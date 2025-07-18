@@ -150,8 +150,8 @@ Once a vulnerability is found:
 
 ### 5.1 Exam Format Overview
 
-- **Duration**: 7 days access to a private lab  
-- **Goal**: Capture specific flags and submit a professional report  
+- **Duration**: 24 Hours access to a private lab  
+- **Goal**:  Hack and Provide Answers to 45 questions
 - **Environment**: Simulated real-world apps with layered security  
 
 ### 5.2 Preparation Steps
@@ -175,15 +175,6 @@ Try to simulate the exam conditions:
 
 - Choose any HackTheBox or TryHackMe machine  
 - Set a 6-hour time limit to find vulnerabilities and write a mini-report  
-
-#### Step 4: Practice Reporting
-
-Use Markdown or Word to structure reports:
-
-- Executive summary  
-- Findings with severity, PoC, and impact  
-- Screenshots  
-- Remediation steps  
 
 ---
 
