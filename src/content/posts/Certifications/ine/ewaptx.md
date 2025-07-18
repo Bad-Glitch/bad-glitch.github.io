@@ -8,8 +8,6 @@ category: 'Certifications'
 lang: 'ar-eng'
 ---
 
-# 
-
 ## Introduction
 
 The eLearnSecurity Web Application Penetration Tester eXtreme (eWPTXv3) is one of the most advanced and respected certifications in the field of web application security. It is designed for professionals who already possess a solid understanding of web application penetration testing and are looking to take their skills to the next level.
