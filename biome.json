@@ -7,11 +7,15 @@
   },
   "files": {
     "ignoreUnknown": false,
-    "ignore": ["src/**/*.css","src/public/**/*", "dist/**/*", "node_modules/**/*"]
+    "ignore": [
+      "src/**/*.css",
+      "src/public/**/*",
+      "dist/**/*",
+      "node_modules/**/*"
+    ]
   },
   "formatter": {
-    "enabled": true,
-    "indentStyle": "tab"
+    "enabled": false
   },
   "organizeImports": {
     "enabled": true
@@ -29,7 +33,11 @@
   },
   "overrides": [
     {
-      "include": ["*.svelte", "*.astro", "*.vue"],
+      "include": [
+        "*.svelte",
+        "*.astro",
+        "*.vue"
+      ],
       "linter": {
         "rules": {
           "style": {
