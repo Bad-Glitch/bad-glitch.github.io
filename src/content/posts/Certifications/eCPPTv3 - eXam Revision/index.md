@@ -1,4 +1,5 @@
----
+﻿---
+
 title: "My eCPPTv3 Exam Review — A Detailed Breakdown"
 published: 2026-08-22
 description: "My honest eCPPTv3 exam review, covering preparation, Active Directory, web application testing, privilege escalation, hash cracking, tools, exam experience, and practical tips."
@@ -10,7 +11,7 @@ lang: "en"
 
 # My eCPPTv3 Exam Review — A Detailed Breakdown
 
-![eCPPTv3 Exam Review](./images/ecpptv3.png.png)
+![eCPPTv3 Exam Review](./images/ecpptv3.png)
 
 I sat the eCPPTv3 a little while back, and I’ve been meaning to sit down and write out everything I went through while it’s still fresh. The good parts, the annoying parts, the stuff nobody mentions before you book it.
 
@@ -44,7 +45,7 @@ None of that felt optional.
 
 AD is one of those topics where reading about it and actually doing it live in completely different worlds — enumerating users, shares, group memberships, trust relationships, it only starts to click once you’ve done it fifty times across slightly different setups and started noticing the patterns repeat.
 
-I also spent real hours just getting fast with the Impacket AD tools specifically, because there’s a huge gap between “I’ve heard of `GetNPUsers.py`” and actually being able to fire it correctly on the first try while a clock is running.
+I also spent real hours just getting fast with the Impacket AD tools specifically, because there’s a huge gap between ΓÇ£I’ve heard of `GetNPUsers.py`ΓÇ¥ and actually being able to fire it correctly on the first try while a clock is running.
 
 The web app side was simpler in comparison — HackTheBox’s WordPress course, then just grinding through as many TryHackMe web rooms as I could stand.
 
@@ -191,7 +192,7 @@ Obvious in hindsight, easy to miss in the moment if `sudo -l` isn’t already a 
 
 On the Windows side, privilege escalation came down to loot more often than exploits for me.
 
-I found a FileZilla config sitting in an admin’s AppData folder with a saved connection, credentials “encoded” in Base64 rather than actually encrypted — and decoding it handed me access to a completely different machine than the one I found the file on.
+I found a FileZilla config sitting in an admin’s AppData folder with a saved connection, credentials ΓÇ£encodedΓÇ¥ in Base64 rather than actually encrypted — and decoding it handed me access to a completely different machine than the one I found the file on.
 
 Good reminder that a lot of lateral movement isn’t clever exploitation at all.
 
@@ -237,7 +238,7 @@ Part of what made it hard wasn’t even the cracking itself.
 
 It was figuring out what I was actually looking at before committing to a method.
 
-One “hash” pulled from a database dump turned out to just be Base64-encoded plaintext dressed up to look cryptographic — decoded in about two seconds flat once I stopped trying to crack it like a real hash.
+One ΓÇ£hashΓÇ¥ pulled from a database dump turned out to just be Base64-encoded plaintext dressed up to look cryptographic — decoded in about two seconds flat once I stopped trying to crack it like a real hash.
 
 Others were raw, unsalted MD5 with no prefix at all, which I ran through an online lookup instead of burning local CPU cycles, since common unsalted MD5s are often already present in public lookup databases.
 
@@ -330,7 +331,7 @@ In an AD environment, something that fails now can quietly become relevant later
 
 And because hash cracking ate so much of my time, I kept one central running list of every hash, its type, and its status, instead of letting that scatter across a dozen different note pages.
 
-Probably saved me an hour or more on its own, and made it trivial to notice patterns — like realizing three “different” hashes from three different hosts all decoded to the same weak password.
+Probably saved me an hour or more on its own, and made it trivial to notice patterns — like realizing three ΓÇ£differentΓÇ¥ hashes from three different hosts all decoded to the same weak password.
 
 ![Notes and workflow](./images/11.png)
 
@@ -354,7 +355,7 @@ Even so — passing this thing was a real accomplishment, and I don’t want tha
 
 It was demanding, occasionally maddening — hash cracking, mostly, if we’re naming names — and I’m genuinely proud I got through it.y
 
-Looking back at the whole run — the recon, chaining a web app foothold into database credentials, pivoting that into a Linux privilege escalation, then carrying that same “people reuse passwords, always check for it” instinct all the way into a full AD compromise — it stopped feeling like a checklist of disconnected exercises somewhere along the way and started feeling like one continuous story.
+Looking back at the whole run — the recon, chaining a web app foothold into database credentials, pivoting that into a Linux privilege escalation, then carrying that same ΓÇ£people reuse passwords, always check for itΓÇ¥ instinct all the way into a full AD compromise — it stopped feeling like a checklist of disconnected exercises somewhere along the way and started feeling like one continuous story.
 
 Which, honestly, is probably the whole point of an exam like this.
 
