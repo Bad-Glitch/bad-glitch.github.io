@@ -1,5 +1,4 @@
 ---
-
 title: "My eCPPTv3 Exam Review — A Detailed Breakdown"
 published: 2026-08-22
 description: "My honest eCPPTv3 exam review, covering preparation, Active Directory, web application testing, privilege escalation, hash cracking, tools, exam experience, and practical tips."
