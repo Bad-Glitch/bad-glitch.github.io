@@ -7,7 +7,7 @@ image: "ecpptv3.png"
 tags: [eCPPTv3, Active Directory, Web Security, Penetration Testing]
 category: "Certifications"
 lang: "en"
-----------
+---
 
 # My eCPPTv3 Exam Review — A Detailed Breakdown
 
