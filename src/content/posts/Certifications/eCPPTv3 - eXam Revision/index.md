@@ -1,5 +1,4 @@
 ﻿---
-
 title: "My eCPPTv3 Exam Review — A Detailed Breakdown"
 published: 2026-08-22
 description: "My honest eCPPTv3 exam review, covering preparation, Active Directory, web application testing, privilege escalation, hash cracking, tools, exam experience, and practical tips."
@@ -10,8 +9,6 @@ lang: "en"
 ---
 
 # My eCPPTv3 Exam Review — A Detailed Breakdown
-
-![eCPPTv3 Exam Review](./images/ecpptv3.png)
 
 I sat the eCPPTv3 a little while back, and I’ve been meaning to sit down and write out everything I went through while it’s still fresh. The good parts, the annoying parts, the stuff nobody mentions before you book it.
 
@@ -360,3 +357,4 @@ Looking back at the whole run — the recon, chaining a web app foothold into da
 Which, honestly, is probably the whole point of an exam like this.
 
 Good luck if you’re going for it. Happy to answer questions if anyone has them.
+
