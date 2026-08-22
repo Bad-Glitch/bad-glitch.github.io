@@ -1,4 +1,5 @@
 ---
+
 title: "My eCPPTv3 Exam Review — A Detailed Breakdown"
 published: 2026-08-22
 description: "My honest eCPPTv3 exam review, covering preparation, Active Directory, web application testing, privilege escalation, hash cracking, tools, exam experience, and practical tips."
@@ -6,22 +7,11 @@ image: "ecpptv3.png"
 tags: [eCPPTv3, Active Directory, Web Security, Penetration Testing]
 category: "Certifications"
 lang: "en"
----
-
----
-
-title: "My eCPPTv3 Exam Review — A Detailed Breakdown"
-published: 2026-08-22
-description: "My honest eCPPTv3 exam review, covering preparation, Active Directory, web application testing, privilege escalation, hash cracking, tools, exam experience, and practical tips."
-image: "ecpptv3.png.png"
-tags: [eCPPTv3, Active Directory, Web Security, Penetration Testing]
-category: "Certifications"
-lang: "en"
 ----------
 
 # My eCPPTv3 Exam Review — A Detailed Breakdown
 
-![eCPPTv3 Exam Review](./ecpptv3.png)
+![eCPPTv3 Exam Review](./images/ecpptv3.png.png)
 
 I sat the eCPPTv3 a little while back, and I’ve been meaning to sit down and write out everything I went through while it’s still fresh. The good parts, the annoying parts, the stuff nobody mentions before you book it.
 
@@ -363,7 +353,7 @@ That’s backwards, and it should probably change.
 
 Even so — passing this thing was a real accomplishment, and I don’t want that to get lost in all the complaining above.
 
-It was demanding, occasionally maddening — hash cracking, mostly, if we’re naming names — and I’m genuinely proud I got through it.
+It was demanding, occasionally maddening — hash cracking, mostly, if we’re naming names — and I’m genuinely proud I got through it.y
 
 Looking back at the whole run — the recon, chaining a web app foothold into database credentials, pivoting that into a Linux privilege escalation, then carrying that same “people reuse passwords, always check for it” instinct all the way into a full AD compromise — it stopped feeling like a checklist of disconnected exercises somewhere along the way and started feeling like one continuous story.
 
