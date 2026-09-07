@@ -110,8 +110,7 @@ http://example.com/login.php?user=admin' OR '1'='1' -- &pass=12345
 
 html
 
-script>alert('XSS Attack');</script>
-
+```html script>alert('XSS Attack');</script>```
 لو ظهرت الرسالة، التطبيق معرض لهجوم XSS.
 
 ج. Cross-Site Request Forgery (CSRF)
