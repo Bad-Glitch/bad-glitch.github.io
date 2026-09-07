@@ -1,7 +1,7 @@
 ---
 title: "eJPTv2 Study Notes"
 published: 2026-09-07
-description: "نوتس تفصيلية لكورس eJPTv2 بتغطي مراحل اختبار الاختراق كاملة"
+description: "practical notes covering the eJPTv2 certification"
 image: "ejptv2.png"
 tags:
   - "eJPTv2"
