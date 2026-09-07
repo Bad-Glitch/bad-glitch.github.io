@@ -1,5 +1,5 @@
 ---
-title: "نوتس eJPTv2 — ملخص شامل لكل مراحل اختبار الاختراق"
+title: "eJPTv2 Study Notes"
 published: 2026-09-07
 description: "نوتس تفصيلية لكورس eJPTv2 بتغطي مراحل اختبار الاختراق كاملة"
 image: "ejptv2.png"
