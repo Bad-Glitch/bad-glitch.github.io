@@ -9,7 +9,7 @@ tags:
   - "Network Security"
   - "Web Security"
   - "Enumeration"
-category: "category: Courses Notes"
+category: "Courses Notes"
 lang: "ar"
 ---
 
