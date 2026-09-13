@@ -1,20 +1,17 @@
-\---
-
+---
 title: "eCIR Study Notes"
 published: 2026-09-13
 description: "نوتس شاملة لكورس eCIR (INE) بالعربي: إدارة الحوادث الأمنية، تحليل حركة مرور الشبكة، المعالجة العملية للحوادث، وعمليات SOC 3.0"
-image: "eCIRv3.jpg"tags:
-
-* "eCIR"
-* "Incident Response"
-* "SOC"
-* "Network Forensics"
-* "SIEM"
+image: "eCIRv3.jpg"
+tags:
+  - "eCIR"
+  - "Incident Response"
+  - "SOC"
+  - "Network Forensics"
+  - "SIEM"
 category: "Courses Notes"
 lang: "ar"
-
-\---
-
+---
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800\&family=IBM+Plex+Mono:wght@400;500\&display=swap" rel="stylesheet">
