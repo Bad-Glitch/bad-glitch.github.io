@@ -1,21 +1,23 @@
----
+\---
+
 title: "eCIR Study Notes"
 published: 2026-09-13
 description: "نوتس شاملة لكورس eCIR (INE) بالعربي: إدارة الحوادث الأمنية، تحليل حركة مرور الشبكة، المعالجة العملية للحوادث، وعمليات SOC 3.0"
-image: image: "eCIRv3.jpg"
-tags:
-  - "eCIR"
-  - "Incident Response"
-  - "SOC"
-  - "Network Forensics"
-  - "SIEM"
+image: "eCIRv3.jpg"tags:
+
+* "eCIR"
+* "Incident Response"
+* "SOC"
+* "Network Forensics"
+* "SIEM"
 category: "Courses Notes"
 lang: "ar"
----
+
+\---
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800\&family=IBM+Plex+Mono:wght@400;500\&display=swap" rel="stylesheet">
 <style>
 .ecir-rtl-notes{
     --bg: #0e1113;
@@ -30,7 +32,7 @@ lang: "ar"
     --code-bg: #0c0f11;
     --radius: 12px;
   }
-.ecir-rtl-notes *{ box-sizing: border-box; }
+.ecir-rtl-notes \*{ box-sizing: border-box; }
 .ecir-rtl-notes{
     margin:0; padding:0;
     background: var(--bg);
@@ -309,13 +311,13 @@ lang: "ar"
     <h3>التحضير (Preparation)</h3>
     <p>في المرحلة دي بنجهز نفسنا قبل ما أي حاجة تحصل. الهدف هنا إنك تكون مستعد لأي حادث يحصل:</p>
     <ul><li><strong>وضع سياسات وخطط</strong>: نكتب سياسات واضحة للتعامل مع الحوادث.</li><li><strong>تدريب الفريق</strong>: نعمل تدريبات للفريق اللي هيكون مسؤول عن التعامل مع الحوادث عشان يبقوا جاهزين.</li><li><strong>الأدوات</strong>: تجهيز الأدوات اللي هتساعد في الكشف عن الحوادث والرد عليها، زي برامج مكافحة الفيروسات وأدوات المراقبة.</li></ul>
-    <h3>الكشف والتعرف (Detection &amp; Identification)</h3>
+    <h3>الكشف والتعرف (Detection \&amp; Identification)</h3>
     <p>هنا بنبدأ نراقب الأنظمة بشكل مستمر عشان نكتشف أي حاجة غريبة أو غير طبيعية:</p>
     <ul><li><strong>المراقبة المستمرة</strong>: استخدام أدوات مراقبة زي الـ SIEM (Security Information and Event Management) عشان تتابع الأنظمة والبيانات.</li><li><strong>التعرف على الحادث</strong>: لو في مشكلة حصلت، بنحاول نفهم طبيعتها بسرعة، زي هل هو هجوم هاكرز ولا فيروس ولا مشكلة تقنية؟</li></ul>
     <h3>الاحتواء (Containment)</h3>
     <p>في المرحلة دي بنحاول نسيطر على الحادث عشان ما ينتشرش أو يتفاقم:</p>
     <ul><li><strong>الاحتواء الفوري</strong>: بنعمل حاجات زي عزل النظام اللي اتأثر أو قطع الاتصال عن الأجهزة اللي فيها المشكلة عشان نمنع انتشار الضرر.</li><li><strong>الاحتواء طويل الأمد</strong>: بعد ما نسيطر على الوضع مبدئيًا، بنبدأ نخطط إزاي نحل المشكلة بدون ما نأثر على بقية الأنظمة.</li></ul>
-    <h3>التقدير والتحليل (Eradication &amp; Analysis)</h3>
+    <h3>التقدير والتحليل (Eradication \&amp; Analysis)</h3>
     <p>في المرحلة دي بنبدأ نفهم الحادث بعمق ونحل المشكلة من جذورها:</p>
     <ul><li><strong>إزالة السبب الجذري</strong>: لو فيه فيروس أو برمجية خبيثة، بنشيلها من النظام.</li><li><strong>تحليل البيانات</strong>: بنجمع بيانات عن الحادث عشان نعرف إيه اللي حصل بالظبط وإيه الثغرات اللي استغلها الهجوم.</li></ul>
     <h3>التعافي (Recovery)</h3>
@@ -328,8 +330,8 @@ lang: "ar"
   </section>
   <hr class="section-divider">
   <section class="stage" id="traffic-flow-analysis">
-    <h2><span class="num">2</span> تحليل حركة مرور الشبكة والتدفق <span class="dim" style="font-size:14px;font-weight:400;">(Network Traffic &amp; Flow Analysis)</span></h2>
-    <div class="intro"><p>تحليل حركة مرور الشبكة (Network Traffic &amp; Flow Analysis) هو عملية مراقبة وتحليل البيانات اللي بتتحرك جوه الشبكة لفهم الأنشطة اللي بتحصل عليها، والكشف عن أي تهديدات أو مشاكل. الفكرة ببساطة إنك تقدر تفهم "من بيكلم مين؟"، "إيه البيانات اللي بتتنقل؟" و"هل في أي حاجة مش طبيعية؟".</p>
+    <h2><span class="num">2</span> تحليل حركة مرور الشبكة والتدفق <span class="dim" style="font-size:14px;font-weight:400;">(Network Traffic \&amp; Flow Analysis)</span></h2>
+    <div class="intro"><p>تحليل حركة مرور الشبكة (Network Traffic \&amp; Flow Analysis) هو عملية مراقبة وتحليل البيانات اللي بتتحرك جوه الشبكة لفهم الأنشطة اللي بتحصل عليها، والكشف عن أي تهديدات أو مشاكل. الفكرة ببساطة إنك تقدر تفهم "من بيكلم مين؟"، "إيه البيانات اللي بتتنقل؟" و"هل في أي حاجة مش طبيعية؟".</p>
     <h3>إيه هو Network Traffic؟</h3>
     <p>شبكة الكمبيوتر بتبعت وتستقبل بيانات طول الوقت، البيانات دي بتتسمى "Traffic" أو "حركة مرور الشبكة". ممكن تكون بيانات متبادلة بين أجهزة جوه نفس الشبكة أو بين الشبكة بتاعتك والإنترنت.</p>
     <ul><li><strong>Traffic</strong> ممكن يبقى أي حاجة: زي إنك تفتح موقع، تبعت إيميل، أو حتى تحديث برامج.</li><li><strong>Packets</strong>: البيانات بتتبعت على شكل أجزاء صغيرة اسمها "Packets"، ودي هي اللي بنحللها عشان نفهم إيه اللي بيحصل على الشبكة.</li></ul>
@@ -371,7 +373,7 @@ lang: "ar"
     <h3>أهمية تحليل Traffic و Flow للشركات</h3>
     <ul><li>بيساعد الشركات تحافظ على أمن الشبكات بتاعتها وتكتشف أي هجمات قبل ما تأثر عليها.</li><li>بيساعد في مراقبة الأداء والتأكد إن الأنظمة شغالة بكفاءة بدون مشاكل.</li><li>بيساهم في التوافق مع قوانين حماية البيانات والخصوصية.</li></ul></div>
     <div class="subtopic">
-      <h3 class="sub-heading"><span class="sub-num">2.1 &amp; 2.2</span> اكتشاف التسلل عن طريق تحليل حركة المرور
+      <h3 class="sub-heading"><span class="sub-num">2.1 \&amp; 2.2</span> اكتشاف التسلل عن طريق تحليل حركة المرور
         <span class="dim" style="font-size:13px;font-weight:400;"> (Intrusion Detection by Analyzing Traffic)</span>
       </h3>
       <p><strong>اكتشاف التسلل من خلال تحليل حركة المرور</strong> هو جزء مهم جدًا من حماية الشبكة. الفكرة إنك تقدر تكتشف أي نشاط غير طبيعي أو غير متوقع على الشبكة من خلال مراقبة حركة البيانات (Traffic) اللي بتمر عليها. ده بيتم غالبًا باستخدام أدوات مخصصة زي أنظمة اكتشاف التسلل (Intrusion Detection Systems - IDS).</p>
@@ -494,7 +496,7 @@ lang: "ar"
   </section>
   <hr class="section-divider">
   <section class="stage" id="soc3-operations">
-    <h2><span class="num">4</span> عمليات وتحليلات SOC 3.0 <span class="dim" style="font-size:14px;font-weight:400;">(SOC 3.0 Operations &amp; Analytics)</span></h2>
+    <h2><span class="num">4</span> عمليات وتحليلات SOC 3.0 <span class="dim" style="font-size:14px;font-weight:400;">(SOC 3.0 Operations \&amp; Analytics)</span></h2>
     <div class="intro"><p><strong>SOC 3.0</strong> (Security Operations Center 3.0) هو مفهوم متقدم لمراكز عمليات الأمان، يركز على دمج البيانات والتحليلات الذكية لتحسين استجابة الأمان وتقديم حماية أفضل ضد التهديدات. مع تزايد التهديدات السيبرانية وتعقيد الأنظمة، تطورت مراكز العمليات لتلبية هذه الاحتياجات.</p>
     <h3>الخصائص الرئيسية لـ SOC 3.0</h3>
     <ul><li><strong>التحليلات الذكية (Intelligent Analytics)</strong>: استخدام تقنيات مثل تعلم الآلة (Machine Learning) والذكاء الاصطناعي (Artificial Intelligence) لتحليل البيانات الكبيرة وتحديد الأنماط الغير عادية. هذه التقنيات تساعد في تحسين دقة اكتشاف التهديدات وتقليل عدد الإنذارات الكاذبة.</li><li><strong>دمج البيانات (Data Integration)</strong>: SOC 3.0 يدمج البيانات من مصادر متعددة، مثل سجلات الأجهزة، والبيانات السحابية، والشبكات، والتطبيقات، مما يوفر رؤية شاملة عن الوضع الأمني. دمج البيانات يساعد في تسريع الاستجابة للحوادث ويسهل التحقيق في الأحداث الأمنية.</li><li><strong>الأتمتة (Automation)</strong>: استخدام أدوات الأتمتة لأداء المهام الروتينية مثل جمع البيانات، التحليل، والإشعارات. الأتمتة تخفف من العبء على فرق الأمان وتسمح لهم بالتركيز على الأنشطة الأكثر أهمية.</li><li><strong>إدارة الأحداث (Incident Management)</strong>: تطوير بروتوكولات واضحة لإدارة الحوادث، بدءًا من الكشف عن الحادث وصولاً إلى الاستجابة والتعافي. يستخدم SOC 3.0 تقنيات تحليل الحوادث لتحسين استجابة الفريق وتحقيق التعلم من الحوادث السابقة.</li><li><strong>التحليلات الاستباقية (Proactive Analytics)</strong>: استخدام التحليلات للتنبؤ بالتهديدات قبل حدوثها. يمكن أن تتضمن هذه الأنشطة تحليل التوجهات والأنماط من البيانات التاريخية للكشف عن التهديدات المحتملة.</li></ul>
@@ -592,3 +594,4 @@ lang: "ar"
   </footer>
 </div>
 </div>
+
