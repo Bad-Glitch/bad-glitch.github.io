@@ -10,7 +10,6 @@ draft: false
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
-
 <style>
 .ejpt-rtl-notes{
     --bg: #0f1216;
@@ -279,11 +278,8 @@ draft: false
     text-decoration:none;
   }
 </style>
-
 <div class="ejpt-rtl-notes">
 <div class="wrap">
-
-
   <header class="hero" id="top">
     <span class="eyebrow">PENTESTING NOTES · eJPTv2</span>
     <h1 class="title">نوتس eJPTv2 — ملخص شامل لكل مراحل اختبار الاختراق</h1>
@@ -292,7 +288,6 @@ draft: false
       وحتى استغلال تطبيقات الويب، مع شرح للمفاهيم، الأدوات، أوامر التثبيت والاستخدام، وأمثلة عملية لكل مرحلة.
     </p>
   </header>
-
   <nav class="toc">
     <h2>محتويات النوتس</h2>
     <ol>
@@ -307,13 +302,10 @@ draft: false
       <li><a href="#tools-install">تثبيت الأدوات الأساسية للكورس</a></li>
     </ol>
   </nav>
-
   <!-- ============ 1. PROCESS ============ -->
   <section class="stage" id="process">
     <h2><span class="num">1</span> عملية اختبار الاختراق (Penetration Testing Process)</h2>
-
     <p>دي المراحل اللي بتمر بيها عملية اختبار الاختراق بالترتيب:</p>
-
     <div class="pipeline">
       <span class="step">Engagement</span><span class="arrow">→</span>
       <span class="step">Information Gathering</span><span class="arrow">→</span>
@@ -323,13 +315,11 @@ draft: false
       <span class="step">Post-Exploitation</span><span class="arrow">→</span>
       <span class="step">Reporting</span>
     </div>
-
     <p>
       الفكرة الأساسية إن اختبار الاختراق مش "افتح Metasploit وابدأ تضرب Exploits عشوائي" — دي عملية منظمة، كل مرحلة
       فيها بتبني على اللي قبلها، ولو قفزت مرحلة أو استعجلت فيها، هتلاقي نفسك تايه في مرحلة الاستغلال من غير ما تعرف
       إنت بتخترق إيه بالظبط.
     </p>
-
     <h3>Engagement</h3>
     <p>
       دي المرحلة اللي بيتم فيها الاتفاق بين البينتستر والكلاينت (مالك المؤسسة). بيتحدد فيها:
@@ -341,7 +331,6 @@ draft: false
       <li><strong>نقطة التواصل (Point of Contact):</strong> مين اللي البينتستر هيتواصل معاه لو حصل حادث غير متوقع، زي إنه سبب تعطل لخدمة حقيقية بالغلط</li>
       <li><strong>الـ Rules of Engagement (RoE):</strong> وثيقة رسمية بتوضح الصلاحيات القانونية للاختبار، وده اللي بيحميك لو حصل أي مشكلة</li>
     </ul>
-
     <div class="callout example">
       <span class="label">مثال عملي</span>
       <p>
@@ -350,10 +339,8 @@ draft: false
         الخروج عن الـ Scope من غير إذن بيحول اختبار الاختراق القانوني لجريمة إلكترونية.
       </p>
     </div>
-
     <h3>Information Gathering</h3>
     <p>دي مرحلة جمع المعلومات، وبتتقسم لنوعين رئيسيين:</p>
-
     <h4>Passive Information Gathering</h4>
     <p>
       البينتستر بيجمع معلومات عن الهدف من غير أي تفاعل مباشر معاه، يعني الهدف نفسه أو أي جهاز تابع له ملهوش أي أثر
@@ -366,7 +353,6 @@ draft: false
       <li>تحديد التقنيات المستخدمة في المواقع المستهدفة</li>
       <li>تحديد النطاقات الفرعية</li>
     </ul>
-
     <h4>Active Information Gathering</h4>
     <p>
       هنا بيحصل تفاعل مباشر مع الهدف (طلبات HTTP فعلية، اتصالات على منافذ، إلخ)، وده معناه إن فيه احتمال إن أنظمة
@@ -377,12 +363,10 @@ draft: false
       <li>التعرف على البنية التحتية الداخلية لشبكة الهدف</li>
       <li>استخراج المعلومات من الأنظمة المستهدفة مباشرة (زي banner grabbing)</li>
     </ul>
-
     <p class="dim">
       الفرق العملي بينهم إن الـ Passive بتاخد وقت أطول وبتديك صورة عامة، والـ Active بتديك تفاصيل دقيقة لكنها
       بتزود فرصة اكتشافك.
     </p>
-
     <h4>تقنيات وأدوات جمع المعلومات</h4>
     <div class="table-wrap">
       <table>
@@ -407,7 +391,6 @@ draft: false
         </tbody>
       </table>
     </div>
-
     <div class="callout">
       <span class="label">ملاحظة</span>
       <p>
@@ -415,16 +398,13 @@ draft: false
         بالكامل — بما فيها أسماء السيرفرات الداخلية وعناوينها، وده بيوفر عليك مجهود اكتشاف كبير.
       </p>
     </div>
-
     <h4>تثبيت واستخدام الأدوات</h4>
-
     <p><strong>Whois</strong></p>
     <pre><code>sudo apt-get update
 sudo apt-get install whois</code></pre>
     <pre><code>whois example.com
 whois 8.8.8.8</code></pre>
     <p>بتطلعلك معلومات زي: مين مسجل الدومين، تاريخ التسجيل والانتهاء، وسيرفرات الـ DNS المرتبطة بيه. مفيدة كخطوة أولى قبل أي حاجة تانية.</p>
-
     <p><strong>wafw00f</strong></p>
     <pre><code>python3 --version
 pip3 install wafw00f</code></pre>
@@ -434,7 +414,6 @@ pip3 install wafw00f</code></pre>
       طريقة تعاملك مع التطبيق بعد كده — مثلًا لو فيه WAF، هجمات SQL Injection المباشرة هتتحظر، فهتحتاج تفكر في
       تقنيات Evasion.
     </p>
-
     <p><strong>Sublist3r</strong></p>
     <pre><code>sudo apt-get install git
 pip install -r requirements.txt</code></pre>
@@ -443,7 +422,6 @@ pip install -r requirements.txt</code></pre>
       بتجمع النطاقات الفرعية من مصادر متعددة (Google، Bing، Yahoo، VirusTotal...) في أمر واحد. لو لقيت subdomain
       زي <code>dev.example.com</code> أو <code>staging.example.com</code>، غالبًا دي بتبقى بيئات أقل تأمينًا من الموقع الرئيسي.
     </p>
-
     <p><strong>theHarvester</strong></p>
     <pre><code>sudo apt-get install git
 git clone https://github.com/laramies/theHarvester.git
@@ -453,12 +431,10 @@ pip install -r requirements.txt</code></pre>
       الإيميلات اللي بتجمعها هنا مش بس لغرض التوعية، دي بتفيدك بعد كده في هجمات زي Password Spraying على بوابات
       تسجيل الدخول (VPN، Webmail، Office365).
     </p>
-
     <p><strong>Nmap</strong></p>
     <pre><code>sudo apt-get update
 sudo apt-get install nmap</code></pre>
     <pre><code>nmap -p 80 example.com</code></pre>
-
     <div class="callout example">
       <span class="label">مثال عملي متكامل</span>
       <p>
@@ -468,25 +444,19 @@ sudo apt-get install nmap</code></pre>
         بـ wafw00f. في الآخر، عندك صورة كاملة عن الهدف من غير ما تبعت أي طلب فحص شرس واحد لسه.
       </p>
     </div>
-
     <p class="dim">كدا خلصنا جزء الـ Information Gathering بالكامل.</p>
   </section>
-
   <hr class="section-divider">
-
   <!-- ============ 2. FOOTPRINTING ============ -->
   <section class="stage" id="footprinting">
     <h2><span class="num">2</span> التتبع والفحص (Footprinting and Scanning)</h2>
-
     <p>
       السكشن ده لا يقل أهمية عن اللي قبله، لأن عملية الاستطلاع وجمع المعلومات بتشكل نسبة كبيرة من نجاح عملية اختبار
       الاختراق بالكامل — الإحصائية الشائعة في المجال إن حوالي 60-70% من وقت أي اختبار اختراق حقيقي بيروح في
       الاستطلاع والفحص، مش في الاستغلال نفسه.
     </p>
     <p>الفكرة الأساسية: قبل ما تبدأ تخترق أي حاجة، لازم تجمع كل المعلومات اللي تقدر توصلها عن الهدف بدون ما تخليه يحس إنك بتراقبه.</p>
-
     <h3>أنواع جمع المعلومات</h3>
-
     <h4>1. Passive Footprinting</h4>
     <p>
       جمع معلومات عن الهدف من غير أي تفاعل مباشر معاه — زي متابعة أخبار الشركة، الـ LinkedIn بتاع الموظفين، أو
@@ -502,7 +472,6 @@ site:target.com intitle:"index of"</code></pre>
       <li><strong>TheHarvester:</strong> لجمع الإيميلات، الدومينات، وعناوين IP الخاصة بالشركة</li>
       <li><strong>Recon-ng:</strong> أداة بتجمع المعلومات بشكل منظم وتلقائي، وبتشتغل بنظام Modules زي Metasploit بالظبط</li>
     </ul>
-
     <h4>2. Active Footprinting</h4>
     <p>هنا بيبدأ التفاعل المباشر مع الهدف — زي فحص الأجهزة أو الخدمات الشغالة عنده.</p>
     <ul>
@@ -510,31 +479,26 @@ site:target.com intitle:"index of"</code></pre>
       <li><strong>Netcraft:</strong> بيدي معلومات عن الموقع والسيرفر، وحتى تاريخ التغييرات اللي حصلت في التقنيات المستخدمة بمرور الوقت</li>
       <li><strong>Shodan:</strong> زي محرك بحث بس مخصص للأجهزة المتصلة بالإنترنت — ممكن تدور فيه بـ <code>org:"Target Company"</code> وتلاقي كل الأجهزة المعرّفة باسم الشركة</li>
     </ul>
-
     <h3>المعلومات اللي لازم تجمعها</h3>
     <ul>
       <li><strong>معلومات الدومين:</strong> بيانات DNS، معلومات التسجيل، والـ Subdomains</li>
       <li><strong>معلومات الشركة:</strong> عناوين IP، مواقع المكاتب، والموظفين</li>
       <li><strong>معلومات الموقع:</strong> التكنولوجيات المستخدمة، السيرفرات، والحماية</li>
     </ul>
-
     <h3>الفحص (Scanning)</h3>
     <p>
       بعد جمع المعلومات، بييجي دور الفحص عشان تعرف إيه الشغال على النظام من خدمات — وده بيبقى الأساس اللي هتبني عليه
       أي محاولة اختراق بعد كده. الفكرة ببساطة: من غير Scanning إنت عمال تحاول تخترق حاجة إنت أصلًا مش عارف هي شغالة
       ولا لأ.
     </p>
-
     <h4>1. فحص المنافذ (Port Scanning)</h4>
     <p>الأداة الأساسية هنا هي Nmap — بتفحص المنافذ، تعرف نظام التشغيل، والخدمات الشغالة.</p>
     <pre><code>nmap -sS -p- [TARGET_IP]       # فحص كل المنافذ
 nmap -sV -p 80,443 [TARGET_IP]  # عرض تفاصيل الخدمات
 nmap -O [TARGET_IP]             # اكتشاف نظام التشغيل</code></pre>
-
     <p>فحص سريع وفحص شامل:</p>
     <pre><code>nmap -T4 -F 192.168.1.1        # فحص سريع للمنافذ المفتوحة
 nmap -sS -p- 192.168.1.1       # فحص كل المنافذ من 1 لـ 65535</code></pre>
-
     <p>فرق بسيط بين أنواع الفحص المهمة:</p>
     <div class="table-wrap">
       <table>
@@ -547,7 +511,6 @@ nmap -sS -p- 192.168.1.1       # فحص كل المنافذ من 1 لـ 65535</c
         </tbody>
       </table>
     </div>
-
     <div class="callout example">
       <span class="label">مثال عملي</span>
       <p>
@@ -556,16 +519,13 @@ nmap -sS -p- 192.168.1.1       # فحص كل المنافذ من 1 لـ 65535</c
         بـ Apache.
       </p>
     </div>
-
     <p>
       <strong>Masscan</strong> — بيعمل نفس شغل Nmap بس أسرع بكتير، ومناسب لفحص ملايين المنافذ في ثواني، خصوصًا لو
       بتفحص شبكة كبيرة أو نطاق IP واسع:
     </p>
     <pre><code>masscan -p1-65535 192.168.1.0/24 --rate=1000</code></pre>
-
     <p><strong>Unicornscan</strong> — أداة قوية لفحص الشبكات الكبيرة وعندها قدرات مميزة في التعامل مع بروتوكولات مختلفة:</p>
     <pre><code>unicornscan -i eth0 -mT -p 1-65535 192.168.1.1</code></pre>
-
     <h4>2. فحص الثغرات (Vulnerability Scanning)</h4>
     <p>بعد ما نعرف المنافذ والخدمات، بنشوف لو فيها ثغرات معروفة.</p>
     <ul>
@@ -575,7 +535,6 @@ nmap -sS -p- 192.168.1.1       # فحص كل المنافذ من 1 لـ 65535</c
         <pre><code>nikto -h http://example.com</code></pre>
       </li>
     </ul>
-
     <h4>3. فحص الشبكة (Network Scanning)</h4>
     <p>الهدف هنا معرفة مين متصل على الشبكة والشبكات الفرعية.</p>
     <p><strong>Netdiscover:</strong></p>
@@ -583,7 +542,6 @@ nmap -sS -p- 192.168.1.1       # فحص كل المنافذ من 1 لـ 65535</c
     <p><strong>Fping</strong> — بيعمل Ping على مجموعة عناوين IP بسرعة:</p>
     <pre><code>fping -a -g 192.168.1.0/24</code></pre>
     <p><strong>Angry IP Scanner</strong> — أداة بواجهة رسومية سهلة لفحص عناوين الـ IP.</p>
-
     <h3>أدوات إضافية مفيدة</h3>
     <ul>
       <li><strong>Wireshark:</strong> لمراقبة الشبكة وفهم اللي بيحصل فيها لحظة بلحظة</li>
@@ -600,7 +558,6 @@ nmap -sS -p- 192.168.1.1       # فحص كل المنافذ من 1 لـ 65535</c
         <pre><code>nc -nv [TARGET_IP] 22</code></pre>
       </li>
     </ul>
-
     <h3>نصائح للفحص</h3>
     <ul>
       <li>اتأكد من الأذونات — قبل أي فحص، لازم يكون عندك إذن رسمي من صاحب الشبكة أو الموقع</li>
@@ -609,18 +566,14 @@ nmap -sS -p- 192.168.1.1       # فحص كل المنافذ من 1 لـ 65535</c
       <li>وثّق كل حاجة أول بأول — بدل ما تعتمد على ذاكرتك، احفظ نتيجة كل سكان في ملف باستخدام <code>-oN</code> أو <code>-oA</code> في Nmap، هتحتاجها وقت كتابة التقرير</li>
     </ul>
   </section>
-
   <hr class="section-divider">
-
   <!-- ============ 3. ENUMERATION ============ -->
   <section class="stage" id="enumeration">
     <h2><span class="num">3</span> الاستخراج (Enumeration)</h2>
-
     <p>
       الـ Enumeration بتيجي بعد مرحلة الـ Scanning، وفيها بنطلع معلومات أكتر تفصيلًا عن النظام أو الشبكة اللي
       بنستهدفها — مين شغال في الشركة، إيه الخدمات الشغالة، إيه الأجهزة المتصلة بالشبكة، وتفاصيل كتير تانية.
     </p>
-
     <div class="callout">
       <span class="label">الفرق الجوهري</span>
       <p>
@@ -629,7 +582,6 @@ nmap -sS -p- 192.168.1.1       # فحص كل المنافذ من 1 لـ 65535</c
         معلومة عامة لمعلومة قابلة للاستغلال فعليًا.
       </p>
     </div>
-
     <h3>أنواع الـ Enumeration</h3>
     <ul>
       <li><strong>Network Enumeration:</strong> معرفة الأجهزة الموجودة في الشبكة وكل جهاز شغال عليه إيه</li>
@@ -637,7 +589,6 @@ nmap -sS -p- 192.168.1.1       # فحص كل المنافذ من 1 لـ 65535</c
       <li><strong>Service Enumeration:</strong> معرفة الخدمات الشغالة على كل جهاز (FTP، HTTP، SMB... إلخ)</li>
       <li><strong>Protocol Enumeration:</strong> استخراج معلومات عن البروتوكولات المستخدمة في الشبكة (SNMP، NetBIOS، LDAP...)</li>
     </ul>
-
     <h4>1. Network Enumeration</h4>
     <p><strong>Nmap</strong> — لعمل مسح شامل على الشبكة ومعرفة كل الأجهزة المتصلة:</p>
     <pre><code>nmap -sn 192.168.1.0/24</code></pre>
@@ -645,7 +596,6 @@ nmap -sS -p- 192.168.1.1       # فحص كل المنافذ من 1 لـ 65535</c
     <pre><code>netdiscover -r 192.168.1.0/24</code></pre>
     <p><strong>ARP Scan</strong> — لجلب الأجهزة المتصلة باستخدام بروتوكول ARP:</p>
     <pre><code>arp-scan -l</code></pre>
-
     <h4>2. User Enumeration</h4>
     <p>
       <strong>RPCclient</strong> — لفتح جلسة على جهاز عن طريق SMB واستخراج بيانات المستخدمين. مفيدة جدًا لو الجهاز
@@ -654,23 +604,18 @@ nmap -sS -p- 192.168.1.1       # فحص كل المنافذ من 1 لـ 65535</c
     <pre><code>rpcclient -U "" [TARGET_IP]</code></pre>
     <p>وبعدها جوا الجلسة:</p>
     <pre><code>enumdomusers</code></pre>
-
     <p>
       <strong>enum4linux</strong> — بيدي تفاصيل شاملة عن أنظمة الويندوز (مستخدمين، جروبات، سياسات كلمات المرور،
       الشيرز، حتى معلومات عن الدومين نفسه) في أمر واحد:
     </p>
     <pre><code>enum4linux -a [TARGET_IP]</code></pre>
-
     <p><strong>smbclient</strong> — للاتصال المباشر بالشيرز واستعراض محتواها زي ما بتعمل مع FTP تقريبًا:</p>
     <pre><code>smbclient -L //[TARGET_IP] -N
 smbclient //[TARGET_IP]/ShareName -N</code></pre>
-
     <p><strong>Nmap Scripts:</strong></p>
     <pre><code>nmap --script smb-enum-users -p 445 [TARGET_IP]</code></pre>
-
     <p><strong>Hydra</strong> — لتجربة كلمات مرور مختلفة على قائمة مستخدمين:</p>
     <pre><code>hydra -L users.txt -P passwords.txt [TARGET_IP] smb</code></pre>
-
     <div class="callout example">
       <span class="label">مثال عملي</span>
       <p>
@@ -681,7 +626,6 @@ smbclient //[TARGET_IP]/ShareName -N</code></pre>
         بسبب سياسة الـ Account Lockout.
       </p>
     </div>
-
     <h4>3. Service Enumeration</h4>
     <p><strong>Nmap Service Scripts:</strong></p>
     <pre><code>nmap --script ftp-anon,ftp-bounce,ftp-syst -p 21 [TARGET_IP]</code></pre>
@@ -693,7 +637,6 @@ smbclient //[TARGET_IP]/ShareName -N</code></pre>
     <pre><code>use auxiliary/scanner/smb/smb_enumshares
 set RHOSTS [TARGET_IP]
 run</code></pre>
-
     <h4>4. Protocol Enumeration</h4>
     <p><strong>SNMP Enumeration:</strong></p>
     <pre><code>snmpwalk -v 2c -c public [TARGET_IP]</code></pre>
@@ -707,25 +650,20 @@ run</code></pre>
     <pre><code>nbtscan 192.168.1.0/24</code></pre>
     <p><strong>LDAP Enumeration:</strong></p>
     <pre><code>ldapsearch -x -h [TARGET_IP] -b "dc=example,dc=com"</code></pre>
-
     <p class="dim">
       الـ Enumeration محتاجة صبر واهتمام بالتفاصيل الصغيرة — أكتر ثغرة ممكن تلاقيها بتيجي من حاجة بسيطة زي إعداد
       غلط أو مستخدم ناسي يقفل الـ FTP. القاعدة العملية اللي أتبعها دايمًا: لو فيه بورت مفتوح، جرب كل الـ Enumeration
       الممكنة عليه قبل ما تنتقل للجهاز اللي بعده — رجوعك تاني بعد ساعات ممكن يضيع وقت كبير في إعادة التموضع.
     </p>
   </section>
-
   <hr class="section-divider">
-
   <!-- ============ 4. VULN ASSESSMENT ============ -->
   <section class="stage" id="vuln-assessment">
     <h2><span class="num">4</span> تقييم الثغرات (Vulnerability Assessment)</h2>
-
     <p>
       الـ Vulnerability Assessment أو تقييم الثغرات هو إنك تفحص نظام أو شبكة أو موقع عشان تلاقي نقاط الضعف اللي
       ممكن الهاكر يستغلها — الهدف إنك تلاقيها قبله.
     </p>
-
     <div class="callout">
       <span class="label">الفرق المهم</span>
       <p>
@@ -733,7 +671,6 @@ run</code></pre>
         خطوة كمان ويحاول يستغل الثغرة فعليًا عشان يثبت تأثيرها الحقيقي (مش كل ثغرة نظرية قابلة للاستغلال فعليًا).
       </p>
     </div>
-
     <h3>خطوات التقييم</h3>
     <ol class="plain">
       <li>
@@ -754,7 +691,6 @@ run</code></pre>
       <li><strong>كتابة التقرير:</strong> توثيق الثغرات وخطورتها وطرق إصلاحها</li>
       <li><strong>المتابعة (Remediation &amp; Re-Assessment):</strong> التأكد إن الثغرات اتقفلت فعلًا بعد الإصلاح</li>
     </ol>
-
     <h3>أهم الأدوات</h3>
     <div class="table-wrap">
       <table>
@@ -770,7 +706,6 @@ run</code></pre>
         </tbody>
       </table>
     </div>
-
     <h3>خطوات فحص شامل سريع</h3>
     <pre><code># 1. ابدأ بـ Nmap لمعرفة المنافذ والخدمات
 nmap -sV -sC -oN scan_results.txt [TARGET_IP]</code></pre>
@@ -780,7 +715,6 @@ nmap -sV -sC -oN scan_results.txt [TARGET_IP]</code></pre>
       <li>استخدم Burp Suite أو Nikto لو فيه تطبيق ويب</li>
       <li>حلل النتائج واكتب التقرير</li>
     </ul>
-
     <div class="callout example">
       <span class="label">مثال عملي</span>
       <p>
@@ -790,7 +724,6 @@ nmap -sV -sC -oN scan_results.txt [TARGET_IP]</code></pre>
         Critical.
       </p>
     </div>
-
     <h3>نصائح</h3>
     <ul>
       <li>حافظ على تحديث الأدوات باستمرار — الأدوات القديمة ممكن ماتكتشفش الثغرات الجديدة</li>
@@ -799,13 +732,10 @@ nmap -sV -sC -oN scan_results.txt [TARGET_IP]</code></pre>
       <li>تابع الثغرات الجديدة اللي بتظهر باستمرار (نشرات CVE يوميًا)</li>
     </ul>
   </section>
-
   <hr class="section-divider">
-
   <!-- ============ 5. NETWORK AUDITING ============ -->
   <section class="stage" id="network-auditing">
     <h2><span class="num">5</span> تدقيق الشبكات (Network Auditing)</h2>
-
     <p>
       تدقيق الشبكات هو فحص وتحليل الشبكة بالكامل عشان تعرف الأجهزة الموجودة، الخدمات الشغالة، إعدادات الشبكة،
       الثغرات الأمنية، وأي أخطاء ممكن تأثر على الأداء أو الأمان.
@@ -817,7 +747,6 @@ nmap -sV -sC -oN scan_results.txt [TARGET_IP]</code></pre>
         متوافقة مع أفضل الممارسات الأمنية؟"
       </p>
     </div>
-
     <h3>ليه بنعمل Network Auditing؟</h3>
     <ul>
       <li><strong>تحسين الأمان:</strong> اكتشاف الثغرات وسدها</li>
@@ -825,7 +754,6 @@ nmap -sV -sC -oN scan_results.txt [TARGET_IP]</code></pre>
       <li><strong>الامتثال (Compliance):</strong> التأكد من التوافق مع معايير زي PCI-DSS وISO</li>
       <li><strong>الكشف عن الأخطاء:</strong> اكتشاف الأخطاء في الإعدادات قبل ما تسبب مشاكل كبيرة</li>
     </ul>
-
     <h3>خطوات التدقيق</h3>
     <ol class="plain">
       <li>
@@ -842,7 +770,6 @@ nmap -sV -sC -oN scan_results.txt [TARGET_IP]</code></pre>
       <li><strong>كتابة التقرير:</strong> توثيق الثغرات والمشاكل والتوصيات</li>
       <li><strong>المتابعة:</strong> إعادة التدقيق بعد الإصلاح للتأكد من إغلاق الثغرات</li>
     </ol>
-
     <h3>أدوات مهمة</h3>
     <ul>
       <li><strong>Nmap:</strong> فحص الأجهزة والخدمات في الشبكة</li>
@@ -852,7 +779,6 @@ nmap -sV -sC -oN scan_results.txt [TARGET_IP]</code></pre>
       <li><strong>Splunk / ELK Stack:</strong> تحليل السجلات</li>
       <li><strong>PRTG Network Monitor:</strong> لمراقبة حالة الأجهزة والخدمات باستمرار وإرسال تنبيهات لحظية عند حدوث مشكلة</li>
     </ul>
-
     <div class="callout example">
       <span class="label">مثال عملي</span>
       <p>
@@ -861,7 +787,6 @@ nmap -sV -sC -oN scan_results.txt [TARGET_IP]</code></pre>
         لأنها بتوسع دائرة الخطر لو أي جهاز عادي اتخترق.
       </p>
     </div>
-
     <h3>نصائح</h3>
     <ul>
       <li>راجع كل جهاز وكل خدمة، حتى لو باين إنها مش مهمة</li>
@@ -871,44 +796,34 @@ nmap -sV -sC -oN scan_results.txt [TARGET_IP]</code></pre>
       <li>ابقى محدث بالثغرات الجديدة دايمًا</li>
     </ul>
   </section>
-
   <hr class="section-divider">
-
   <!-- ============ 6. NETWORK PENTEST ============ -->
   <section class="stage" id="network-pentest">
     <h2><span class="num">6</span> اختبار اختراق الشبكات (Network Penetration Testing)</h2>
-
     <p>
       هنا بتمثل دور الهاكر فعليًا وتحاول تخترق شبكة معينة عشان تكتشف الثغرات ونقاط الضعف فيها قبل ما حد تاني يكتشفها
       ويستغلها.
     </p>
-
     <h3>الخطوات</h3>
-
     <h4>1. التخطيط والموافقة</h4>
     <p>خد إذن رسمي من صاحب الشبكة يوضح نطاق الفحص والأدوات المسموح استخدامها — ده بيحميك قانونيًا.</p>
-
     <h4>2. جمع المعلومات</h4>
     <p>الأجهزة الموجودة، الـ IP Range، وأنظمة التشغيل الشغالة.</p>
     <pre><code>nmap -sn [IP Range]</code></pre>
     <p>بالإضافة لـ WHOIS وNSLookup لمعرفة معلومات الدومين والـ IP.</p>
-
     <h4>3. الفحص</h4>
     <ul>
       <li>Port Scanning بـ Nmap</li>
       <li>Service Enumeration لمعرفة الخدمات الشغالة على كل منفذ</li>
     </ul>
-
     <h4>4. Enumeration</h4>
     <ul>
       <li><strong>enum4linux:</strong> لاستخراج معلومات SMB</li>
       <li><strong>SNMPwalk:</strong> لسحب البيانات من الأجهزة اللي شغالة عليها SNMP</li>
       <li><strong>rpcclient:</strong> لجلب معلومات RPC Services</li>
     </ul>
-
     <h4>5. Vulnerability Assessment</h4>
     <p>فحص شامل بـ Nessus أو OpenVAS لاكتشاف الأنظمة غير المحدثة، البروتوكولات القديمة، وكلمات المرور الضعيفة.</p>
-
     <h4>6. Exploitation</h4>
     <p>استغلال الثغرات المكتشفة فعليًا، على سبيل المثال:</p>
     <ul>
@@ -919,7 +834,6 @@ nmap -sV -sC -oN scan_results.txt [TARGET_IP]</code></pre>
       <li><strong>Metasploit Framework:</strong> فيه Exploits جاهزة للاستخدام المباشر</li>
       <li><strong>Hydra / Medusa:</strong> لهجمات الـ Brute-force</li>
     </ul>
-
     <div class="callout example">
       <span class="label">مثال عملي متكامل</span>
       <p>
@@ -936,30 +850,25 @@ exploit</code></pre>
         Remote Code Execution بدون مصادقة.
       </p>
     </div>
-
     <h4>7. Maintaining Access</h4>
     <p>تثبيت الوجود على الجهاز بعد الدخول — زي إنشاء Backdoor بـ Netcat أو رفع Web Shell.</p>
-
     <h4>8. Privilege Escalation</h4>
     <p>
       رفع الصلاحيات من مستخدم عادي لـ Admin، باستخدام أدوات زي Linux Exploit Suggester أو Windows Exploit
       Suggester — الفكرة هنا إنك بتجمع معلومات عن الكيرنل والتحديثات المثبتة، وبتقارنها بقاعدة بيانات ثغرات معروفة
       لرفع الصلاحيات.
     </p>
-
     <h4>9. Pivoting</h4>
     <p>
       التحرك من جهاز لجهاز جوا نفس الشبكة باستخدام الجهاز المخترق كبوابة، عبر أدوات زي Chisel أو Proxychains. مفيدة
       جدًا لما تكتشف إن الجهاز اللي اخترقته عنده كارت شبكة تاني متصل بشبكة داخلية تانية إنت أصلًا مش قادر توصلها
       مباشرة.
     </p>
-
     <h4>10. Post-Exploitation</h4>
     <p>
       سحب أي معلومات حساسة — ملفات، Passwords، بيانات مهمة. أدوات زي Mimikatz بتستخدم هنا لسحب كلمات المرور المخزنة
       في الذاكرة على أنظمة Windows.
     </p>
-
     <h4>11. Covering Tracks &amp; Reporting</h4>
     <p>
       مسح أي أثر يدل على تواجدك على النظام، وكتابة تقرير شامل بكل الثغرات اللي اتكشفت واتستغلت وطرق إصلاحها.
@@ -971,7 +880,6 @@ exploit</code></pre>
         يقدر يتمرن على اكتشافها كجزء من التمرين.
       </p>
     </div>
-
     <h3>الأدوات المستخدمة</h3>
     <ul>
       <li><strong>Nmap:</strong> فحص الشبكة والمنافذ</li>
@@ -982,7 +890,6 @@ exploit</code></pre>
       <li><strong>CrackMapExec:</strong> أداة ممتازة للتحقق السريع من صلاحية بيانات اعتماد على مجموعة أجهزة كاملة في أمر واحد، ومفيدة جدًا في بيئات Active Directory</li>
       <li><strong>BloodHound:</strong> لرسم العلاقات بين المستخدمين والجروبات والأجهزة في بيئة Active Directory بصريًا، وبيوريك أقصر مسار من مستخدم عادي لصلاحيات Domain Admin</li>
     </ul>
-
     <h3>نصائح مهمة</h3>
     <ul>
       <li>خد إذن رسمي أول أي حاجة — الشغل لازم يكون قانوني</li>
@@ -990,23 +897,17 @@ exploit</code></pre>
       <li>اختار الأداة المناسبة لكل موقف، مش كل أداة تنفع في كل هجوم</li>
     </ul>
   </section>
-
   <hr class="section-divider">
-
   <!-- ============ 7. WEBAPP PENTEST ============ -->
   <section class="stage" id="webapp-pentest">
     <h2><span class="num">7</span> اختبار اختراق تطبيقات الويب (Web Application Penetration Testing)</h2>
-
     <p>
       هنا بتحاكي دور الهاكر لاكتشاف الثغرات في تطبيقات الويب — الهدف حماية التطبيق من أي هجوم محتمل ومساعدة
       المطورين في تحسين الأمان.
     </p>
-
     <h3>الخطوات</h3>
-
     <h4>1. التخطيط والموافقة</h4>
     <p>زي اختبار الشبكات بالظبط — إذن رسمي من أصحاب التطبيق، وتحديد حدود الفحص بدقة.</p>
-
     <h4>2. جمع المعلومات</h4>
     <p>فهم هيكل التطبيق، وظائفه، وطريقة تفاعل المستخدمين معاه.</p>
     <ul>
@@ -1014,14 +915,12 @@ exploit</code></pre>
       <li><strong>NSLookup:</strong> سجلات DNS</li>
       <li><strong>Google Dorking:</strong> للوصول لمعلومات حساسة عن التطبيق</li>
     </ul>
-
     <h4>3. فحص التطبيق</h4>
     <ul>
       <li><strong>OWASP ZAP:</strong> أداة مفتوحة المصدر لفحص تطبيقات الويب</li>
       <li><strong>Burp Suite:</strong> من أشهر أدوات فحص تطبيقات الويب</li>
       <li><strong>Wappalyzer:</strong> إضافة متصفح بتكشفلك التقنيات المستخدمة في بناء الموقع (لغة البرمجة، الـ CMS، المكتبات الأمامية) في ثواني</li>
     </ul>
-
     <h4>4. Enumeration</h4>
     <p>استخراج نقاط الدخول في التطبيق — نماذج التسجيل، API endpoints، وكل مكون ممكن يتم استغلاله.</p>
     <ul>
@@ -1032,7 +931,6 @@ exploit</code></pre>
         <pre><code>wfuzz -c -z file,/usr/share/wordlists/dirb/common.txt --hc 404 http://example.com/FUZZ</code></pre>
       </li>
     </ul>
-
     <h4>5. Vulnerability Assessment</h4>
     <p>البحث عن أنواع ثغرات محددة:</p>
     <ul>
@@ -1043,13 +941,11 @@ exploit</code></pre>
       <li><strong>File Upload Vulnerabilities:</strong> رفع ملفات ضارة (زي Web Shell) لو التطبيق مش بيتحقق كويس من نوع الملف المرفوع</li>
       <li><strong>Local/Remote File Inclusion (LFI/RFI):</strong> تضمين ملفات من السيرفر نفسه أو من مصدر خارجي، وده ممكن يوصل لتنفيذ أوامر</li>
     </ul>
-
     <h4>6. Exploitation</h4>
     <ul>
       <li><strong>SQLMap:</strong> لتسهيل استغلال ثغرات SQL Injection</li>
       <li><strong>XSSer:</strong> لاكتشاف واستغلال ثغرات XSS</li>
     </ul>
-
     <div class="callout example">
       <span class="label">مثال عملي</span>
       <p>
@@ -1065,22 +961,17 @@ sqlmap -u "http://example.com/vuln.php?id=1" -D webapp_db -T users --dump</code>
         مرورهم المشفرة).
       </p>
     </div>
-
     <h4>7. Privilege Escalation</h4>
     <p>
       رفع الصلاحيات لو دخلت بحساب محدود، عن طريق البحث عن نقاط ضعف إضافية في التطبيق — زي تعديل قيمة Cookie أو
       Parameter بيحدد دور المستخدم (<code>role=user → role=admin</code>).
     </p>
-
     <h4>8. Maintaining Access</h4>
     <p>تثبيت طريقة دخول ثانية بعد الاختراق — زي رفع Shell على السيرفر.</p>
-
     <h4>9. Post-Exploitation</h4>
     <p>جمع معلومات إضافية عن التطبيق وقواعد البيانات، باستخدام Burp Suite أو Metasploit.</p>
-
     <h4>10. Covering Tracks &amp; Reporting</h4>
     <p>مسح أي أثر، وكتابة تقرير شامل بالثغرات وطرق استغلالها والتوصيات لإصلاحها.</p>
-
     <h3>أدوات أساسية</h3>
     <div class="table-wrap">
       <table>
@@ -1096,7 +987,6 @@ sqlmap -u "http://example.com/vuln.php?id=1" -D webapp_db -T users --dump</code>
         </tbody>
       </table>
     </div>
-
     <h3>نصائح مهمة</h3>
     <ul>
       <li>خد إذن رسمي من صاحب التطبيق قبل البدء</li>
@@ -1105,61 +995,47 @@ sqlmap -u "http://example.com/vuln.php?id=1" -D webapp_db -T users --dump</code>
       <li>راجع الـ OWASP Top 10 بشكل دوري — بتلخصلك أخطر عشر فئات ثغرات في تطبيقات الويب، ومعظم اللي هتقابله في الامتحان أو في الشغل الحقيقي بيقع تحت واحدة منهم</li>
     </ul>
   </section>
-
   <hr class="section-divider">
-
   <!-- ============ 8. TOOLS INSTALL ============ -->
   <section class="stage" id="tools-install">
     <h2><span class="num">8</span> تثبيت الأدوات الأساسية للكورس</h2>
     <p>مرجع سريع لتثبيت واستخدام أهم الأدوات اللي هتحتاجها في الكورس ده:</p>
-
     <h4>Nmap</h4>
     <pre><code># على كالي لينكس: موجودة بشكل افتراضي
 nmap -sS [TARGET_IP]</code></pre>
-
     <h4>Burp Suite</h4>
     <p>نزّل النسخة المجانية (Community Edition) من الموقع الرسمي، افتح البرنامج وابدأ من Intruder أو Scanner، وضيف البروكسي بتاعه في المتصفح.</p>
-
     <h4>OWASP ZAP</h4>
     <p>نزّل النسخة المناسبة لنظامك، افتح البرنامج واستخدم Quick Start لفحص أي تطبيق ويب، وضيف البروكسي في المتصفح.</p>
-
     <h4>SQLMap</h4>
     <pre><code># على كالي لينكس
 sudo apt install sqlmap</code></pre>
     <pre><code>python sqlmap.py -u "http://example.com/vuln.php?id=1" --dbs</code></pre>
-
     <h4>Nikto</h4>
     <pre><code># على كالي لينكس
 sudo apt install nikto</code></pre>
     <pre><code>perl nikto.pl -h http://example.com</code></pre>
-
     <h4>Metasploit Framework</h4>
     <pre><code># موجودة جاهزة على كالي لينكس
 msfconsole</code></pre>
     <pre><code>use exploit/windows/smb/ms17_010_eternalblue</code></pre>
-
     <h4>Hydra</h4>
     <pre><code># على كالي لينكس
 sudo apt install hydra</code></pre>
     <pre><code>hydra -l username -P passwords.txt ftp://target_ip</code></pre>
-
     <h4>Wireshark</h4>
     <pre><code># على كالي لينكس
 sudo apt install wireshark</code></pre>
     <p>افتح البرنامج، اختار واجهة الشبكة، وابدأ التقاط البيانات.</p>
-
     <h4>Postman</h4>
     <p>نزّل النسخة المناسبة من الموقع الرسمي، استخدمه لاختبار الـ APIs عن طريق إدخال الـ URL وتجربة الـ Requests المختلفة.</p>
-
     <h4>Gobuster</h4>
     <pre><code># على كالي لينكس
 sudo apt install gobuster</code></pre>
     <pre><code>gobuster dir -u http://example.com -w /usr/share/wordlists/dirb/common.txt</code></pre>
-
     <h4>CrackMapExec</h4>
     <pre><code>pip3 install crackmapexec</code></pre>
     <pre><code>crackmapexec smb 192.168.1.0/24 -u username -p password</code></pre>
-
     <h4>BloodHound</h4>
     <pre><code>sudo apt install bloodhound</code></pre>
     <p>
@@ -1167,9 +1043,7 @@ sudo apt install gobuster</code></pre>
       تستوردها في واجهة BloodHound الرسومية عشان تشوف العلاقات والمسارات بين الحسابات.
     </p>
   </section>
-
   <hr class="section-divider">
-
   <section class="stage" style="margin-bottom: 0;">
     <h2 style="border-bottom:none; margin-bottom:12px;">الخلاصة</h2>
     <p>
@@ -1177,12 +1051,9 @@ sudo apt install gobuster</code></pre>
       جمع المعلومات، الفحص، الـ Enumeration، تقييم الثغرات، تدقيق الشبكات، واختبار اختراق الشبكات وتطبيقات الويب.
     </p>
   </section>
-
   <footer>
     <div>نوتس eJPTv2 — للمراجعة والاستخدام الشخصي فقط، استخدم كل الأدوات المذكورة داخل نطاق قانوني ومصرّح به فقط.</div>
     <a class="back-to-top" href="#top">⬆ رجوع لأعلى الصفحة</a>
   </footer>
-
-
 </div>
 </div>
