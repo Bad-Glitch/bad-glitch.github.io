@@ -1,3 +1,17 @@
+---
+title: "eAIS - AI LLM Systems and Security Architecture"
+published: 2026-09-18
+description: "AI, LLM Systems and Security Architecture study notes"
+image: "eAIS.png"
+tags:
+  - "eAIS"
+  - "AI"
+  - "LLM"
+  - "AI Security"
+  - "Security Architecture"
+category: "Courses Notes"
+lang: "ar"
+---
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
