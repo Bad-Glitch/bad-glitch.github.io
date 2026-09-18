@@ -2,7 +2,7 @@
 title: "OSINT Toolkit"
 published: 2026-09-15
 description: "مجموعة شاملة ومنظمة من أكتر من 1275 أداة وموقع OSINT، مقسّمة على 23 تصنيف: محركات البحث، البريد الإلكتروني، البحث عن الأشخاص، السوشيال ميديا، الصور، الدومينات، وأكتر"
-image: "OSINT-Toolkit.png"
+image: "OSINT Toolkit.png"
 tags:
  - "OSINT"
  - "Recon"
