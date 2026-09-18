@@ -1,4 +1,4 @@
----
+﻿---
 import "@fontsource/roboto/400.css";
 import "@fontsource/roboto/500.css";
 import "@fontsource/roboto/700.css";
@@ -397,7 +397,7 @@ const bannerOffset =
 			document.querySelectorAll("pre");
 
 		preElements.forEach((element) => {
-			OverlayScrollbars(element, {
+			OverlayScrollbars(element as HTMLElement, {
 				scrollbars: {
 					theme:
 						"scrollbar-base scrollbar-dark px-2",
@@ -414,7 +414,7 @@ const bannerOffset =
 			);
 
 		katexElements.forEach((element) => {
-			OverlayScrollbars(element, {
+			OverlayScrollbars(element as HTMLElement, {
 				scrollbars: {
 					theme:
 						"scrollbar-base scrollbar-auto py-1",
