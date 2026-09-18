@@ -2,7 +2,7 @@
 title: "OSINT Search Hub"
 published: 2026-09-16
 description: "أداة تفاعلية بتولّد روابط بحث مباشرة على عشرات المواقع من مجرد يوزرنيم أو إيميل أو رقم تليفون — كل حاجة شغالة جوا المتصفح من غير أي سيرفر أو تجميع بيانات"
-image: "OSINT-Search-Hub.png"
+image: "OSINT Toolkit.png"
 tags:
   - "OSINT"
   - "Tools"
