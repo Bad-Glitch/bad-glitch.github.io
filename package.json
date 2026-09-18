@@ -26,9 +26,9 @@
     "@iconify-json/fa6-solid": "^1.2.3",
     "@iconify-json/material-symbols": "^1.2.19",
     "@iconify/svelte": "^4.2.0",
-    "@swup/astro": "^1.6.0",
+    "@swup/astro": "^1.8.0",
     "@tailwindcss/typography": "^0.5.16",
-    "astro": "5.7.2",
+    "astro": "5.18.2",
     "astro-compress": "^2.4.3",
     "astro-icon": "^1.2.0",
     "hastscript": "^9.0.1",
@@ -67,5 +67,10 @@
     "postcss-nesting": "^14.0.1",
     "stylus": "^0.64.0"
   },
-  "packageManager": "pnpm@9.14.4"
+  "packageManager": "pnpm@9.14.4",
+  "pnpm": {
+    "overrides": {
+      "postcss-selector-parser": "6.1.3"
+    }
+  }
 }
