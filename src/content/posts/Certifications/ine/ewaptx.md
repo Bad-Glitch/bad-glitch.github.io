@@ -4,7 +4,7 @@ published: 2025-07-18
 description: 'The Ultimate Guide to the eWPTXv3 Certification: Course Content, Study Approach, Lab Strategy, and Exam Preparation'
 image: 'ewaptx.png'
 tags: [Web Security]
-category: 'Certifications'
+category: "Certifications"
 lang: 'ar-eng'
 ---
 # eWPTXv3 Certification: My Journey, Study Guide, and Exam Experience

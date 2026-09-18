@@ -4,7 +4,7 @@ published: 2025-05-02
 description: "Comprehensive guide on SQL Injection vulnerabilities, exploitation techniques from data extraction to remote code execution, and effective prevention strategies."
 image: 'sqli.webp'
 tags: [Web Security]
-category: 'Server-Side Attacks'
+category: "Web Server-Side"
 draft: false 
 lang: 'ar-eng'
 ---

@@ -4,7 +4,7 @@ published: 2025-04-22
 description: 'Deep dive into combining Golden Ticket attacks with scheduled tasks for persistent domain compromise, covering Kerberos exploitation, ticket forging, and automated persistence mechanisms'
 image: ''
 tags: [Windows PrivEsc]
-category: 'Privilege Escalation'
+category: "Privilege Escalation"
 draft: false 
 lang: 'ar-eng'
 ---

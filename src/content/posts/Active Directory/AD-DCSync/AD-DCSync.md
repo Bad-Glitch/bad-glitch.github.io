@@ -5,7 +5,7 @@ updated: 2025-04-10
 description: 'Post-exploitation technique leveraging Active Directory replication to extract credentials and compromise domain without touching the target server.'
 image: 'AD-DCSync.webp'
 tags: []
-category: 'Active Directory Attacks'
+category: "Active Directory"
 draft: false 
 lang: 'ar-eng'
 ---

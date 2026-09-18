@@ -4,7 +4,7 @@ published: 2025-04-22
 description: "Deep dive into Access Control List (ACL) misconfigurations, exploiting weak permissions to escalate privileges and breach sensitive data."
 image: ''
 tags: []
-category: 'Privilege Escalation'
+category: "Privilege Escalation"
 draft: false 
 lang: 'ar-eng'
 ---

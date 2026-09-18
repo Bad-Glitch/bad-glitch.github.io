@@ -4,7 +4,7 @@ published: 2025-05-23
 description: 'Master web application security with our comprehensive white box testing guide. Learn systematic approaches for code analysis, security testing, and implementation of robust security controls.'
 image: 'WEB4.webp'
 tags: [Web Security]
-category: 'Methodologies'
+category: "Methodologies"
 draft: false 
 lang: 'ar-eng'
 keywords: 'web application security, white box testing, code analysis, security testing methodology, web security guide, vulnerability assessment, security testing steps, web application testing'

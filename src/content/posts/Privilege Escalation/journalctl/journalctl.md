@@ -4,7 +4,7 @@ published: 2025-04-22
 description: 'Deep dive into journalctl exploitation techniques, showing how attackers extract sensitive data, manipulate logs, and escalate privileges in Linux systems'
 image: ''
 tags: []
-category: 'Privilege Escalation'
+category: "Privilege Escalation"
 draft: false 
 lang: 'ar-eng'
 ---

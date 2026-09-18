@@ -5,7 +5,7 @@ updated: 2025-04-10
 description: 'Exploring how to leverage runas.exe with /netonly flag for Active Directory credential injection without interactive login'  
 image: 'AD-runas.exe.jpeg'
 tags: []
-category: 'Active Directory Attacks'
+category: "Active Directory"
 draft: false 
 lang: 'ar-eng'
 ---

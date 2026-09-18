@@ -5,7 +5,7 @@ updated: 2025-02-01
 description: 'An in-depth review of Hack The Box Dante Pro Lab - enterprise-grade penetration testing environment.'
 image: 'dante-lab.png'
 tags: [HTB Pro Labs]
-category: 'Certifications'
+category: "Certifications"
 draft: false 
 lang: 'ar-eng'
 ---

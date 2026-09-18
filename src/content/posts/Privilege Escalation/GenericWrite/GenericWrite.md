@@ -4,7 +4,7 @@ published: 2025-04-22
 description: 'Deep dive into Generic Write exploitation—from abusing file permissions to domain admin takeover'  
 image: ''
 tags: []
-category: 'Privilege Escalation'
+category: "Privilege Escalation"
 draft: false 
 lang: 'ar-eng'
 ---

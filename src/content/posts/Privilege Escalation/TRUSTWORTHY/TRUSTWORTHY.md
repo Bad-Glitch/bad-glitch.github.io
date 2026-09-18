@@ -4,7 +4,7 @@ published: 2025-04-22
 description: 'Deep dive into TRUSTWORTHY property exploitation, demonstrating how attackers leverage this setting for privilege escalation and full database server compromise'
 image: ''
 tags: [ Windows PrivEsc]
-category: 'Privilege Escalation'
+category: "Privilege Escalation"
 draft: false 
 lang: 'ar-eng'
 ---

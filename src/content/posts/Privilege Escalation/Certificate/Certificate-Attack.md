@@ -4,7 +4,7 @@ published: 2025-04-22
 description: 'Deep dive into AD CS exploitation—from certificate abuse to domain admin compromise'
 image: 'Certificate-Attack.png'
 tags: []
-category: 'Privilege Escalation'
+category: "Privilege Escalation"
 draft: false 
 lang: 'ar-eng'
 ---

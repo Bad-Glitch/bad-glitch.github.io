@@ -3,7 +3,7 @@ title: "Mastering Advanced Red Teaming with CRTS V2: From Initial Access to Doma
 published: 2023-12-16
 description: "Comprehensive guide to advanced adversary emulation and red team operations using real-world tactics covered in CyberWarFare Labs' CRTS V2 training."
 image: 'CRTS.jpeg'
-category: 'Certifications'
+category: "Certifications"
 draft: false 
 lang: 'ar-eng'
 ---

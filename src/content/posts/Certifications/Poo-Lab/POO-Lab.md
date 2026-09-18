@@ -5,7 +5,7 @@ updated: 2025-02-01
 description: 'An in-depth review of the P.O.O - Level 1 Red Team Operator lab.'
 image: 'poo-lab.png'
 tags: [HTB Pro Labs]
-category: 'Certifications'
+category: "Certifications"
 draft: false 
 lang: 'ar-eng'
 ---

@@ -4,7 +4,7 @@ published: 2025-04-22
 description: 'Deep dive into LLMNR poisoning attacks, demonstrating how attackers abuse the protocol for MITM attacks, credential theft, and lateral movement.'
 image: ''
 tags: []
-category: 'Privilege Escalation'
+category: "Privilege Escalation"
 draft: false 
 lang: 'ar-eng'
 ---

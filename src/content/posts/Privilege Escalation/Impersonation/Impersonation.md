@@ -4,7 +4,7 @@ published: 2025-04-22
 description: "Deep dive into the Impersonation Token attack technique, from gaining SE_IMPERSONATE_PRIVILEGE to executing commands as a privileged user."  
 image: ''
 tags: [ Windows PrivEsc]
-category: 'Privilege Escalation'
+category: "Privilege Escalation"
 draft: false 
 lang: 'ar-eng'
 ---

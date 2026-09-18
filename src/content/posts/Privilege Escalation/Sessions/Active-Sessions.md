@@ -4,7 +4,7 @@ published: 2025-04-22
 description: "Deep dive into session management exploits, from session hijacking to advanced token manipulation and defensive strategies."  
 image: ''
 tags: []
-category: 'Privilege Escalation'
+category: "Privilege Escalation"
 draft: false 
 lang: 'ar-eng'
 ---

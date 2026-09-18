@@ -4,7 +4,7 @@ published: 2025-05-05
 description: 'Exploring Cross-Site Request Forgery (CSRF) attacks, their exploitation in various scenarios, and mitigation strategies.'
 image: 'CSRF.jpeg'
 tags: [Web Security]
-category: 'Client-Side Attacks'
+category: "Web Client-Side"
 draft: false 
 lang: 'ar-eng'
 ---

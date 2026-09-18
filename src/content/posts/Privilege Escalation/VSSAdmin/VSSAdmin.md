@@ -4,7 +4,7 @@ published: 2025-04-20
 description: 'Exploiting Windows Volume Shadow Copies to extract deleted files and sensitive data while evading detection.'
 image: 'vss1.webp'
 tags: [ Windows PrivEsc]
-category: 'Privilege Escalation'
+category: "Privilege Escalation"
 draft: false 
 lang: 'ar-eng'
 

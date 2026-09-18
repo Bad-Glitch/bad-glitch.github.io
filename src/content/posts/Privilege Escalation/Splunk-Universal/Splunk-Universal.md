@@ -4,7 +4,7 @@ published: 2025-04-22
 description: 'Deep dive into exploiting Splunk Universal Forwarder for stealthy data exfiltration, remote code execution, and maintaining persistent access'
 image: ''
 tags: [Linux PrivEsc]
-category: 'Privilege Escalation'
+category: "Privilege Escalation"
 draft: false 
 lang: 'ar-eng'
 ---

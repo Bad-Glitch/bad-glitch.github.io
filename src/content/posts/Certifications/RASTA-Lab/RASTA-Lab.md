@@ -5,7 +5,7 @@ updated: 2025-02-01
 description: 'An in-depth review of the RastaLabs advanced Red Team simulation environment.'
 image: 'rasta-lab.png'
 tags: [HTB Pro Labs]
-category: 'Certifications'
+category: "Certifications"
 draft: false 
 lang: ''
 ---

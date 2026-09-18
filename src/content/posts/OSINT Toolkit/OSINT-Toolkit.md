@@ -9,7 +9,7 @@ tags:
  - "Investigation"
  - "Toolkit"
  - "Cybersecurity"
-category: "Toolkits"
+category: "OSINT Toolkit"
 lang: "ar"
 ---
 

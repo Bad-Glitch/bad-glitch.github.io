@@ -4,7 +4,7 @@ published: 2025-05-23
 description: 'Master web application security with our comprehensive black box testing guide. Learn systematic approaches for vulnerability assessment, penetration testing, and security best practices for web applications.'
 image: 'WEB3.webp'
 tags: [Web Security]
-category: 'Methodologies'
+category: "Methodologies"
 draft: false 
 lang: 'ar-eng'
 keywords: 'web application security, black box testing, penetration testing, security testing methodology, web security guide, vulnerability assessment, security testing steps, web application testing'
