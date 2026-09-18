@@ -1,3 +1,8 @@
+---
+title: "AI LLM Systems and Security Architecture"
+published: 2026-09-18
+description: "eAIS Module 1 notes covering AI, LLM systems, architecture, retrieval, context, data flows, and security."
+---
 # Module 1: أساسيات الـ AI و LLM وهندسة الأمان (AI/LLM Systems & Security Architecture)
 > نوتس مذاكرة منظمة لأول موديول في كورس eAIS — تغطي الأساسيات النظرية والمعمارية والأمنية اللي المفروض تكون فاهمها كويس قبل ما تنتقل للموديولات اللي بعد كده.
 
