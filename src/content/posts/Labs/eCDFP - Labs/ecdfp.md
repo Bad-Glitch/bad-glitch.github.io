@@ -1,5 +1,5 @@
 ---
-title: "eCDFP Lab Roadmap: Digital Forensics & Incident Response"
+title: "eCDFP Lab"
 published: 2026-09-19
 description: "A structured roadmap of 17 TryHackMe labs covering the eCDFP course, from DFIR fundamentals and Windows/Linux forensics to investigation tools, case scenarios, and EDR."
 tags: [eCDFP, Labs, TryHackMe, DFIR, Digital Forensics, Incident Response]
