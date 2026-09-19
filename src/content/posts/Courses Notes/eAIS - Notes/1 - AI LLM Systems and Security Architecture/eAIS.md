@@ -1,17 +1,15 @@
 ---
-title: "eAIS - AI LLM Systems and Security Architecture"
-published: 2026-09-18
-description: "AI, LLM Systems and Security Architecture study notes"
-image: "eAIS.png"
-tags:
-  - "eAIS"
-  - "AI"
-  - "LLM"
-  - "AI Security"
-  - "Security Architecture"
+title: "AI LLM Systems and Security Architecture"
+published: 2026-09-19
+description: "AI LLM Systems and Security Architecture — eAIS Module 1 notes."
+tags: [eAIS, AI Security, LLM, AI Systems, Security Architecture]
 category: "Courses Notes"
-lang: "ar"
+course: "eAIS"
+module: 1
+draft: false
 ---
+<!DOCTYPE html>
+<html ...
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -23,216 +21,327 @@ lang: "ar"
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg: #0A0D13;
-    --surface: #12161F;
-    --surface-2: #171C27;
-    --border: #232A38;
-    --text: #E7EAF0;
-    --muted: #97A2B5;
-    --accent: #6C8CFF;
-    --accent-soft: rgba(108,140,255,0.12);
-    --amber: #F2B84B;
-    --amber-soft: rgba(242,184,75,0.10);
-    --teal: #3FD6B0;
-    --radius: 10px;
+    /* --- Calm, low-contrast dark palette with soft gradients --- */
+    --bg-1: #12141C;
+    --bg-2: #171B26;
+    --surface: #1A1F2B;
+    --surface-2: #1F2532;
+    --border: #2A3140;
+    --border-soft: #232936;
+
+    --text: #D9DDE6;
+    --text-soft: #C3C9D6;
+    --muted: #8B93A3;
+
+    --accent-a: #8C9EFF;   /* soft periwinkle */
+    --accent-b: #6FE3C9;   /* soft mint/teal */
+    --accent-grad: linear-gradient(90deg, var(--accent-a), var(--accent-b));
+
+    --amber: #E8B979;      /* softened amber, less saturated */
+    --amber-soft: rgba(232,185,121,0.09);
+    --amber-border: rgba(232,185,121,0.28);
+
+    --radius: 12px;
     --mono: 'IBM Plex Mono', 'Courier New', monospace;
   }
 
   * { box-sizing: border-box; }
 
   html, body {
-    background: var(--bg);
-    color: var(--text);
     margin: 0;
     padding: 0;
     direction: rtl;
     text-align: right;
+    background: var(--bg-1);
   }
 
   body {
     font-family: 'Cairo', 'Segoe UI', Tahoma, sans-serif;
-    line-height: 1.9;
+    line-height: 2;
     font-size: 16.5px;
+    color: var(--text);
+    background:
+      radial-gradient(1100px 500px at 15% -5%, rgba(140,158,255,0.07), transparent 60%),
+      radial-gradient(900px 500px at 85% 10%, rgba(111,227,201,0.05), transparent 60%),
+      linear-gradient(180deg, var(--bg-1) 0%, var(--bg-2) 100%);
+    background-attachment: fixed;
   }
 
   .page {
-    max-width: 860px;
+    max-width: 840px;
     margin: 0 auto;
-    padding: 48px 22px 90px;
+    padding: 48px 22px 100px;
   }
 
   /* ---------- Header banner ---------- */
   .banner {
-    background: linear-gradient(160deg, var(--surface) 0%, var(--surface-2) 100%);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 38px 34px;
-    margin-bottom: 46px;
     position: relative;
     overflow: hidden;
+    background: linear-gradient(155deg, #1B2030 0%, #191E2C 55%, #1D2434 100%);
+    border: 1px solid var(--border-soft);
+    border-radius: 18px;
+    padding: 40px 36px;
+    margin-bottom: 26px;
   }
   .banner::before{
     content: "";
     position: absolute;
-    inset-inline-end: -60px;
-    top: -60px;
-    width: 220px;
-    height: 220px;
-    background: radial-gradient(circle, var(--accent-soft) 0%, transparent 70%);
+    inset-inline-end: -80px;
+    top: -80px;
+    width: 260px;
+    height: 260px;
+    background: radial-gradient(circle, rgba(140,158,255,0.14) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .banner::after{
+    content: "";
+    position: absolute;
+    inset-inline-start: -60px;
+    bottom: -100px;
+    width: 240px;
+    height: 240px;
+    background: radial-gradient(circle, rgba(111,227,201,0.10) 0%, transparent 70%);
     pointer-events: none;
   }
   .banner .kicker {
     display: inline-block;
     font-family: var(--mono);
     font-size: 12.5px;
-    letter-spacing: 0.02em;
-    color: var(--accent);
-    background: var(--accent-soft);
-    border: 1px solid rgba(108,140,255,0.35);
+    letter-spacing: 0.03em;
+    color: #C9D3FF;
+    background: rgba(140,158,255,0.10);
+    border: 1px solid rgba(140,158,255,0.28);
     border-radius: 999px;
     padding: 5px 14px;
-    margin-bottom: 18px;
+    margin-bottom: 20px;
     direction: ltr;
   }
   .banner h1 {
-    margin: 0 0 12px;
-    font-size: 30px;
+    margin: 0 0 14px;
+    font-size: 29px;
     font-weight: 800;
-    line-height: 1.5;
-    color: #fff;
-    border: none;
-    padding: 0;
+    line-height: 1.55;
+    background: var(--accent-grad);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: #C9D3FF; /* fallback */
   }
   .banner .lede {
     color: var(--muted);
-    font-size: 16px;
-    line-height: 1.85;
-    max-width: 640px;
-    margin: 0 0 22px;
+    font-size: 15.5px;
+    line-height: 1.95;
+    max-width: 620px;
+    margin: 0 0 24px;
   }
   .tags {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
+    gap: 9px;
   }
   .tag {
     font-size: 13px;
-    color: var(--teal);
-    background: rgba(63,214,176,0.08);
-    border: 1px solid rgba(63,214,176,0.3);
+    color: #A9E8D8;
+    background: rgba(111,227,201,0.07);
+    border: 1px solid rgba(111,227,201,0.25);
     border-radius: 999px;
     padding: 5px 13px;
   }
 
-  /* ---------- Typography ---------- */
-  h1, h2, h3, h4 {
-    font-weight: 700;
-    color: #fff;
+  /* ---------- Table of contents ---------- */
+  .toc {
+    background: var(--surface);
+    border: 1px solid var(--border-soft);
+    border-radius: 16px;
+    padding: 26px 28px 22px;
+    margin-bottom: 50px;
   }
+  .toc-title {
+    font-weight: 700;
+    font-size: 15px;
+    color: var(--text-soft);
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border-soft);
+  }
+  .toc-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px 18px;
+  }
+  .toc-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 8px;
+    border-radius: 8px;
+    color: var(--text-soft);
+    text-decoration: none;
+    font-size: 14px;
+    border-bottom: none;
+    transition: background 0.15s ease;
+  }
+  .toc-item:hover { background: rgba(140,158,255,0.06); }
+  .toc-num {
+    flex: none;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--mono);
+    font-size: 11.5px;
+    font-weight: 500;
+    color: #0F1219;
+    background: var(--accent-grad);
+  }
+  .toc-num-plain {
+    background: none;
+    color: var(--muted);
+    font-size: 16px;
+  }
+
+  /* ---------- Typography ---------- */
+  h1, h2, h3, h4 { font-weight: 700; }
 
   h2 {
-    font-size: 23px;
-    margin: 56px 0 20px;
-    padding-inline-start: 14px;
-    border-inline-start: 4px solid var(--accent);
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    font-size: 21px;
+    margin: 64px 0 22px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border-soft);
+    color: #EDEFF4;
   }
+  h2 .num {
+    flex: none;
+    width: 38px;
+    height: 38px;
+    border-radius: 11px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--mono);
+    font-size: 15px;
+    font-weight: 600;
+    color: #10131C;
+    background: var(--accent-grad);
+  }
+  h2 .htext { line-height: 1.5; }
 
   h3 {
-    font-size: 18px;
-    margin: 30px 0 14px;
-    color: var(--accent);
+    font-size: 17.5px;
+    margin: 32px 0 14px;
+    color: var(--accent-a);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  h3::before {
+    content: "";
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent-grad);
+    flex: none;
   }
 
   h4 {
-    font-size: 15.5px;
-    margin: 20px 0 10px;
-    color: var(--text);
+    font-size: 15px;
+    margin: 22px 0 10px;
+    color: var(--text-soft);
   }
 
-  p { margin: 0 0 16px; color: var(--text); }
+  p { margin: 0 0 17px; color: var(--text); }
 
-  strong { color: #fff; font-weight: 700; }
+  strong { color: #F1F3F8; font-weight: 700; }
 
-  a { color: var(--accent); text-decoration: none; border-bottom: 1px dashed rgba(108,140,255,0.5); }
+  a { color: var(--accent-a); text-decoration: none; border-bottom: 1px dashed rgba(140,158,255,0.45); }
 
   hr {
     border: none;
-    border-top: 1px solid var(--border);
-    margin: 44px 0;
+    height: 1px;
+    margin: 50px 0;
+    background: linear-gradient(90deg, transparent, var(--border), transparent);
   }
 
   ul, ol {
-    margin: 0 0 16px;
-    padding-inline-start: 26px;
+    margin: 0 0 18px;
+    padding-inline-start: 24px;
   }
-  li { margin-bottom: 8px; color: var(--text); }
-  li::marker { color: var(--accent); }
+  li { margin-bottom: 9px; color: var(--text); }
+  li::marker { color: var(--accent-b); }
+  li > ul, li > ol { margin-top: 9px; }
 
   /* ---------- Blockquotes = security / note callouts ---------- */
   blockquote {
-    margin: 22px 0;
-    padding: 16px 20px;
+    margin: 24px 0;
+    padding: 17px 22px;
     background: var(--amber-soft);
-    border-inline-start: 4px solid var(--amber);
-    border-radius: 6px;
-    color: #EFE3C8;
+    border: 1px solid var(--amber-border);
+    border-inline-start: 3px solid var(--amber);
+    border-radius: 10px;
+    color: #E3D8C4;
   }
-  blockquote p { margin: 0; color: inherit; }
+  blockquote p { margin: 0; color: inherit; line-height: 1.85; }
   blockquote strong { color: var(--amber); }
 
   /* ---------- Tables ---------- */
   .table-wrap {
     overflow-x: auto;
-    margin: 20px 0;
-    border: 1px solid var(--border);
-    border-radius: 10px;
+    margin: 22px 0;
+    border: 1px solid var(--border-soft);
+    border-radius: 12px;
   }
   table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 14.5px;
+    font-size: 14.3px;
     min-width: 480px;
   }
   thead th {
-    background: var(--surface-2);
-    color: var(--accent);
+    background: linear-gradient(180deg, var(--surface-2), var(--surface));
+    color: var(--accent-a);
     font-weight: 700;
     text-align: start;
-    padding: 12px 14px;
-    border-bottom: 1px solid var(--border);
+    padding: 13px 15px;
+    border-bottom: 1px solid var(--border-soft);
     white-space: nowrap;
   }
   tbody td {
-    padding: 11px 14px;
-    border-bottom: 1px solid var(--border);
-    color: var(--text);
+    padding: 12px 15px;
+    border-bottom: 1px solid var(--border-soft);
+    color: var(--text-soft);
     vertical-align: top;
   }
   tbody tr:last-child td { border-bottom: none; }
-  tbody tr:hover { background: rgba(255,255,255,0.02); }
+  tbody tr:nth-child(even) { background: rgba(255,255,255,0.012); }
+  tbody tr:hover { background: rgba(140,158,255,0.035); }
 
   /* ---------- Code ---------- */
   code {
     font-family: var(--mono);
-    font-size: 13.5px;
+    font-size: 13.3px;
     background: var(--surface-2);
-    border: 1px solid var(--border);
+    border: 1px solid var(--border-soft);
     border-radius: 4px;
     padding: 2px 6px;
     direction: ltr;
     unicode-bidi: embed;
-    color: var(--teal);
+    color: var(--accent-b);
   }
   .code-wrap {
     overflow-x: auto;
-    margin: 20px 0;
+    margin: 22px 0;
   }
   pre {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-inline-start: 3px solid var(--accent);
-    border-radius: 8px;
-    padding: 18px 20px;
+    background: linear-gradient(180deg, var(--surface), var(--bg-1));
+    border: 1px solid var(--border-soft);
+    border-inline-start: 3px solid var(--accent-a);
+    border-radius: 10px;
+    padding: 19px 22px;
     direction: ltr;
     text-align: left;
     margin: 0;
@@ -241,26 +350,28 @@ lang: "ar"
     background: none;
     border: none;
     padding: 0;
-    color: #C9D1E0;
-    font-size: 13.5px;
-    line-height: 1.7;
+    color: #BFC7D6;
+    font-size: 13.3px;
+    line-height: 1.75;
   }
 
   /* ---------- Footer ---------- */
   .footer-note {
-    margin-top: 60px;
-    padding-top: 24px;
-    border-top: 1px solid var(--border);
+    margin-top: 70px;
+    padding-top: 26px;
+    border-top: 1px solid var(--border-soft);
     color: var(--muted);
-    font-size: 14px;
+    font-size: 13.5px;
     text-align: center;
   }
 
-  @media (max-width: 600px) {
+  @media (max-width: 640px) {
     .page { padding: 30px 14px 70px; }
-    .banner { padding: 26px 20px; }
-    .banner h1 { font-size: 23px; }
-    h2 { font-size: 19px; }
+    .banner { padding: 28px 22px; }
+    .banner h1 { font-size: 22px; }
+    .toc-grid { grid-template-columns: 1fr; }
+    h2 { font-size: 18px; gap: 10px; }
+    h2 .num { width: 32px; height: 32px; font-size: 13px; }
   }
 </style>
 </head>
@@ -280,7 +391,28 @@ lang: "ar"
     </div>
   </div>
 
-<h2>نظرة عامة على الموديول</h2>
+
+<nav class="toc"><div class="toc-title">محتويات الموديول</div><div class="toc-grid">
+<a class="toc-item" href="#overview"><span class="toc-num toc-num-plain">•</span><span>نظرة عامة على الموديول</span></a>
+<a class="toc-item" href="#sec1"><span class="toc-num">1</span><span>فهم الذكاء الاصطناعي (Understanding AI)</span></a>
+<a class="toc-item" href="#sec2"><span class="toc-num">2</span><span>الـ Large Language Models (LLMs)</span></a>
+<a class="toc-item" href="#sec3"><span class="toc-num">3</span><span>الـ Prompts والـ Context Window</span></a>
+<a class="toc-item" href="#sec4"><span class="toc-num">4</span><span>الـ Tokenization</span></a>
+<a class="toc-item" href="#sec5"><span class="toc-num">5</span><span>الـ Inference — إيه اللي بيحصل فعليًا لما تدوس "Send"</span></a>
+<a class="toc-item" href="#sec6"><span class="toc-num">6</span><span>الـ LLM Stack — من الموديل للتطبيق</span></a>
+<a class="toc-item" href="#sec7"><span class="toc-num">7</span><span>Model Endpoints — البنية والأمان</span></a>
+<a class="toc-item" href="#sec8"><span class="toc-num">8</span><span>الـ Agents والـ Agentic AI</span></a>
+<a class="toc-item" href="#sec9"><span class="toc-num">9</span><span>الـ Orchestrators والـ Tool Layers</span></a>
+<a class="toc-item" href="#sec10"><span class="toc-num">10</span><span>مقدمة عن RAG (Retrieval-Augmented Generation)</span></a>
+<a class="toc-item" href="#sec11"><span class="toc-num">11</span><span>الـ Embeddings و Vector Databases</span></a>
+<a class="toc-item" href="#sec12"><span class="toc-num">12</span><span>تحديد الـ Trust Boundaries في أنظمة AI</span></a>
+<a class="toc-item" href="#sec13"><span class="toc-num">13</span><span>تدفقات البيانات الحساسة في أنظمة AI</span></a>
+<a class="toc-item" href="#sec14"><span class="toc-num">14</span><span>مخاطر الـ Logging والـ Telemetry والـ Observability</span></a>
+<a class="toc-item" href="#sec15"><span class="toc-num">15</span><span>تطبيق عملي: MedAssist AI — مراجعة معمارية أمنية (Lab)</span></a>
+<a class="toc-item" href="#summary"><span class="toc-num toc-num-plain">•</span><span>الخلاصة العامة للموديول</span></a>
+</div></nav>
+
+<h2 id="overview"><span class="htext">نظرة عامة على الموديول</span></h2>
 <p>الموديول ده بيتكون من 4 محاور رئيسية:</p>
 <ol>
 <li><strong>LLM Core Architecture Components</strong> – مكونات النظام الأساسية</li>
@@ -305,7 +437,7 @@ lang: "ar"
 <li>وعي عام بمعماريات الكلاود أو الويب (مش شرط لكن بيفرق).</li>
 </ul>
 <hr />
-<h2>1 فهم الذكاء الاصطناعي (Understanding AI)</h2>
+<h2 id="sec1"><span class="num">1</span><span class="htext">فهم الذكاء الاصطناعي (Understanding AI)</span></h2>
 <h3>تعريف الـ AI</h3>
 <p><strong>التعريف التقليدي:</strong></p>
 <blockquote>
@@ -397,7 +529,7 @@ lang: "ar"
 <p><strong>AI = الهدف (the what)</strong> | <strong>ML = الطريقة (the how)</strong> | <strong>LLM = أداة (a tool)</strong></p>
 </blockquote>
 <hr />
-<h2>2 الـ Large Language Models (LLMs)</h2>
+<h2 id="sec2"><span class="num">2</span><span class="htext">الـ Large Language Models (LLMs)</span></h2>
 <h3>إيه هو الـ LLM؟</h3>
 <p>LLM هو نوع من أنظمة الـ AI مصمم يفهم ويولّد ويتعامل مع اللغة البشرية. بيتبني باستخدام Deep Learning (تحديدًا الشبكات العصبية)، ومتدرّب على بيانات ضخمة جدًا (كتب، كود، مواقع، محادثات). أمثلة: GPT-4، Claude، Gemini، Llama.</p>
 <p><strong>تفكيك الاسم:</strong></p>
@@ -514,7 +646,7 @@ lang: "ar"
 <li><strong>Manipulation via Crafted Inputs</strong> – prompts مصمَّمة بعناية ممكن توجّه الموديل لسلوك غير مقصود.</li>
 </ol>
 <hr />
-<h2>3 الـ Prompts والـ Context Window</h2>
+<h2 id="sec3"><span class="num">3</span><span class="htext">الـ Prompts والـ Context Window</span></h2>
 <h3>إيه هو الـ Prompt؟</h3>
 <p>الـ Prompt هو <strong>كل حاجة الموديل بيستلمها قبل ما يولّد الرد</strong> — مش بس اللي المستخدم كتبه، ممكن يشمل تعليمات، مستندات، تاريخ محادثة، وأكتر.</p>
 <blockquote>
@@ -576,7 +708,7 @@ USER: How many weeks of leave do I get?
 <li>استخدام ملخصات بدل البيانات الخام</li>
 </ul>
 <hr />
-<h2>4 الـ Tokenization</h2>
+<h2 id="sec4"><span class="num">4</span><span class="htext">الـ Tokenization</span></h2>
 <h3>إيه هو الـ Token؟</h3>
 <p>أصغر وحدة نص الموديل يقدر يعالجها. التوكِنز مش كلمات، دي <strong>أجزاء من كلمات (subwords)</strong> — حاجة وسط بين الكلمة والحرف.</p>
 <ul>
@@ -692,7 +824,7 @@ USER: How many weeks of leave do I get?
 الطلب بيترفض أو يتقص أو تجودته بتقل
 </code></pre></div>
 <hr />
-<h2>5 الـ Inference — إيه اللي بيحصل فعليًا لما تدوس "Send"</h2>
+<h2 id="sec5"><span class="num">5</span><span class="htext">الـ Inference — إيه اللي بيحصل فعليًا لما تدوس "Send"</span></h2>
 <h3>إيه هو الـ Inference؟</h3>
 <p>المرحلة اللي فيها الموديل المدرَّب بيستخدَم لتوليد مخرجات (إجابات، نصوص، كود، صور...) بناءً على مدخل جديد — من غير ما يعدّل معرفته.</p>
 <p>بشكل مبسّط: أخذ prompt → تمريره عبر الشبكة العصبية المُدرَّبة مسبقًا → إنتاج مخرج احتمالي توكِن بتوكِن.</p>
@@ -782,7 +914,7 @@ USER: How many weeks of leave do I get?
 <p>محتاج تسريع GPU/TPU، وكل طلب بيعالج كل التوكِنز في الـ context، بيولّد توكِنز واحد واحد، محتاج VRAM كبير لأوزان الموديل، bandwidth عالي للذاكرة، وحوسبة متوازية.</p>
 <p><strong>خلاصة:</strong> prompts أطول = تكلفة أعلى | موديلات أكبر = تكلفة أعلى | الـ API inference بيتحاسب منفصل عن الـ UI access.</p>
 <hr />
-<h2>6 الـ LLM Stack — من الموديل للتطبيق</h2>
+<h2 id="sec6"><span class="num">6</span><span class="htext">الـ LLM Stack — من الموديل للتطبيق</span></h2>
 <h3>الموديل مش هو المنتج</h3>
 <ul>
 <li>الموديل لوحده مجرد ملف أوزان — مفيهوش واجهة، ولا ذاكرة، ولا قواعد، ولا اتصال بالعالم الخارجي.</li>
@@ -858,7 +990,7 @@ Infrastructure → GPU clusters, model weights, logging, access control, billing
 <p><strong>أدوات المطوّر في طبقة الأبليكيشن:</strong>
 System Prompt Injection (Identity + Rules) | User Input Sanitisation | Output Filtering/Moderation | Session &amp; Memory Management | Rate Limiting &amp; Abuse Detection | Logging &amp; Audit Trail | Access Control | Observability</p>
 <hr />
-<h2>7 Model Endpoints — البنية والأمان</h2>
+<h2 id="sec7"><span class="num">7</span><span class="htext">Model Endpoints — البنية والأمان</span></h2>
 <h3>إيه هو الـ Model Endpoint؟</h3>
 <ul>
 <li>URL بيستقبل prompt ويرجّع completion.</li>
@@ -948,7 +1080,7 @@ anthropic-version: 2023-06-01
 <li><strong>Response Logging Risks</strong> – الرد بيحمل الـ completion، عدد التوكِنز، ومعرّف الرسالة. لو الردود اتسجلت من غير تنقية، مخرجات حساسة (بما فيها بيانات كررها الموديل من السياق) ممكن تتراكم في مخازن logs ممكن تكون ضوابط الوصول بتاعتها أضعف من الأبليكيشن الأساسي.</li>
 </ol>
 <hr />
-<h2>8 الـ Agents والـ Agentic AI</h2>
+<h2 id="sec8"><span class="num">8</span><span class="htext">الـ Agents والـ Agentic AI</span></h2>
 <h3>الفرق الجوهري: Chatbot يرد، Agent يتصرف (acts)</h3>
 <p>Agent هو نظام AI بيسعى لهدف بشكل مستقل عبر خطوات متعددة. بيشتغل عن طريق: إدراك بيئته (perceive) → اتخاذ قرارات (decide) → تنفيذ أفعال (act) → التكيف بناءً على النتائج (adapt).</p>
 <p>الكلمة أصلها لاتيني "agere" = يفعل / يتصرف.</p>
@@ -1093,7 +1225,7 @@ anthropic-version: 2023-06-01
 <li>تسجيل شامل لكل قرار ونداء أداة</li>
 </ul>
 <hr />
-<h2>9 الـ Orchestrators والـ Tool Layers</h2>
+<h2 id="sec9"><span class="num">9</span><span class="htext">الـ Orchestrators والـ Tool Layers</span></h2>
 <h3>إيه هو الـ Orchestrator؟</h3>
 <p>الكود اللي بيقعد بين الأبليكيشن والموديل. بيقرر إمتى ينادي الموديل، يبعتله إيه، وإيه اللي يعمله بالنتيجة.</p>
 <ul>
@@ -1185,7 +1317,7 @@ anthropic-version: 2023-06-01
 <li><strong>افصل اعتمادات تنفيذ الأدوات عن اعتمادات وصول الموديل</strong> — مفتاح API بتاع الموديل ميبقاش هو نفس المفتاح اللي بيفوّض أفعال الأدوات.</li>
 </ol>
 <hr />
-<h2>10 مقدمة عن RAG (Retrieval-Augmented Generation)</h2>
+<h2 id="sec10"><span class="num">10</span><span class="htext">مقدمة عن RAG (Retrieval-Augmented Generation)</span></h2>
 <h3>إيه هو الـ RAG؟</h3>
 <p>تقنية بتديّ للـ LLM وصول لمعلومات مش اتدرّب عليها، عن طريق جلب مستندات ذات صلة لحظة ما المستخدم بيسأل سؤال، وحقنها في الـ prompt قبل ما الموديل يولّد رده.</p>
 <p><strong>المشكلة الأساسية اللي بتحلها:</strong> معرفة الـ LLM ثابتة وقت التدريب. الموديل معندوش أي فكرة عن مستنداتك الداخلية، كتالوج منتجاتك، أحداث بعد تاريخ التدريب، أو أي حاجة خاصة بمؤسستك.</p>
@@ -1276,7 +1408,7 @@ anthropic-version: 2023-06-01
 <li><strong>Context Budget Abuse via Retrieval</strong> – لو حجم الاسترجاع وحدود التوكِنز مش مقيّدة، مهاجم ممكن يصيغ استعلامات ترجّع chunks زيادة أو غير مرتبطة، بترفع التكلفة وتخفّف أهمية التعليمات والأدلة المهمة.</li>
 </ol>
 <hr />
-<h2>11 الـ Embeddings و Vector Databases</h2>
+<h2 id="sec11"><span class="num">11</span><span class="htext">الـ Embeddings و Vector Databases</span></h2>
 <h3>إيه هو الـ Embedding؟</h3>
 <p>قائمة أرقام بتمثّل معنى قطعة نص — مش الحروف أو الكلمات الحرفية، لكن <strong>المعنى الدلالي (semantic meaning)</strong>.</p>
 <p>الكمبيوتر مش بيقارن النص على أساس معناه مباشرة، هو بيقارن أرقام. الـ embedding بيحوّل المعنى لصورة يمكن الحساب عليها.</p>
@@ -1325,7 +1457,7 @@ anthropic-version: 2023-06-01
 <li><strong>عامل top-k كـ security parameter</strong> – top-k أكبر = محتوى خارجي أكتر بيدخل الـ context window = فرصة أكبر لاسترجاع chunks غير مرتبطة أو حساسة.</li>
 </ol>
 <hr />
-<h2>12 تحديد الـ Trust Boundaries في أنظمة AI</h2>
+<h2 id="sec12"><span class="num">12</span><span class="htext">تحديد الـ Trust Boundaries في أنظمة AI</span></h2>
 <h3>إيه هو الـ Trust Boundary؟</h3>
 <p>نقطة انتقال فيها البيانات، أو التحكم، أو التنفيذ بتتحرك بين مكونات مالهاش نفس مستوى الثقة. عبور الحدود ده بيحتاج توثيق، تحقق، تفويض صريح، قيود، مراقبة، أو مزيج من دول.</p>
 <blockquote>
@@ -1452,7 +1584,7 @@ anthropic-version: 2023-06-01
 <p><strong>السؤال المحوري في أي تحليل trust boundary:</strong> لو المدخل ده خبيث، هيحصل إيه بعد كده؟</p>
 </blockquote>
 <hr />
-<h2>13 تدفقات البيانات الحساسة في أنظمة AI</h2>
+<h2 id="sec13"><span class="num">13</span><span class="htext">تدفقات البيانات الحساسة في أنظمة AI</span></h2>
 <h3>ليه الـ Context Window "عملية معالجة بيانات عالية الخطورة"؟</h3>
 <p>أنظمة AI تقدر تعالج تنوع أوسع من النصوص الحساسة من كتير من workflows التقليدية — لأن الـ prompts ممكن تجمع مدخل مستخدم حر، مستندات مسترجعة، نتائج أدوات، وتعليمات أبليكيشن كلها في نفس الطلب.</p>
 <p>طلب واحد ممكن يشمل PII، محتوى أعمال سري، سجلات قاعدة بيانات حية، تاريخ محادثة، وconfiguration للنظام. <strong>كل مكون بيستقبل، يخزّن، يسترجع، أو يعرض السياق المجمَّع ده بيبقى جزء من تدفق البيانات الحساسة ونقطة تعرض محتملة.</strong></p>
@@ -1619,7 +1751,7 @@ ASSISTANT: According to the retrieved account record, the current overdue balanc
 <li><strong>Conversation History Limits</strong> – استخدم تاريخ محدود، تلخيص، انتهاء صلاحية، وحذف انتقائي. تجنّب الاحتفاظ بمحادثات خام كاملة للأبد.</li>
 </ol>
 <hr />
-<h2>14 مخاطر الـ Logging والـ Telemetry والـ Observability</h2>
+<h2 id="sec14"><span class="num">14</span><span class="htext">مخاطر الـ Logging والـ Telemetry والـ Observability</span></h2>
 <h3>ليه لوجات الـ AI مخزن بيانات مركّز؟</h3>
 <p>لوجات الأبليكيشن التقليدية غالبًا بتركّز على metadata (معرّفات الطلب، status codes، timestamps، رسائل الأخطاء). <strong>لوجات AI ممكن تلتقط prompts كاملة، مستندات مسترجعة، نداءات أدوات، حالات وسيطة، ردود الموديل، ومعرّفات المحادثة.</strong></p>
 <p>ده بيخلي لوجات AI مخزن بيانات حساسة مركّز وسطح تعرض ثانوي محتاج نفس الحوكمة اللي بتاعة بيانات الإنتاج.</p>
@@ -1699,7 +1831,7 @@ response_body: { content: &quot;Your current balance is $2,340 overdue.&quot; }
 <li><strong>Encrypt, Isolate, and Control Exports</strong> – احمِ البيانات أثناء النقل وعند التخزين، اعزل البيئات والـ tenants، راجع معالجة البائعين، واحكم في التمرير والنسخ الاحتياطية والتحميلات.</li>
 </ol>
 <hr />
-<h2>15 تطبيق عملي: MedAssist AI — مراجعة معمارية أمنية (Lab)</h2>
+<h2 id="sec15"><span class="num">15</span><span class="htext">تطبيق عملي: MedAssist AI — مراجعة معمارية أمنية (Lab)</span></h2>
 <h3>السيناريو</h3>
 <p>HealthFirst Corp بتستعد لتوسيع نطاق MedAssist AI، شات بوت داخلي بيرد على أسئلة الموظفين عن مزايا الرعاية الصحية، خطط التأمين، مزايا التقاعد، إجازة الأمومة/الأبوة، والإجازات.</p>
 <p>المراجع عنده وصول للأبليكيشن الشغالة، الكود المصدري، اللوجات، والخدمات المساعدة.</p>
@@ -1830,7 +1962,7 @@ response_body: { content: &quot;Your current balance is $2,340 overdue.&quot; }
 <li><strong>التحقق باختبارات أمنية</strong> – أعد اختبار الوصول المباشر لقاعدة البيانات، endpoints الـ debug، حقول اللوج، الاسترجاع عبر المستخدمين، وتسريب الـ prompt/output قبل التوسّع.</li>
 </ol>
 <hr />
-<h2>الخلاصة العامة للموديول</h2>
+<h2 id="summary"><span class="htext">الخلاصة العامة للموديول</span></h2>
 <h3>المحاور اللي غطّيناها:</h3>
 <ol>
 <li><strong>أساسيات AI و LLM</strong> – الموديلات، الـ prompts، التوكِنز، الـ context windows، والـ inference</li>

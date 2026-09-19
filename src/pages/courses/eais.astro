@@ -1,0 +1,82 @@
+---
+import MainGridLayout from "../../layouts/MainGridLayout.astro";
+import { getCollection } from "astro:content";
+import { getPostUrlBySlug } from "../../utils/url-utils";
+
+const allPosts = await getCollection("posts");
+
+const modules = allPosts
+    .filter((post) => post.data.course === "eAIS")
+    .sort((a, b) => (a.data.module ?? 999) - (b.data.module ?? 999));
+---
+
+<MainGridLayout
+    title="eAIS — AI Security Course"
+    description="eAIS course notes, organized by module."
+>
+    <div class="flex flex-col gap-6">
+        
+        <!-- Course Header -->
+        <div class="rounded-[var(--radius-large)] bg-[var(--card-bg)] p-6 md:p-8">
+            <div class="flex flex-col gap-3">
+                <div class="text-sm font-medium opacity-60">
+                    Course Notes
+                </div>
+
+                <h1 class="text-3xl font-bold">
+                    eAIS
+                </h1>
+
+                <p class="text-lg opacity-70">
+                    AI Security Course Notes
+                </p>
+
+                <p class="text-sm opacity-60">
+                    A structured collection of eAIS course notes,
+                    organized by module.
+                </p>
+
+                <div class="text-sm opacity-60">
+                    {modules.length} Modules Available
+                </div>
+            </div>
+        </div>
+
+        <!-- Modules -->
+        <div class="flex flex-col gap-4">
+            {modules.map((module) => (
+                <a
+                    href={getPostUrlBySlug(module.slug)}
+                    class="group block rounded-[var(--radius-large)] bg-[var(--card-bg)] p-5 transition-all hover:shadow-lg"
+                >
+                    <div class="flex items-start gap-4">
+                        
+                        <!-- Module Number -->
+                        <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[var(--btn-regular-bg)] font-bold">
+                            {module.data.module}
+                        </div>
+
+                        <!-- Module Info -->
+                        <div class="min-w-0 flex-1">
+                            <h2 class="text-lg font-semibold transition-colors group-hover:text-[var(--primary)]">
+                                {module.data.title}
+                            </h2>
+
+                            {module.data.description && (
+                                <p class="mt-2 text-sm opacity-60">
+                                    {module.data.description}
+                                </p>
+                            )}
+
+                            <div class="mt-3 text-sm font-medium text-[var(--primary)]">
+                                Read Module Notes →
+                            </div>
+                        </div>
+
+                    </div>
+                </a>
+            ))}
+        </div>
+
+    </div>
+</MainGridLayout>
