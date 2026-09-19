@@ -1,5 +1,5 @@
 ---
-title: "Advanced Web Application Penetration Testing Roadmap"
+title: " eWPTX-v3 - Labs"
 published: 2026-09-19
 description: "A structured roadmap of 84 labs on TryHackMe and PortSwigger covering authentication attacks, advanced injection, API testing, request smuggling, and SSRF."
 tags: [Labs, TryHackMe, PortSwigger, Web Application Security, Web Security, Penetration Testing, Enumeration, Recon]
