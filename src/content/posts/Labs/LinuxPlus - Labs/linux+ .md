@@ -1,5 +1,5 @@
 ---
-title: "Linux+ Course Labs Roadmap"
+title: "Linux+ Course Labs "
 published: 2026-09-19
 description: "A structured roadmap of 27 hands-on labs on TryHackMe and KodeKloud covering the Linux+ course, from command line fundamentals to storage management and troubleshooting."
 tags: [Linux+, CompTIA, Labs, TryHackMe, KodeKloud, Linux]
