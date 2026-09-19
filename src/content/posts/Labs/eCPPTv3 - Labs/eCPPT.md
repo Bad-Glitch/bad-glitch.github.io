@@ -1,5 +1,5 @@
 ---
-title: "eCPPT v3 Course Labs Roadmap"
+title: "eCPPT v3 Course Labs "
 published: 2026-09-19
 description: "A structured roadmap of 137 labs on TryHackMe and PortSwigger covering the eCPPT v3 course, from reconnaissance and web hacking to Active Directory and red team fundamentals."
 tags: [eCPPTv3, Labs, TryHackMe, PortSwigger, Active Directory, Penetration Testing, Web Security, Web Application Security]
