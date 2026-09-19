@@ -1,5 +1,5 @@
 ---
-title: "CySA+ (CS0-003) Lab Roadmap: A Structured Practice Guide"
+title: "CySA+ (CS0-003) Lab"
 published: 2026-09-19
 description: "A structured roadmap of 74 TryHackMe labs covering the full CompTIA CySA+ (CS0-003) exam, organized into 14 sections and mapped to the exam domains."
 tags: [CySA+, CompTIA, Labs, TryHackMe, SOC, SIEM, Incident Response, Threat Hunting, Vulnerability Management]
