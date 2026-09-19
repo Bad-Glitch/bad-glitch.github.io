@@ -1,5 +1,5 @@
 ---
-title: "eWAPT v2 Course Labs Roadmap"
+title: "eWAPT v2 Course Labs"
 published: 2026-09-19
 description: "A structured roadmap of 70 labs on TryHackMe and PortSwigger covering the eWAPT v2 course, from web fundamentals and Burp Suite to XSS and SQL injection."
 tags: [eWPTv2, Labs, TryHackMe, PortSwigger, Web Application Security, Web Security, Penetration Testing, Enumeration]
