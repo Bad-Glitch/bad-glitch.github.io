@@ -1,5 +1,5 @@
 ---
-title: "CEH Free Labs: A Structured Practice Guide"
+title: "CEH Free Labs"
 published: 2026-09-19
 description: "A curated list of 120 free labs on TryHackMe and PortSwigger, organized into 16 sections and mapped to CEH modules, with a suggested order of completion."
 tags: [CEH, Labs, TryHackMe, PortSwigger, Penetration Testing, Web Security, Network Security, Enumeration]
