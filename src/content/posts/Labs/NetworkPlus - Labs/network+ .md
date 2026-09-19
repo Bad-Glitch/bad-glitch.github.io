@@ -1,5 +1,5 @@
 ---
-title: "Network+ Course Labs Roadmap"
+title: "Network+ Course Labs"
 published: 2026-09-19
 description: "A structured roadmap of 30 TryHackMe labs covering the Network+ course, from networking fundamentals and protocols to traffic analysis and network security tools."
 tags: [Network+, CompTIA, Labs, TryHackMe, Network Security, Networking]
@@ -9,7 +9,7 @@ draft: false
 
 
 ## Overview
-
+clsl
 This roadmap supports the **Network+** course with hands-on TryHackMe labs, organized into 7 sections that follow the course flow: networking fundamentals, services and protocols, security and hardening, traffic analysis, detection and monitoring tools, infrastructure, and core security tools.
 
 The roadmap was put together by **Netriders Academy**, with the labs curated by **Ahmed Sultan**. Every link opens the lab directly.
