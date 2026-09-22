@@ -1,5 +1,5 @@
 ---
-title: "eAIS Course Labs Roadmap: AI Security"
+title: "eAIS Course Labs"
 published: 2026-09-19
 description: "A structured roadmap of 27 TryHackMe labs covering the eAIS course, from AI/ML security fundamentals to prompt injection, supply chain security, RAG security, and MLOps."
 tags: [eAIS, Labs, TryHackMe, AI Security, LLM Security, Prompt Injection]
