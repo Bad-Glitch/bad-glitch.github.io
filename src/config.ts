@@ -45,7 +45,7 @@ export const navBarConfig: NavBarConfig = {
 };
 
 export const profileConfig: ProfileConfig = {
-	avatar: "assets/images/demo-avatar.png",
+	avatar: "/bad-glitch-cover.png",
 	name: "Amr Abdel Hamide",
 	bio: "Red Teamer | OSCP, CRTP, eWAPTXv3 | breaking systems, simulating real threats.",
 	links: [
