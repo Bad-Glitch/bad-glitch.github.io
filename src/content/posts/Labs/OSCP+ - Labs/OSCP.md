@@ -1,5 +1,5 @@
 ---
-title: "OSCP+ Prep: Full Labs Roadmap (Course Modules + Bonus Platforms)"
+title: "OSCP+ Prep: Full Labs"
 published: 2026-09-19
 description: "A complete OSCP+ preparation roadmap: %d TryHackMe labs across 20 course modules, plus a bonus section of additional free platforms (Hack The Box, OverTheWire, PentesterLab, CyberDefenders, VulnHub, picoCTF, WebGoat, DVWA) to round out your practice."
 tags: [OSCP, Labs, TryHackMe, Hack The Box, OverTheWire, Penetration Testing, Active Directory, Privilege Escalation, Web Security, Password Attacks]
