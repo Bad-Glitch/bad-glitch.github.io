@@ -1,0 +1,949 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OSCP · Module 1: مقدمة في الأمن السيبراني</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-0: #0B0B0D;
+    --bg-1: #121214;
+    --surface: #17171A;
+    --surface-2: #1D1D21;
+    --border: #2A2A2F;
+    --border-soft: #232326;
+
+    --text: #E6E6E9;
+    --text-soft: #C4C4CA;
+    --muted: #8A8A92;
+
+    --red: #E1362F;
+    --red-soft: rgba(225,54,47,0.10);
+    --red-border: rgba(225,54,47,0.35);
+    --red-grad: linear-gradient(90deg, #E1362F, #F2794A);
+
+    --amber: #E8A23A;
+    --amber-soft: rgba(232,162,58,0.09);
+    --amber-border: rgba(232,162,58,0.30);
+
+    --green: #3FBF6E;
+
+    --mono: 'IBM Plex Mono', 'Courier New', monospace;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    direction: rtl;
+    text-align: right;
+    background: var(--bg-0);
+  }
+
+  body {
+    font-family: 'Cairo', 'Segoe UI', Tahoma, sans-serif;
+    line-height: 1.95;
+    font-size: 16.5px;
+    color: var(--text);
+    background:
+      radial-gradient(900px 420px at 12% -8%, rgba(225,54,47,0.10), transparent 60%),
+      radial-gradient(800px 420px at 90% 6%, rgba(232,162,58,0.06), transparent 60%),
+      linear-gradient(180deg, var(--bg-0) 0%, var(--bg-1) 100%);
+    background-attachment: fixed;
+  }
+
+  .page {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 46px 22px 100px;
+  }
+
+  /* ---------- Terminal-style banner ---------- */
+  .banner {
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(155deg, #17171A 0%, #141416 55%, #18151A 100%);
+    border: 1px solid var(--border-soft);
+    border-radius: 10px;
+    padding: 0 0 34px;
+    margin-bottom: 26px;
+    box-shadow: 0 20px 50px -20px rgba(0,0,0,0.6);
+  }
+  .term-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 13px 18px;
+    border-bottom: 1px solid var(--border-soft);
+    background: rgba(255,255,255,0.015);
+    direction: ltr;
+  }
+  .term-dot { width: 11px; height: 11px; border-radius: 50%; display: inline-block; }
+  .term-dot.r { background: #E1362F; }
+  .term-dot.y { background: #E8A23A; }
+  .term-dot.g { background: #3FBF6E; }
+  .term-path {
+    margin-inline-start: 12px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .banner-body { padding: 30px 34px 4px; }
+  .banner .kicker {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 12.5px;
+    letter-spacing: 0.03em;
+    color: var(--red);
+    background: var(--red-soft);
+    border: 1px solid var(--red-border);
+    border-radius: 3px;
+    padding: 5px 12px;
+    margin-bottom: 20px;
+    direction: ltr;
+  }
+  .banner h1 {
+    margin: 0 0 14px;
+    font-size: 28px;
+    font-weight: 800;
+    line-height: 1.5;
+    color: #F4F4F6;
+  }
+  .banner .lede {
+    color: var(--muted);
+    font-size: 15.5px;
+    line-height: 1.95;
+    max-width: 620px;
+    margin: 0 0 24px;
+  }
+  .tags { display: flex; flex-wrap: wrap; gap: 9px; }
+  .tag {
+    font-size: 12.5px;
+    font-family: var(--mono);
+    color: var(--amber);
+    background: var(--amber-soft);
+    border: 1px solid var(--amber-border);
+    border-radius: 3px;
+    padding: 5px 11px;
+  }
+
+  /* ---------- TOC: directory-listing style ---------- */
+  .toc {
+    background: var(--surface);
+    border: 1px solid var(--border-soft);
+    border-radius: 8px;
+    padding: 6px 0 6px;
+    margin-bottom: 50px;
+    overflow: hidden;
+  }
+  .toc-title {
+    font-family: var(--mono);
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--green);
+    padding: 14px 22px;
+    border-bottom: 1px solid var(--border-soft);
+    direction: ltr;
+    text-align: left;
+  }
+  .toc-list { display: flex; flex-direction: column; }
+  .toc-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 22px;
+    color: var(--text-soft);
+    text-decoration: none;
+    font-size: 14.5px;
+    border-bottom: 1px solid rgba(255,255,255,0.03);
+    transition: background 0.15s ease, padding-inline-start 0.15s ease;
+  }
+  .toc-list .toc-item:last-child { border-bottom: none; }
+  .toc-item:hover { background: rgba(225,54,47,0.06); }
+  .toc-num {
+    flex: none;
+    font-family: var(--mono);
+    font-size: 12.5px;
+    font-weight: 600;
+    color: #0F0F10;
+    background: var(--red-grad);
+    border-radius: 3px;
+    padding: 3px 8px;
+    direction: ltr;
+  }
+
+  /* ---------- Typography ---------- */
+  h1, h2, h3, h4 { font-weight: 700; }
+
+  h2 {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    font-size: 21px;
+    margin: 66px 0 22px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border-soft);
+    color: #F0F0F2;
+  }
+  h2 .num {
+    flex: none;
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 700;
+    color: #0F0F10;
+    background: var(--red-grad);
+    border-radius: 5px;
+    padding: 7px 12px;
+    direction: ltr;
+  }
+  h2 .htext { line-height: 1.5; }
+
+  h3 {
+    font-size: 17px;
+    margin: 34px 0 14px;
+    color: var(--red);
+    display: flex;
+    align-items: center;
+    gap: 9px;
+  }
+  h3::before {
+    content: "#";
+    font-family: var(--mono);
+    color: var(--amber);
+    font-weight: 700;
+  }
+
+  h4 {
+    font-size: 14.8px;
+    margin: 22px 0 10px;
+    color: var(--text-soft);
+    font-family: var(--mono);
+  }
+
+  p { margin: 0 0 17px; color: var(--text); }
+
+  strong { color: #FBFBFC; font-weight: 700; }
+
+  a { color: var(--amber); text-decoration: none; border-bottom: 1px dashed var(--amber-border); }
+
+  hr {
+    border: none;
+    height: 1px;
+    margin: 50px 0;
+    background: linear-gradient(90deg, transparent, var(--border), transparent);
+  }
+
+  ul, ol {
+    margin: 0 0 18px;
+    padding-inline-start: 24px;
+  }
+  li { margin-bottom: 9px; color: var(--text); }
+  li::marker { color: var(--red); font-family: var(--mono); }
+  li > ul, li > ol { margin-top: 9px; }
+
+  /* ---------- Blockquotes = key definitions / case studies ---------- */
+  blockquote {
+    margin: 24px 0;
+    padding: 17px 22px;
+    background: var(--red-soft);
+    border: 1px solid var(--red-border);
+    border-inline-start: 3px solid var(--red);
+    border-radius: 6px;
+    color: #EAD9D7;
+  }
+  blockquote p { margin: 0; color: inherit; line-height: 1.85; }
+  blockquote strong { color: #FFB4AE; }
+
+  /* ---------- Tables ---------- */
+  .table-wrap {
+    overflow-x: auto;
+    margin: 22px 0;
+    border: 1px solid var(--border-soft);
+    border-radius: 8px;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14.2px;
+    min-width: 480px;
+  }
+  thead th {
+    background: var(--surface-2);
+    color: var(--amber);
+    font-weight: 700;
+    font-family: var(--mono);
+    font-size: 12.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    text-align: start;
+    padding: 13px 15px;
+    border-bottom: 1px solid var(--border-soft);
+    white-space: nowrap;
+  }
+  tbody td {
+    padding: 12px 15px;
+    border-bottom: 1px solid var(--border-soft);
+    color: var(--text-soft);
+    vertical-align: top;
+  }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:nth-child(even) { background: rgba(255,255,255,0.012); }
+  tbody tr:hover { background: rgba(225,54,47,0.045); }
+
+  /* ---------- Code / terminal blocks ---------- */
+  code {
+    font-family: var(--mono);
+    font-size: 13.3px;
+    background: var(--surface-2);
+    border: 1px solid var(--border-soft);
+    border-radius: 4px;
+    padding: 2px 6px;
+    direction: ltr;
+    unicode-bidi: embed;
+    color: var(--green);
+  }
+  .code-wrap { overflow-x: auto; margin: 22px 0; }
+  pre {
+    background: #0E0E10;
+    border: 1px solid var(--border-soft);
+    border-inline-start: 3px solid var(--red);
+    border-radius: 8px;
+    padding: 18px 22px;
+    direction: ltr;
+    text-align: left;
+    margin: 0;
+  }
+  pre code {
+    background: none;
+    border: none;
+    padding: 0;
+    color: #B9E8C9;
+    font-size: 13.2px;
+    line-height: 1.75;
+  }
+
+  /* ---------- Footer ---------- */
+  .footer-note {
+    margin-top: 70px;
+    padding-top: 26px;
+    border-top: 1px solid var(--border-soft);
+    color: var(--muted);
+    font-size: 13.3px;
+    font-family: var(--mono);
+    text-align: center;
+    direction: ltr;
+  }
+
+  @media (max-width: 640px) {
+    .page { padding: 28px 14px 70px; }
+    .banner-body { padding: 24px 20px 4px; }
+    .banner h1 { font-size: 21px; }
+    h2 { font-size: 18px; gap: 10px; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="banner">
+    <div class="term-bar">
+      <span class="term-dot r"></span><span class="term-dot y"></span><span class="term-dot g"></span>
+      <span class="term-path">root@oscp:~/module-01$</span>
+    </div>
+    <div class="banner-body">
+      <span class="kicker">OSCP · PEN-200 · Module 01</span>
+      <h1>مقدمة في الأمن السيبراني</h1>
+      <p class="lede">الأساس النظري قبل الدخول للجزء العملي الهجومي — عقلية الأمن السيبراني، المصطلحات الجوهرية، ثالوث CIA، الضوابط والاستراتيجيات الدفاعية، الأطر القانونية والمعيارية، ومسارات العمل في المجال.</p>
+      <div class="tags">
+        <span class="tag">threat-actors</span>
+        <span class="tag">cia-triad</span>
+        <span class="tag">defense-in-depth</span>
+        <span class="tag">compliance</span>
+        <span class="tag">career-paths</span>
+      </div>
+    </div>
+  </div>
+
+
+<nav class="toc"><div class="toc-title">$ ls learning_units/</div><div class="toc-list">
+<a class="toc-item" href="#lu1"><span class="toc-num">01</span><span class="toc-label">ممارسة الأمن السيبراني (The Practice of Cybersecurity)</span></a>
+<a class="toc-item" href="#lu2"><span class="toc-num">02</span><span class="toc-label">التهديدات وممثلو التهديد (Threats and Threat Actors)</span></a>
+<a class="toc-item" href="#lu3"><span class="toc-num">03</span><span class="toc-label">ثالوث CIA (The CIA Triad)</span></a>
+<a class="toc-item" href="#lu4"><span class="toc-num">04</span><span class="toc-label">مبادئ وضوابط واستراتيجيات الأمان (Security Principles, Controls, and Strategies)</span></a>
+<a class="toc-item" href="#lu5"><span class="toc-num">05</span><span class="toc-label">القوانين واللوائح والمعايير والأطر (Cybersecurity Laws, Regulations, Standards, and Frameworks)</span></a>
+<a class="toc-item" href="#lu6"><span class="toc-num">06</span><span class="toc-label">الفرص الوظيفية في الأمن السيبراني (Career Opportunities in Cybersecurity)</span></a>
+</div></nav>
+
+<h1>Module 1: مقدمة في الأمن السيبراني (Introduction to Cybersecurity)</h1>
+<blockquote>
+<p>نوتس OSCP — الموديول ده بيبني الأساس النظري قبل ما ندخل في الجزء العملي الهجومي. مقسَّم لـ 6 وحدات تعليمية (Learning Units)، وبيغطي عقلية الأمن السيبراني، المصطلحات الأساسية، ثالوث CIA، الضوابط والاستراتيجيات، الأطر القانونية والمعيارية، ووصولًا للمسارات الوظيفية في المجال.</p>
+</blockquote>
+<hr />
+<h2 id="lu1"><span class="num">01</span><span class="htext">ممارسة الأمن السيبراني (The Practice of Cybersecurity)</span></h2>
+<h3>الأمن السيبراني مش مجرد فرع من الـ IT</h3>
+<p>الأمن السيبراني مجال مستقل بذاته، ومش المفروض نشوفه كمجرد فرع من تطوير البرمجيات أو إدارة الأنظمة. عنده خصائص فريدة بتميّزه عن التخصصات التقنية التانية — أهمها إن الأمان بيتعامل مع <strong>خصوم أذكياء ومتعمّدين</strong>.</p>
+<p>التعامل مع الخصوم البشريين ده محتاج عقلية ومنهج مختلف تمامًا عن التعامل مع أعطال عرضية أو طبيعية. سواء إنت بتنفّذ هجمات محاكاة (simulated attacks) أو بتدافع عن أنظمة، لازم تتوقّع أفعال واستراتيجيات المهاجمين المحتملين. عكس الأخطاء العشوائية، الخصوم دول يقدروا يفكروا، يحللوا، يتوقعوا النتائج، وياخدوا قرارات استراتيجية.</p>
+<p>الخصوم كمان بيمروا بمشاعر زي الخوف، الطمع، الفخر، أو الندم — وده بيأثر على سلوكهم. المهاجمين والمدافعين الاتنين يقدروا يستغلوا العوامل البشرية دي: المهاجم ممكن يستخدم التهديد أو الإحراج للتلاعب في الهدف، بينما المدافع ممكن يستخدم استراتيجيات الردع لتثبيط الاختراق.</p>
+<blockquote>
+<p><strong>الخلاصة:</strong> الناس عنصر مركزي في الأمن السيبراني — السلوك البشري مهم بقد التكنولوجيا نفسها.</p>
+</blockquote>
+<h3>الاستدلال تحت عدم اليقين (Reasoning Under Uncertainty)</h3>
+<p>تحدي أساسي في الأمن السيبراني إن القرارات غالبًا لازم تُتخذ في ظروف عدم يقين. البشر عندهم قدرات استدلال قوية، لكن مش كليّي المعرفة — مش قادرين نستنتج كل نتيجة من حقيقة معينة، ولا نحتفظ بكميات لا نهائية من المعلومات.</p>
+<p><strong>فكّر في الفرق بين الشطرنج والبوكر:</strong></p>
+<p>في الشطرنج، كل اللاعبين يقدروا يشوفوا الحالة الكاملة للعبة، وده بيسمح بتوقعات مبنية على معلومات كاملة. في البوكر، اللاعبين بياخدوا قرارات بمعرفة ناقصة، محتاجين تقدير واستدلال احتمالي.</p>
+<blockquote>
+<p><strong>الأمن السيبراني أقرب للبوكر:</strong> المدافعين والمهاجمين نادرًا ما يكون عندهم رؤية كاملة للأنظمة، الشبكات، أو نوايا الخصوم.</p>
+</blockquote>
+<p>لما بنحاكي هجمات، بنعمل افتراضات ونقدّر احتمالات عن نقاط ضعف محتملة. بالمثل، المدافعين لازم يرتّبوا أولوية حماية أكتر أسطح الهجوم حرجًا أو تعرضًا، حتى لو مش كل الثغرات معروفة.</p>
+<p>التحديات دي — الخصوم الأذكياء وعدم اليقين — بتوضّح إن الأمن السيبراني محتاج فهم عميق للتفكير البشري وحل المشاكل.</p>
+<h3>كلمة عن العقليات (Mindsets)</h3>
+<p>النجاح في الأمن السيبراني مش بس معتمد على المعرفة التقنية، لكن كمان على فهم طريقة تفكيرك إنت وعقلية الخصوم المحتملين. الـ <strong>mindset</strong> ممكن نشوفه كمجموعة معتقدات بتشكّل إزاي بنستقبل التحديات ونتعامل مع حل المشاكل.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>النوع</th>
+<th>الوصف</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Fixed Mindset (عقلية ثابتة)</strong></td>
+<td>بتفترض إن المهارات، الموهبة، أو القدرة على التعلّم ثابتة، وإن المجهود لتحسينها قيمته قليلة</td>
+</tr>
+<tr>
+<td><strong>Growth Mindset (عقلية النمو)</strong></td>
+<td>بتتبنّى فكرة إن القدرات تقدر تتطور بمرور الوقت عن طريق المجهود، التعلّم، والتكيّف</td>
+</tr>
+</tbody>
+</table></div>
+<p>تبنّي عقلية النمو أساسي في الأمن السيبراني، حيث التفكير المرن والتعلّم المستمر مفاتيح للتغلّب على التحديات المعقّدة.</p>
+<h3>تبنّي عقليات الأمن السيبراني الفعّالة</h3>
+<p>الأبحاث بتوضّح إن الإيمان بقدرتنا على التعافي من الأخطاء بيحسّن أداءنا بشكل كبير. في الأمن السيبراني، عمل أخطاء والتعلّم منها أمر حتمي، وده بيخلي الجانب ده من عقلية النمو مهم بشكل خاص. التعلّم المستمر، التأمل، والتكيّف عناصر أساسية للنجاح في المجال.</p>
+<p>عقلية حرجة تانية هي <strong>الـ Security Mindset</strong>، اللي قدّمها الباحث <strong>Bruce Schneier</strong>. العقلية دي بتركّز على السؤال المستمر: <strong>"إزاي أقدر أهاجم أو أدافع عن النظام ده؟"</strong> بالتعامل مع الأنظمة، الشبكات، أو التقنيات الجديدة بالمنظور ده، المتعلّمين بيبدأوا يحددوا أنماط متكررة ونقاط ضعف محتملة بشكل أفعل.</p>
+<hr />
+<h2 id="lu2"><span class="num">02</span><span class="htext">التهديدات وممثلو التهديد (Threats and Threat Actors)</span></h2>
+<h3>أهداف الوحدة</h3>
+<p>فهم إزاي المهاجمين والمدافعين بيتعلّموا من بعض | فهم الفروق بين المخاطر، التهديدات، الثغرات، والاستغلالات | سرد ووصف فئات مختلفة من ممثلي التهديد | التعرّف على هجمات سيبرانية حديثة | فهم إزاي الهجمات الخبيثة بتأثر على المؤسسات والأفراد</p>
+<p>مصطلح <strong>digital security</strong> أصله عسكري، ودلوقتي مستخدَم بشكل واسع للإشارة لحماية البيانات والتحكم في الوصول عبر الإنترنت أو الشبكات الرقمية التانية. رغم إن الـ digital security جزء من مظلة الـ information security الأوسع (اللي كمان بتشمل حماية أصول تخزين البيانات الفعلية زي السيرفرات أو خزائن التخزين الآمنة)، تركيزنا هنا هيكون على القدرات الأونلاين والأنشطة الرقمية.</p>
+<h3>تطوّر الهجوم والدفاع</h3>
+<p>الأمن السيبراني فريد لأنه بيشمل طرفين بأهداف متعارضة: المدافعين عايزين يحموا الأصول، والمهاجمين هدفهم ياخدوها. العلاقة التبادلية دي بتدفع الطرفين يبقوا أذكى ومهرة أكتر مع الوقت.</p>
+<p><strong>قصة Alice وBob:</strong> Bob عنده شجرة موز قيّمة وعايز يحتفظ بالموز لنفسه. Alice عايزة تسرقه.</p>
+<div class="code-wrap"><pre><code>1. Bob مش منتبه → Alice بتاخد موزة بسهولة
+2. Bob بيحرس الشجرة → Alice بتراقب لحظات ضعفه وتتسلل
+3. Bob بيبني سور → Alice بتتعلم تحفر تحته
+4. Bob بيدرّب كلب → Alice بتلهيه بأكل
+5. Bob بيضيف إنذارات وكاميرات → Alice بتلاقي طريقة تتخطاها
+</code></pre></div>
+<p>الدورة دي بتوضّح إزاي المهاجمين والمدافعين بيتكيّفوا باستمرار، وبيحسّنوا مهاراتهم بسبب أفعال بعض. القصة كمان بتعكس مفهوم <strong>المخاطر والامتثال (risk and compliance)</strong> — Bob ممكن في النهاية يقبل خسارة معينة ويشتري تأمين، لكن عشان يتغطى، لازم يستوفي متطلبات حماية معينة (زي الحفاظ على السور والكلب في مكانهم).</p>
+<blockquote>
+<p>الأمن السيبراني معركة مستمرة التطور، حيث التقدّم معتمد على توقّع والرد على الطرف التاني.</p>
+</blockquote>
+<h3>المخاطر، التهديدات، الثغرات، والاستغلالات</h3>
+<p><strong>الخطر (Risk)</strong> هو المفهوم الأساسي، بيُقاس بُبعدين:</p>
+<ul>
+<li>احتمالية حدوث حدث سلبي</li>
+<li>التأثير اللي هيحصل على حاجة إحنا بنقدّرها</li>
+</ul>
+<p>بناءً على البُعدين دول، المخاطر بتتصنّف لأربع فئات:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th></th>
+<th>احتمالية منخفضة</th>
+<th>احتمالية عالية</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>تأثير منخفض</strong></td>
+<td>خطر منخفض جدًا</td>
+<td>خطر متوسط</td>
+</tr>
+<tr>
+<td><strong>تأثير عالي</strong></td>
+<td>خطر متوسط-عالي</td>
+<td>خطر حرج</td>
+</tr>
+</tbody>
+</table></div>
+<p>كمتخصص أمان، تقييم المخاطر معناه تسأل سؤالين حاسمين: <strong>إيه احتمالية حدوث هجوم معين؟</strong> و<strong>إيه أسوأ عاقبة ممكنة لو حصل؟</strong> الإطار ده بيساعدنا نرتّب أولوية جهود الأمان ونتخذ قرارات مدروسة عن الحماية والتخفيف.</p>
+<p><strong>مثال Log4j:</strong> بسبب انتشار مكتبة Log4j بشكل واسع، الثغرة المرتبطة بيها استلمت أعلى درجة خطورة (10.0 - Critical) حسب نظام CVSS. ده حفّز استعجال واسع، مع مؤسسات وموردين بيتسابقوا لتحديد الأنظمة المتأثرة، تطبيق patches، والتحقيق في اختراقات محتملة.</p>
+<p>كان ممكن تجنّب المشكلة بالتحقق السليم وتنقية مدخلات المستخدم. كان ممكن كمان تقليل تأثيرها لو وظائف خطيرة — زي الطلبات البعيدة أو تنفيذ الكود التلقائي — كانت معطَّلة افتراضيًا.</p>
+<blockquote>
+<p><strong>ثغرة برمجية (Vulnerability)</strong> بتوجد لما مستخدم يقدر يتلاعب في برنامج بطريقة المطوّر ما قصدهاش. لو التلاعب ده منح وصول غير مصرَّح أو صلاحيات مرتفعة وحصل عن قصد، بيبقى <strong>استغلال (Exploit)</strong>.</p>
+</blockquote>
+<p>في مصطلحات الأمن السيبراني، كلمة exploit ليها استخدامين: كاسم بتشير لطريقة أو تقنية بتُستخدم للاستفادة من نقطة ضعف. كفعل بتوصّف عملية استغلال نقطة الضعف دي لتحقيق نتيجة محددة.</p>
+<p><strong>سطح الهجوم (Attack Surface):</strong> كل نقطة دخول ممكنة يقدر النظام يُستهدف منها.</p>
+<p><strong>متجه الهجوم (Attack Vector):</strong> مسار محدد بيجمع بين ثغرة وطريقة استغلال لتحقيق هدف المهاجم.</p>
+<p>فرق الأمان بتهدف لتقليل التعرّض الكلي بتاعها، بينما المهاجمين بيحللوا الأنظمة بعناية عشان يكتشفوا أفعل المسارات للاختراق.</p>
+<h3>تصنيفات ممثلي التهديد (Threat Actors)</h3>
+<p>معظم المخاطر اللي بتواجه الأنظمة والمؤسسات جاية من السلوك البشري مش أسباب طبيعية. عكس الجريمة الفعلية التقليدية، الجرائم السيبرانية بتوفّر مزايا للجناة: سهولة الحفاظ على إخفاء الهوية، تنفيذ هجمات من أي مكان في العالم عن بُعد، ومخاطر جسدية وتكاليف تشغيلية أقل عمومًا.</p>
+<h4>1. المهاجمين الأفراد (Individual Attackers)</h4>
+<p>أي شخص بيحاول يتخطى القيود أو يسيء استخدام الأنظمة لأغراض غير مصرَّحة. في البيئات الرقمية، ده ممكن يشمل الوصول لخدمات مقيَّدة، سرقة بيانات اعتماد، التلاعب في الإعدادات، أو تشويه مواقع عامة.</p>
+<blockquote>
+<p><strong>مثال: اختراق Capital One 2019</strong> — Paige Thompson استغلت إعداد شديد التساهل في البنية التحتية للشبكة، واسترجعت بيانات حساسة لحوالي 100 مليون فرد (أرقام ضمان اجتماعي، تفاصيل حسابات، معلومات اتصال شخصية). <strong>الدرس:</strong> تطبيق مبدأ أقل الصلاحيات، تقييد صلاحيات الـ firewall بشكل سليم، والمراقبة الاستباقية كانت هتقلل الخطر بشكل كبير.</p>
+</blockquote>
+<h4>2. الجماعات الخبيثة المنظَّمة (Organized Malicious Groups)</h4>
+<p>لما المهاجمين يتعاونوا، خبرتهم وتنسيقهم المجمّع بيضخّم فعاليتهم بشكل كبير. الإنترنت بيمكّن التواصل الفوري عبر مسافات شاسعة، وده بيسمح للأعضاء يقسّموا المسؤوليات، يشاركوا المعلومات الاستخباراتية، وينفّذوا عمليات معقّدة بكفاءة.</p>
+<blockquote>
+<p><strong>مثال: مجموعة Lapsus$</strong> — استهدفت مؤسسات متعددة عبر شهور، استخرجت بيانات ملكية زي كود مصدري ومستندات داخلية، واستخدمت أساليب ابتزاز للضغط على الضحايا. تنوّع تقنياتهم بيوضّح إزاي التخصص جوه المجموعة بيعزّز القدرة — عضو واحد على الـ social engineering، تاني على الاستغلال التقني، وتالت على استخراج البيانات.</p>
+<p><strong>مبدأ شائع:</strong> المهاجمين محتاجين ينجحوا مرة واحدة بس، بينما المدافعين لازم يمنعوا كل محاولة باستمرار. عدم التماثل ده بيبقى أوضح مع الخصوم المنظَّمين.</p>
+</blockquote>
+<p><strong>استراتيجيات التخفيف:</strong> تقوية الوعي الداخلي، اكتشاف النشاط الشاذ، فرض MFA، تطبيق ضوابط وصول صارمة، وتقسيم الشبكات لتحديد الحركة الجانبية.</p>
+<h4>3. التهديدات الداخلية (Insider Threats)</h4>
+<p>خطيرة بشكل خاص لأنها جاية من أفراد أصلًا عندهم وصول شرعي — موظفين حاليين، موظفين سابقين، متعاقدين، أو شركاء موثوقين. إلمامهم بالأنظمة والعمليات الداخلية يقدر يخليهم يتخطوا الضمانات أسهل من المهاجمين الخارجيين.</p>
+<blockquote>
+<p><strong>مثال: خلال بداية جائحة COVID-19 (2020)</strong> — مدير تنفيذي سابق في شركة إمدادات طبية دخل الأنظمة الداخلية باستخدام اعتمادات اتعملت أثناء توظيفه، وعدّل وحذف بيانات حرجة، مما عطّل توزيع الإمدادات وقت حرج.</p>
+</blockquote>
+<p><strong>إجراءات وقائية:</strong> فرض سياسات أقل الصلاحيات، إلغاء الوصول فورًا عند إنهاء الخدمة، مراجعات حسابات دورية، ومراقبة أنماط النشاط الشاذة.</p>
+<h4>4. الجهات المدعومة من الدول (Nation-State Actors)</h4>
+<p>أعلى مستوى من التطوّر. غالبًا عندهم تمويل كبير، قدرات تقنية متقدّمة، وأهداف استراتيجية متماشية مع مصالح وطنية. عملياتهم ممكن تشمل تجسّس، سرقة مالية، تعطيل بنية تحتية حرجة، أو تأثير جيوسياسي.</p>
+<blockquote>
+<p><strong>مثال: مجموعة "Lazarus" (كوريا الشمالية)</strong> — مرتبطة بحوادث متعددة عالية البروفايل: سرقة بيانات شركات (اختراق Sony)، حملات ransomware عالمية زي WannaCry، وهجمات مالية واسعة النطاق ضد بنوك ومنصات عملات رقمية.</p>
+</blockquote>
+<p><strong>توصيات دفاعية:</strong> تقسيم الشبكات الداخلية، إدارة patch صارمة للأنظمة المكشوفة للإنترنت، نشر MFA بشكل سليم، مراقبة أنماط دخول غير طبيعية، وضمان تسجيل شامل مع تحليل دوري.</p>
+<h3>هجمات سيبرانية حديثة (Recent Breaches)</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>الفئة</th>
+<th>الحادثة</th>
+<th>الوصف والدرس</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Social Engineering</strong></td>
+<td>Twitter (يوليو 2020)</td>
+<td>Spear phishing خدع موظفين للكشف عن اعتمادات، مما مكّن الوصول لأدوات إدارية داخلية استُخدمت لترويج احتيال عملات رقمية عبر حسابات مشهورة</td>
+</tr>
+<tr>
+<td><strong>Phishing واسع النطاق</strong></td>
+<td>Toyota subsidiary (سبتمبر 2021)</td>
+<td>هجوم Business Email Compromise (BEC) أقنع موظف يعدّل تفاصيل حساب دفع، مما أدى لتحويل ~4 مليار ين (~37 مليون دولار)</td>
+</tr>
+<tr>
+<td><strong>Ransomware</strong></td>
+<td>Colonial Pipeline (مايو 2021)</td>
+<td>نقطة دخول: باسورد واحد مخترَق مرتبط بوصول عن بُعد، بدون MFA. أدى لنقص وقود، ارتفاع أسعار، وملايين الدولارات فدية</td>
+</tr>
+<tr>
+<td><strong>إساءة استخدام اعتمادات</strong></td>
+<td>SolarWinds (ديسمبر 2020)</td>
+<td>باسورد ضعيف اتعرّض على GitHub سابقًا؛ سلسلة إمداد مخترَقة أثّرت على ~18,000 مؤسسة عبر تحديثات Orion الخبيثة</td>
+</tr>
+<tr>
+<td><strong>تجاوز التوثيق</strong></td>
+<td>Kaseya VSA (يوليو 2021)</td>
+<td>ثغرة تجاوز توثيق استُغلت لنشر REvil ransomware عبر تحديث خبيث، بتأثير متسلسل على MSPs وعملاءهم</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>توصيات الوقاية من BEC حسب الـ FBI:</strong> أكّد طلبات تغيير الدفع/الحساب شخصيًا | تحقق عبر رقم هاتف موثوق لو التحقق الشخصي مش ممكن | تعامل بشك مع الطلبات العاجلة أو ذات الضغط | افحص عناوين المرسل والروابط بعناية | تجنّب المرفقات من مصادر مجهولة | تحقق من نطاقات الإيميل على تغييرات إملائية دقيقة</p>
+<hr />
+<h2 id="lu3"><span class="num">03</span><span class="htext">ثالوث CIA (The CIA Triad)</span></h2>
+<h3>أهداف الوحدة</h3>
+<p>فهم أهمية حماية سرية المعلومات | فهم أهمية حماية سلامة المعلومات | استكشاف أهمية حماية توفّر المعلومات</p>
+<h3>الثلاث ركائز</h3>
+<p>نموذج <strong>CIA</strong> — Confidentiality، Integrity، Availability — بيمثّل الخصائص الأساسية المفروض الأنظمة والبيانات الآمنة تحافظ عليها. معظم حوادث الأمن السيبراني ممكن تتقيّم بناءً على إزاي ضعّفت أو انتهكت واحدة أو أكتر من الخصائص دي.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>الركيزة</th>
+<th>التعريف</th>
+<th>أمثلة فشل</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Confidentiality (السرية)</strong></td>
+<td>تقييد الوصول للمعلومات عشان بس الأفراد المصرَّحين يشوفوها</td>
+<td>تسريب بيانات، وصول غير مصرَّح لقاعدة بيانات، سرقة اعتمادات</td>
+</tr>
+<tr>
+<td><strong>Integrity (السلامة)</strong></td>
+<td>الحفاظ على صحة وموثوقية المعلومات ووظائف النظام</td>
+<td>تغيير، إتلاف، أو تلاعب في البيانات بدون تصريح</td>
+</tr>
+<tr>
+<td><strong>Availability (التوفّر)</strong></td>
+<td>ضمان بقاء الأنظمة والخدمات والمعلومات قابلة للاستخدام والوصول للمستخدمين المصرَّحين</td>
+<td>انقطاع خدمة، هجمات DDoS، malware مبني على التشفير</td>
+</tr>
+</tbody>
+</table></div>
+<h3>السياق بيحدد الأولوية</h3>
+<p>أهمية كل ركيزة بتعتمد على السياق اللي النظام بيشتغل فيه:</p>
+<ul>
+<li><strong>مذكرات شخصية (يوميات):</strong> الأولوية القصوى هي <strong>السرية</strong> — منع الآخرين من قراءتها. هل حد يقدر يضيف ملاحظة ليها أو هل متاحة كل وقت أقل أهمية.</li>
+<li><strong>سجلات دواء المستشفى:</strong> الحفاظ على بيانات دقيقة وغير معدَّلة هو الأهم — أي تعديل غير مصرَّح لتفاصيل الوصفة الطبية ممكن يؤدي لعلاج خاطئ وعواقب خطيرة. هنا <strong>السلامة</strong> هي الركيزة الحرجة.</li>
+</ul>
+<p>لما ثغرة أو اختراق يتحدد، متخصصو الأمان بيحللوا أنهي بُعد — أو مجموعة أبعاد — من النموذج ده اتأثر. تصنيف الحوادث بالطريقة دي بيوفّر فهم أوضح للخطر، بيساعد يحدد الخطورة، ويوجّه استراتيجيات العلاج المناسبة.</p>
+<h3>موازنة الثالوث مع أهداف المؤسسة</h3>
+<p>نقطة مهمة: ضوابط الأمان نفسها ممكن أحيانًا تكون ضارة بالتوفّر. الأمان الشديد جدًا مش دايمًا الأمثل للمؤسسة. لو الأمان قوي لدرجة إن المستخدمين مايقدروش يستخدموا الأنظمة، أو بيتضايقوا منه باستمرار، ده ممكن يؤدي لعدم كفاءة، معنويات منخفضة، وربما انهيار المؤسسة.</p>
+<blockquote>
+<p>موازنة ضوابط الأمان مع التوفّر عملية تقييم مستمرة وحرجة — استكشاف، threat modeling، نقاش، اختبار، ونشر. وضع قواعد بتمنع الموظفين من المشاركة في التحسينات طريقة سهلة لتخريب برنامج الأمان.</p>
+</blockquote>
+<p><strong>الأمان مسؤولية الجميع</strong>، والعمليات اللي بتستقبل feedback من المؤسسة كلها وبتعلّم الموظفين إزاي يستخدموا الضوابط عادةً بتكون مهمة لبرنامج أمان ناجح.</p>
+<hr />
+<h2 id="lu4"><span class="num">04</span><span class="htext">مبادئ وضوابط واستراتيجيات الأمان (Security Principles, Controls, and Strategies)</span></h2>
+<h3>أهداف الوحدة</h3>
+<p>فهم أهمية طبقات دفاع متعددة | وصف threat intelligence وتطبيقاته | فهم ليه الوصول والصلاحيات لازم تكون مقيَّدة قد الإمكان | فهم ليه الأمان مايعتمدش على السرّية | تحديد سياسات بتخفف التهديدات | فهم نماذج أمان مختلفة | تحديد ضوابط تخفّف تهديدات الأمن السيبراني</p>
+<h3>مبدأ أقل الصلاحيات (Minimum Privilege / Least Privilege)</h3>
+<p>أي كيان جوه نظام — مستخدم، خدمة، أو مكوّن برنامج — المفروض يُمنح بس الصلاحيات الضرورية لتنفيذ وظائفه. التطبيق السليم للمبدأ ده بيقلل سطح هجوم النظام ويحد من التعرّض المحتمل.</p>
+<blockquote>
+<p>في اختراق Capital One 2019، الحادثة حصلت جزئيًا لأن Web Application Firewall كان عنده صلاحيات زايدة، مما سمح للمهاجمين يوصلوا لبيانات حساسة.</p>
+</blockquote>
+<p>المبدأ ده بينطبق مش بس على البشر، لكن كمان على الأجهزة، الـ routers، الـ firewalls، أو أي مكوّن يقدر يقرأ، يكتب، أو يعدّل معلومات.</p>
+<h3>نموذج Zero Trust</h3>
+<p>بناءً على فكرة أقل الصلاحيات، الـ Zero Trust بياخد الأمان لأبعد من كده بإلغاء كل افتراضات الثقة جوه الشبكات. كل طلب وصول بيتعامل معاه بفحص دقيق، والتفويض الدقيق مطلوب لكل الموارد.</p>
+<p><strong>المكونات الأساسية:</strong></p>
+<ol>
+<li><strong>Time-Limited Access (Just in Time Access)</strong> – الصلاحيات بتتحقق فورًا</li>
+<li><strong>Minimal Access Rights (Just Enough Access)</strong> – الوصول متماشي مع مفهوم أقل الصلاحيات</li>
+<li><strong>Data Protection</strong> – التشفير والـ tokenization بيحميوا المعلومات الحساسة</li>
+<li><strong>Dynamic Policies</strong> – ضوابط الوصول بتتكيّف باستمرار لضمان الإنفاذ السليم</li>
+<li><strong>Microsegmentation</strong> – الوصول للموارد مقيَّد بأصغر نطاق ضروري</li>
+</ol>
+<h3>الشفافية في الأمان (Transparency / Open Security)</h3>
+<p>ده المبدأ اللي بيتسمى أحيانًا "open security" — بيقول إن فعالية نظام الأمان مش المفروض تعتمد على الغموض (obscurity). بمعنى تاني، حتى لو المهاجم فهم بالظبط إزاي الدفاعات متنفَّذة، النظام المفروض يفضل آمن.</p>
+<p>ده مش بيلغي الحاجة لأسرار زي الباسوردات، لكن النظام المفروض يصمد قدام الهجمات حتى لما الخصم يعرف الآليات الحمائية الموجودة.</p>
+<h3>الدفاع الطبقي (Defense in Depth / Layered Defense)</h3>
+<p>الاستراتيجية دي بتشجّع تنفيذ إجراءات حمائية متعددة عبر طبقات مختلفة من النظام. لو ضابط واحد فشل، التانيين لسه يقدروا يوفروا حماية.</p>
+<p><strong>تشبيه من برّه الحوسبة:</strong> جراج محمي بكود دخول إلكتروني، باب مقفول بمفتاح، ونظام إنذار داخلي — كل طبقة بتضيف مرونة.</p>
+<p>كتير من المؤسسات بتفشل في بناء دفاعات طبقية كافية، بتعتمد بشكل مفرط على حل أمني واحد أو أدوات طرف ثالث بتركّز على جانب واحد من الحماية. ده بيخلق ثغرات بسبب نقاط فشل مفردة.</p>
+<h3>نماذج الأمان (Security Models)</h3>
+<p>إطار الأمان هو مخطط مفاهيمي بيُستخدم لتطبيق حمايات جوه أنظمة المعلومات. الأطر دي عادةً ما بتحددش ضوابط دقيقة، لكن بتوفّر منهج منظّم وأحيانًا قواعد ممكن تتكيّف لبيئات تشغيلية مختلفة.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>النموذج</th>
+<th>التركيز</th>
+<th>الوصف</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Bell–LaPadula</strong></td>
+<td>السرية</td>
+<td>يُستخدم للتحكم في الوصول في بيئات متعددة مستويات الحساسية (unclassified, confidential, secret, top secret). المستخدمين مايقدروش يقرأوا فوق مستوى تصريحهم (Simple Security Rule) ولا يكتبوا لمستوى أقل (Star Security Rule)</td>
+</tr>
+<tr>
+<td><strong>Brewer and Nash</strong></td>
+<td>السرية</td>
+<td>مصمَّم لمنع تضارب المصالح (مثلًا في الاستشارات أو المحاسبة). موظف بيوصل لبيانات عميل ممكن يُحجب مؤقتًا عن بيانات عميل منافس</td>
+</tr>
+<tr>
+<td><strong>Biba</strong></td>
+<td>السلامة</td>
+<td>بيدّي مستويات سلامة للمستخدمين والبيانات. المستخدمين مايقدروش يقرأوا تحت مستواهم (Simple Integrity Rule) أو يكتبوا فوقه (Star Integrity Rule)</td>
+</tr>
+<tr>
+<td><strong>Clark-Wilson</strong></td>
+<td>السلامة</td>
+<td>بيفرض السلامة عبر معاملات متحكَّم فيها (transactions) بدل الوصول المباشر — كل التعديلات لازم تتماشى مع سياسات محدَّدة</td>
+</tr>
+<tr>
+<td><strong>RBAC</strong> (Role-Based Access Control)</td>
+<td>وصول عام</td>
+<td>الصلاحيات بتتعين للأدوار، والمستخدمين بياخدوا وصول بناءً على أدوارهم — شائع في الـ cloud وIAM</td>
+</tr>
+<tr>
+<td><strong>ABAC</strong> (Attribute-Based Access Control)</td>
+<td>وصول عام</td>
+<td>الوصول بيُمنح بناءً على مجموعة خصائص (attributes) للمستخدمين والموارد — يسمح بإدارة وصول دقيقة جدًا وقابلة للتكيّف</td>
+</tr>
+</tbody>
+</table></div>
+<h3>Shift-Left Security</h3>
+<p>طريقة فعّالة لتقليل التكاليف الإضافية وتجنّب تعطيل توفّر النظام هي تصميم الأمان مباشرة جوه معمارية النظام بدل ما نضيفه لاحقًا. بناء الأمان في أساس المنتج من البداية بيحسّن الكفاءة ويقلل الحاجة لحمايات مُضافة لاحقًا (retrofitted).</p>
+<p>من غير تطبيق استراتيجية shift-left، فرق التطوير ممكن تسلّم تطبيقات من غير أمان مدمج، مما يجبر المؤسسة تنفّذ ضمانات خارجية متعددة لاحقًا. بإشراك خبراء أمان في مراحل التصميم والتطوير، بيبقى ممكن نصنع منتج بضوابط أمان أصلية (native)، وده بيحسّن تجربة المستخدم وكمان بيقلل الاعتماد على إجراءات حمائية إضافية.</p>
+<p>كتير من التطبيقات لسه معتمدة بشكل كبير على دفاعات مستوى المنصة (platform-level) بدل ما تدمج الأمان جوه البرنامج نفسه. لو كل وظائف الأمان مقدَّمة من تقنية منصة معينة (زي Kubernetes)، مستخدم عنده وصول إداري للمنصة دي يقدر يتلاعب أو يعطّل الحمايات دي، مما يعرّض كل الخدمات المعتمِدة للخطر.</p>
+<h3>فصل الصلاحيات الإدارية (Administrative Segmentation)</h3>
+<p>ممكن يبان معقول نديّ للمدير (admin) صلاحية تجاوز آليات أمان معينة بناءً على دوره. لكن لما تهديد يجي من الداخل — أو مهاجم يحصل على اعتمادات إدارية شرعية — الوضع الأمني الكلي ممكن ينهار.</p>
+<p>للحماية من التهديدات الداخلية والمهاجمين اللي حصلوا على وصول صالح، أساسي تقسّم مسؤوليات الأمان عشان مفيش فرد واحد يقدر يتجاوز كل الضمانات. ده ممكن يشمل فصل المهام بين فرق التطبيقات ومسؤولي الأنظمة، أو توزيع الصلاحيات الإدارية عبر أفراد متعددين، شبيه بمفهوم <strong>Shamir's Secret Sharing (SSS)</strong>.</p>
+<p>باستخدام SSS، النظام ممكن يتضبط عشان يحتاج تفويضات متعددة لتنفيذ فعل إداري عالي المستوى واحد — مثلًا، منح وصول root ممكن يحتاج موافقة 3 مسؤولين منفصلين.</p>
+<h3>Threat Modeling وThreat Intelligence</h3>
+<p>قبل تحليل المخاطر المحتملة على مؤسسة، أساسي إننا نعمل الأول جرد شامل لكل الأصول. مش منطقي نركّز على تهديدات تستهدف معدّات Cisco لو المؤسسة بتشغّل بس معدّات Juniper.</p>
+<p>بمجرد ما بنسجّل أصول الهاردوير والسوفت وير ونفهم متطلبات التشغيل بتاعة المؤسسة، نقدر نبدأ نقيّم التهديدات المحتملة. فرق الأمان يا إما بتعمل بحثها الخاص أو بتستخدم تحليلات تهديد مقدَّمة من موردين متعلقة بصناعات وتقنيات محددة.</p>
+<p>الاستخبارات دي بتغذي <strong>Threat Modeling</strong>، اللي بيشمل فحص الأنماط والتقنيات اللي المهاجمين الحقيقيين بيستخدموها، وتقييم إزاي دي ممكن تأثر على موظفي المؤسسة، عملياتها، أنظمتها، وسوفت وير ها.</p>
+<blockquote>
+<p><strong>Threat Intelligence</strong> هي معلومات اتحدد سياقها لمؤسسة معينة: رؤى قابلة للتنفيذ مستمَدة من الـ threat modeling بتبرز مخاطر حقيقية لأهداف المؤسسة. معلومة خام (زي وجود exploit معين) مش threat intelligence في حد ذاتها، لكن ممكن تساهم فيها بمجرد ما تتحدد سياقها.</p>
+</blockquote>
+<p>الفرق الأساسي بين معلومات أمان عامة وthreat intelligence هو <strong>السياق</strong>: معلومات الأمان ممكن تكون مفيدة نظريًا، لكن الـ threat intelligence خاصة بالمؤسسة وبتدعم قرارات مدروسة لتقوية الإجراءات والاستراتيجيات.</p>
+<h3>تمارين Table-Top</h3>
+<p>بمجرد الحصول على threat intelligence مهمة، المؤسسات غالبًا بتستفيد من تنظيم نقاش عبر-وظيفي (cross-functional) فورًا. صيغة شائعة لده اسمها <strong>table-top exercise</strong>، حيث مهندسين، أصحاب مصلحة، ومتخصصي أمان بيتجمّعوا عشان يقيّموا إزاي المؤسسة ممكن تستجيب لأنواع مختلفة من الحوادث أو الهجمات.</p>
+<p>إجراء التمارين دي بانتظام عبر الأنظمة والبيئات بيضمن إن كل الفرق مألوفة بالـ Tactics, Techniques, and Procedures (TTPs) للاستجابة لسيناريوهات متنوعة. كتير من المؤسسات بتعاني من TTPs غير مطوّرة كفاية، وده ممكن يؤخّر استجابة الحادث بشكل كبير.</p>
+<p><strong>مثال:</strong> سيناريو فيه هجوم phishing ناجح يستهدف مسؤول ممكن يعرّض المؤسسة كلها. لتقوية الدفاعات، مؤسسة ممكن تنفّذ نظام وصول إيميل مخصَّص للمسؤولين معزول فعليًا — المسؤولين بيفتحوا الإيميلات عبر واجهة عميل جوه بيئة sandbox شديدة الأمان على هاردوير منفصل، بدل محطات عمل بوصول للإنتاج.</p>
+<p>تمارين table-top مكوّن أساسي في <strong>Business Continuity Planning (BCP)</strong>، بتغطي مش بس حوادث الأمن السيبراني (زي ransomware) لكن كمان طوارئ تنظيمية أوسع زي كوارث طبيعية أو تهديدات أمنية بتشمل عنف.</p>
+<h3>الـ Patching المستمر والتحقق من سلسلة الإمداد</h3>
+<p>ممارسة دفاعية أساسية تانية هي <strong>automated continuous patching</strong> — استرجاع التحديثات من الكود المصدري الأعلى وتطبيقها الأول على بيئة تطوير أو staging. بمجرد التطبيق، التغييرات بتتختبر بدقة، وبس لو الاختبارات نجحت بيتم ترقيتها للإنتاج.</p>
+<p>المخاطر الأساسي المرتبط بالاستراتيجية دي هو احتمال اختراق سلسلة إمداد السوفت وير (software supply chain). التحقق المستمر من سلسلة الإمداد أساسي لكل من الموردين والمستهلكين — ده بيضمن إن كل سوفت وير وهاردوير مستلَم أصلي وغير معدَّل.</p>
+<p>استخدام <strong>Software Bill of Materials (SBOM)</strong> لتتبّع الاعتماديات في عملية البناء فعّال جدًا لمراقبة سلامة سلسلة الإمداد. بتوثيق كل الاعتماديات، توليد SBOM، وتغليفه تشفيريًا مع التطبيق أو الـ container، المؤسسات تقدر تتحقق من توقيع SBOM قبل النشر.</p>
+<h3>النسخ الاحتياطية (Backups)</h3>
+<p>نسخة احتياطية هي لقطة (snapshot) من البيانات في لحظة زمنية محددة. النسخ الاحتياطية أساسية لأنها بتسمح لنا نستعيد البيانات لو اتلفت، اتمسحت، أو بقت غير متاحة.</p>
+<p><strong>أنواع استراتيجيات النسخ الاحتياطي:</strong></p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>النوع</th>
+<th>الوصف</th>
+<th>المميزات</th>
+<th>العيوب</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Full Backup</strong></td>
+<td>نسخة كاملة من كل البيانات</td>
+<td>سهل الاستعادة</td>
+<td>وقت طويل، تخزين أكبر</td>
+</tr>
+<tr>
+<td><strong>Incremental Backup</strong></td>
+<td>بس الملفات اللي اتغيّرت من آخر نسخة (كاملة أو تزايدية)</td>
+<td>وقت وتخزين أقل</td>
+<td>استعادة أعقد — محتاجة إعادة بناء من نسخ متعددة</td>
+</tr>
+<tr>
+<td><strong>Differential Backup</strong></td>
+<td>الملفات اللي اتغيّرت من آخر نسخة كاملة</td>
+<td>تخزين أوسط، استعادة أبسط من الـ incremental</td>
+<td>تخزين أكتر من incremental</td>
+</tr>
+</tbody>
+</table></div>
+<p>النسخ الاحتياطية كمان ممكن تُصنَّف حسب حالة النظام وقت أخذها: <strong>Hot Backups</strong> و<strong>Cold Backups</strong>. وحسب مكان التخزين: محليًا، على جهاز منفصل، أو وسائط خارجية (hard drives، USB، DVDs، أشرطة مغناطيسية).</p>
+<p>فصل وسائط النسخ الاحتياطي للتخزين أوفلاين بيحميها من الهجمات الأونلاين، رغم إن ده بيقدّم تحديات لوجستية وتكاليف. النسخ الفعلية لسه عرضة للسرقة، وده ممكن يؤدي لسيناريوهات ابتزاز.</p>
+<blockquote>
+<p><strong>الاستراتيجية الأأمن عمومًا هي الهجينة (Hybrid)</strong> — الجمع بين hot/cold وأونلاين/أوفلاين بيضمن مرونة. التكرار (redundancy) أساسي: استخدام طرق نسخ احتياطي متعددة بيضمن إن لو واحدة فشلت، تانية تكون متاحة — ده بيخلق نهج دفاع بالعمق.</p>
+</blockquote>
+<p>النسخ الاحتياطية لازم تتخزن بأمان، والتشفير تقنية أساسية لحمايتها من الوصول غير المصرَّح.</p>
+<h3>التشفير (Encryption)</h3>
+<p>من أفعل الدفاعات ضد الوصول غير المصرَّح. اعتبارات مهمة: تشفير البيانات مفيد بس لو نقدر نفك تشفيرها وقت الحاجة. بعض البيانات ممكن تكون مقصودة للاستخدام المؤقت بس.</p>
+<p><strong>مثال رئيسي: TLS (Transport Layer Security)</strong> — بس الـ client والـ server في جلسة معينة يقدروا يفكوا تشفير المعلومات المنقولة، وحتى المسؤولين مالهمش وصول. مفاتيح فك التشفير موجودة في الذاكرة لفترة قصيرة جدًا قبل ما تتشال. في سيناريوهات التشفير المؤقت (ephemeral encryption) دي، المفاتيح عمرها ما بتتكتب على القرص أو تتبعت عبر الشبكة.</p>
+<p>مهم كمان نضمن إن بس الحد الأدنى الضروري من المستخدمين أو الأنظمة عندهم صلاحيات فك التشفير. بالمثل، ملفات النسخ الاحتياطي المفروض تتشفّر بمفاتيح فريدة، والمفاتيح مايتكررش استخدامها عبر تطبيقات مختلفة. كل مفتاح تشفير المفروض يكون له غرض واحد محدَّد بوضوح.</p>
+<h3>الـ Logging واختبار الفوضى (Chaos Testing)</h3>
+<p>اللوجات المنظَّمة كويس من أهم جوانب الأمان في تصميم التطبيقات. لما اللوجات متسقة، سهلة المعالجة، ومفصَّلة كفاية، فرق العمليات تقدر تكتشف وترد على المشاكل أسرع.</p>
+<p>اللوجات مش مقصورة على الشبكة بس — أجهزة الشبكة الأساسية زي الـ routers، الـ switches، والـ firewalls محتاجة كمان تتسجّل، بما فيها معلومات زي تاريخ الشراء، إصدار نظام التشغيل، وتاريخ نهاية العمر الافتراضي.</p>
+<p>جرد الأصول الشامل بيساعد الإدارة تخطط لمشتريات كبيرة مع اقتراب انتهاء عمر الأجهزة، وبيدّي فريق الأمان مرجع سريع للبنية التحتية للشبكة.</p>
+<p><strong>Chaos Testing</strong> نوع من ممارسات BCP وDR، غالبًا مؤتمت. مثلًا، مؤسسة ممكن تستخدم virtual machine باعتمادات إدارية صالحة جوه شبكة الإنتاج عشان تحاكي اضطرابات متعمَّدة — عن طريق Red Teams، إيقافات مؤتمتة مجدوَلة، أو إرسال أوامر خبيثة موثَّقة عبر APIs المنصة. الهدف اختبار الضوابط تحت ظروف غير متوقّعة وفوضوية.</p>
+<hr />
+<h2 id="lu5"><span class="num">05</span><span class="htext">القوانين واللوائح والمعايير والأطر (Cybersecurity Laws, Regulations, Standards, and Frameworks)</span></h2>
+<h3>أهداف الوحدة</h3>
+<p>فهم واسع للقضايا القانونية والتنظيمية حوالين الأمن السيبراني | فهم أطر ومعايير مختلفة بتساعد المؤسسات توجّه أنشطتها الأمنية | الإلمام بـ "تشريح الأمن السيبراني" (Anatomy of Cyber)</p>
+<h3>القوانين واللوائح</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>القانون</th>
+<th>الوصف</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>HIPAA</strong> (1996)</td>
+<td>قانون أمريكي بيحكم التأمين الصحي وحماية سجلات المرضى الطبية. بيحمي <strong>PHI</strong> (Protected Health Information) عبر: <strong>Privacy Rule</strong> (كيفية مشاركة PHI وحقوق المريض)، و<strong>Security Rule</strong> (ضمانات إدارية، فعلية، وتقنية لحماية e-PHI)</td>
+</tr>
+<tr>
+<td><strong>FERPA</strong> (1974)</td>
+<td>بينظّم خصوصية سجلات الطلاب التعليمية في أمريكا. بيقيّد الإفصاح من غير موافقة، ماعدا حالات معينة (نقل مدارس، طوارئ صحية، امتثال قانوني). المخالفة بتعرّض المدارس لفقدان التمويل الفيدرالي</td>
+</tr>
+<tr>
+<td><strong>GLBA</strong> (1999)</td>
+<td>بيفرض متطلبات على المؤسسات المالية لحماية معلومات العملاء المالية — شرح كيفية الجمع والاستخدام والمشاركة، مع خيار الانسحاب</td>
+</tr>
+<tr>
+<td><strong>GDPR</strong> (2016، الاتحاد الأوروبي)</td>
+<td>بيحكم خصوصية وأمان البيانات. بيدّي أفراد حقوق واسعة — "الحق في النسيان"، إشعارات الاختراق، نقل البيانات. الغرامات تصل لـ 20 مليون يورو أو 4% من الإيراد السنوي، أيهما أعلى. بينطبق على أي كيان بيعالج بيانات مقيمين في الاتحاد الأوروبي بغض النظر عن مكان المؤسسة</td>
+</tr>
+<tr>
+<td><strong>Key Disclosure Laws</strong></td>
+<td>بعض الدول بتطلب الإفصاح عن مفاتيح التشفير أو الباسوردات في ظروف قانونية معينة — مثال: <strong>RIPA 2000</strong> (المملكة المتحدة) بيسمح للسلطات تجبر المشتبه بهم يقدّموا مفاتيح فك التشفير، بعقوبات تصل لسنتين سجن (خمس سنين لحالات الأمن القومي أو حماية الأطفال)</td>
+</tr>
+<tr>
+<td><strong>CCPA</strong> (2018، كاليفورنيا)</td>
+<td>بيدّي حقوق للمقيمين: <strong>Right to Know</strong> (إفصاح البيانات المجمَّعة)، <strong>Right to Opt-Out</strong> (رفض بيع البيانات)، <strong>Right to Delete</strong> (حذف المعلومات الشخصية)</td>
+</tr>
+</tbody>
+</table></div>
+<h3>المعايير والأطر</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>الإطار</th>
+<th>الوصف</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>PCI DSS</strong> (2004)</td>
+<td>إطار أمن معلومات للمؤسسات اللي بتتعامل مع بيانات بطاقات ائتمان. بيدار من Payment Card Industry Security Standards Council. التقييم سنوي. مثال: <strong>Requirement 2</strong> بيمنع استخدام باسوردات افتراضية من المورّد؛ <strong>Requirement 3</strong> بيحدد أنواع بيانات حامل البطاقة المسموح تخزينها وإزاي تُحمى</td>
+</tr>
+<tr>
+<td><strong>CIS Top 18</strong></td>
+<td>ضوابط أمان حرجة موصى بيها من Center for Internet Security (سابقًا 20، دلوقتي 18). مقسَّمة لـ 3 مجموعات تنفيذ: <strong>IG1</strong> (مؤسسات صغيرة، موارد IT محدودة)، <strong>IG2</strong> (مؤسسات متوسطة، بنية أعقد)، <strong>IG3</strong> (تنفيذ كامل، فرق أمان مخصَّصة)</td>
+</tr>
+<tr>
+<td><strong>NIST Cybersecurity Framework</strong></td>
+<td>يوفّر معايير وممارسات لتحديد، تقييم، وتقليل مخاطر الأمن السيبراني. 3 مكونات: <strong>Core</strong> (الوظائف الست)، <strong>Implementation Tiers</strong>، <strong>Profiles</strong>. الوظائف الست: <code>Identify (ID) → Protect (PR) → Detect (DE) → Respond (RS) → Recover (RC)</code></td>
+</tr>
+<tr>
+<td><strong>MITRE ATT&amp;CK وD3FEND</strong></td>
+<td>ATT&amp;CK بيوثّق سلوكيات وتقنيات المهاجمين (TTPs) عالميًا. D3FEND (المقابل الدفاعي) بيوفّر ممارسات موصى بيها للوقاية، الاكتشاف، التخفيف، والاستجابة</td>
+</tr>
+<tr>
+<td><strong>ISA/IEC 62443</strong></td>
+<td>معيار يركّز على أمان أنظمة التحكم والأتمتة الصناعية (IACS / OT)</td>
+</tr>
+<tr>
+<td><strong>Cyber Kill Chain</strong> (Lockheed Martin)</td>
+<td>دورة حياة الهجوم السيبراني بسبع مراحل (تفصيل تحت)</td>
+</tr>
+<tr>
+<td><strong>FedRAMP</strong></td>
+<td>إطار أمان موحَّد لخدمات الـ cloud المستخدَمة من وكالات فيدرالية أمريكية. تفويض واحد بيغطي كل الوكالات، بضوابط مبنية على NIST SP 800-53 Rev. 4</td>
+</tr>
+</tbody>
+</table></div>
+<h3>Cyber Kill Chain — المراحل السبع</h3>
+<div class="code-wrap"><pre><code>1. Reconnaissance    → تحديد الأهداف والثغرات المحتملة
+2. Weaponization      → تطوير استغلال لنقاط الضعف المحددة
+3. Delivery           → إطلاق الهجوم
+4. Exploitation       → تنفيذ الـ payload على الهدف
+5. Installation       → تثبيت malware على النظام
+6. Command &amp; Control  → الحفاظ على الوصول وإصدار الأوامر
+7. Actions on Objectives → تحقيق هدف المهاجم (سرقة بيانات أو تدمير)
+</code></pre></div>
+<h3>تشريح الأمن السيبراني (Anatomy of Cyber)</h3>
+<p>الأمن السيبراني في جوهره شكل من إدارة المخاطر مركّز على التهديدات المبنية على الشبكة اللي بتأثر على الأصول المعالَجة أو المخزَّنة في أنظمة تقنية. الأنظمة دي بتدعم عمليات المؤسسة التجارية وبتنشئ قيمة، فالهجمات عليها ممكن تؤدي لفقدان قيمة. لإدارة الخطر ده، المؤسسات بتنفّذ ضوابط أمنية.</p>
+<p><strong>المخطط بيتكون من:</strong></p>
+<ul>
+<li><strong>في الأسفل:</strong> إطار الأمان (Security Framework) بيوفّر ضوابط لحماية المؤسسة وتقليل الخطر — ممكن يكون ISO 27000، NIST CSF، أو أي إطار يحدد ضوابط أمان. أحد الضوابط دي هو <strong>Security Incident Management</strong>.</li>
+<li><strong>في الأعلى:</strong> تهديد بيستغل ثغرة، مسبّب حدث أمني ممكن يتصعّد لحادث أمني. الحوادث دي بتضرّ المؤسسة وتقلل قيمتها، بما فيها تكاليف الاستجابة للحادث.</li>
+<li><strong>الأصول</strong> في المخطط بتمثّل موارد قيّمة للمؤسسة — حرجة للعمليات لكن كمان أهداف محتملة بتقدّم خطر.</li>
+</ul>
+<p><strong>Security Incident Management</strong> بيشمل العملية الكاملة: اكتشاف الأحداث، الفرز، تحديد الحوادث، ثم التحقيق والحل.</p>
+<p>باستخدام NIST CSF كمثال، الوظائف الست ممكن تترسم على المخطط ده لتوضيح فين الضوابط المحددة بتدخل — ده بيلخّص جوهر الأمن السيبراني بشكل واضح ومفهوم لكل من المديرين التنفيذيين ومتخصصي الأمان.</p>
+<hr />
+<h2 id="lu6"><span class="num">06</span><span class="htext">الفرص الوظيفية في الأمن السيبراني (Career Opportunities in Cybersecurity)</span></h2>
+<h3>المسار الهجومي (Attack)</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>الدور</th>
+<th>الوصف</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Network Penetration Tester</strong></td>
+<td>يكتشف ويستغل ثغرات جوه شبكة مستهدفة. محتاج فهم قوي للشبكات والأنظمة، ومهارات كتابة تقنية واضحة لتوثيق النتائج</td>
+</tr>
+<tr>
+<td><strong>Web Application Tester</strong></td>
+<td>يقيّم تطبيقات الويب على نقاط ضعف أمنية. محتاج معرفة قوية بثغرات الويب، أساليب black-box وwhite-box</td>
+</tr>
+<tr>
+<td><strong>Cloud Penetration Tester</strong></td>
+<td>يقيّم أمان البنية التحتية السحابية. مناسب لمن عنده خبرة في تقنيات الـ cloud</td>
+</tr>
+<tr>
+<td><strong>Exploit Developer</strong></td>
+<td>يكتشف ويطوّر استغلالات لثغرات السوفت وير. مناسب لمن بيستمتع بالـ reverse engineering، تحليل الكود منخفض المستوى، وتخطي التخفيفات الأمنية</td>
+</tr>
+<tr>
+<td><strong>Vulnerability Researcher</strong></td>
+<td>يبحث في ثغرات سوفت وير جديدة وتقنيات استغلال، يقيّم تأثيرها، يطوّر Proofs of Concept (PoCs)، ويوصّل النتائج لأصحاب المصلحة</td>
+</tr>
+</tbody>
+</table></div>
+<h3>المسار الدفاعي (Defend)</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>الدور</th>
+<th>الوصف</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Security Administrator</strong></td>
+<td>دور إدارة أنظمة مركّز على الأمان عبر المؤسسة على المستوى التشغيلي</td>
+</tr>
+<tr>
+<td><strong>Cyber Defence Analyst (SOC Analyst)</strong></td>
+<td>يراقب، يفرز، ويصعّد تنبيهات أمنية من الشبكات المراقَبة</td>
+</tr>
+<tr>
+<td><strong>Malware Analyst</strong></td>
+<td>يفحص عينات malware مشتبهة أو مؤكَّدة لفهم إزاي بتشتغل وغرضها</td>
+</tr>
+<tr>
+<td><strong>Digital Forensics Analyst</strong></td>
+<td>يحقق في حوادث الأمن السيبراني بجمع وتحليل أدلة الاختراقات واستعادة البيانات</td>
+</tr>
+<tr>
+<td><strong>Cyber Defence Incident Responder</strong></td>
+<td>يستجيب لأحداث الأمن السيبراني، بيحدد سببها ونطاقها، ويوصي بإجراءات الاحتواء والإزالة والتعافي</td>
+</tr>
+<tr>
+<td><strong>Threat Hunter</strong></td>
+<td>يبحث استباقيًا في الشبكات والأنظمة عن Indicators of Compromise (IOCs) باستخدام threat intelligence محدَّث</td>
+</tr>
+</tbody>
+</table></div>
+<h3>مسار البناء (Build)</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>الدور</th>
+<th>الوصف</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Enterprise Security Architect (ESA)</strong></td>
+<td>يفهم أنشطة المؤسسة التجارية ويبني نماذج بتربط حلول الأمان بالخدمات التجارية</td>
+</tr>
+<tr>
+<td><strong>Cloud Architect</strong></td>
+<td>يصمم ويشرف على تنفيذ استراتيجية حوسبة سحابية متماشية مع أهداف العمل</td>
+</tr>
+<tr>
+<td><strong>Security Solution Architect (SA)</strong></td>
+<td>يطوّر حلول معمارية عالية المستوى لأمان التطبيقات</td>
+</tr>
+<tr>
+<td><strong>Security Designer</strong></td>
+<td>مسؤول عن تصميم، بناء، وغالبًا صيانة هياكل الدفاع السيبراني للتطبيقات والبنية التحتية</td>
+</tr>
+<tr>
+<td><strong>Developer</strong></td>
+<td>يكتب برامج حاسوبية من مكونات نظام التشغيل الأساسية لتطبيقات سطح المكتب، الموبايل، والويب</td>
+</tr>
+<tr>
+<td><strong>DevSecOps Engineer</strong></td>
+<td>يدمج الأمان في كل مراحل دورة حياة تطوير السوفت وير، ويؤتمت اختبارات وعمليات الأمان</td>
+</tr>
+<tr>
+<td><strong>Site Reliability Engineer (SRE)</strong></td>
+<td>يضمن ويحسّن توفّر وأداء أنظمة السوفت وير</td>
+</tr>
+<tr>
+<td><strong>System Hardener (System Administrator)</strong></td>
+<td>يضبط الأنظمة لتقليل المخاطر الأمنية — تعديل إعدادات افتراضية غير آمنة، إزالة سوفت وير غير مستخدَم، فرض قواعد firewall</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<p><em>نهاية نوتس الموديول الأول — OSCP: Introduction to Cybersecurity</em></p>
+  <div class="footer-note">-- EOF: module-01/introduction-to-cybersecurity.md --</div>
+
+</div>
+</body>
+</html>
