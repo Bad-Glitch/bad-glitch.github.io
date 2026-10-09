@@ -1,6 +1,6 @@
 ---
-import MainGridLayout from "../../layouts/MainGridLayout.astro";
 import { getCollection } from "astro:content";
+import MainGridLayout from "../../layouts/MainGridLayout.astro";
 import { getPostUrlBySlug } from "../../utils/url-utils";
 
 const allPosts = await getCollection("posts");

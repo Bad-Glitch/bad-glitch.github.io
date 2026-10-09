@@ -3,7 +3,7 @@ import { UNCATEGORIZED } from "@constants/constants";
 import I18nKey from "../i18n/i18nKey";
 import { i18n } from "../i18n/translation";
 import { getSortedPosts } from "../utils/content-utils";
-import { getPostUrlBySlug, url } from "../utils/url-utils";
+import { url, getPostUrlBySlug } from "../utils/url-utils";
 
 interface Props {
         keyword?: string;
@@ -45,19 +45,23 @@ const standalonePosts = posts.filter(
         (post) => !(post.data.category === "Courses Notes" && post.data.course),
 );
 
+
 const courses = Array.from(
-        new Set(coursePosts.map((post) => post.data.course).filter(Boolean)),
+        new Set(
+                coursePosts
+                        .map((post) => post.data.course)
+                        .filter((course): course is string => Boolean(course)),
+        ),
 ).map((course) => {
         const modules = coursePosts
                 .filter((post) => post.data.course === course)
                 .sort((a, b) => (a.data.module ?? 999) - (b.data.module ?? 999));
 
         return {
-                name: course!,
+                name: course,
                 modules,
         };
 });
-
 const groups: { year: number; posts: typeof standalonePosts }[] = (() => {
         const groupedPosts = standalonePosts.reduce(
                 (grouped: { [year: number]: typeof standalonePosts }, post) => {
