@@ -1,5 +1,9 @@
-# From Defacement to PLCs: How Iranian State-Aligned Cyber Operations Evolved, 2009–2026
 
+---
+title: "From Defacement to PLCs: How Iranian State-Aligned Cyber Operations Evolved, 2009–2026"
+published: 2026-10-09
+description: "An analysis of the evolution of Iranian state-aligned cyber operations from website defacement to attacks targeting industrial control systems."
+---
 *By [Amr Abdel Hamide (Badglitch)] · October 2026 · Threat intelligence analysis*
 
 ## Why this piece exists
