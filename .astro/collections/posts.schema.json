@@ -66,6 +66,13 @@
           "type": "string",
           "default": ""
         },
+        "course": {
+          "type": "string",
+          "default": ""
+        },
+        "module": {
+          "type": "number"
+        },
         "prevTitle": {
           "type": "string",
           "default": ""

