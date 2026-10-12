@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OSCP · Module 19: Active Directory — المقدمة والـ Enumeration</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-0:#0B0B0D;--bg-1:#121214;--surface:#17171A;--surface-2:#1D1D21;
+    --border:#2A2A2F;--border-soft:#232326;
+    --text:#E6E6E9;--text-soft:#C4C4CA;--muted:#8A8A92;
+    --red:#E1362F;--red-soft:rgba(225,54,47,0.10);--red-border:rgba(225,54,47,0.35);
+    --red-grad:linear-gradient(90deg,#E1362F,#F2794A);
+    --amber:#E8A23A;--amber-soft:rgba(232,162,58,0.09);--amber-border:rgba(232,162,58,0.30);
+    --green:#3FBF6E;--green-soft:rgba(63,191,110,0.09);--green-border:rgba(63,191,110,0.30);
+    --blue:#4EA1D3;--blue-soft:rgba(78,161,211,0.09);--blue-border:rgba(78,161,211,0.30);
+    --purple:#A179E8;--purple-soft:rgba(161,121,232,0.10);--purple-border:rgba(161,121,232,0.32);
+    --mono:'IBM Plex Mono','Courier New',monospace;
+  }
+  html[data-theme="light"]{--bg-0:#F4F3F1;--bg-1:#ECEBE8;--surface:#FFFFFF;--surface-2:#F3F2EF;--border:#DEDCD6;--border-soft:#E6E4DF;--text:#1C1B19;--text-soft:#3C3A36;--muted:#726F68;}
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;direction:rtl;text-align:right;background:var(--bg-0);}
+  body{font-family:'Cairo','Segoe UI',Tahoma,sans-serif;line-height:1.95;font-size:16.5px;color:var(--text);
+    background:radial-gradient(900px 420px at 12% -8%,rgba(225,54,47,0.10),transparent 60%),radial-gradient(800px 420px at 90% 6%,rgba(232,162,58,0.06),transparent 60%),linear-gradient(180deg,var(--bg-0) 0%,var(--bg-1) 100%);
+    background-attachment:fixed;transition:background .2s,color .2s;}
+  html[data-theme="light"] body{background:radial-gradient(900px 420px at 12% -8%,rgba(225,54,47,.06),transparent 60%),radial-gradient(800px 420px at 90% 6%,rgba(232,162,58,.05),transparent 60%),linear-gradient(180deg,var(--bg-0) 0%,var(--bg-1) 100%);}
+  .progress-rail{position:fixed;top:0;inset-inline:0;height:3px;background:rgba(255,255,255,.04);z-index:60;}
+  html[data-theme="light"] .progress-rail{background:rgba(0,0,0,.05);}
+  .progress-bar{height:100%;width:0%;background:var(--red-grad);transition:width .08s linear;}
+  .float-controls{position:fixed;bottom:22px;left:22px;z-index:55;display:flex;flex-direction:column;gap:10px;}
+  .fctrl-btn{width:42px;height:42px;border-radius:50%;background:var(--surface);border:1px solid var(--border);color:var(--text-soft);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;box-shadow:0 10px 24px -10px rgba(0,0,0,.5);transition:transform .15s,border-color .15s,opacity .2s;}
+  .fctrl-btn:hover{transform:translateY(-2px);border-color:var(--red-border);color:var(--red);}
+  #toTop{opacity:0;pointer-events:none;}#toTop.show{opacity:1;pointer-events:auto;}
+  .page{max-width:860px;margin:0 auto;padding:46px 22px 100px;}
+  .banner{position:relative;overflow:hidden;background:linear-gradient(155deg,var(--surface) 0%,var(--bg-1) 55%,var(--surface) 100%);border:1px solid var(--border-soft);border-radius:10px;padding:0 0 34px;margin-bottom:26px;box-shadow:0 20px 50px -20px rgba(0,0,0,.6);}
+  .term-bar{display:flex;align-items:center;gap:8px;padding:13px 18px;border-bottom:1px solid var(--border-soft);background:rgba(255,255,255,.015);direction:ltr;}
+  .term-dot{width:11px;height:11px;border-radius:50%;display:inline-block;}
+  .term-dot.r{background:#E1362F;}.term-dot.y{background:#E8A23A;}.term-dot.g{background:#3FBF6E;}
+  .term-path{margin-inline-start:12px;font-family:var(--mono);font-size:12px;color:var(--muted);}
+  .theme-switch{margin-inline-start:auto;font-family:var(--mono);font-size:11px;color:var(--muted);background:transparent;border:1px solid var(--border);border-radius:4px;padding:4px 9px;cursor:pointer;}
+  .theme-switch:hover{color:var(--amber);border-color:var(--amber-border);}
+  .banner-body{padding:30px 34px 4px;}
+  .banner .kicker{display:inline-block;font-family:var(--mono);font-size:12.5px;letter-spacing:.03em;color:var(--red);background:var(--red-soft);border:1px solid var(--red-border);border-radius:3px;padding:5px 12px;margin-bottom:20px;direction:ltr;}
+  .banner h1{margin:0 0 14px;font-size:27px;font-weight:800;line-height:1.5;color:var(--text);}
+  .banner .lede{color:var(--muted);font-size:15.5px;line-height:1.95;max-width:640px;margin:0 0 24px;}
+  .tags{display:flex;flex-wrap:wrap;gap:9px;}
+  .tag{font-size:12.5px;font-family:var(--mono);color:var(--amber);background:var(--amber-soft);border:1px solid var(--amber-border);border-radius:3px;padding:5px 11px;}
+  .toc{background:var(--surface);border:1px solid var(--border-soft);border-radius:8px;padding:6px 0;margin-bottom:50px;overflow:hidden;}
+  .toc-title{font-family:var(--mono);font-weight:600;font-size:13px;color:var(--green);padding:14px 22px;border-bottom:1px solid var(--border-soft);direction:ltr;text-align:left;}
+  .toc-list{display:flex;flex-direction:column;}
+  .toc-item{display:flex;align-items:center;gap:14px;padding:12px 22px;color:var(--text-soft);text-decoration:none;font-size:14.5px;border-bottom:1px solid rgba(255,255,255,.03);transition:background .15s;}
+  .toc-list .toc-item:last-child{border-bottom:none;}
+  .toc-item:hover{background:var(--red-soft);}
+  .toc-num{flex:none;font-family:var(--mono);font-size:12.5px;font-weight:600;color:#0F0F10;background:var(--red-grad);border-radius:3px;padding:3px 8px;direction:ltr;}
+  h1,h2,h3,h4{font-weight:700;}
+  h2{display:flex;align-items:center;gap:14px;font-size:21px;margin:66px 0 22px;padding-bottom:16px;border-bottom:1px solid var(--border-soft);color:var(--text);}
+  h2 .num{flex:none;font-family:var(--mono);font-size:13px;font-weight:700;color:#0F0F10;background:var(--red-grad);border-radius:5px;padding:7px 12px;direction:ltr;}
+  h2 .htext{line-height:1.5;}
+  h3{font-size:17px;margin:34px 0 14px;color:var(--red);display:flex;align-items:center;gap:9px;}
+  h3::before{content:"#";font-family:var(--mono);color:var(--amber);font-weight:700;}
+  h4{font-size:14.8px;margin:22px 0 10px;color:var(--text-soft);font-family:var(--mono);}
+  p{margin:0 0 17px;color:var(--text);}
+  strong{color:var(--text);font-weight:700;}
+  :root:not([data-theme="light"]) strong{color:#FBFBFC;}
+  a{color:var(--amber);text-decoration:none;border-bottom:1px dashed var(--amber-border);}
+  hr{border:none;height:1px;margin:50px 0;background:linear-gradient(90deg,transparent,var(--border),transparent);}
+  ul,ol{margin:0 0 18px;padding-inline-start:24px;}
+  li{margin-bottom:9px;color:var(--text);}
+  li::marker{color:var(--red);font-family:var(--mono);}
+  li>ul,li>ol{margin-top:9px;}
+  .goals-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px;margin:0 0 22px;}
+  .goal-card{display:flex;gap:10px;align-items:flex-start;background:var(--surface);border:1px solid var(--border-soft);border-radius:7px;padding:13px 15px;font-size:14px;color:var(--text-soft);}
+  .goal-card .gi{flex:none;font-family:var(--mono);font-size:11px;font-weight:700;color:var(--green);background:var(--green-soft);border:1px solid var(--green-border);border-radius:4px;width:22px;height:22px;display:flex;align-items:center;justify-content:center;}
+  blockquote{margin:24px 0;padding:17px 22px;background:var(--red-soft);border:1px solid var(--red-border);border-inline-start:3px solid var(--red);border-radius:6px;color:var(--text-soft);}
+  blockquote p{margin:0;color:inherit;line-height:1.85;}
+  blockquote p+p{margin-top:10px;}
+  blockquote strong{color:var(--text);}
+  .callout{margin:24px 0;padding:17px 22px 18px;border-radius:6px;border:1px solid var(--border-soft);border-inline-start:3px solid var(--border);background:var(--surface);}
+  .callout p{margin:0;color:var(--text-soft);line-height:1.85;}
+  .callout p+p{margin-top:10px;}
+  .callout-label{display:inline-flex;align-items:center;gap:7px;font-family:var(--mono);font-size:11.5px;font-weight:700;letter-spacing:.02em;text-transform:uppercase;margin-bottom:10px;direction:ltr;}
+  .callout.note{border-inline-start-color:var(--blue);background:var(--blue-soft);}.callout.note .callout-label{color:var(--blue);}
+  .callout.warning{border-inline-start-color:var(--red);background:var(--red-soft);}.callout.warning .callout-label{color:var(--red);}
+  .callout.tip{border-inline-start-color:var(--green);background:var(--green-soft);}.callout.tip .callout-label{color:var(--green);}
+  .callout.examtip{border-inline-start-color:var(--purple);background:var(--purple-soft);}.callout.examtip .callout-label{color:var(--purple);}
+  .callout.case{border-inline-start-color:var(--amber);background:var(--amber-soft);}.callout.case .callout-label{color:var(--amber);}
+  .callout.definition{border-inline-start-color:var(--muted);background:var(--surface-2);}.callout.definition .callout-label{color:var(--text-soft);}
+  .table-wrap{overflow-x:auto;margin:22px 0;border:1px solid var(--border-soft);border-radius:8px;}
+  table{width:100%;border-collapse:collapse;font-size:14.2px;min-width:480px;}
+  thead th{background:var(--surface-2);color:var(--amber);font-weight:700;font-family:var(--mono);font-size:12.5px;text-transform:uppercase;letter-spacing:.02em;text-align:start;padding:13px 15px;border-bottom:1px solid var(--border-soft);white-space:nowrap;}
+  tbody td{padding:12px 15px;border-bottom:1px solid var(--border-soft);color:var(--text-soft);vertical-align:top;}
+  tbody tr:last-child td{border-bottom:none;}
+  tbody tr:nth-child(even){background:rgba(127,127,127,.03);}
+  tbody tr:hover{background:var(--red-soft);}
+  code{font-family:var(--mono);font-size:13.3px;background:var(--surface-2);border:1px solid var(--border-soft);border-radius:4px;padding:2px 6px;direction:ltr;unicode-bidi:embed;color:var(--green);}
+  .code-wrap{position:relative;overflow-x:auto;margin:22px 0;}
+  .code-tag{position:absolute;top:10px;left:14px;font-family:var(--mono);font-size:10.5px;color:var(--muted);letter-spacing:.04em;text-transform:uppercase;z-index:2;}
+  .copy-btn{position:absolute;top:8px;right:10px;z-index:2;font-family:var(--mono);font-size:11px;color:var(--muted);background:var(--surface-2);border:1px solid var(--border-soft);border-radius:4px;padding:4px 9px;cursor:pointer;direction:ltr;}
+  .copy-btn:hover{color:var(--amber);border-color:var(--amber-border);}
+  .copy-btn.copied{color:var(--green);border-color:var(--green-border);}
+  pre{background:var(--bg-0);border:1px solid var(--border-soft);border-inline-start:3px solid var(--red);border-radius:8px;padding:30px 22px 18px;direction:ltr;text-align:left;margin:0;}
+  html[data-theme="light"] pre{background:#16181C;}
+  pre code{background:none;border:none;padding:0;color:#B9E8C9;font-size:13.2px;line-height:1.75;}
+  .diagram-card{background:var(--surface);border:1px solid var(--border-soft);border-radius:10px;padding:22px 18px 16px;margin:24px 0;}
+  .diagram-card svg{width:100%;height:auto;display:block;}
+  .diagram-caption{margin-top:10px;text-align:center;font-family:var(--mono);font-size:11.5px;color:var(--muted);}
+  .takeaways{background:var(--surface);border:1px solid var(--border-soft);border-radius:8px;padding:18px 22px 20px;margin:30px 0 10px;}
+  .takeaways-title{font-family:var(--mono);font-size:12.5px;font-weight:700;color:var(--green);margin-bottom:12px;direction:ltr;text-align:left;display:flex;align-items:center;gap:8px;}
+  .takeaways ul{margin:0;padding-inline-start:20px;}
+  .takeaways li{color:var(--text-soft);font-size:14.5px;}
+  .cheat-section h4{color:var(--amber);font-size:13px;margin:26px 0 8px;}
+  .step-track{display:flex;flex-direction:column;gap:0;margin:24px 0;}
+  .step-item{position:relative;padding:0 0 26px 0;padding-inline-start:46px;border-inline-start:2px solid var(--border-soft);}
+  .step-item:last-child{border-inline-start:2px solid transparent;padding-bottom:4px;}
+  .step-num{position:absolute;inset-inline-start:-17px;top:0;width:32px;height:32px;border-radius:50%;background:var(--red-grad);color:#0F0F10;font-family:var(--mono);font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;}
+  .step-title{font-weight:700;color:var(--text);margin-bottom:6px;font-size:15px;}
+  .step-body{color:var(--text-soft);font-size:14.5px;}
+  .step-body p{margin:0 0 10px;}.step-body p:last-child{margin-bottom:0;}
+  /* AD hierarchy visual */
+  .ad-tree{background:var(--surface-2);border:1px solid var(--border-soft);border-radius:8px;padding:16px 20px;margin:18px 0;direction:ltr;text-align:left;}
+  .ad-row{display:flex;align-items:center;gap:10px;margin-bottom:8px;font-family:var(--mono);font-size:12.5px;}
+  .ad-row:last-child{margin-bottom:0;}
+  .ad-node{border-radius:4px;padding:4px 10px;font-weight:600;}
+  .ad-node.forest{background:rgba(161,121,232,.15);border:1px solid var(--purple-border);color:var(--purple);}
+  .ad-node.domain{background:var(--blue-soft);border:1px solid var(--blue-border);color:var(--blue);}
+  .ad-node.dc{background:var(--red-soft);border:1px solid var(--red-border);color:var(--red);}
+  .ad-node.ou{background:var(--amber-soft);border:1px solid var(--amber-border);color:var(--amber);}
+  .ad-node.obj{background:var(--green-soft);border:1px solid var(--green-border);color:var(--green);}
+  .ad-indent{color:var(--border);margin-inline-start:10px;}
+  /* bloodhound path */
+  .bh-path{background:var(--surface-2);border:1px solid var(--border-soft);border-radius:8px;padding:14px 20px;margin:18px 0;direction:ltr;text-align:left;}
+  .bh-node{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:12px;border-radius:20px;padding:5px 12px;border:1px solid var(--border-soft);margin:4px;}
+  .bh-node.owned{background:var(--red-soft);border-color:var(--red-border);color:var(--red);}
+  .bh-node.machine{background:var(--blue-soft);border-color:var(--blue-border);color:var(--blue);}
+  .bh-node.da{background:var(--purple-soft);border-color:var(--purple-border);color:var(--purple);}
+  .bh-edge{font-family:var(--mono);font-size:11px;color:var(--amber);padding:2px 6px;background:var(--amber-soft);border-radius:3px;direction:ltr;}
+  .bh-arrow{color:var(--muted);font-size:14px;margin:0 4px;}
+  .footer-note{margin-top:70px;padding-top:26px;border-top:1px solid var(--border-soft);color:var(--muted);font-size:13.3px;font-family:var(--mono);text-align:center;direction:ltr;}
+  @media print{.float-controls,.progress-rail,.copy-btn,.theme-switch{display:none!important;}body{background:#fff;color:#000;}.page{max-width:100%;}}
+  @media(max-width:640px){.page{padding:28px 14px 70px;}.banner-body{padding:24px 20px 4px;}.banner h1{font-size:21px;}h2{font-size:18px;gap:10px;}.float-controls{left:12px;bottom:14px;}}
+</style>
+</head>
+<body>
+
+<div class="progress-rail"><div class="progress-bar" id="progressBar"></div></div>
+<div class="float-controls">
+  <button class="fctrl-btn" id="toTop" title="ارجع لفوق" aria-label="ارجع لفوق">↑</button>
+</div>
+
+<div class="page">
+
+  <div class="banner">
+    <div class="term-bar">
+      <span class="term-dot r"></span><span class="term-dot y"></span><span class="term-dot g"></span>
+      <span class="term-path">root@oscp:~/module-19$</span>
+      <button class="theme-switch" id="themeSwitch">theme: dark</button>
+    </div>
+    <div class="banner-body">
+      <span class="kicker">OSCP · PEN-200 · Module 19</span>
+      <h1>Active Directory — المقدمة والـ Enumeration</h1>
+      <p class="lede">من بنية AD (Forest، Domain، DC، OU، GPO) لحد enumeration كامل بـ net.exe وPowerShell/LDAP وPowerView، واستغلال ACL misconfigurations وGPP passwords وKerberoasting وAS-REP Roasting، وأتمتة الكل بـ BloodHound+SharpHound.</p>
+      <div class="tags">
+        <span class="tag">active-directory</span>
+        <span class="tag">powerview</span>
+        <span class="tag">bloodhound</span>
+        <span class="tag">kerberoasting</span>
+        <span class="tag">acl-abuse</span>
+        <span class="tag">gpp-passwords</span>
+      </div>
+    </div>
+  </div>
+
+<nav class="toc"><div class="toc-title">$ ls learning_units/</div><div class="toc-list">
+<a class="toc-item" href="#lu1"><span class="toc-num">01</span><span class="toc-label">مقدمة لـ Active Directory — المكوّنات والكائنات</span></a>
+<a class="toc-item" href="#lu2"><span class="toc-num">02</span><span class="toc-label">Enumeration بأدوات Legacy — net.exe وnltest</span></a>
+<a class="toc-item" href="#lu3"><span class="toc-num">03</span><span class="toc-label">PowerShell وLDAP Enumeration</span></a>
+<a class="toc-item" href="#lu4"><span class="toc-num">04</span><span class="toc-label">PowerView Enumeration</span></a>
+<a class="toc-item" href="#lu5"><span class="toc-num">05</span><span class="toc-label">Object Permissions وACL Abuse</span></a>
+<a class="toc-item" href="#lu6"><span class="toc-num">06</span><span class="toc-label">Domain Shares وSYSVOL وGPP Passwords</span></a>
+<a class="toc-item" href="#lu7"><span class="toc-num">07</span><span class="toc-label">متجهات هجوم AD المتقدمة</span></a>
+<a class="toc-item" href="#lu8"><span class="toc-num">08</span><span class="toc-label">BloodHound وSharpHound</span></a>
+<a class="toc-item" href="#cheat"><span class="toc-num">--</span><span class="toc-label">Cheat Sheet مرجعي</span></a>
+<a class="toc-item" href="#summary"><span class="toc-num">--</span><span class="toc-label">الخلاصة العامة للموديول</span></a>
+</div></nav>
+
+<hr />
+
+<h2 id="lu1"><span class="num">01</span><span class="htext">مقدمة لـ Active Directory</span></h2>
+
+<div class="callout definition">
+<div class="callout-label">⬦ ما هو Active Directory</div>
+<p><strong>Active Directory Domain Services (AD DS)</strong> = خدمة دليل مركزية بتدير المستخدمين والأجهزة والتطبيقات والصلاحيات عبر المؤسسة بشكل موسّع. أنشأته Microsoft، صدر أول مرة مع Windows 2000 Server. تستخدمه أكثر من 90% من شركات Fortune 500 — <strong>هو البنية التحتية لـ IT المؤسسي.</strong></p>
+<p>ليه AD مهم لمختبري الاختراق: AD بيخزّن معلومات شاملة عن <strong>كل شيء</strong> في البيئة. التحكّم في كائنات domain محددة → يمكن التحكّم في <strong>البنية التحتية كاملة</strong>. اختراق كامل للـ domain = وصول تنظيمي شامل — إيميلات، ملفات، سيرفرات، VPNs.</p>
+</div>
+
+<h3>المكوّنات الأساسية لـ AD</h3>
+
+<div class="ad-tree">
+  <div class="ad-row"><span class="ad-node forest">Forest</span><span style="color:var(--muted);font-size:11px;margin-inline-start:8px;">مجموعة من domain أو أكثر تشترك schema وglobal catalog</span></div>
+  <div class="ad-row"><span class="ad-indent">└─</span><span class="ad-node domain">Domain (corp.com)</span><span style="color:var(--muted);font-size:11px;margin-inline-start:8px;">الحد المنطقي — الوحدة الإدارية الأساسية</span></div>
+  <div class="ad-row"><span class="ad-indent" style="margin-inline-start:24px">├─</span><span class="ad-node dc">Domain Controller (DC)</span><span style="color:var(--muted);font-size:11px;margin-inline-start:8px;">يوثّق المستخدمين ويخزّن قاعدة بيانات الـ directory. PDC = أحدث البيانات</span></div>
+  <div class="ad-row"><span class="ad-indent" style="margin-inline-start:24px">├─</span><span class="ad-node ou">OU (Organizational Unit)</span><span style="color:var(--muted);font-size:11px;margin-inline-start:8px;">كائن حاوية — مثل مجلد — يجمّع كائنات ذات صلة</span></div>
+  <div class="ad-row"><span class="ad-indent" style="margin-inline-start:24px">│&nbsp;&nbsp;└─</span><span class="ad-node obj">GPO</span><span style="color:var(--muted);font-size:11px;margin-inline-start:8px;">Group Policy Object — يطبّق إعدادات/قيودًا على المستخدمين والأجهزة</span></div>
+  <div class="ad-row"><span class="ad-indent" style="margin-inline-start:24px">└─</span><span class="ad-node obj">Objects: Users · Computers · Groups</span><span style="color:var(--muted);font-size:11px;margin-inline-start:8px;">كائنات الـ directory الأساسية</span></div>
+</div>
+
+<h3>أنواع كائنات AD</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>النوع</th><th>الوصف</th><th>خصائص مهمة للمهاجم</th></tr></thead>
+<tbody>
+<tr><td><strong>User Objects</strong></td><td>أشخاص أو service accounts</td><td>sAMAccountName، SID، pwdLastSet، lastLogon، description (ممكن يحتوي باسورد!)</td></tr>
+<tr><td><strong>Computer Objects</strong></td><td>أجهزة منضمة للـ domain</td><td>OS version، hostname، last logon، SPNs</td></tr>
+<tr><td><strong>Group Objects</strong></td><td>Security groups (وصول للموارد) | Distribution (قوائم إيميل)</td><td>Domain Admins = تحكّم كامل | Enterprise Admins = كل الـ forests</td></tr>
+<tr><td><strong>SPNs</strong></td><td>تربط خدمة بالحساب الذي يُشغّلها</td><td>حرج للـ Kerberos auth وKerberoasting</td></tr>
+</tbody>
+</table></div>
+
+<h3>الأهداف ذات القيمة العالية في AD</h3>
+<div class="goals-grid">
+  <div class="goal-card"><span class="gi" style="background:var(--red-soft);color:var(--red);border-color:var(--red-border)">DA</span><span><strong>Domain Admins:</strong> تحكّم كامل في الـ domain — الهدف #1</span></div>
+  <div class="goal-card"><span class="gi" style="background:var(--red-soft);color:var(--red);border-color:var(--red-border)">EA</span><span><strong>Enterprise Admins:</strong> تحكّم في كل الـ domains في الـ forest</span></div>
+  <div class="goal-card"><span class="gi" style="background:var(--purple-soft);color:var(--purple);border-color:var(--purple-border)">DC</span><span><strong>Domain Controller:</strong> يحتوي NTDS.dit — كل هاشات كلمات المرور</span></div>
+  <div class="goal-card"><span class="gi" style="background:var(--amber-soft);color:var(--amber);border-color:var(--amber-border)">KR</span><span><strong>KRBTGT Account:</strong> اختراقه = هجوم Golden Ticket</span></div>
+  <div class="goal-card"><span class="gi" style="background:var(--blue-soft);color:var(--blue);border-color:var(--blue-border)">SP</span><span><strong>Service Accounts (SPNs):</strong> أهداف Kerberoasting — غالبًا باسوردات ضعيفة/قديمة</span></div>
+  <div class="goal-card"><span class="gi" style="background:var(--green-soft);color:var(--green);border-color:var(--green-border)">BO</span><span><strong>Backup Operators:</strong> يمكنهم نسخ NTDS.dit. Account Operators: إنشاء/تعديل حسابات</span></div>
+</div>
+
+<div class="takeaways">
+<div class="takeaways-title">$ cat ./lu1_takeaways.txt</div>
+<ul>
+<li>AD = قاعدة بيانات مركزية لكل شيء — كل مستخدم موثَّق يمكنه قراءة معظم بيانات AD</li>
+<li>PDC (Primary Domain Controller) = أدق البيانات — استهدفه دائمًا للـ queries</li>
+<li>NTDS.dit على الـ DC = كل هاشات كلمات مرور المؤسسة في ملف واحد</li>
+<li>KRBTGT + Domain Admin = الجائزة الكبرى — من هناك التحكّم يصبح شاملًا</li>
+</ul>
+</div>
+
+<hr />
+
+<h2 id="lu2"><span class="num">02</span><span class="htext">Enumeration بأدوات Legacy — net.exe وnltest</span></h2>
+
+<h3>عقلية الـ Enumeration</h3>
+<p>الـ Enumeration = جمع الاستخبارات — أساس كل هجمات AD. ابدأ من سيناريو assumed-breach: بيانات اعتماد domain صالحة (phishing، إعادة استخدام، إلخ). ابدأ من حساب domain منخفض الصلاحيات — هذا كل ما تحتاجه للـ enumeration.</p>
+
+<blockquote>
+<p><strong>الـ Enumeration ليست خطوة واحدة أبدًا</strong> — كرّرها بعد كل حساب جديد تخترقه، وبعد كل جهاز جديد تصل إليه. كل موقع جديد يكشف بيانات جديدة — الصلاحيات تختلف من حساب لحساب. كل مستخدم في الـ domain يمكنه قراءة معظم بيانات AD افتراضيًا — لا استغلال مطلوب، فقط توثيق.</p>
+</blockquote>
+
+<h3>net.exe — Recon سريع للـ Domain</h3>
+<p>net.exe مدمَج في كل إصدارات Windows. يتواصل مباشرةً مع الـ DC عبر LDAP/NetBIOS. لا تثبيت مطلوب — "living off the land".</p>
+
+<div class="code-wrap"><span class="code-tag">cmd / powershell</span><pre><code># سرد كل مستخدمي الـ domain
+net user /domain
+
+# فحص مستخدم محدد (مجموعات، آخر دخول، إعدادات الباسورد)
+net user jeffadmin /domain
+
+# سرد كل مجموعات الـ domain
+net group /domain
+
+# سرد أعضاء مجموعة محددة
+net group "Domain Admins" /domain
+net group "Sales Department" /domain
+
+# إيجاد Domain Controllers
+nltest /dclist:corp.com
+
+# مجموعات المستخدم الحالي
+whoami /groups
+</code></pre></div>
+
+<h3>ما نبحث عنه في خرج net.exe</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>ما نشوفه</th><th>ما يعنيه للهجوم</th></tr></thead>
+<tbody>
+<tr><td><code>jeffadmin</code>، <code>backupadmin</code>، <code>svc-sql</code></td><td>حسابات ذات صلاحيات عالية محتملة — أهداف أولوية</td></tr>
+<tr><td><code>svc_*</code> أو <code>svc-*</code></td><td>Service accounts — ممكن يكون عندهم SPNs → Kerberoasting</td></tr>
+<tr><td>حسابات قديمة/خاملة</td><td>باسوردات ضعيفة، أقل مراقبة — مثالية للاستيلاء الخفي</td></tr>
+<tr><td>Domain Admins، Enterprise Admins</td><td>الأهداف النهائية</td></tr>
+<tr><td>Remote Desktop Users، Remote Management Users</td><td>يسمح بالتنقّل الجانبي عبر RDP/WinRM</td></tr>
+<tr><td>Backup Operators، Account Operators</td><td>صلاحيات خاصة — ممكن تستخدم لقراءة NTDS.dit أو إنشاء حسابات</td></tr>
+<tr><td>سياسة الباسورد (Lockout threshold)</td><td>يحدد آمن interval لـ password spraying</td></tr>
+</tbody>
+</table></div>
+
+<div class="takeaways">
+<div class="takeaways-title">$ cat ./lu2_takeaways.txt</div>
+<ul>
+<li>net.exe = أسرع طريقة للـ recon الأولي — لا أدوات إضافية، لا admin rights</li>
+<li>حقل <code>description</code> في بيانات المستخدم ممكن يحتوي باسوردات مكتوبة فيه بشكل مباشر</li>
+<li>خذ الـ lockout threshold بجدية — تجاوزه يُقفل حسابات حقيقية ويُنبّه الأمان</li>
+</ul>
+</div>
+
+<hr />
+
+<h2 id="lu3"><span class="num">03</span><span class="htext">PowerShell وLDAP Enumeration</span></h2>
+
+<h3>ليه نتجاوز net.exe</h3>
+<ul>
+<li>net.exe محدود — لا يعرض كل خصائص LDAP</li>
+<li>PowerShell + .NET classes تعطي وصولًا لكل خاصية LDAP</li>
+<li>Get-ADUser cmdlets تحتاج RSAT (عادةً على الـ DCs فقط)</li>
+<li>البديل: استخدام .NET classes المدمجة مباشرةً</li>
+</ul>
+<div class="goals-grid">
+  <div class="goal-card"><span class="gi">DE</span><span><code>DirectoryEntry</code> — الاتصال بـ AD عبر LDAP</span></div>
+  <div class="goal-card"><span class="gi">DS</span><span><code>DirectorySearcher</code> — الاستعلام عن كائنات بفلاتر</span></div>
+</div>
+<p><strong>المزايا:</strong> يعمل على أي جهاز منضم للـ domain بصلاحيات مستخدم عادية | لا أدوات إضافية ولا admin rights | يستخدم LDAP شرعي — أصعب في الكشف من ضجيج الـ scanners</p>
+
+<h3>فهم مسارات LDAP</h3>
+<div class="ad-tree">
+  <div class="ad-row" style="margin-bottom:12px;"><span style="color:var(--muted);font-size:11.5px">هيكل مسار LDAP:</span> <code style="font-size:12px">LDAP://&lt;hostname&gt;/&lt;DistinguishedName&gt;</code></div>
+  <div class="ad-row"><code style="color:var(--blue)">DC=corp,DC=com</code><span style="color:var(--muted);font-size:11.5px;margin-inline-start:12px">→ جذر الـ domain</span></div>
+  <div class="ad-row"><code style="color:var(--blue)">CN=Users,DC=corp,DC=com</code><span style="color:var(--muted);font-size:11.5px;margin-inline-start:12px">→ حاوية Users</span></div>
+  <div class="ad-row"><code style="color:var(--blue)">OU=IT,DC=corp,DC=com</code><span style="color:var(--muted);font-size:11.5px;margin-inline-start:12px">→ OU للـ IT</span></div>
+  <div class="ad-row"><code style="color:var(--amber)">CN=stephanie,CN=Users,DC=corp,DC=com</code><span style="color:var(--muted);font-size:11.5px;margin-inline-start:12px">→ مستخدم محدد</span></div>
+</div>
+
+<h3>بناء سكربت LDAP Enumeration ديناميكي</h3>
+<div class="code-wrap"><span class="code-tag">powershell</span><pre><code># الخطوة 1 — إيجاد اسم الـ PDC
+$domain = [System.DirectoryServices.ActiveDirectory.Domain]::GetCurrentDomain()
+$pdc = $domain.PdcRoleOwner.Name
+
+# الخطوة 2 — الحصول على الـ DN
+$dn = ([ADSI]'').distinguishedName
+
+# الخطوة 3 — بناء مسار LDAP الكامل
+$ldap = "LDAP://$pdc/$dn"
+# النتيجة: LDAP://DC1.corp.com/DC=corp,DC=com
+
+# إنشاء searcher والاستعلام عن المستخدمين
+$se = New-Object System.DirectoryServices.DirectorySearcher([ADSI]$ldap)
+$se.Filter = '(samAccountType=805306368)'
+$results = $se.FindAll()
+
+# طباعة أسماء المستخدمين
+$results | ForEach-Object { $_.Properties.samaccountname }
+</code></pre></div>
+
+<h3>مرجع فلاتر LDAP الأكثر فائدة</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>الفلتر</th><th>نوع الكائن</th><th>حالة الاستخدام</th></tr></thead>
+<tbody>
+<tr><td><code>(objectClass=user)</code></td><td>كل كائنات المستخدمين</td><td>enumeration عام للمستخدمين</td></tr>
+<tr><td><code>(samAccountType=805306368)</code></td><td>حسابات مستخدمين عادية فقط</td><td>استبعاد حسابات الأجهزة</td></tr>
+<tr><td><code>(objectClass=group)</code></td><td>كل المجموعات</td><td>enumeration المجموعات</td></tr>
+<tr><td><code>(objectClass=computer)</code></td><td>حسابات الأجهزة</td><td>اكتشاف الأجهزة</td></tr>
+<tr><td><code>(&(objectClass=user)(servicePrincipalName=*))</code></td><td>مستخدمون بـ SPNs</td><td>مرشَّحون لـ Kerberoasting</td></tr>
+<tr><td><code>(userAccountControl:1.2.840.113556.1.4.803:=4194304)</code></td><td>Pre-auth معطَّل</td><td>أهداف AS-REP Roasting</td></tr>
+</tbody>
+</table></div>
+
+<div class="code-wrap"><span class="code-tag">powershell</span><pre><code># إيجاد أعضاء Domain Admins
+$se.Filter = '(&(objectClass=group)(cn=Domain Admins))'
+$da = $se.FindOne()
+$da.Properties.member
+
+# Enumeration الأجهزة + نظام التشغيل
+$se.Filter = '(objectClass=computer)'
+$se.FindAll() | ForEach-Object {
+    $_.Properties.dnshostname
+    $_.Properties.operatingsystem
+}
+</code></pre></div>
+
+<hr />
+
+<h2 id="lu4"><span class="num">04</span><span class="htext">PowerView Enumeration</span></h2>
+
+<div class="callout definition">
+<div class="callout-label">⬦ ما هو PowerView</div>
+<p>PowerView = سكربت PowerShell بواسطة @harmj0y — المعيار الذهبي لـ AD recon. يؤتمت استعلامات LDAP المعقّدة — أكثر كفاءةً بكثير من السكربتات اليدوية. يُحمَّل في الذاكرة (بدون كتابة على الديسك) — يقلّل البصمة الجنائية.</p>
+</div>
+
+<div class="code-wrap"><span class="code-tag">powershell</span><pre><code"># تحميل PowerView
+powershell -ep bypass
+Import-Module .\PowerView.ps1
+</code></pre></div>
+<div class="callout warning">
+<div class="callout-label">⚠ تنبيه</div>
+<p>الأنتي فايروس ممكن يُعلَّم على PowerView — استخدم AMSI bypass أو نسخة مُبهَمة (obfuscated) في المهمات الحقيقية.</p>
+</div>
+
+<h3>مرجع أوامر PowerView الأساسية</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>الأمر</th><th>ما يُرجِع</th></tr></thead>
+<tbody>
+<tr><td><code>Get-NetDomain</code></td><td>اسم الـ domain، الـ forest، الـ DCs، المستوى الوظيفي، PDC role owner</td></tr>
+<tr><td><code>Get-NetDomainController</code></td><td>كل الـ DCs — IP، نظام التشغيل، الأدوار</td></tr>
+<tr><td><code>Get-NetUser</code></td><td>كل المستخدمين — كل خاصية LDAP (pwdLastSet، lastLogon، SPN، إلخ)</td></tr>
+<tr><td><code>Get-NetUser -SPN</code></td><td>مستخدمون بـ SPNs — أهداف Kerberoasting</td></tr>
+<tr><td><code>Get-NetGroup</code></td><td>كل مجموعات الـ domain</td></tr>
+<tr><td><code>Get-NetGroupMember "Domain Admins" -Recurse</code></td><td>أعضاء مجموعة محددة (بما فيها المتداخلة)</td></tr>
+<tr><td><code>Get-NetComputer</code></td><td>كل أجهزة الـ domain — نظام التشغيل، hostname، آخر دخول</td></tr>
+<tr><td><code>Find-LocalAdminAccess</code></td><td>الأجهزة التي للمستخدم الحالي صلاحية admin عليها</td></tr>
+<tr><td><code>Get-NetSession -ComputerName X</code></td><td>الجلسات النشطة على جهاز محدد</td></tr>
+<tr><td><code>Get-ObjectAcl -Identity X</code></td><td>ACL للكائن X — لاكتشاف misconfigured permissions</td></tr>
+<tr><td><code>Find-DomainShare</code></td><td>كل الـ shares في الـ domain</td></tr>
+</tbody>
+</table></div>
+
+<h3>Enumeration مستهدَف للمهاجم</h3>
+<div class="code-wrap"><span class="code-tag">powershell</span><pre><code># كل المستخدمين مع الخصائص المهمة
+Get-NetUser | Select cn,pwdlastset,lastlogon,memberof,serviceprincipalname,description
+
+# إيجاد SPNs (أهداف Kerberoasting)
+Get-NetUser -SPN | Select samaccountname,serviceprincipalname
+
+# أعضاء Domain Admins (بما فيهم المتداخلون)
+Get-NetGroupMember "Domain Admins" -Recurse
+
+# الأجهزة + إصدار نظام التشغيل
+Get-NetComputer | Select dnshostname,operatingsystem,operatingsystemversion
+</code></pre></div>
+
+<h3>إيجاد Local Admin والجلسات النشطة</h3>
+<div class="callout case">
+<div class="callout-label">✎ سلسلة الهجوم الكلاسيكية</div>
+<p>1) Find-LocalAdminAccess → تجد إنك admin على CLIENT74 | 2) Get-NetSession على CLIENT74 → jeffadmin (Domain Admin) جلسته نشطة هناك | 3) استخدم صلاحياتك على CLIENT74 لاستخراج credentials من LSASS | 4) تصبح Domain Admin!</p>
+</div>
+<div class="code-wrap"><span class="code-tag">powershell</span><pre><code># مسح كل أجهزة الـ domain (NOISY!)
+Find-LocalAdminAccess
+
+# فحص الجلسات على جهاز محدد
+Get-NetSession -ComputerName CLIENT74
+# ممكن يفشل على Windows 10/11 الحديثة
+
+# بديل: PsLoggedOn (يحتاج RemoteRegistry)
+.\PsLoggedOn.exe \\CLIENT74
+# jeffadmin logged in → فرصة credential extraction!
+</code></pre></div>
+<div class="callout note">
+<div class="callout-label">ⓘ Find-LocalAdminAccess</div>
+<p>بيفحص كل أجهزة الـ domain عبر Service Control Manager — مصدر ضجيج كبير. استخدمه بحذر في بيئات الإنتاج أو قيّد النطاق.</p>
+</div>
+
+<hr />
+
+<h2 id="lu5"><span class="num">05</span><span class="htext">Object Permissions وACL Abuse</span></h2>
+
+<h3>فهم ACL في AD</h3>
+<p>كل كائن AD له <strong>Access Control List (ACL)</strong>. ACL = مجموعة من Access Control Entries (ACEs). كل ACE = <strong>من</strong> (SID) له <strong>ما</strong> من صلاحية على <strong>هذا</strong> الكائن.</p>
+<blockquote>
+<p><strong>Insight أساسي:</strong> ACL misconfigurations شائعة جدًا — تتراكم على مدى سنين من التغييرات IT ولا أحد يراجعها. يمكن أن تمكّن من تصعيد الصلاحيات <strong>بدون أي استغلال سوفت وير</strong>.</p>
+</blockquote>
+
+<h3>صلاحيات AD الخطيرة — مرجع المهاجم</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>الصلاحية</th><th>التأثير</th><th>تقنية الهجوم</th></tr></thead>
+<tbody>
+<tr><td><strong>GenericAll</strong></td><td>تحكّم كامل في الكائن</td><td>إعادة تعيين الباسورد، إضافة للمجموعة، أخذ الملكية</td></tr>
+<tr><td><strong>GenericWrite</strong></td><td>كتابة أي خاصية</td><td>تعديل scriptPath، تعيين SPN للـ Kerberoasting</td></tr>
+<tr><td><strong>WriteOwner</strong></td><td>تغيير مالك الكائن</td><td>أخذ الملكية، ثم منح نفسك GenericAll</td></tr>
+<tr><td><strong>WriteDACL</strong></td><td>تعديل الـ ACL</td><td>منح نفسك GenericAll على أي كائن</td></tr>
+<tr><td><strong>AllExtendedRights</strong></td><td>كل الحقوق الممتدة</td><td>إجبار إعادة تعيين الباسورد، قراءة كلمات LAPS</td></tr>
+<tr><td><strong>ForceChangePassword</strong></td><td>إعادة تعيين الباسورد بدون معرفة الحالي</td><td>الاستيلاء على الحساب</td></tr>
+<tr><td><strong>AddMember / Self</strong></td><td>إضافة أعضاء للمجموعة</td><td>إضافة نفسك لـ Domain Admins</td></tr>
+</tbody>
+</table></div>
+
+<div class="callout case">
+<div class="callout-label">✎ السيناريو</div>
+<p>stephanie (صلاحيات منخفضة) لديها GenericAll على مجموعة 'Management Department' → يمكنها إضافة نفسها → ترث وصول المجموعة.</p>
+</div>
+
+<div class="code-wrap"><span class="code-tag">powershell</span><pre><code># عرض ACL كائن محدد
+Get-ObjectAcl -Identity 'Management Department' |
+    Select ActiveDirectoryRights,SecurityIdentifier
+
+# تحويل SID لاسم قابل للقراءة
+Convert-SidToName S-1-5-21-...
+
+# إيجاد كل GenericAll في الـ domain
+Get-ObjectAcl -Domain corp.com |
+    Where-Object {$_.ActiveDirectoryRights -eq 'GenericAll'} |
+    Select ObjectDN,SecurityIdentifier
+
+# استغلال GenericAll: إضافة نفسك للمجموعة
+Add-DomainGroupMember -Identity 'Management Department' -Members stephanie
+
+# تحقّق من العضوية الجديدة
+Get-NetGroupMember "Management Department"
+
+# CLEANUP — إزالة نفسك بعد الاختبار!
+Remove-DomainGroupMember -Identity 'Management Department' -Members stephanie
+</code></pre></div>
+<div class="callout warning">
+<div class="callout-label">⚠ تنظيف ضروري</div>
+<p>دايمًا نظّف بعد استغلال الـ ACL — أزل نفسك من المجموعات بعد انتهاء الاختبار. التغييرات غير المُنظَّفة قد تترك backdoors أو تُنبّه الأمان.</p>
+</div>
+
+<hr />
+
+<h2 id="lu6"><span class="num">06</span><span class="htext">Domain Shares وSYSVOL وGPP Passwords</span></h2>
+
+<h3>ليه الـ Shares كنز معلومات</h3>
+<p>المؤسسات تعتمد على التخزين المشترك للتعاون. الـ shares كثيرًا ما تحتوي: بيانات اعتماد، configs، سكربتات، وثائق. قابلة للقراءة بواسطة <strong>كل مستخدمي الـ domain</strong> افتراضيًا.</p>
+
+<div class="table-wrap"><table>
+<thead><tr><th>نوع الـ Share</th><th>من يستطيع الوصول</th><th>ما نبحث عنه</th></tr></thead>
+<tbody>
+<tr><td><code>ADMIN$</code>، <code>C$</code>، <code>IPC$</code></td><td>Admins فقط</td><td>—</td></tr>
+<tr><td><code>SYSVOL</code>، <code>NETLOGON</code></td><td>كل مستخدمي الـ domain</td><td>GPP passwords، logon scripts، config files</td></tr>
+<tr><td>Shares مخصَّصة</td><td>غالبًا صلاحيات ضعيفة</td><td>باسوردات، configs، scripts بمعلومات حساسة</td></tr>
+</tbody>
+</table></div>
+
+<div class="callout definition">
+<div class="callout-label">⬦ SYSVOL وثغرة GPP Passwords</div>
+<p>SYSVOL: share على مستوى الـ domain على كل DCs. يخزّن: GPOs، logon scripts، config files. كل مستخدمي الـ domain يمكنهم قراءته — مطلوب لتطبيق الـ policy عند الدخول.</p>
+<p><strong>ثغرة Group Policy Preferences (GPP):</strong> المدراء استخدموا GPP لنشر باسوردات local admin على الأجهزة. الباسوردات مخزَّنة في Groups.xml — مشفَّرة بـ AES-256. <strong>Microsoft نشرت مفتاح AES عام 2012</strong> — أي شخص يمكنه فكّ التشفير. MS14-025 أصلحت إنشاء باسوردات GPP جديدة لكن الملفات القديمة لا تزال موجودة!</p>
+</div>
+
+<div class="code-wrap"><span class="code-tag">powershell / cmd</span><pre><code># إيجاد كل الـ shares في الـ domain
+Find-DomainShare
+
+# استكشاف SYSVOL بشكل recursive
+ls \\dc1.corp.com\sysvol\corp.com\
+
+# البحث عن ملفات GPP passwords
+findstr /S /I 'cpassword' \\dc1.corp.com\sysvol\
+
+# فكّ تشفير الـ cpassword
+gpp-decrypt '<cpassword_value>'
+# → P@ssword123!  (local admin على كل الأجهزة!)
+
+# البحث في shares مخصَّصة عن ملفات حساسة
+findstr /S /I /M 'password\|passw\|cred' *.*
+</code></pre></div>
+
+<div class="callout examtip">
+<div class="callout-label">★ Exam Tip</div>
+<p>SYSVOL هو أول مكان تتحقق منه بعد الحصول على أي domain credentials. GPP passwords هي من أشهر التكتيكات في OSCP وتظهر بشكل كبير في الامتحانات. أمر gpp-decrypt في Kali يفكّ التشفير مباشرةً.</p>
+</div>
+
+<hr />
+
+<h2 id="lu7"><span class="num">07</span><span class="htext">متجهات هجوم AD المتقدمة</span></h2>
+
+<h3>Kerberoasting</h3>
+<div class="callout definition">
+<div class="callout-label">⬦ كيف يعمل</div>
+<p>Kerberos authentication يستخدم SPNs. أي مستخدم domain يمكنه طلب service ticket (TGS) لأي SPN. الـ service ticket مشفَّر بهاش NTLM لحساب الخدمة. المهاجم يطلب tickets → يحفظها → يكسرها offline.</p>
+<p><strong>ليه قوي:</strong> يحتاج فقط بيانات اعتماد domain عادية | طلب الـ ticket يشبه ترافيك Kerberos الطبيعي | Offline cracking — بدون خطر account lockout | حسابات الخدمة غالبًا باسوردات ضعيفة/قديمة</p>
+</div>
+
+<div class="step-track">
+<div class="step-item"><div class="step-num">1</div><div class="step-title">إيجاد حسابات بـ SPNs</div><div class="step-body">
+<div class="code-wrap"><span class="code-tag">powershell</span><pre><code>Get-NetUser -SPN | Select samaccountname,serviceprincipalname</code></pre></div>
+</div></div>
+<div class="step-item"><div class="step-num">2</div><div class="step-title">طلب service tickets</div><div class="step-body">
+<div class="code-wrap"><span class="code-tag">powershell</span><pre><code">Invoke-Kerberoast -OutputFormat Hashcat</code></pre></div>
+</div></div>
+<div class="step-item"><div class="step-num">3</div><div class="step-title">كسر offline بـ Hashcat</div><div class="step-body">
+<div class="code-wrap"><span class="code-tag">bash</span><pre><code">hashcat -m 13100 hashes.txt rockyou.txt
+# النتيجة: باسورد service account بنص واضح
+# حسابات الخدمة غالبًا ذات صلاحيات عالية!</code></pre></div>
+</div></div>
+</div>
+
+<h3>AS-REP Roasting</h3>
+<div class="callout definition">
+<div class="callout-label">⬦ كيف يعمل</div>
+<p>Kerberos pre-authentication مطلوب عادةً — يثبت إن المستخدم يعرف باسورده قبل الحصول على TGT. بعض الحسابات لديها pre-auth <strong>معطَّلة</strong> (misconfiguration). بدون pre-auth: أي مهاجم يمكنه طلب AS-REP. الـ AS-REP مشفَّر بهاش باسورد الحساب → كسر offline — لا lockout! <strong>يحتاج فقط وصول للشبكة — لا credentials مطلوبة!</strong></p>
+</div>
+
+<div class="step-track">
+<div class="step-item"><div class="step-num">1</div><div class="step-title">إيجاد حسابات pre-auth معطَّلة</div><div class="step-body">
+<div class="code-wrap"><span class="code-tag">powershell</span><pre><code"># LDAP filter
+$se.Filter = '(userAccountControl:1.2.840.113556.1.4.803:=4194304)'</code></pre></div>
+</div></div>
+<div class="step-item"><div class="step-num">2</div><div class="step-title">طلب AS-REP hash بـ Rubeus</div><div class="step-body">
+<div class="code-wrap"><span class="code-tag">cmd</span><pre><code">Rubeus.exe asreproast /format:hashcat</code></pre></div>
+</div></div>
+<div class="step-item"><div class="step-num">3</div><div class="step-title">كسر offline بـ Hashcat</div><div class="step-body">
+<div class="code-wrap"><span class="code-tag">bash</span><pre><code">hashcat -m 18200 hashes.txt rockyou.txt
+# → باسورد مستخدم domain مكشوف</code></pre></div>
+</div></div>
+</div>
+
+<h3>هجمات Kerberos Delegation</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>النوع</th><th>الوصف</th><th>الاستغلال</th><th>الاكتشاف</th></tr></thead>
+<tbody>
+<tr><td><strong>Unconstrained</strong></td><td>الجهاز يتصرّف نيابةً عن أي مستخدم موثَّق. يخزّن TGTs في LSASS</td><td>اختراق الجهاز → استخراج TGTs → انتحال هوية Domain Admin</td><td><code>Get-ADComputer -Filter {TrustedForDelegation -eq 'True'}</code></td></tr>
+<tr><td><strong>Constrained</strong></td><td>يحدّد الـ delegation لخدمات محددة — أأمن لكن قابل للاستغلال</td><td>التحكّم في الحساب المفوَّض → انتحال هوية أي مستخدم لتلك الخدمات</td><td>فحص <code>msDS-AllowedToDelegateTo</code></td></tr>
+<tr><td><strong>RBCD</strong></td><td>Resource-Based — أحدث وأكثر مرونة</td><td>كتابة <code>msDS-AllowedToActOnBehalfOfOtherIdentity</code> + إضافة computer account → انتحال هوية DA</td><td>فحص الـ attribute على الأجهزة</td></tr>
+</tbody>
+</table></div>
+
+<h3>AdminSDHolder وSDProp — Persistence خفي</h3>
+<div class="callout definition">
+<div class="callout-label">⬦ AdminSDHolder</div>
+<p>كائن AD خاص يتحكّم في الصلاحيات على كل الحسابات المميَّزة/المحمية (بما فيها Domain Admins، Enterprise Admins، Schema Admins). عملية <strong>SDProp</strong> تعمل كل 60 دقيقة: تُعيد تعيين ACL كل الحسابات المحمية لتطابق ACL الـ AdminSDHolder.</p>
+<p><strong>هجوم الـ Persistence:</strong> عدّل ACL الـ AdminSDHolder → أضف GenericAll لنفسك → SDProp بيوزّع صلاحياتك لكل الحسابات المميَّزة. حتى لو المدافعون أعادوا تعيين باسوردات DA → صلاحيتك تبقى. مستخدَم لـ long-term stealthy persistence.</p>
+</div>
+
+<h3>LAPS وShadow Credentials</h3>
+<div class="goals-grid">
+  <div class="goal-card"><span class="gi">LA</span><span><strong>LAPS:</strong> يُدوّر باسوردات local admin تلقائيًا. الباسورد في AD attribute: <code>ms-Mcs-AdmPwd</code>. Misconfiguration: أي domain user يمكنه قراءته! → local admin على الجهاز</span></div>
+  <div class="goal-card"><span class="gi">SC</span><span><strong>Shadow Credentials:</strong> persistence حديث بدون malware. يضيف key credential بديل (<code>msDS-KeyCredentialLink</code>). يتيح التوثيق كذلك الحساب بدون معرفة الباسورد. يحتاج write access على الـ attribute. أداة: Whisker.exe</span></div>
+</div>
+
+<div class="takeaways">
+<div class="takeaways-title">$ cat ./lu7_takeaways.txt</div>
+<ul>
+<li>Kerberoasting: كل مستخدم domain يمكنه طلب TGS لأي SPN — mode 13100 في Hashcat</li>
+<li>AS-REP Roasting: لا credentials مطلوبة! فقط إيجاد حسابات pre-auth معطَّلة — mode 18200</li>
+<li>AdminSDHolder persistence: من أصعب التقنيات اكتشافًا لأنها تستخدم آلية شرعية في AD</li>
+<li>LAPS misconfiguration: تحقّق دائمًا من <code>ms-Mcs-AdmPwd</code> — كثيرًا ما يكون قابلًا للقراءة</li>
+</ul>
+</div>
+
+<hr />
+
+<h2 id="lu8"><span class="num">08</span><span class="htext">BloodHound وSharpHound</span></h2>
+
+<h3>ليه الـ Enumeration الآلي</h3>
+<p>الـ Enumeration اليدوي يبني الفهم — لكنه بطيء. المؤسسات الكبيرة: آلاف المستخدمين والأجهزة وملايين الصلاحيات. رسم خرائط العلاقات يدويًا مستحيل عمليًا. <strong>BloodHound يحلّ هذا:</strong> يجمع كل بيانات علاقات الـ domain آليًا، يبني قاعدة بيانات رسم بياني تفاعلية، يجد <strong>أقصر مسار</strong> من أي مستخدم لـ Domain Admin.</p>
+<div class="callout warning">
+<div class="callout-label">⚠ BloodHound ضوضاء كبيرة</div>
+<p>BloodHound بيولّد ترافيك LDAP/API كبير — خطط توقيت الجمع ونطاقه في المهمات الحقيقية.</p>
+</div>
+
+<h3>SharpHound — أداة جمع البيانات</h3>
+<p>SharpHound يستخدم آليات Windows الشرعية للجمع:</p>
+<ul>
+<li><code>NetWkstaUserEnum</code> → المستخدمون المسجَّلون على كل جهاز</li>
+<li><code>NetSessionEnum</code> → الجلسات الشبكية النشطة</li>
+<li>LDAP queries → كل كائنات AD وخصائصها</li>
+<li>Remote Registry → بيانات الإعداد</li>
+</ul>
+<p><strong>ما يجمعه:</strong> عضوية المستخدمين/المجموعات + المجموعات المتداخلة | صلاحيات local admin على كل جهاز | الجلسات النشطة (من مسجَّل دخول أين) | ACLs وصلاحيات الكائنات | SPNs وحسابات الخدمة</p>
+
+<div class="code-wrap"><span class="code-tag">powershell</span><pre><code"># تحميل في الذاكرة (fileless)
+powershell -ep bypass
+Import-Module .\SharpHound.ps1
+Invoke-BloodHound -CollectionMethod All
+
+# الخرج: أرشيف ZIP من ملفات JSON
+# استورد الـ ZIP في BloodHound للتحليل
+</code></pre></div>
+
+<h3>BloodHound — استعلامات قوية</h3>
+<div class="code-wrap"><span class="code-tag">cypher — BloodHound custom queries</span><pre><code"># المستخدمون الذين لديهم GenericAll على أي شيء
+MATCH p=(m:User)-[r:GenericAll]->(n)
+WHERE m.name = 'STEPHANIE@CORP.COM'
+RETURN p
+
+# مستخدمون Kerberoastable بمسار لـ Domain Admins
+MATCH p=shortestPath(
+  (n:User {hasspn:true})-[*1..]->(m:Group {name:'DOMAIN ADMINS@CORP.COM'})
+)
+RETURN p
+</code></pre></div>
+
+<h3>مثال مسار هجوم حقيقي — BloodHound يكشفه</h3>
+<p>BloodHound يعرض الرسم البياني التالي:</p>
+<div class="bh-path">
+  <div style="display:flex;align-items:center;flex-wrap:wrap;gap:4px;padding:8px 0;">
+    <span class="bh-node owned">● stephanie (Owned)</span>
+    <span class="bh-arrow">→</span>
+    <span class="bh-edge">AdminTo</span>
+    <span class="bh-arrow">→</span>
+    <span class="bh-node machine">■ CLIENT74</span>
+    <span class="bh-arrow">→</span>
+    <span class="bh-edge">HasSession</span>
+    <span class="bh-arrow">→</span>
+    <span class="bh-node machine">● jeffadmin</span>
+    <span class="bh-arrow">→</span>
+    <span class="bh-edge">MemberOf</span>
+    <span class="bh-arrow">→</span>
+    <span class="bh-node da">★ Domain Admins</span>
+  </div>
+</div>
+
+<p><strong>ما يعنيه هذا:</strong></p>
+<ol>
+<li>Stephanie لديها local admin على CLIENT74</li>
+<li>Domain Admin jeffadmin لديه جلسة نشطة على CLIENT74</li>
+<li>استخرج credentials jeffadmin من LSASS على CLIENT74</li>
+<li>استخدم credentials للتوثيق كـ Domain Admin</li>
+</ol>
+<blockquote>
+<p>هذا بالضبط كيف تحدث كثير من عمليات اختراق AD الحقيقية. BloodHound يجد هذا المسار من 3 hops في ثوانٍ عبر +10,000 node.</p>
+</blockquote>
+
+<div class="callout tip">
+<div class="callout-label">✓ BloodHound Workflow</div>
+<p>1) شغّل SharpHound: <code>Invoke-BloodHound -CollectionMethod All</code> | 2) استورد الـ ZIP في BloodHound | 3) علّم الحسابات التي تمتلكها (Right-click → Mark as Owned) | 4) "Shortest Path from Owned to Domain Admins" | 5) هذا مسارك الخاص للـ DA</p>
+</div>
+
+<div class="takeaways">
+<div class="takeaways-title">$ cat ./lu8_takeaways.txt</div>
+<ul>
+<li>BloodHound = أقوى أداة لرؤية مسارات الهجوم — لكنها مصدر ضجيج كبير</li>
+<li>دائمًا علّم الحسابات التي تمتلكها أولًا → استعلام "Shortest Path from Owned"</li>
+<li>SharpHound يمكن تحميله في الذاكرة (بدون ملف exe) لتقليل البصمة</li>
+<li>Custom Cypher queries تسمح بإيجاد علاقات محددة جدًا لا تعرضها الاستعلامات الجاهزة</li>
+</ul>
+</div>
+
+<hr />
+
+<h2 id="cheat"><span class="htext">Cheat Sheet مرجعي</span></h2>
+<div class="cheat-section">
+<h4>net.exe الأساسية</h4>
+<div class="code-wrap"><span class="code-tag">cmd</span><pre><code">net user /domain                         # كل مستخدمي الـ domain
+net user USERNAME /domain               # تفاصيل مستخدم محدد
+net group /domain                       # كل مجموعات الـ domain
+net group "Domain Admins" /domain      # أعضاء مجموعة محددة
+nltest /dclist:DOMAIN                   # إيجاد Domain Controllers
+whoami /groups                          # مجموعات المستخدم الحالي
+</code></pre></div>
+
+<h4>PowerView — الأكثر استخدامًا</h4>
+<div class="code-wrap"><span class="code-tag">powershell</span><pre><code">Get-NetDomain                                         # معلومات الـ domain
+Get-NetDomainController                              # كل الـ DCs
+Get-NetUser | Select cn,pwdlastset,description       # مستخدمون + خصائص
+Get-NetUser -SPN                                      # أهداف Kerberoasting
+Get-NetGroupMember "Domain Admins" -Recurse          # أعضاء DA
+Get-NetComputer | Select dnshostname,operatingsystem # الأجهزة + OS
+Find-LocalAdminAccess                                # أجهزة أنت admin عليها
+Get-NetSession -ComputerName MACHINE                 # جلسات نشطة
+Get-ObjectAcl -Identity 'GROUP' | Select ActiveDirectoryRights,SecurityIdentifier
+Find-DomainShare                                     # كل الـ shares
+</code></pre></div>
+
+<h4>LDAP Filters الأساسية</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>الفلتر</th><th>الهدف</th></tr></thead>
+<tbody>
+<tr><td><code>(samAccountType=805306368)</code></td><td>مستخدمون عاديون (بدون computer accounts)</td></tr>
+<tr><td><code>(&(objectClass=user)(servicePrincipalName=*))</code></td><td>Kerberoasting targets</td></tr>
+<tr><td><code>(userAccountControl:1.2.840.113556.1.4.803:=4194304)</code></td><td>AS-REP Roasting targets</td></tr>
+</tbody>
+</table></div>
+
+<h4>Hashcat Modes لـ AD</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>Mode</th><th>النوع</th><th>الأمر</th></tr></thead>
+<tbody>
+<tr><td>13100</td><td>Kerberoasting (TGS-REP)</td><td><code>hashcat -m 13100 hashes.txt rockyou.txt</code></td></tr>
+<tr><td>18200</td><td>AS-REP Roasting</td><td><code>hashcat -m 18200 hashes.txt rockyou.txt</code></td></tr>
+<tr><td>1000</td><td>NTLM (لبعد استخراج من DC)</td><td><code>hashcat -m 1000 ntlm.hash rockyou.txt</code></td></tr>
+</tbody>
+</table></div>
+
+<h4>مرجع ACL — الصلاحيات الخطيرة</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>الصلاحية</th><th>ماذا تفعل؟</th></tr></thead>
+<tbody>
+<tr><td>GenericAll</td><td>تحكّم كامل → إعادة تعيين باسورد / إضافة للمجموعة</td></tr>
+<tr><td>WriteDACL</td><td>عدّل الـ ACL → امنح نفسك GenericAll</td></tr>
+<tr><td>WriteOwner</td><td>غيّر المالك → ثم خذ GenericAll</td></tr>
+<tr><td>ForceChangePassword</td><td>إعادة تعيين الباسورد مباشرةً</td></tr>
+<tr><td>GenericWrite</td><td>عدّل أي attribute → عيّن SPN للـ Kerberoasting</td></tr>
+</tbody>
+</table></div>
+</div>
+
+<hr />
+
+<h2 id="summary"><span class="htext">الخلاصة العامة للموديول</span></h2>
+<p>Active Directory هو العمود الفقري لشبكات المؤسسات — اختراقه يعني اختراق المؤسسة بالكامل. الـ Enumeration <strong>مستمر</strong> — كرّره بعد كل حساب أو جهاز جديد؛ كل مستوى يكشف مسارات هجوم جديدة.</p>
+
+<div class="diagram-card">
+<svg viewBox="0 0 760 180" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="grdad" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#E1362F"/><stop offset="1" stop-color="#F2794A"/>
+    </linearGradient>
+    <marker id="adArr" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#E8A23A"/></marker>
+  </defs>
+  <g font-family="IBM Plex Mono, monospace" font-size="10.5" fill="#C4C4CA">
+    <rect x="10" y="60" width="120" height="52" rx="7" fill="#17171A" stroke="#8A8A92" stroke-width="1.3"/>
+    <text x="70" y="83" text-anchor="middle" fill="#8A8A92" font-weight="700">Low-priv</text>
+    <text x="70" y="100" text-anchor="middle" font-size="9.5">domain user</text>
+
+    <rect x="160" y="60" width="120" height="52" rx="7" fill="#17171A" stroke="#4EA1D3" stroke-width="1.3"/>
+    <text x="220" y="80" text-anchor="middle" fill="#4EA1D3" font-weight="700">Enumeration</text>
+    <text x="220" y="96" text-anchor="middle" font-size="9.5">net / PowerView</text>
+    <text x="220" y="109" text-anchor="middle" font-size="9.5">BloodHound</text>
+
+    <rect x="310" y="60" width="120" height="52" rx="7" fill="#17171A" stroke="#E8A23A" stroke-width="1.3"/>
+    <text x="370" y="80" text-anchor="middle" fill="#E8A23A" font-weight="700">ACL / GPP</text>
+    <text x="370" y="96" text-anchor="middle" font-size="9.5">GenericAll</text>
+    <text x="370" y="109" text-anchor="middle" font-size="9.5">SYSVOL</text>
+
+    <rect x="460" y="60" width="140" height="52" rx="7" fill="#17171A" stroke="#3FBF6E" stroke-width="1.3"/>
+    <text x="530" y="80" text-anchor="middle" fill="#3FBF6E" font-weight="700">Kerberoasting</text>
+    <text x="530" y="96" text-anchor="middle" font-size="9.5">AS-REP / Session</text>
+    <text x="530" y="109" text-anchor="middle" font-size="9.5">Hunting</text>
+
+    <rect x="630" y="60" width="120" height="52" rx="7" fill="#17171A" stroke="url(#grdad)" stroke-width="2"/>
+    <text x="690" y="83" text-anchor="middle" fill="#E1362F" font-weight="700">Domain Admin</text>
+    <text x="690" y="100" text-anchor="middle" font-size="9.5">full control</text>
+
+    <path d="M130 86 H160" stroke="#E8A23A" stroke-width="1.8" marker-end="url(#adArr)"/>
+    <path d="M280 86 H310" stroke="#E8A23A" stroke-width="1.8" marker-end="url(#adArr)"/>
+    <path d="M430 86 H460" stroke="#E8A23A" stroke-width="1.8" marker-end="url(#adArr)"/>
+    <path d="M600 86 H630" stroke="#E8A23A" stroke-width="1.8" marker-end="url(#adArr)"/>
+
+    <text x="70" y="140" text-anchor="middle" font-size="9.5" fill="#8A8A92">net.exe / LDAP</text>
+    <text x="220" y="140" text-anchor="middle" font-size="9.5" fill="#4EA1D3">PowerView / BH</text>
+    <text x="370" y="140" text-anchor="middle" font-size="9.5" fill="#E8A23A">WriteDACL / cpassword</text>
+    <text x="530" y="140" text-anchor="middle" font-size="9.5" fill="#3FBF6E">TGS hash → crack</text>
+    <text x="690" y="140" text-anchor="middle" font-size="9.5" fill="#E1362F">NTDS.dit / Golden Ticket</text>
+  </g>
+</svg>
+<div class="diagram-caption">مسار تصعيد AD الكلاسيكي: Low-priv → Enumeration → ACL/GPP → Kerberoasting/Sessions → Domain Admin</div>
+</div>
+
+<blockquote>
+<p><strong>القاعدة الذهبية:</strong> الـ Enumeration الشامل أهم من أي إكسبلويت. أدوات مثل net.exe وPowerView وBloodHound تعطيك الخريطة — أنت فقط تتبع المسارات. كل خطوة تُنفَّذ على بيانات حقيقية مجموعة من الـ domain نفسه.</p>
+</blockquote>
+<hr />
+<p><em>نهاية نوتس الموديول التاسع عشر — OSCP: Active Directory Introduction & Enumeration</em></p>
+  <div class="footer-note">-- EOF: module-19/active-directory-enumeration.md --</div>
+</div>
+
+<script>
+(function(){
+  var root=document.documentElement;
+  var btn=document.getElementById('themeSwitch');
+  function applyTheme(t){root.setAttribute('data-theme',t);btn.textContent='theme: '+t;try{localStorage.setItem('oscp-notes-theme',t);}catch(e){}}
+  var saved='dark';try{saved=localStorage.getItem('oscp-notes-theme')||'dark';}catch(e){}
+  applyTheme(saved);
+  btn.addEventListener('click',function(){applyTheme(root.getAttribute('data-theme')==='dark'?'light':'dark');});
+  var bar=document.getElementById('progressBar');
+  function onScroll(){var h=document.documentElement;var s=h.scrollTop;var ht=h.scrollHeight-h.clientHeight;bar.style.width=(ht>0?(s/ht*100):0)+'%';var t=document.getElementById('toTop');if(s>500){t.classList.add('show');}else{t.classList.remove('show');}}
+  document.addEventListener('scroll',onScroll);onScroll();
+  document.getElementById('toTop').addEventListener('click',function(){window.scrollTo({top:0,behavior:'smooth'});});
+  document.querySelectorAll('.code-wrap').forEach(function(wrap){
+    var codeEl=wrap.querySelector('code');if(!codeEl)return;
+    var b=document.createElement('button');b.className='copy-btn';b.textContent='copy';
+    b.addEventListener('click',function(){var text=codeEl.innerText;if(navigator.clipboard){navigator.clipboard.writeText(text).then(function(){b.textContent='copied ✓';b.classList.add('copied');setTimeout(function(){b.textContent='copy';b.classList.remove('copied');},1500);});}});
+    wrap.appendChild(b);
+  });
+})();
+</script>
+</body>
+</html>
