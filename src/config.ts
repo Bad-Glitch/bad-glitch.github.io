@@ -15,7 +15,7 @@ export const siteConfig: SiteConfig = {
 		fixed: false,
 	},
 	banner: {
-		enable: true,
+		enable: false,
 		src: "/background.jpg",
 		position: "center",
 		credit: {
@@ -25,7 +25,7 @@ export const siteConfig: SiteConfig = {
 		},
 	},
 	toc: {
-		enable: true,
+		enable: false,
 		depth: 2,
 	},
 	favicon: [],
@@ -45,9 +45,9 @@ export const navBarConfig: NavBarConfig = {
 };
 
 export const profileConfig: ProfileConfig = {
-	avatar: "/bad-glitch-cover1.jpg",
+avatar: "/background.jpg",
 	name: "Amr Abdel Hamide",
-	bio: "Red Teamer | OSCP, CRTP, eWAPTXv3 | breaking systems, simulating real threats.",
+	bio: "Red Teamer | OSCP, CRTP, eWAPTXv3 | eCPPTv3 | breaking systems, simulating real threats.",
 	links: [
 		{
 			name: "Twitter",
@@ -73,7 +73,9 @@ export const profileConfig: ProfileConfig = {
 };
 
 export const licenseConfig: LicenseConfig = {
-	enable: true,
+	enable: false,
 	name: "CC BY-NC-SA 4.0",
 	url: "https://creativecommons.org/licenses/by-nc-sa/4.0/",
 };
+
+
