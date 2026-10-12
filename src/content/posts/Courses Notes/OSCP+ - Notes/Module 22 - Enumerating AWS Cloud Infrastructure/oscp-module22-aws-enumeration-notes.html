@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OSCP · Module 22: تعداد بنية AWS السحابية</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-0:#0B0B0D;--bg-1:#121214;--surface:#17171A;--surface-2:#1D1D21;
+    --border:#2A2A2F;--border-soft:#232326;
+    --text:#E6E6E9;--text-soft:#C4C4CA;--muted:#8A8A92;
+    --red:#E1362F;--red-soft:rgba(225,54,47,0.10);--red-border:rgba(225,54,47,0.35);
+    --red-grad:linear-gradient(90deg,#E1362F,#F2794A);
+    --amber:#E8A23A;--amber-soft:rgba(232,162,58,0.09);--amber-border:rgba(232,162,58,0.30);
+    --green:#3FBF6E;--green-soft:rgba(63,191,110,0.09);--green-border:rgba(63,191,110,0.30);
+    --blue:#4EA1D3;--blue-soft:rgba(78,161,211,0.09);--blue-border:rgba(78,161,211,0.30);
+    --purple:#A179E8;--purple-soft:rgba(161,121,232,0.10);--purple-border:rgba(161,121,232,0.32);
+    --mono:'IBM Plex Mono','Courier New',monospace;
+  }
+  html[data-theme="light"]{
+    --bg-0:#F4F3F1;--bg-1:#ECEBE8;--surface:#FFFFFF;--surface-2:#F3F2EF;
+    --border:#DEDCD6;--border-soft:#E6E4DF;--text:#1C1B19;--text-soft:#3C3A36;--muted:#726F68;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;direction:rtl;text-align:right;background:var(--bg-0);}
+  body{font-family:'Cairo','Segoe UI',Tahoma,sans-serif;line-height:1.95;font-size:16.5px;color:var(--text);
+    background:radial-gradient(900px 420px at 12% -8%,rgba(225,54,47,0.10),transparent 60%),
+               radial-gradient(800px 420px at 90% 6%,rgba(232,162,58,0.06),transparent 60%),
+               linear-gradient(180deg,var(--bg-0) 0%,var(--bg-1) 100%);
+    background-attachment:fixed;transition:background 0.2s ease,color 0.2s ease;}
+  html[data-theme="light"] body{background:radial-gradient(900px 420px at 12% -8%,rgba(225,54,47,0.06),transparent 60%),radial-gradient(800px 420px at 90% 6%,rgba(232,162,58,0.05),transparent 60%),linear-gradient(180deg,var(--bg-0) 0%,var(--bg-1) 100%);}
+  .progress-rail{position:fixed;top:0;inset-inline:0;height:3px;background:rgba(255,255,255,0.04);z-index:60;}
+  html[data-theme="light"] .progress-rail{background:rgba(0,0,0,0.05);}
+  .progress-bar{height:100%;width:0%;background:var(--red-grad);transition:width 0.08s linear;}
+  .float-controls{position:fixed;bottom:22px;left:22px;z-index:55;display:flex;flex-direction:column;gap:10px;}
+  .fctrl-btn{width:42px;height:42px;border-radius:50%;background:var(--surface);border:1px solid var(--border);color:var(--text-soft);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;box-shadow:0 10px 24px -10px rgba(0,0,0,0.5);transition:transform 0.15s ease,border-color 0.15s ease,opacity 0.2s ease;}
+  .fctrl-btn:hover{transform:translateY(-2px);border-color:var(--red-border);color:var(--red);}
+  #toTop{opacity:0;pointer-events:none;}
+  #toTop.show{opacity:1;pointer-events:auto;}
+  .page{max-width:860px;margin:0 auto;padding:46px 22px 100px;}
+  .banner{position:relative;overflow:hidden;background:linear-gradient(155deg,var(--surface) 0%,var(--bg-1) 55%,var(--surface) 100%);border:1px solid var(--border-soft);border-radius:10px;padding:0 0 34px;margin-bottom:26px;box-shadow:0 20px 50px -20px rgba(0,0,0,0.6);}
+  .term-bar{display:flex;align-items:center;gap:8px;padding:13px 18px;border-bottom:1px solid var(--border-soft);background:rgba(255,255,255,0.015);direction:ltr;}
+  .term-dot{width:11px;height:11px;border-radius:50%;display:inline-block;}
+  .term-dot.r{background:#E1362F;}.term-dot.y{background:#E8A23A;}.term-dot.g{background:#3FBF6E;}
+  .term-path{margin-inline-start:12px;font-family:var(--mono);font-size:12px;color:var(--muted);}
+  .theme-switch{margin-inline-start:auto;font-family:var(--mono);font-size:11px;color:var(--muted);background:transparent;border:1px solid var(--border);border-radius:4px;padding:4px 9px;cursor:pointer;}
+  .theme-switch:hover{color:var(--amber);border-color:var(--amber-border);}
+  .banner-body{padding:30px 34px 4px;}
+  .banner .kicker{display:inline-block;font-family:var(--mono);font-size:12.5px;letter-spacing:0.03em;color:var(--red);background:var(--red-soft);border:1px solid var(--red-border);border-radius:3px;padding:5px 12px;margin-bottom:20px;direction:ltr;}
+  .banner h1{margin:0 0 14px;font-size:28px;font-weight:800;line-height:1.5;color:var(--text);}
+  .banner .lede{color:var(--muted);font-size:15.5px;line-height:1.95;max-width:640px;margin:0 0 24px;}
+  .tags{display:flex;flex-wrap:wrap;gap:9px;}
+  .tag{font-size:12.5px;font-family:var(--mono);color:var(--amber);background:var(--amber-soft);border:1px solid var(--amber-border);border-radius:3px;padding:5px 11px;}
+  .toc{background:var(--surface);border:1px solid var(--border-soft);border-radius:8px;padding:6px 0 6px;margin-bottom:50px;overflow:hidden;}
+  .toc-title{font-family:var(--mono);font-weight:600;font-size:13px;color:var(--green);padding:14px 22px;border-bottom:1px solid var(--border-soft);direction:ltr;text-align:left;}
+  .toc-list{display:flex;flex-direction:column;}
+  .toc-item{display:flex;align-items:center;gap:14px;padding:12px 22px;color:var(--text-soft);text-decoration:none;font-size:14.5px;border-bottom:1px solid rgba(255,255,255,0.03);transition:background 0.15s ease;}
+  .toc-list .toc-item:last-child{border-bottom:none;}
+  .toc-item:hover{background:var(--red-soft);}
+  .toc-num{flex:none;font-family:var(--mono);font-size:12.5px;font-weight:600;color:#0F0F10;background:var(--red-grad);border-radius:3px;padding:3px 8px;direction:ltr;}
+  h1,h2,h3,h4{font-weight:700;}
+  h2{display:flex;align-items:center;gap:14px;font-size:21px;margin:66px 0 22px;padding-bottom:16px;border-bottom:1px solid var(--border-soft);color:var(--text);}
+  h2 .num{flex:none;font-family:var(--mono);font-size:13px;font-weight:700;color:#0F0F10;background:var(--red-grad);border-radius:5px;padding:7px 12px;direction:ltr;}
+  h2 .htext{line-height:1.5;}
+  h3{font-size:17px;margin:34px 0 14px;color:var(--red);display:flex;align-items:center;gap:9px;}
+  h3::before{content:"#";font-family:var(--mono);color:var(--amber);font-weight:700;}
+  h4{font-size:14.8px;margin:22px 0 10px;color:var(--text-soft);font-family:var(--mono);}
+  p{margin:0 0 17px;color:var(--text);}
+  strong{color:var(--text);font-weight:700;}
+  :root:not([data-theme="light"]) strong{color:#FBFBFC;}
+  a{color:var(--amber);text-decoration:none;border-bottom:1px dashed var(--amber-border);}
+  hr{border:none;height:1px;margin:50px 0;background:linear-gradient(90deg,transparent,var(--border),transparent);}
+  ul,ol{margin:0 0 18px;padding-inline-start:24px;}
+  li{margin-bottom:9px;color:var(--text);}
+  li::marker{color:var(--red);font-family:var(--mono);}
+  li>ul,li>ol{margin-top:9px;}
+  .goals-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px;margin:0 0 22px;}
+  .goal-card{display:flex;gap:10px;align-items:flex-start;background:var(--surface);border:1px solid var(--border-soft);border-radius:7px;padding:13px 15px;font-size:14px;color:var(--text-soft);}
+  .goal-card .gi{flex:none;font-family:var(--mono);font-size:11px;font-weight:700;color:var(--green);background:var(--green-soft);border:1px solid var(--green-border);border-radius:4px;width:22px;height:22px;display:flex;align-items:center;justify-content:center;}
+  blockquote{margin:24px 0;padding:17px 22px;background:var(--red-soft);border:1px solid var(--red-border);border-inline-start:3px solid var(--red);border-radius:6px;color:var(--text-soft);}
+  blockquote p{margin:0;color:inherit;line-height:1.85;}
+  blockquote p+p{margin-top:10px;}
+  blockquote strong{color:var(--text);}
+  .callout{margin:24px 0;padding:17px 22px 18px;border-radius:6px;border:1px solid var(--border-soft);border-inline-start:3px solid var(--border);background:var(--surface);}
+  .callout p{margin:0;color:var(--text-soft);line-height:1.85;}
+  .callout p+p{margin-top:10px;}
+  .callout ul{margin:6px 0 0;}
+  .callout-label{display:inline-flex;align-items:center;gap:7px;font-family:var(--mono);font-size:11.5px;font-weight:700;letter-spacing:0.02em;text-transform:uppercase;margin-bottom:10px;direction:ltr;}
+  .callout.note{border-inline-start-color:var(--blue);background:var(--blue-soft);}
+  .callout.note .callout-label{color:var(--blue);}
+  .callout.warning{border-inline-start-color:var(--red);background:var(--red-soft);}
+  .callout.warning .callout-label{color:var(--red);}
+  .callout.tip{border-inline-start-color:var(--green);background:var(--green-soft);}
+  .callout.tip .callout-label{color:var(--green);}
+  .callout.examtip{border-inline-start-color:var(--purple);background:var(--purple-soft);}
+  .callout.examtip .callout-label{color:var(--purple);}
+  .callout.case{border-inline-start-color:var(--amber);background:var(--amber-soft);}
+  .callout.case .callout-label{color:var(--amber);}
+  .callout.definition{border-inline-start-color:var(--muted);background:var(--surface-2);}
+  .callout.definition .callout-label{color:var(--text-soft);}
+  .callout.danger{border-inline-start-color:#FF5A52;background:rgba(255,90,82,0.08);}
+  .callout.danger .callout-label{color:#FF5A52;}
+  .table-wrap{overflow-x:auto;margin:22px 0;border:1px solid var(--border-soft);border-radius:8px;}
+  table{width:100%;border-collapse:collapse;font-size:14.2px;min-width:480px;}
+  thead th{background:var(--surface-2);color:var(--amber);font-weight:700;font-family:var(--mono);font-size:12.5px;text-transform:uppercase;letter-spacing:0.02em;text-align:start;padding:13px 15px;border-bottom:1px solid var(--border-soft);white-space:nowrap;}
+  tbody td{padding:12px 15px;border-bottom:1px solid var(--border-soft);color:var(--text-soft);vertical-align:top;}
+  tbody tr:last-child td{border-bottom:none;}
+  tbody tr:nth-child(even){background:rgba(127,127,127,0.03);}
+  tbody tr:hover{background:var(--red-soft);}
+  code{font-family:var(--mono);font-size:13.3px;background:var(--surface-2);border:1px solid var(--border-soft);border-radius:4px;padding:2px 6px;direction:ltr;unicode-bidi:embed;color:var(--green);}
+  .code-wrap{position:relative;overflow-x:auto;margin:22px 0;}
+  .code-tag{position:absolute;top:10px;left:14px;font-family:var(--mono);font-size:10.5px;color:var(--muted);letter-spacing:0.04em;text-transform:uppercase;z-index:2;}
+  .copy-btn{position:absolute;top:8px;right:10px;z-index:2;font-family:var(--mono);font-size:11px;color:var(--muted);background:var(--surface-2);border:1px solid var(--border-soft);border-radius:4px;padding:4px 9px;cursor:pointer;direction:ltr;}
+  .copy-btn:hover{color:var(--amber);border-color:var(--amber-border);}
+  .copy-btn.copied{color:var(--green);border-color:var(--green-border);}
+  pre{background:var(--bg-0);border:1px solid var(--border-soft);border-inline-start:3px solid var(--red);border-radius:8px;padding:30px 22px 18px;direction:ltr;text-align:left;margin:0;}
+  html[data-theme="light"] pre{background:#16181C;}
+  pre code{background:none;border:none;padding:0;color:#B9E8C9;font-size:13.2px;line-height:1.75;}
+  .diagram-card{background:var(--surface);border:1px solid var(--border-soft);border-radius:10px;padding:22px 18px 16px;margin:24px 0;}
+  .diagram-card svg{width:100%;height:auto;display:block;}
+  .diagram-caption{margin-top:10px;text-align:center;font-family:var(--mono);font-size:11.5px;color:var(--muted);}
+  .takeaways{background:var(--surface);border:1px solid var(--border-soft);border-radius:8px;padding:18px 22px 20px;margin:30px 0 10px;}
+  .takeaways-title{font-family:var(--mono);font-size:12.5px;font-weight:700;color:var(--green);margin-bottom:12px;direction:ltr;text-align:left;display:flex;align-items:center;gap:8px;}
+  .takeaways ul{margin:0;padding-inline-start:20px;}
+  .takeaways li{color:var(--text-soft);font-size:14.5px;}
+  .cheat-section h4{color:var(--amber);font-size:13px;margin:26px 0 8px;}
+  .step-track{display:flex;flex-direction:column;gap:0;margin:24px 0;}
+  .step-item{position:relative;padding:0 0 26px 0;padding-inline-start:46px;border-inline-start:2px solid var(--border-soft);}
+  .step-item:last-child{border-inline-start:2px solid transparent;padding-bottom:4px;}
+  .step-num{position:absolute;inset-inline-start:-17px;top:0;width:32px;height:32px;border-radius:50%;background:var(--red-grad);color:#0F0F10;font-family:var(--mono);font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;}
+  .step-title{font-weight:700;color:var(--text);margin-bottom:6px;font-size:15px;}
+  .step-body{color:var(--text-soft);font-size:14.5px;}
+  .step-body p{margin:0 0 10px;}
+  .step-body p:last-child{margin-bottom:0;}
+  .method-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px;margin:22px 0;}
+  .method-card{background:var(--surface);border:1px solid var(--border-soft);border-radius:8px;padding:14px 16px;}
+  .method-card .mnum{font-family:var(--mono);font-size:11px;font-weight:700;color:#0F0F10;background:var(--red-grad);border-radius:4px;padding:2px 8px;display:inline-block;margin-bottom:8px;direction:ltr;}
+  .method-card .mtitle{font-weight:700;color:var(--text);font-size:14px;margin-bottom:5px;}
+  .method-card .mdesc{color:var(--text-soft);font-size:13.3px;line-height:1.75;}
+  .footer-note{margin-top:70px;padding-top:26px;border-top:1px solid var(--border-soft);color:var(--muted);font-size:13.3px;font-family:var(--mono);text-align:center;direction:ltr;}
+  .dsvg-box{fill:var(--surface-2);stroke:var(--border-soft);stroke-width:1;}
+  .dsvg-box-r{fill:var(--red-soft);stroke:var(--red-border);stroke-width:1;}
+  .dsvg-box-g{fill:var(--green-soft);stroke:var(--green-border);stroke-width:1;}
+  .dsvg-box-b{fill:var(--blue-soft);stroke:var(--blue-border);stroke-width:1;}
+  .dsvg-box-a{fill:var(--amber-soft);stroke:var(--amber-border);stroke-width:1;}
+  .dsvg-box-p{fill:var(--purple-soft);stroke:var(--purple-border);stroke-width:1;}
+  .dsvg-line{stroke:var(--border);stroke-width:1.5;fill:none;}
+  .dsvg-arr{fill:var(--border);}
+  .dsvg-arr-r{fill:var(--red);}
+  .dsvg-txt{fill:var(--text);font-family:IBM Plex Mono,monospace;}
+  .dsvg-muted{fill:var(--muted);font-family:IBM Plex Mono,monospace;}
+  .dsvg-red{fill:var(--red);}
+  .dsvg-green{fill:var(--green);}
+  .dsvg-amber{fill:var(--amber);}
+  .dsvg-blue{fill:var(--blue);}
+  @media print{.float-controls,.progress-rail,.copy-btn,.theme-switch{display:none !important;}body{background:#fff;color:#000;}.page{max-width:100%;}}
+  @media(max-width:640px){.page{padding:28px 14px 70px;}.banner-body{padding:24px 20px 4px;}.banner h1{font-size:21px;}h2{font-size:18px;gap:10px;}.float-controls{left:12px;bottom:14px;}}
+</style>
+</head>
+<body>
+
+<div class="progress-rail"><div class="progress-bar" id="progressBar"></div></div>
+<div class="float-controls">
+  <button class="fctrl-btn" id="toTop" title="ارجع لفوق">↑</button>
+</div>
+
+<div class="page">
+
+<div class="banner">
+  <div class="term-bar">
+    <span class="term-dot r"></span><span class="term-dot y"></span><span class="term-dot g"></span>
+    <span class="term-path">root@oscp:~/module-22$</span>
+    <button class="theme-switch" id="themeSwitch">theme: dark</button>
+  </div>
+  <div class="banner-body">
+    <span class="kicker">OSCP · PEN-200 · Module 22</span>
+    <h1>تعداد بنية AWS السحابية (Enumerating AWS Cloud Infrastructure)</h1>
+    <p class="lede">من اسم دومين واحد بدون أي وصول — إلى خريطة كاملة لحسابات IAM وAMIs وSnapshots. DNS Fingerprinting، استغلال شروط IAM Policy كـ Oracle لاستخراج Account ID، تعداد المستخدمين والأدوار، وأتمتة كل ده عبر JMESPath وPacu.</p>
+    <div class="tags">
+      <span class="tag">cloud-recon</span>
+      <span class="tag">dns-fingerprinting</span>
+      <span class="tag">s3-discovery</span>
+      <span class="tag">aws-cli</span>
+      <span class="tag">iam-enumeration</span>
+      <span class="tag">account-id-oracle</span>
+      <span class="tag">jmespath</span>
+      <span class="tag">pacu</span>
+    </div>
+  </div>
+</div>
+
+<nav class="toc"><div class="toc-title">$ ls learning_units/</div><div class="toc-list">
+  <a class="toc-item" href="#lu1"><span class="toc-num">01</span><span>نظرة عامة على استطلاع السحابة</span></a>
+  <a class="toc-item" href="#lu2"><span class="toc-num">02</span><span>استطلاع DNS والدومين</span></a>
+  <a class="toc-item" href="#lu3"><span class="toc-num">03</span><span>استطلاع الدومين الخاص بالخدمات</span></a>
+  <a class="toc-item" href="#lu4"><span class="toc-num">04</span><span>الاستطلاع عبر API</span></a>
+  <a class="toc-item" href="#lu5"><span class="toc-num">05</span><span>الحصول على Account ID عبر S3</span></a>
+  <a class="toc-item" href="#lu6"><span class="toc-num">06</span><span>تعداد مستخدمي وأدوار IAM</span></a>
+  <a class="toc-item" href="#lu7"><span class="toc-num">07</span><span>صلاحيات IAM وتحليل السياسات</span></a>
+  <a class="toc-item" href="#lu8"><span class="toc-num">08</span><span>تعداد موارد IAM</span></a>
+  <a class="toc-item" href="#lu9"><span class="toc-num">09</span><span>معالجة البيانات بـ JMESPath</span></a>
+  <a class="toc-item" href="#lu10"><span class="toc-num">10</span><span>التعداد الآلي بـ Pacu</span></a>
+  <a class="toc-item" href="#methodology"><span class="toc-num">--</span><span>تحليل النتائج ومسارات التصعيد</span></a>
+  <a class="toc-item" href="#cheat"><span class="toc-num">--</span><span>Cheat Sheet مرجعي</span></a>
+  <a class="toc-item" href="#summary"><span class="toc-num">--</span><span>الخلاصة العامة للموديول</span></a>
+</div></nav>
+
+<!-- ══════════════════════════════════ LU1 -->
+<h2 id="lu1"><span class="num">01</span><span class="htext">نظرة عامة على استطلاع السحابة</span></h2>
+
+<h3>ليه استطلاع السحابة مختلف</h3>
+<p>الاستطلاع التقليدي بيعتمد على فحص IPs وفحص الخدمات وإيجاد منافذ مفتوحة. استطلاع السحابة بيضيف أسطح هجوم جديدة تمامًا.</p>
+<div class="goals-grid">
+  <div class="goal-card"><span class="gi">1</span><span>واجهات مزوّد السحابة (APIs) متاحة بشكل عام</span></div>
+  <div class="goal-card"><span class="gi">2</span><span>الموارد عندها أنماط تسمية متوقَّعة يمكن تخمينها</span></div>
+  <div class="goal-card"><span class="gi">3</span><span>Metadata الحساب بتتسرّب من خلال سلوك الـ API نفسه</span></div>
+  <div class="goal-card"><span class="gi">4</span><span>الموارد العامة ممكن تكشف البنية الداخلية للمؤسسة</span></div>
+</div>
+<p>AWS واحدة من أكثر منصات السحابة انتشارًا — وهي التركيز الأساسي لهذا الموديول.</p>
+
+<h3>منظوران للتعداد</h3>
+<div class="method-grid">
+<div class="method-card"><span class="mnum">خارجي</span><div class="mtitle">بدون مصادقة</div><div class="mdesc">معلومات عامة بس — بدون أي وصول لحساب سحابي: سجلات DNS، WHOIS، ملكية الـ IP، روابط عامة، أدوات متصفح الشبكة، وتعداد الـ Subdomains.</div></div>
+<div class="method-card"><span class="mnum">داخلي</span><div class="mtitle">بعد المصادقة</div><div class="mdesc">بيانات اعتماد أو مفاتيح API متاحة — تفاعل مباشر مع واجهات المزوّد لتعداد الموارد: تحليل IAM، AMIs العامة، Snapshots، وS3 Buckets.</div></div>
+</div>
+<div class="callout note">
+<div class="callout-label">مبدأ أساسي</div>
+<p>التعداد دايمًا تكراري — أي وصول أو بيانات اعتماد جديدة لازم تبدأ دورة استطلاع جديدة.</p>
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU2 -->
+<h2 id="lu2"><span class="num">02</span><span class="htext">استطلاع DNS والدومين</span></h2>
+
+<h3>البداية من دومين واحد</h3>
+<ul>
+<li>المعلومة الوحيدة المعروفة: الدومين الأساسي فقط (مثلًا BadGlitch.io)</li>
+<li>الخطوة 1 — استعلام سجلات NS: بيكشف مين بيدير DNS الدومين. نمط AWS Route 53: <code>*.awsdns-*.com / .org / .net / .co.uk</code> — ده لوحده بيؤكد استخدام AWS</li>
+<li>الخطوة 2 — WHOIS على دومين الـ Name Server: بيؤكد الملكية لأمازون عبر معلومات المسجّل</li>
+</ul>
+
+<h3>البصمة التقنية — أوامر عملية</h3>
+<div class="code-wrap"><span class="code-tag">dns fingerprinting</span><pre><code># استعلام سجلات NS:
+nslookup -type=NS badglitch.io
+# → ns-XXX.awsdns-XX.com
+
+# تحويل الدومين لـ IP:
+nslookup badglitch.io
+# → 52.x.x.x (نطاق AWS العام)
+
+# Reverse DNS lookup:
+nslookup 52.x.x.x
+# → ec2-52-x-x-x.compute-1.amazonaws.com
+
+# WHOIS على الـ IP:
+whois 52.x.x.x | grep -i 'amazon\|aws'
+# يؤكد: AMAZON-EC2
+</code></pre></div>
+<div class="callout tip">
+<div class="callout-label">نمط EC2</div>
+<p>نمط Reverse DNS الخاص بـ EC2: <code>ec2-X-X-X-X.compute-1.amazonaws.com</code> — بيؤكد وجود جهاز افتراضي على AWS EC2.</p>
+</div>
+
+<h3>تعداد الـ Subdomains</h3>
+<ul>
+<li>كل Subdomain ممكن يمثّل خدمة أو بيئة مختلفة — بيئات Dev/Staging/Internal غالبًا سيئة الإعداد</li>
+<li>الطرق: DNS brute-force بـ Wordlists، سجلات Certificate Transparency (crt.sh)، محركات البحث (<code>site:domain.com</code>)</li>
+<li>الأدوات: <code>amass</code>، <code>subfinder</code>، <code>dnsx</code>، وضع DNS في <code>gobuster</code></li>
+<li>كل Subdomain جديد بيعيد تشغيل عملية البصمة من الأول</li>
+</ul>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU3 -->
+<h2 id="lu3"><span class="num">03</span><span class="htext">استطلاع الدومين الخاص بالخدمات</span></h2>
+
+<h3>كيف تُنشئ خدمات AWS روابط متوقَّعة</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>الخدمة</th><th>نمط الرابط</th></tr></thead>
+<tbody>
+<tr><td>S3 Bucket</td><td><code>&lt;bucket-name&gt;.s3.amazonaws.com</code></td></tr>
+<tr><td>S3 Bucket (بديل)</td><td><code>s3.amazonaws.com/&lt;bucket-name&gt;</code></td></tr>
+<tr><td>CloudFront</td><td><code>&lt;id&gt;.cloudfront.net</code></td></tr>
+<tr><td>EC2</td><td><code>ec2-X-X-X-X.compute-1.amazonaws.com</code></td></tr>
+</tbody>
+</table></div>
+<p>اكتشاف أي رابط خدمة بيكشف الخدمة السحابية المستخدَمة، وأنماط التسمية بتفضح عادات التنظيم الداخلية — معرفة اسم Bucket واحد بتساعد في تخمين أسماء تانية.</p>
+
+<h3>أدوات المتصفح للاستطلاع</h3>
+<ul>
+<li>فتح الموقع الهدف وتشغيل DevTools (F12) → تبويب Network → إعادة تحميل الصفحة</li>
+<li>كل طلب مورد ظاهر: JavaScript، CSS، صور، خطوط، استدعاءات API — بما فيها الموارد من دومينات خارجية زي S3 buckets</li>
+<li>ركّز على الطلبات لـ <code>*.s3.amazonaws.com</code> — بتكشف أسماء الـ Buckets، ومسار الرابط غالبًا بيكشف البنية الداخلية للملفات</li>
+</ul>
+
+<h3>أخطاء إعداد S3 Bucket</h3>
+<div class="callout danger">
+<div class="callout-label">أخطاء شائعة وخطيرة</div>
+<ul>
+<li>تفعيل سرد المحتويات (Bucket Listing) → سرد كل الأوبجكتس جوه الـ Bucket</li>
+<li>ACL مفرط في الصلاحية → أي حد يقدر يقرأ ملفات خاصة</li>
+<li>بدون تشفير → البيانات مكشوفة بشكل نصي</li>
+</ul>
+</div>
+<p>حتى من غير صلاحية سرد: رسائل الخطأ بتؤكد وجود الـ Bucket من عدمه — <strong>403</strong> يعني الـ Bucket موجود لكن الوصول مرفوض، و<strong>404</strong> يعني الـ Bucket مش موجود أصلًا. جرّب أنماط زي <code>company-dev</code>، <code>company-backup</code>، <code>company-staging</code>.</p>
+
+<h3>أدوات اكتشاف Buckets آلية</h3>
+<ul>
+<li><strong>GrayhatWarfare.com</strong> — بحث عن S3 Buckets المكشوفة علنًا بالكلمة المفتاحية، عبر عدة مزوّدين سحابيين، بدون مصادقة</li>
+<li><strong>S3Scanner</strong> — أداة CLI لتعداد الـ Buckets، بتجرّب تباديل مختلفة من الأسماء وبترجّع حالة عام/خاص/متاح</li>
+</ul>
+<div class="callout tip">
+<div class="callout-label">أنماط تسمية للتجربة</div>
+<p>company-name، companyname-public، companyname-static، companyname-assets، companyname-backup، companyname-dev، companyname-staging، companyname-prod — وماتنساش فحص Azure Blob وGCP Storage أيضًا في بيئات Multi-cloud.</p>
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU4 -->
+<h2 id="lu4"><span class="num">04</span><span class="htext">الاستطلاع عبر API</span></h2>
+
+<h3>طريقتان للتفاعل مع AWS</h3>
+<ul>
+<li><strong>Web Console (GUI):</strong> واجهة إدارة بالمتصفح، محتاجة اسم مستخدم + كلمة مرور + MFA</li>
+<li><strong>AWS CLI (API برمجي):</strong> وصول سطر أوامر لكل خدمات AWS، محتاج Access Key ID + Secret Access Key</li>
+</ul>
+<div class="callout note">
+<div class="callout-label">أسلوب المهاجم</div>
+<p>إنشاء حساب AWS خاص بالمهاجم نفسه للحصول على بيانات اعتماد API شرعية، واستخدامها للاستعلام عن واجهات المزوّد السحابي واكتشاف الموارد اللي المؤسسات الهدف شاركتها علنًا. ده إجراء قانوني — استعلام APIs عامة من حسابك الخاص.</p>
+</div>
+
+<div class="code-wrap"><span class="code-tag">aws cli setup + sts verification</span><pre><code>aws configure --profile attacker
+AWS Access Key ID: AKIA...
+AWS Secret Access Key: ...
+Default region: us-east-1
+
+aws --profile attacker sts get-caller-identity
+# {
+#   "Account": "123456789012",
+#   "UserId": "AIDAXXXXXXX",
+#   "Arn": "arn:aws:iam::123...:user/attacker"
+# }
+</code></pre></div>
+
+<h3>AMIs العامة — كنز استخباراتي</h3>
+<ul>
+<li>AMI = Amazon Machine Image، قالب جهاز افتراضي لإطلاق EC2 instances. المؤسسات بتنشئ AMIs مخصّصة ببرامج وإعدادات مثبّتة مسبقًا</li>
+</ul>
+<div class="callout danger">
+<div class="callout-label">ليه AMIs المخصّصة خطيرة لما تكون عامة</div>
+<p>ممكن تحتوي بيانات اعتماد مضمَّنة (مفاتيح API، كلمات مرور في ملفات الإعداد)، تكشف المكدّس البرمجي والبنية الداخلية، وتاغاتها بتفضح أسماء المشاريع والبيئات والفرق. حقل الـ <code>owner</code> بيكشف Account ID صاحب الـ AMI مباشرة.</p>
+</div>
+
+<div class="code-wrap"><span class="code-tag">discovering public amis + snapshots</span><pre><code>aws --profile attacker ec2 describe-images \
+  --filters 'Name=name,Values=*badglitch*' --owners self amazon
+
+aws ec2 describe-images --executable-users all \
+  --filters 'Name=name,Values=*company*'
+
+# OwnerId: 123456789012  ← Account ID الهدف!
+# Name: badglitch-web-prod-2024
+
+# بعد معرفة الـ Account ID:
+aws ec2 describe-snapshots --owner-ids <account_id>
+aws rds describe-db-snapshots --snapshot-type public
+</code></pre></div>
+<p>Snapshots الـ EBS نسخ احتياطية لأقراص كاملة — Public EBS snapshot يعني أي حد يقدر ينشئ Volume منه ويوصّله. Snapshots الـ RDS نسخ قاعدة بيانات كاملة في لحظة معيّنة — Public RDS snapshot يعني أي حد يقدر يسترجع قاعدة بيانات منه.</p>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU5 -->
+<h2 id="lu5"><span class="num">05</span><span class="htext">الحصول على Account ID عبر S3</span></h2>
+
+<h3>الفكرة الجوهرية</h3>
+<p>الهدف: اكتشاف Account ID الخاص بـ AWS بتاع الهدف من غير أي وصول مباشر. الحيلة: شروط IAM policy تقدر تتحقّق من Account ID مالك المورد — وAWS بيُقيِّم الشرط ده <strong>قبل</strong> منح الوصول. استجابة السماح/الرفض بتكشف هل الشرط كان صح أو غلط.</p>
+<div class="callout warning">
+<div class="callout-label">نظام الصلاحيات كـ Oracle</div>
+<p>اختبار "هل الـ Account ID بيبدأ بـ 0؟" → رفض. اختبار "هل بيبدأ بـ 1؟" → سماح → الرقم الأول هو '1'! تكرار العملية لكل رقم تالي → إعادة بناء الـ ID الكامل (12 رقم).</p>
+</div>
+
+<div class="step-track">
+<div class="step-item">
+<div class="step-num">1</div>
+<div class="step-title">إنشاء مستخدم IAM مقيَّد</div>
+<div class="step-body"><p>في حساب المهاجم الخاص — مستخدم جديد بدون أي صلاحيات افتراضيًا.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">2</div>
+<div class="step-title">تحديد S3 Bucket عام</div>
+<div class="step-body"><p>إيجاد Bucket قابل للقراءة علنًا وتابع للمؤسسة الهدف.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">3</div>
+<div class="step-title">إنشاء IAM Policy شرطية</div>
+<div class="step-body"><p>منح صلاحية محدودة (<code>s3:ListBucket</code>) فقط لو Account ID مالك المورد بيطابق بادئة معيّنة.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">4</div>
+<div class="step-title">ربط الـ Policy واختبارها</div>
+<div class="step-body"><p>محاولة سرد الـ Bucket — النجاح = الشرط اتحقق = الرقم صح.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">5</div>
+<div class="step-title">التكرار لكل رقم</div>
+<div class="step-body"><p>توسيع البادئة رقم رقم — اختبار كل الأرقام العشرة لكل موضع.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">6</div>
+<div class="step-title">إعادة بناء الـ ID الكامل</div>
+<div class="step-body"><p>بعد 12 تكرارًا — رقم الحساب الكامل المكوَّن من 12 رقم بيظهر بالكامل.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">7</div>
+<div class="step-title">استخدام الـ ID لاستطلاع إضافي</div>
+<div class="step-body"><p>البحث عن AMIs وSnapshots وهويات IAM باستخدام الـ Account ID المكتشَف.</p></div>
+</div>
+</div>
+
+<div class="callout tip">
+<div class="callout-label">ليه التقنية دي خفيّة جدًا</div>
+<p>كل الإجراءات بتحصل جوه حساب المهاجم نفسه — إنشاء المستخدمين والسياسات والاختبار كلها عمليات داخلية. اللوجات بتتسجّل في CloudTrail بتاع المهاجم بس، وحساب الهدف ميشوفش غير وصول عادي للـ Bucket العام. مفيش تنبيهات Brute-force — حجم الطلبات قليل جدًا، والعملية ممكن تُؤتمت بالكامل.</p>
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU6 -->
+<h2 id="lu6"><span class="num">06</span><span class="htext">تعداد مستخدمي وأدوار IAM</span></h2>
+
+<h3>كيف يسرّب تحقّق IAM principal البيانات</h3>
+<p>AWS بيتحقّق من صحة IAM principals <strong>قبل</strong> حفظ سياسات الموارد. المهاجم بينشئ Resource policy بتمنح وصول لـ ARN مستخدم مُخمَّن — لو الـ Policy اتحفظت بنجاح، المستخدم ده موجود فعلًا في الحساب الهدف؛ لو ظهر خطأ "Invalid principal"، المستخدم مش موجود. ده عمليًا تعداد Brute-force عبر استجابات الـ API — بدون أي محاولات تسجيل دخول، فمفيش Lockouts أبدًا.</p>
+
+<h3>أسماء IAM شائعة للتجربة</h3>
+<ul>
+<li>عامة عالية القيمة: admin، administrator، root، devops، developer، cloudadmin</li>
+<li>sysadmin، backup، security، auditor، support، helpdesk</li>
+<li>cicd، jenkins، terraform، ansible، packer، github-actions</li>
+<li>billing، finance، readonly، monitor، loganalytics</li>
+<li>أنماط خاصة بالمؤسسة: firstname.lastname، f.lastname، company-admin</li>
+</ul>
+
+<h3>تعداد الأدوار (Roles) — أهداف أعلى قيمة</h3>
+<p>الأدوار غالبًا عندها صلاحيات أعلى من المستخدمين — مصمَّمة للخدمات والتطبيقات والوصول عبر الحسابات، وغالبًا بتشمل صلاحيات بمستوى أدمن. نفس تقنية التحقّق بتنطبق: تخمين ARN الدور في Resource policy، وAWS بيتحقّق هل الدور موجود فعلًا. أسماء أدوار مستهدَفة: Admin، Backup، SecurityAudit، PowerUser، DevOps، CICD، CrossAccount، Lambda-Exec.</p>
+
+<div class="callout danger">
+<div class="callout-label">سوء إعداد AssumeRole</div>
+<p>لو دور مكتشَف بيثق في حسابات خارجية، المهاجم يقدر ينادي <code>sts:AssumeRole</code> ويستلم بيانات اعتماد مؤقتة للحساب الهدف — وده بينقل الوضع من استطلاع لـ اختراق أولي فعلي. إعداد سيئ: ثقة في <code>aws:*</code> (كل الحسابات)، وحتى الثقة في حسابات محدَّدة من غير شرط <code>ExternalId</code> فيها خطورة.</p>
+</div>
+
+<div class="callout note">
+<div class="callout-label">خصائص التخفّي</div>
+<p>كل التعداد بيحصل في حساب المهاجم الخاص — إنشاء السياسات واختبارها مبيولّدش أي لوجات في حساب الهدف. الاستثناء الوحيد: انتحال الدور (Role Assumption) الناجح — استدعاءات AssumeRole بتظهر في CloudTrail الخاص بالهدف.</p>
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU7 -->
+<h2 id="lu7"><span class="num">07</span><span class="htext">صلاحيات IAM وتحليل السياسات</span></h2>
+
+<h3>تقييم بيانات اعتماد مخترَقة</h3>
+<p>أول أمر لازم تنفّذه مع بيانات اعتماد مخترَقة: <code>aws sts get-caller-identity</code> — بيكشف Account ID، UserID، وARN الكامل. مثال: <code>arn:aws:iam::123456789:user/support/clouddesk-plove</code> — المسار "/support/" بيلمّح لغرض الحساب، وحتى عادات التسمية بتكشف الصلاحيات المحتملة.</p>
+
+<h3>كيف تُورَّث الصلاحيات في IAM</h3>
+<ol>
+<li><strong>سياسات مضمَّنة (Inline):</strong> مدمجة مباشرة في المستخدم — خاصة بهوية معيّنة</li>
+<li><strong>سياسات مُدارة مرفقة:</strong> سياسات مستقلة مربوطة مباشرة بالمستخدم</li>
+<li><strong>سياسات المجموعات:</strong> المستخدم بيرث كل صلاحيات كل مجموعة هو عضو فيها — وده غالبًا بيتم تجاهله وبيكون واسع جدًا</li>
+</ol>
+
+<div class="code-wrap"><span class="code-tag">mapping user permissions</span><pre><code>aws iam list-groups-for-user --user-name clouddesk-plove
+# GroupName: support
+
+aws iam list-attached-group-policies --group-name support
+# SupportUser (AWS Managed Policy)
+
+aws iam get-policy-version \
+  --policy-arn arn:aws:iam::aws:policy/SupportUser --version-id v8
+# يعرض كل الأفعال المسموحة!
+</code></pre></div>
+
+<div class="callout warning">
+<div class="callout-label">SupportUser — للقراءة فقط لكنه خطير</div>
+<p>بيمنح وصول للقراءة فقط عبر خدمات AWS كتيرة جدًا — كل عمليات <code>Get*</code>، <code>Describe*</code>، <code>List*</code> على كل خدمة تقريبًا. مينفعش ينشئ أو يعدّل موارد — لكن قيمته الاستطلاعية هائلة: رسم خريطة البنية التحتية بالكامل، قراءة الإعدادات والشهادات وسياسات التوسّع، وتحديد أهداف للتصعيد. القراءة فقط ≠ غير مؤذٍ في أمن السحابة.</p>
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU8 -->
+<h2 id="lu8"><span class="num">08</span><span class="htext">تعداد موارد IAM</span></h2>
+
+<h3>البداية بملخص الحساب</h3>
+<p><code>aws iam get-account-summary</code> بيرجّع أعداد عامة وإعدادات: عدد المستخدمين والمجموعات والأدوار والسياسات، حالة أجهزة MFA (هل Root محمي بـ MFA؟)، قوة سياسة كلمة المرور، وعدد Instance profiles.</p>
+<div class="callout danger">
+<div class="callout-label">اكتشاف عالي القيمة</div>
+<p>حساب Root بدون MFA — عنده وصول غير محدود، ولو مش محمي بـ MFA ده خطر حرج جدًا.</p>
+</div>
+
+<h3>سرد كل هويات IAM</h3>
+<div class="code-wrap"><span class="code-tag">listing identities — iam</span><pre><code>aws iam list-users > users.json
+aws iam list-groups > groups.json
+aws iam list-roles > roles.json
+aws iam list-policies --scope Local > policies.json
+
+# الخطوة الأقوى — كل حاجة في استدعاء واحد:
+aws iam get-account-authorization-details > full_iam_dump.json
+</code></pre></div>
+<ul>
+<li>ابحث عن "admin" جوه اسم المستخدم → غالبًا مميَّز</li>
+<li>مسارات غير معتادة ("/service/"، "/cross-account/")</li>
+<li>حسابات اتعملت حديثًا</li>
+</ul>
+<div class="callout tip">
+<div class="callout-label">ميزة get-account-authorization-details</div>
+<p>استدعاء API واحد بيرجّع كل المستخدمين وسياساتهم، كل المجموعات وأعضائها، كل الأدوار وسياسات الثقة بتاعتهم، وكل السياسات المُدارة بالكامل. استدعاءات أقل = إدخالات CloudTrail أقل = كشف أصعب، وتحليل أوفلاين بدون استعلامات متكررة.</p>
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU9 -->
+<h2 id="lu9"><span class="num">09</span><span class="htext">معالجة البيانات بـ JMESPath</span></h2>
+
+<h3>ليه JMESPath مهم</h3>
+<p>AWS CLI بيرجّع البيانات بصيغة JSON — غالبًا ضخمة جدًا، مئات أو آلاف الأوبجكتس في الاستجابة الواحدة. JMESPath لغة استعلام مخصّصة لمستندات JSON، مدمجة في AWS CLI عبر <code>--query</code> لفلترة وإعادة تشكيل البيانات من جهة العميل.</p>
+<div class="callout note">
+<div class="callout-label">ميزة أساسية للتخفّي</div>
+<p><code>--query</code> من جهة العميل — بدون أي استدعاءات API إضافية. <code>--filter</code> من جهة السيرفر — بيقلّل البيانات المرسلة من AWS. مع بعض: أقل استدعاءات API، أقصى استخبارات.</p>
+</div>
+
+<div class="code-wrap"><span class="code-tag">jmespath practical examples</span><pre><code># استخراج كل أسماء المستخدمين:
+aws iam get-account-authorization-details \
+  --query 'UserDetailList[].UserName'
+
+# إيجاد المستخدمين المرتبطين بـ admin:
+aws iam get-account-authorization-details \
+  --query 'UserDetailList[?contains(UserName,`admin`)].UserName'
+# النتيجة: ["admin", "cloudadmin"]
+
+# المستخدمين مع السياسات المرفقة بيهم:
+aws iam get-account-authorization-details \
+  --query 'UserDetailList[].[UserName,AttachedManagedPolicies[].PolicyName]'
+
+# معالجة ملفات JSON محفوظة محليًا:
+jp -f full_iam_dump.json 'expression'
+</code></pre></div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU10 -->
+<h2 id="lu10"><span class="num">10</span><span class="htext">التعداد الآلي بـ Pacu</span></h2>
+
+<h3>ما هو Pacu؟</h3>
+<ul>
+<li>إطار استغلال AWS مفتوح المصدر، طوّرته Rhino Security Labs مخصّص لتقييمات AWS</li>
+<li>منظَّم في موديولات تستهدف خدمات AWS محدَّدة، مبني على جلسات (كل تقييم بيتخزّن منفصل)</li>
+<li>بيستورد بروفايلات AWS CLI الموجودة، وقاعدة بيانات داخلية بتخزّن كل البيانات المُجمَّعة</li>
+</ul>
+
+<div class="callout danger">
+<div class="callout-label">CloudTrail — القلق الأساسي للكشف</div>
+<p>AWS CloudTrail بيسجّل كل نشاط API افتراضيًا — كل أمر <code>aws</code> بتشغّله = إدخال لوج في حساب الهدف (اسم الفعل، IP المصدر، User Agent اللي ممكن يكشف awscli أو boto3 أو pacu، الوقت، والمعاملات). Pacu بيشغّل استدعاءات API كتير وبسرعة = طفرة واضحة في CloudTrail، وUser Agent بتاعه مميَّز في اللوجات.</p>
+</div>
+
+<div class="code-wrap"><span class="code-tag">pacu — basic workflow</span><pre><code>python3 pacu.py
+Pacu (v1.x) - Main Menu
+
+Pacu (No Session) > new_session
+assessment1
+
+Pacu (assessment1) > import_keys clouddesk
+
+Pacu (assessment1) > run iam__enum_users_roles_policies_groups
+[*] Enumerating IAM users...
+[*] 14 users found, 8 roles found...
+
+Pacu (assessment1) > data iam
+# يعرض كل بيانات IAM المُجمَّعة!
+</code></pre></div>
+
+<h3>يدوي مقابل آلي</h3>
+<div class="method-grid">
+<div class="method-card"><span class="mnum">يدوي</span><div class="mtitle">AWS CLI + JMESPath</div><div class="mdesc">تحكّم كامل في كل استدعاء API، يقلّل ضجيج CloudTrail، OPSEC أفضل (توقيت عشوائي)، فهم أعمق لكل استعلام. أبطأ ومحتاج خبرة أكتر — الأنسب للتقييمات اللي تركّز على التخفّي.</div></div>
+<div class="method-card"><span class="mnum">آلي</span><div class="mtitle">Pacu / enumerate-iam</div><div class="mdesc">سريع — بيغطي خدمات كتيرة بسرعة، بيمسك صلاحيات ممكن تفوتها يدويًا، تنظيم جلسات وبيانات. ضجيج عالي، توقيعات الأدوات قابلة للكشف في CloudTrail، وممكن يفعّل تنبيهات أمنية — الأنسب للتقييمات محدودة الوقت.</div></div>
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ METHODOLOGY -->
+<h2 id="methodology"><span class="num">--</span><span class="htext">تحليل النتائج ومسارات التصعيد</span></h2>
+<p>البيانات الخام مجرد بداية — القيمة الحقيقية في التحليل. بعد أي تعداد (يدوي أو آلي)، ركّز على:</p>
+<ul>
+<li>مستخدمين فيهم "admin" في الاسم — غالبًا صلاحيات عالية</li>
+<li>مجموعات مرفق بيها سياسات قوية</li>
+<li>صلاحيات Wildcard (<code>Action: '*'</code>، <code>Resource: '*'</code>)</li>
+<li>سياسات بتسمح بـ <code>iam:CreateUser</code>، <code>iam:AttachUserPolicy</code>، <code>iam:AddUserToGroup</code></li>
+</ul>
+
+<div class="diagram-card">
+<svg viewBox="0 0 700 150" xmlns="http://www.w3.org/2000/svg">
+  <rect x="5" y="55" width="110" height="55" rx="7" class="dsvg-box-b"/>
+  <text x="60" y="78" text-anchor="middle" class="dsvg-blue" font-size="11" font-weight="700">استطلاع خارجي</text>
+  <text x="60" y="95" text-anchor="middle" class="dsvg-muted" font-size="8">DNS / S3 / AMIs</text>
+
+  <rect x="155" y="55" width="110" height="55" rx="7" class="dsvg-box-a"/>
+  <text x="210" y="78" text-anchor="middle" class="dsvg-amber" font-size="11" font-weight="700">Account ID</text>
+  <text x="210" y="95" text-anchor="middle" class="dsvg-muted" font-size="8">Oracle Technique</text>
+
+  <rect x="305" y="55" width="110" height="55" rx="7" class="dsvg-box"/>
+  <text x="360" y="78" text-anchor="middle" class="dsvg-txt" font-size="11" font-weight="700">تعداد IAM</text>
+  <text x="360" y="95" text-anchor="middle" class="dsvg-muted" font-size="8">Users / Roles</text>
+
+  <rect x="455" y="55" width="110" height="55" rx="7" class="dsvg-box-r"/>
+  <text x="510" y="78" text-anchor="middle" class="dsvg-red" font-size="11" font-weight="700">تحليل الصلاحيات</text>
+  <text x="510" y="95" text-anchor="middle" class="dsvg-muted" font-size="8">JMESPath / Pacu</text>
+
+  <rect x="585" y="55" width="110" height="55" rx="7" class="dsvg-box-g"/>
+  <text x="640" y="78" text-anchor="middle" class="dsvg-green" font-size="11" font-weight="700">مسار تصعيد</text>
+  <text x="640" y="95" text-anchor="middle" class="dsvg-muted" font-size="8">AssumeRole</text>
+
+  <line x1="115" y1="82" x2="155" y2="82" class="dsvg-line"/>
+  <line x1="265" y1="82" x2="305" y2="82" class="dsvg-line"/>
+  <line x1="415" y1="82" x2="455" y2="82" class="dsvg-line"/>
+  <line x1="565" y1="82" x2="585" y2="82" class="dsvg-line"/>
+</svg>
+<div class="diagram-caption">من دومين واحد بدون وصول، وحتى مسار تصعيد كامل جوه حساب AWS الهدف</div>
+</div>
+
+<h3>مسارات تصعيد شائعة في AWS</h3>
+<ul>
+<li>إضافة نفسك لمجموعة أدمن</li>
+<li>إنشاء Access Keys لمستخدم أدمن</li>
+<li>انتحال دور (Role) مميَّز عبر <code>sts:AssumeRole</code></li>
+<li>استغلال شروط وصول قائمة على التاغات (Tags) مفرطة في السماح</li>
+</ul>
+
+<hr />
+
+<!-- ══════════════════════════════════ CHEAT SHEET -->
+<h2 id="cheat"><span class="num">--</span><span class="htext">Cheat Sheet مرجعي</span></h2>
+<div class="cheat-section">
+
+<h4>بصمة DNS واكتشاف S3</h4>
+<div class="code-wrap"><span class="code-tag">quick reference</span><pre><code>nslookup -type=NS <domain>
+nslookup <domain>
+nslookup <ip>
+whois <ip> | grep -i 'amazon\|aws'
+gobuster dns -d <domain> -w wordlist.txt
+curl https://<bucket>.s3.amazonaws.com/
+</code></pre></div>
+
+<h4>استطلاع AWS CLI الأساسي</h4>
+<div class="code-wrap"><span class="code-tag">quick reference</span><pre><code>aws configure --profile attacker
+aws --profile attacker sts get-caller-identity
+aws ec2 describe-images --executable-users all --filters 'Name=name,Values=*company*'
+aws ec2 describe-snapshots --owner-ids <account_id>
+aws iam get-account-summary
+aws iam get-account-authorization-details > full_iam_dump.json
+</code></pre></div>
+
+<h4>استعلامات JMESPath مفيدة</h4>
+<div class="code-wrap"><span class="code-tag">quick reference</span><pre><code>--query 'UserDetailList[].UserName'
+--query 'UserDetailList[?contains(UserName,`admin`)].UserName'
+--query 'UserDetailList[].[UserName,GroupList[].GroupName]'
+jp -f full_iam_dump.json 'expression'
+</code></pre></div>
+
+<h4>Pacu الأساسي</h4>
+<div class="code-wrap"><span class="code-tag">quick reference</span><pre><code>python3 pacu.py
+new_session assessment1
+import_keys <profile-name>
+run iam__enum_users_roles_policies_groups
+data iam
+</code></pre></div>
+
+<h4>Quick Wins — أسرع المسارات في تعداد AWS</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>#</th><th>التحقق</th><th>الأمر</th><th>النتيجة المحتملة</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>سجلات NS بتشاور لـ awsdns؟</td><td><code>nslookup -type=NS</code></td><td>تأكيد استخدام AWS</td></tr>
+<tr><td>2</td><td>فيه S3 bucket مكشوف في مصدر HTML؟</td><td>DevTools Network tab</td><td>اسم Bucket معروف</td></tr>
+<tr><td>3</td><td>AMI عام بيحمل اسم الشركة؟</td><td><code>describe-images --filters</code></td><td>Account ID الهدف</td></tr>
+<tr><td>4</td><td>بيانات اعتماد مخترَقة بصلاحية IAM قراءة؟</td><td><code>get-account-authorization-details</code></td><td>خريطة كاملة للحساب</td></tr>
+<tr><td>5</td><td>دور بيثق في حسابات خارجية بدون ExternalId؟</td><td><code>sts:AssumeRole</code></td><td>اختراق أولي فعلي</td></tr>
+</tbody>
+</table></div>
+
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ SUMMARY -->
+<h2 id="summary"><span class="htext">الخلاصة العامة للموديول</span></h2>
+<p>الموديول ده غطّى تعداد بنية AWS السحابية من اسم دومين واحد بدون أي وصول، مرورًا باستغلال سلوك IAM كـ Oracle، ووصولًا لتعداد وتحليل صلاحيات IAM الكامل يدويًا وآليًا عبر JMESPath وPacu.</p>
+
+<div class="takeaways">
+<div class="takeaways-title">$ cat ./module22_summary.txt</div>
+<ul>
+<li>استطلاع السحابة تكراري — أي وصول أو بيانات اعتماد جديدة لازم تشغّل دورة تعداد جديدة</li>
+<li>تحليل DNS، وبحث WHOIS، وReverse DNS تقدر تحدّد بصمة البنية السحابية قبل أي مصادقة</li>
+<li>أدوات متصفح المطوّر بتكشف روابط خاصة بالخدمات — أسماء S3 buckets، نقاط نهاية CDN، وبوابات API بتفضح عادات التسمية</li>
+<li>AMIs العامة وEBS snapshots ممكن تحتوي أسرار مضمَّنة وملفات إعداد وتفاصيل بنية داخلية</li>
+<li>شروط IAM policy ممكن تُستغَل كـ Oracle لـ Brute-force رقم حساب AWS الهدف رقم برقم</li>
+<li>AWS بيتحقّق من IAM principals قبل تطبيق سياسات الموارد — السلوك ده بيسرّب هل المستخدمين والأدوار موجودين فعلًا</li>
+<li>بيانات اعتماد منخفضة الصلاحية مخترَقة لسه ممكن تمكّن استطلاع واسع لو عندها صلاحيات IAM للقراءة فقط</li>
+<li>JMESPath بيسمح بفلترة استجابات API الضخمة محليًا — استدعاءات API أقل = مخاطر كشف أقل</li>
+<li>Pacu بيؤتمت تعداد IAM والخدمات — لكن الأتمتة ضجيجها عالي وقابلة للكشف عبر CloudTrail</li>
+<li>مبدأ Least Privilege هو الدفاع الأساسي — الصلاحيات المفرطة لسه السبب الجذري لمعظم اختراقات السحابة</li>
+</ul>
+</div>
+
+<blockquote>
+<p><strong>كل تقنيات الموديول ده مبنية على فكرة واحدة:</strong> سلوك واجهات AWS نفسها بيسرّب معلومات حتى لما الهدف من التصميم رفض الوصول. المختبر اللي بيفهم إن كل استجابة — سماح، رفض، أو حتى رسالة خطأ — بتحمل معنى، هو اللي بيحوّل واجهة سحابية مغلقة لخريطة كاملة للحساب الهدف.</p>
+</blockquote>
+
+<div class="callout examtip">
+<div class="callout-label">Professional Mindset</div>
+<p>في الـ Engagement الحقيقي: ابدأ دايمًا بالاستطلاع الخارجي الصامت (DNS، WHOIS، S3 المكشوف، أدوات المتصفح) → استخرج أي Account ID متاح عبر S3 أو AMIs العامة → لو عندك بيانات اعتماد ولو منخفضة الصلاحية، نفّذ <code>get-account-authorization-details</code> فورًا وحلّلها أوفلاين بـ JMESPath → استخدم الأتمتة (Pacu) بس لما السرعة أهم من التخفّي، وراقب أثرك في CloudTrail. وثَّق كل خطوة، حتى الفاشلة.</p>
+</div>
+
+<hr />
+<p><em>نهاية نوتس الموديول الثاني والعشرين — Enumerating AWS Cloud Infrastructure</em></p>
+<div class="footer-note">-- EOF: module-22/aws-enumeration.md --</div>
+
+</div>
+
+<script>
+(function(){
+  var root=document.documentElement,btn=document.getElementById('themeSwitch');
+  function applyTheme(t){root.setAttribute('data-theme',t);btn.textContent='theme: '+t;try{localStorage.setItem('oscp-notes-theme',t);}catch(e){}}
+  var saved='dark';try{saved=localStorage.getItem('oscp-notes-theme')||'dark';}catch(e){}
+  applyTheme(saved);
+  btn.addEventListener('click',function(){applyTheme(root.getAttribute('data-theme')==='dark'?'light':'dark');});
+  var bar=document.getElementById('progressBar');
+  function onScroll(){var h=document.documentElement,s=h.scrollTop,ht=h.scrollHeight-h.clientHeight;bar.style.width=(ht>0?(s/ht*100):0)+'%';var t=document.getElementById('toTop');s>500?t.classList.add('show'):t.classList.remove('show');}
+  document.addEventListener('scroll',onScroll);onScroll();
+  document.getElementById('toTop').addEventListener('click',function(){window.scrollTo({top:0,behavior:'smooth'});});
+  document.querySelectorAll('.code-wrap').forEach(function(wrap){
+    var c=wrap.querySelector('code');if(!c)return;
+    var b=document.createElement('button');b.className='copy-btn';b.textContent='copy';
+    b.addEventListener('click',function(){if(navigator.clipboard){navigator.clipboard.writeText(c.innerText).then(function(){b.textContent='copied ✓';b.classList.add('copied');setTimeout(function(){b.textContent='copy';b.classList.remove('copied');},1500);});}});
+    wrap.appendChild(b);
+  });
+})();
+</script>
+</body>
+</html>
