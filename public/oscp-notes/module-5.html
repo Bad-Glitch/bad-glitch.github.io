@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OSCP · Module 5: فحص الثغرات</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-0: #0B0B0D;
+    --bg-1: #121214;
+    --surface: #17171A;
+    --surface-2: #1D1D21;
+    --border: #2A2A2F;
+    --border-soft: #232326;
+
+    --text: #E6E6E9;
+    --text-soft: #C4C4CA;
+    --muted: #8A8A92;
+
+    --red: #E1362F;
+    --red-soft: rgba(225,54,47,0.10);
+    --red-border: rgba(225,54,47,0.35);
+    --red-grad: linear-gradient(90deg, #E1362F, #F2794A);
+
+    --amber: #E8A23A;
+    --amber-soft: rgba(232,162,58,0.09);
+    --amber-border: rgba(232,162,58,0.30);
+
+    --green: #3FBF6E;
+
+    --mono: 'IBM Plex Mono', 'Courier New', monospace;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    direction: rtl;
+    text-align: right;
+    background: var(--bg-0);
+  }
+
+  body {
+    font-family: 'Cairo', 'Segoe UI', Tahoma, sans-serif;
+    line-height: 1.95;
+    font-size: 16.5px;
+    color: var(--text);
+    background:
+      radial-gradient(900px 420px at 12% -8%, rgba(225,54,47,0.10), transparent 60%),
+      radial-gradient(800px 420px at 90% 6%, rgba(232,162,58,0.06), transparent 60%),
+      linear-gradient(180deg, var(--bg-0) 0%, var(--bg-1) 100%);
+    background-attachment: fixed;
+  }
+
+  .page {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 46px 22px 100px;
+  }
+
+  .banner {
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(155deg, #17171A 0%, #141416 55%, #18151A 100%);
+    border: 1px solid var(--border-soft);
+    border-radius: 10px;
+    padding: 0 0 34px;
+    margin-bottom: 26px;
+    box-shadow: 0 20px 50px -20px rgba(0,0,0,0.6);
+  }
+  .term-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 13px 18px;
+    border-bottom: 1px solid var(--border-soft);
+    background: rgba(255,255,255,0.015);
+    direction: ltr;
+  }
+  .term-dot { width: 11px; height: 11px; border-radius: 50%; display: inline-block; }
+  .term-dot.r { background: #E1362F; }
+  .term-dot.y { background: #E8A23A; }
+  .term-dot.g { background: #3FBF6E; }
+  .term-path {
+    margin-inline-start: 12px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .banner-body { padding: 30px 34px 4px; }
+  .banner .kicker {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 12.5px;
+    letter-spacing: 0.03em;
+    color: var(--red);
+    background: var(--red-soft);
+    border: 1px solid var(--red-border);
+    border-radius: 3px;
+    padding: 5px 12px;
+    margin-bottom: 20px;
+    direction: ltr;
+  }
+  .banner h1 {
+    margin: 0 0 14px;
+    font-size: 28px;
+    font-weight: 800;
+    line-height: 1.5;
+    color: #F4F4F6;
+  }
+  .banner .lede {
+    color: var(--muted);
+    font-size: 15.5px;
+    line-height: 1.95;
+    max-width: 620px;
+    margin: 0 0 24px;
+  }
+  .tags { display: flex; flex-wrap: wrap; gap: 9px; }
+  .tag {
+    font-size: 12.5px;
+    font-family: var(--mono);
+    color: var(--amber);
+    background: var(--amber-soft);
+    border: 1px solid var(--amber-border);
+    border-radius: 3px;
+    padding: 5px 11px;
+  }
+
+  .toc {
+    background: var(--surface);
+    border: 1px solid var(--border-soft);
+    border-radius: 8px;
+    padding: 6px 0 6px;
+    margin-bottom: 50px;
+    overflow: hidden;
+  }
+  .toc-title {
+    font-family: var(--mono);
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--green);
+    padding: 14px 22px;
+    border-bottom: 1px solid var(--border-soft);
+    direction: ltr;
+    text-align: left;
+  }
+  .toc-list { display: flex; flex-direction: column; }
+  .toc-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 22px;
+    color: var(--text-soft);
+    text-decoration: none;
+    font-size: 14.5px;
+    border-bottom: 1px solid rgba(255,255,255,0.03);
+    transition: background 0.15s ease, padding-inline-start 0.15s ease;
+  }
+  .toc-list .toc-item:last-child { border-bottom: none; }
+  .toc-item:hover { background: rgba(225,54,47,0.06); }
+  .toc-num {
+    flex: none;
+    font-family: var(--mono);
+    font-size: 12.5px;
+    font-weight: 600;
+    color: #0F0F10;
+    background: var(--red-grad);
+    border-radius: 3px;
+    padding: 3px 8px;
+    direction: ltr;
+  }
+
+  h1, h2, h3, h4 { font-weight: 700; }
+
+  h2 {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    font-size: 21px;
+    margin: 66px 0 22px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border-soft);
+    color: #F0F0F2;
+  }
+  h2 .num {
+    flex: none;
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 700;
+    color: #0F0F10;
+    background: var(--red-grad);
+    border-radius: 5px;
+    padding: 7px 12px;
+    direction: ltr;
+  }
+  h2 .htext { line-height: 1.5; }
+
+  h3 {
+    font-size: 17px;
+    margin: 34px 0 14px;
+    color: var(--red);
+    display: flex;
+    align-items: center;
+    gap: 9px;
+  }
+  h3::before {
+    content: "#";
+    font-family: var(--mono);
+    color: var(--amber);
+    font-weight: 700;
+  }
+
+  h4 {
+    font-size: 14.8px;
+    margin: 22px 0 10px;
+    color: var(--text-soft);
+    font-family: var(--mono);
+  }
+
+  p { margin: 0 0 17px; color: var(--text); }
+
+  strong { color: #FBFBFC; font-weight: 700; }
+
+  a { color: var(--amber); text-decoration: none; border-bottom: 1px dashed var(--amber-border); }
+
+  hr {
+    border: none;
+    height: 1px;
+    margin: 50px 0;
+    background: linear-gradient(90deg, transparent, var(--border), transparent);
+  }
+
+  ul, ol {
+    margin: 0 0 18px;
+    padding-inline-start: 24px;
+  }
+  li { margin-bottom: 9px; color: var(--text); }
+  li::marker { color: var(--red); font-family: var(--mono); }
+  li > ul, li > ol { margin-top: 9px; }
+
+  blockquote {
+    margin: 24px 0;
+    padding: 17px 22px;
+    background: var(--red-soft);
+    border: 1px solid var(--red-border);
+    border-inline-start: 3px solid var(--red);
+    border-radius: 6px;
+    color: #EAD9D7;
+  }
+  blockquote p { margin: 0; color: inherit; line-height: 1.85; }
+  blockquote strong { color: #FFB4AE; }
+
+  .table-wrap {
+    overflow-x: auto;
+    margin: 22px 0;
+    border: 1px solid var(--border-soft);
+    border-radius: 8px;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14.2px;
+    min-width: 480px;
+  }
+  thead th {
+    background: var(--surface-2);
+    color: var(--amber);
+    font-weight: 700;
+    font-family: var(--mono);
+    font-size: 12.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    text-align: start;
+    padding: 13px 15px;
+    border-bottom: 1px solid var(--border-soft);
+    white-space: nowrap;
+  }
+  tbody td {
+    padding: 12px 15px;
+    border-bottom: 1px solid var(--border-soft);
+    color: var(--text-soft);
+    vertical-align: top;
+  }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:nth-child(even) { background: rgba(255,255,255,0.012); }
+  tbody tr:hover { background: rgba(225,54,47,0.045); }
+
+  code {
+    font-family: var(--mono);
+    font-size: 13.3px;
+    background: var(--surface-2);
+    border: 1px solid var(--border-soft);
+    border-radius: 4px;
+    padding: 2px 6px;
+    direction: ltr;
+    unicode-bidi: embed;
+    color: var(--green);
+  }
+  .code-wrap { overflow-x: auto; margin: 22px 0; }
+  pre {
+    background: #0E0E10;
+    border: 1px solid var(--border-soft);
+    border-inline-start: 3px solid var(--red);
+    border-radius: 8px;
+    padding: 18px 22px;
+    direction: ltr;
+    text-align: left;
+    margin: 0;
+  }
+  pre code {
+    background: none;
+    border: none;
+    padding: 0;
+    color: #B9E8C9;
+    font-size: 13.2px;
+    line-height: 1.75;
+  }
+
+  .footer-note {
+    margin-top: 70px;
+    padding-top: 26px;
+    border-top: 1px solid var(--border-soft);
+    color: var(--muted);
+    font-size: 13.3px;
+    font-family: var(--mono);
+    text-align: center;
+    direction: ltr;
+  }
+
+  @media (max-width: 640px) {
+    .page { padding: 28px 14px 70px; }
+    .banner-body { padding: 24px 20px 4px; }
+    .banner h1 { font-size: 21px; }
+    h2 { font-size: 18px; gap: 10px; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="banner">
+    <div class="term-bar">
+      <span class="term-dot r"></span><span class="term-dot y"></span><span class="term-dot g"></span>
+      <span class="term-path">root@oscp:~/module-05$</span>
+    </div>
+    <div class="banner-body">
+      <span class="kicker">OSCP · PEN-200 · Module 05</span>
+      <h1>فحص الثغرات (Vulnerability Scanning)</h1>
+      <p class="lede">نظرية فحص الثغرات (CVE، CVSS، False Positive/Negative)، تنفيذ فحوصات موثَّقة وغير موثَّقة بـ Nessus، وفحص ثغرات خفيف الوزن بـ Nmap Scripting Engine وسكربت vulners.</p>
+      <div class="tags">
+        <span class="tag">cvss</span>
+        <span class="tag">nessus</span>
+        <span class="tag">nmap-nse</span>
+        <span class="tag">authenticated-scan</span>
+        <span class="tag">vuln-scripts</span>
+      </div>
+    </div>
+  </div>
+
+
+<nav class="toc"><div class="toc-title">$ ls learning_units/</div><div class="toc-list">
+<a class="toc-item" href="#lu1"><span class="toc-num">01</span><span class="toc-label">نظرية فحص الثغرات (Vulnerability Scanning Theory)</span></a>
+<a class="toc-item" href="#lu2"><span class="toc-num">02</span><span class="toc-label">فحص الثغرات باستخدام Nessus</span></a>
+<a class="toc-item" href="#lu3"><span class="toc-num">03</span><span class="toc-label">فحص الثغرات باستخدام Nmap</span></a>
+<a class="toc-item" href="#summary"><span class="toc-num">--</span><span class="toc-label">الخلاصة العامة للموديول</span></a>
+</div></nav>
+
+<h1>Module 5: فحص الثغرات (Vulnerability Scanning)</h1>
+<blockquote>
+<p>اكتشاف الثغرات جزء أساسي من أي تقييم أمني. عملية تحديد سطح الهجوم لقطعة سوفت وير، نظام، أو شبكة بتتسمى <strong>Vulnerability Scanning</strong>. ماسحات الثغرات بتيجي بأشكال كتير، من سكربتات فردية بتحدد ثغرة واحدة، لحلول تجارية معقَّدة بتفحص مجموعة واسعة من الثغرات. الماسحات الآلية ممكن تكون لا تقدّر بثمن لمختبري الاختراق لأنها بتساعد ترسّخ خط أساس سريع على شبكة الهدف قبل تنفيذ تحليل اختبار يدوي أشمل للحصول على تغطية كافية.</p>
+</blockquote>
+<p>في الموديول ده هنحلل الفحص الآلي لثغرات الشبكة، نبدأ بنظرية فحص الثغرات، وبعدين نستخدم <strong>Nessus</strong> و<strong>Nmap</strong> لتنفيذ أنواع مختلفة من فحوصات الثغرات.</p>
+<hr />
+<h2 id="lu1"><span class="num">01</span><span class="htext">نظرية فحص الثغرات (Vulnerability Scanning Theory)</span></h2>
+<h3>أهداف الوحدة</h3>
+<p>فهم أساسي لعملية فحص الثغرات | التعرّف على الأنواع المختلفة لفحوصات الثغرات | فهم اعتبارات فحص الثغرات</p>
+<h3>إزاي ماسحات الثغرات بتشتغل</h3>
+<p>كل ماسح ثغرات ليه سير عمل مخصَّص خاص بيه، لكن العملية الأساسية ورا فحص الثغرات مستقلة عن طريقة التنفيذ. العملية الأساسية لماسح ثغرات آلي ممكن توصَف كالتالي:</p>
+<div class="code-wrap"><pre><code>1. Host Discovery                              → اكتشاف الـ Host
+2. Port Scanning                                → فحص البورتات
+3. OS, Service, and Version Detection          → تحديد نظام التشغيل، الخدمة، والإصدار
+4. Matching Results to a Vulnerability Database → مطابقة النتائج بقاعدة بيانات الثغرات
+</code></pre></div>
+<p><strong>Host Discovery</strong> بتوضّح للماسح إذا كان الهدف شغّال ومستجيب. الماسح بعدين بيستخدم تقنيات متنوعة عشان يحدد كل البورتات المفتوحة على النظام ويكتشف كل الخدمات القابلة للوصول عن بُعد مع إصداراتها المقابلة. بالإضافة لكده، تحديد نظام التشغيل بيتم في الخطوة دي.</p>
+<p>بناءً على كل المعلومات المجمَّعة، ماسح الثغرات بعدين بيستعلم قاعدة بيانات ثغرات عشان يطابق البيانات المكتشَفة بثغرات معروفة. أمثلة قواعد بيانات الثغرات: <strong>National Vulnerability Database (NVD)</strong> و<strong>برنامج Common Vulnerabilities and Exposures (CVE)</strong>.</p>
+<h3>CVE وCVSS</h3>
+<p>الثغرات بتتحدد بنظام <strong>CVE</strong>. رغم إن ده بيسمح لنا نحدد ونلاقي ثغرات موثَّقة، معرّف CVE مابيوفّرش أي معلومة عن خطورة الثغرة.</p>
+<blockquote>
+<p><strong>Common Vulnerability Scoring System (CVSS)</strong> هو إطار للتعامل مع خصائص وخطورة الثغرات. كل CVE له درجة CVSS مُعيَّنة. الإصدارين الرئيسيين هما <strong>CVSS v2</strong> و<strong>CVSS v3</strong>، والاتنين بيستخدموا مدى من 0 لـ 10 لتقييم الثغرات بمستويات خطورة مختلفة.</p>
+</blockquote>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>النطاق (CVSS v3.x)</th>
+<th>مستوى الخطورة</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0.0</td>
+<td>None</td>
+</tr>
+<tr>
+<td>0.1 – 3.9</td>
+<td>Low</td>
+</tr>
+<tr>
+<td>4.0 – 6.9</td>
+<td>Medium</td>
+</tr>
+<tr>
+<td>7.0 – 8.9</td>
+<td>High</td>
+</tr>
+<tr>
+<td>9.0 – 10.0</td>
+<td>Critical</td>
+</tr>
+</tbody>
+</table></div>
+<p>للحصول على درجة CVSS، نقدر نراجع الـ CVE في قاعدة بيانات ثغرات، أو لو مفيش CVE مُعيَّن، نقدر نستخدم <strong>CVSS calculator</strong>. في 2019، <strong>CVSS v3.1</strong> اتطلق، وده وضّح وحسّن الإصدار الموجود.</p>
+<h3>الإيجابيات الكاذبة والسلبيات الكاذبة</h3>
+<blockquote>
+<p><strong>False Positive</strong> بيحصل لما ثغرة بتتكشف لكن الهدف فعليًا مش عرضة ليها. ده ممكن يحصل بسبب تحديد خدمة وإصدار غلط، أو إعداد بيخلّي الهدف غير قابل للاستغلال. الإيجابيات الكاذبة كمان ممكن تحصل لما patches أو تحديثات تتعمل backport (إصلاحات أمنية بتتطبّق على إصدار قديم من السوفت وير).</p>
+<p><strong>False Negative</strong> مصطلح مهم تاني — بيحصل لما ثغرة بتفوت ماسح الثغرات تمامًا.</p>
+</blockquote>
+<h3>التوازن بين الفحص اليدوي والآلي</h3>
+<p>في اختبار اختراق، غالبًا محتاجين نلاقي التوازن الصح بين الفحص اليدوي والآلي. الفحص اليدوي حتميًا هيكون مكثّف الموارد ومستهلك للوقت. لما يكون فيه كمية ضخمة من البيانات نحللها، غالبًا بنوصل لحدنا المعرفي بسرعة ونفوّت تفاصيل حيوية. من ناحية تانية، الفحص اليدوي بيسمح باكتشاف ثغرات معقَّدة ومنطقية صعبة الاكتشاف بأي نوع من الماسحات الآلية.</p>
+<p>الفحوصات الآلية لا تقدّر بثمن في المهام لأسباب عديدة: أولًا، في معظم أنواع التقييمات، عندنا قيود وقت — لو عندنا شبكة مؤسسية ضخمة نفحصها، مش هنقدر نراجع كل نظام يدويًا. ثانيًا، باستخدام الماسحات الآلية، نقدر نحدد بسرعة ثغرات سهلة الاكتشاف وفرص "low-hanging fruit" تانية.</p>
+<blockquote>
+<p>المفروض نخصّص وقت نستكشف فيه الآليات الداخلية لكل أداة آلية ناوين نستخدمها في تقييم أمني. ده هيساعدنا مش بس في إعداد الأداة وفهم النتائج بشكل صحيح، لكن كمان هيساعدنا نفهم القيود اللي لازم نتخطاها بخبرة يدوية.</p>
+</blockquote>
+<h3>أنواع فحوصات الثغرات</h3>
+<p><strong>Location: External vs Internal</strong></p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>النوع</th>
+<th>الوصف</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>External Vulnerability Scan</strong></td>
+<td>تحليل نظام أو أكتر قابلين للوصول من الإنترنت. الأهداف غالبًا تطبيقات ويب، أنظمة في الـ DMZ، وخدمات مواجهة للعامة. العميل عايز نظرة عامة على الحالة الأمنية لكل الأنظمة القابلة للوصول من مهاجم خارجي</td>
+</tr>
+<tr>
+<td><strong>Internal Vulnerability Scan</strong></td>
+<td>وصول مباشر لجزء أو كل الشبكة الداخلية للعميل — إما عبر VPN أو بتنفيذ الفحص على الموقع. الهدف الحصول على نظرة عامة على الحالة الأمنية للشبكة الداخلية، وتحليل المتجهات اللي المهاجم يقدر يستخدمها بعد اختراق المحيط</td>
+</tr>
+</tbody>
+</table></div>
+<blockquote>
+<p><strong>ملاحظة واقعية:</strong> رغم إن الشركة المفروض دايمًا تعرف أنهي أنظمة بتاعتها متاحة للعامة، مش دايمًا بيكون ده الحال — وغالبًا هنلاقي أنظمة وخدمات حساسة مكشوفة خارجيًا الشركة مش واعية بوجودها.</p>
+</blockquote>
+<p><strong>Credentials: Authenticated vs Unauthenticated</strong></p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>النوع</th>
+<th>الوصف</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Unauthenticated Scan</strong></td>
+<td>فحص بدون بيانات اعتماد. بيرسم خريطة النظام بكل البورتات المفتوحة ويوفّر سطح هجوم بمطابقة المعلومات بقواعد بيانات الثغرات. <strong>لكن</strong> مفيش معلومة عن عيوب أمنية محلية، زي patches مفقودة، سوفت وير قديم، أو ثغرات إعداد على النظام نفسه</td>
+</tr>
+<tr>
+<td><strong>Authenticated Scan</strong></td>
+<td>الماسح بيدخل للهدف ببيانات اعتماد صالحة، غالبًا حساب ذو صلاحية عشان أفضل رؤية. <strong>الهدف:</strong> الفحص عن حزم عرضة للخطر، patches مفقودة، أو ثغرات إعداد</td>
+</tr>
+</tbody>
+</table></div>
+<blockquote>
+<p><strong>مثال توضيحي:</strong> في فحص ثغرات بدون توثيق على هدف Windows، مانقدرش نحدد إذا كان النظام محصَّن ضد ثغرة <strong>HiveNightmare</strong>، اللي بتسمح لمستخدم غير مميَّز يقرأ ملفات نظام حساسة. هنا بالظبط فحوصات التوثيق بتيجي في دورها.</p>
+</blockquote>
+<h3>اعتبارات في فحص الثغرات</h3>
+<p><strong>1. مدة الفحص (Scanning Duration)</strong></p>
+<p>حسب نوع الفحص وعدد الأهداف، مدة الفحص الآلي ممكن تختلف بشكل كبير. بما إن الفحوصات الخارجية عبر الإنترنت ممكن تاخد وقت بسبب عدد الـ hops والأنظمة الوسيطة على مسار الشبكة، لازم نخطط حسب كده لو عندنا قايمة كبيرة من عناوين IP.</p>
+<p><strong>2. رؤية الهدف (Target Visibility)</strong></p>
+<p>مهم نحدد إذا كانت أهدافنا قابلة للوصول من غير الحاجة لـ VPNs أو أذونات في firewall.</p>
+<blockquote>
+<p><strong>مثال:</strong> عميل دولي عنده أنظمة في دول متعددة، وبيقيّد الوصول من كل عناوين IP خارج الدولة اللي النظام موجود فيها. من موقعنا، هنقدر نوصل بس للأنظمة الموجودة في دولتنا، بينما الباقي مش متاح لنا.</p>
+</blockquote>
+<p>في المهام الداخلية، مهم نفكر في موقعنا في الشبكة عشان نحصل على نتائج ذات معنى، خاصةً لما عايزين نفحص أنظمة من subnets تانية. <strong>Firewalls, IPS, وأجهزة شبكة وسيطة (زي routers)</strong> ممكن تفلتر أو تعدّل حركة المرور بتاعتنا — مثلًا، لما ماسح الثغرات بيبعت ICMP packets في خطوة Host Discovery والجهاز الوسيط مابيمررهاش، الماسح بيعلّم الهدف كـ offline.</p>
+<p><strong>3. Rate Limiting</strong></p>
+<p>الفحص بتاعنا ممكن يتأثر بـ rate limiting، اللي بيُستخدم لتقييد كمية الترافيك على شبكة. لما الفحص بتاعنا يتخطى حدود زي throughput، عدد packets، أو عدد الاتصالات، النظام المصدري لفحص الثغرات بتاعنا ممكن يتقيّد بشكل كبير. لما host discovery وservice detection probes بيبقوا مقيَّدين بالمعدل وبالتالي بيبطّوا، ماسح الثغرات ممكن يفوّت hosts أو خدمات حية.</p>
+<blockquote>
+<p>معظم ماسحات الثغرات تقدر تتعامل مع ده بتحديد delays، timeouts، وتقييد الاتصالات المتوازية.</p>
+</blockquote>
+<p><strong>4. التأثير على الشبكة والنظام</strong></p>
+<p>ماسح الثغرات بينتج ترافيك شبكة كتير في معظم الإعدادات، خاصةً لو عايزين نفحص أهداف متعددة بالتوازي — ده ممكن بسهولة يخلّي الشبكة غير قابلة للاستخدام. للتعامل مع ده، نقدر نقلل عدد الفحوصات المتوازية أو سرعة الفحص.</p>
+<blockquote>
+<p>مشكلة أكبر هي التأثير المحتمل على استقرار نظام — لازم نحسب إن كل فحص ثغرات يقدر يقدّم عدم استقرار لأي نظام أو خدمة بنفحصها.</p>
+</blockquote>
+<hr />
+<h2 id="lu2"><span class="num">02</span><span class="htext">فحص الثغرات باستخدام Nessus</span></h2>
+<h3>أهداف الوحدة</h3>
+<p>تثبيت Nessus | فهم مكونات Nessus المختلفة | إعداد وتنفيذ فحص ثغرات | فهم والتعامل مع نتائج فحص ثغرات بـ Nessus | توفير بيانات اعتماد لتنفيذ فحص ثغرات موثَّق | فهم أساسي لـ Nessus Plugins</p>
+<p><strong>Nessus</strong> متاح كـ <strong>Nessus Essentials</strong> و<strong>Nessus Professional</strong>. هنستخدم النسخة المجانية، Nessus Essentials، واللي بتيجي بقيود معينة — مثلًا، نقدر نفحص بس 16 عنوان IP مختلف، وبعض القوالب والوظائف مش متاحة. لكن Nessus Essentials هتدّينا رؤية عن إزاي نستخدم النسخة التجارية الكاملة، والمفاهيم العامة المتناقَشة هنا هتنطبق على معظم الماسحات التجارية.</p>
+<h3>تثبيت Nessus</h3>
+<p>Nessus مش متاح في مستودعات Kali ولازم يتثبّت يدويًا. هنحمّل الإصدار الحالي من Nessus كملف <code>.deb</code> بنظام 64-bit لـ Kali من موقع Tenable، مع اختيار <strong>Linux - Debian - amd64</strong> كمنصة.</p>
+<blockquote>
+<p><strong>ملاحظة لمستخدمي Apple Silicon:</strong> المتعلّمين اللي بيستخدموا نظام Apple بشريحة ARM يقدروا يثبّتوا Nessus على Kali VM بتحميل المثبِّت لمنصة <strong>Linux - Ubuntu - arch64</strong>.</p>
+</blockquote>
+<p>بعد تحميل المثبِّت، نتحقق من checksum الـ SHA256 للتأكد منه:</p>
+<div class="code-wrap"><pre><code class="language-bash"># بعد نسخ الـ SHA256 checksum من موقع Tenable
+echo &quot;&lt;copied_checksum&gt;  Nessus-x.x.x-debian10_amd64.deb&quot; &gt; sha256sum_nessus
+sha256sum -c sha256sum_nessus
+</code></pre></div>
+<p>لو النتيجة أظهرت إن الـ checksums متطابقة، يبقى نقدر نثبّت الحزمة:</p>
+<div class="code-wrap"><pre><code class="language-bash">sudo apt install ./Nessus-x.x.x-debian10_amd64.deb
+</code></pre></div>
+<p>بعد اكتمال التثبيت، نبدأ خدمة <code>nessusd</code>:</p>
+<div class="code-wrap"><pre><code class="language-bash">sudo systemctl start nessusd.service
+</code></pre></div>
+<p>بمجرد ما Nessus شغّال، نفتح متصفح ونروح لـ <code>https://127.0.0.1:8834</code>. هنتقابل بتحذير بيوضّح جهة إصدار شهادة غير معروفة — ده متوقَّع بسبب استخدام شهادة self-signed. نضغط <strong>Advanced...</strong> ثم <strong>Accept the Risk and Continue</strong>.</p>
+<h3>قوالب الفحص (Scan Templates)</h3>
+<p>Nessus بيوفّر مجموعة واسعة من قوالب الفحص، مجمَّعة لـ 3 فئات: <strong>Discovery</strong>، <strong>Vulnerabilities</strong>، و<strong>Compliance</strong>.</p>
+<p>Nessus كمان بيوفّر 3 قوالب فحص ثغرات عامة:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>القالب</th>
+<th>الوصف</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Basic Network Scan</strong></td>
+<td>فحص كامل بمعظم الإعدادات مُعرَّفة مسبقًا. بيكتشف مجموعة واسعة من الثغرات، وده القالب الموصى به من Nessus. فيه كمان خيار تخصيص الإعدادات والتوصيات دي</td>
+</tr>
+<tr>
+<td><strong>Advanced Scan</strong></td>
+<td>قالب من غير إعدادات مُعرَّفة مسبقًا — نستخدمه لما عايزين نخصّص فحص الثغرات بالكامل أو عندنا احتياجات محددة</td>
+</tr>
+<tr>
+<td><strong>Advanced Dynamic Scan</strong></td>
+<td>قالب فحص عام أخير، كمان من غير إعدادات أو توصيات مُعرَّفة مسبقًا</td>
+</tr>
+</tbody>
+</table></div>
+<h3>تنفيذ وتحليل نتائج فحص</h3>
+<p>العرض الأولي بيعرض صفحة <strong>Hosts</strong>، اللي بتسرد كل الـ hosts المفحوصة وبتوفّر تمثيل بصري لبيانات الثغرات. ده بيسمح لنا نحدد نتائج مهمة بنظرة واحدة وبيدّينا نظرة عامة على الحالة الأمنية لكل نظام.</p>
+<p>عمود <strong>Severity</strong> بيدّينا مؤشر سريع إذا كانت دي نتيجة حرجة أو لأ. Nessus بيستخدم خطورة <strong>MIXED</strong> لما بيجمّع نتائج مع بعض — عمود <strong>Count</strong> بيوضّح عدد النتائج في المجموعة المقابلة. نقدر نضغط على نتيجة مجمَّعة عشان نعرض قايمة بكل النتائج في المجموعة دي (مثلًا: <strong>Apache Httpd (Multiple Issues)</strong> تحت فئة <strong>Web Servers</strong>).</p>
+<h3>تنفيذ فحص ثغرات موثَّق (Authenticated Scan)</h3>
+<p>في القسم ده، هننفّذ فحص ثغرات موثَّق بتوفير بيانات اعتماد لـ Nessus. زي ما اتناقش قبل كده، الفحوصات الموثَّقة بتنتج معلومات أكتر تفصيلًا وبتقلل عدد الإيجابيات الكاذبة.</p>
+<p>هنستخدم قالب <strong>Credentialed Patch Audit</strong>، اللي جاي مُعدّ مسبقًا لتنفيذ فحوصات أمان محلية ضد الهدف. الفرق بين ده وبين <strong>Basic Network Scan</strong> ببيانات اعتماد هو إن Credentialed Patch Audit بيستخدم بس فحوصات أمان محلية، ومش هينفّذ فحص ثغرات اعتيادي من منظور خارجي. القالب ده مش بس هيفحص عن patches نظام التشغيل الناقصة، لكن كمان تطبيقات قديمة ممكن تكون عرضة لهجمات تصعيد صلاحيات.</p>
+<p><strong>إعداد بيانات الاعتماد:</strong></p>
+<ol>
+<li>اعطِ اسم للفحص وحدد الهدف (مثلًا <code>DESKTOP</code>)</li>
+<li>روح لتبويب <strong>Credentials</strong> واختار <strong>SSH</strong> في فئة Host</li>
+<li>في <strong>Authentication method</strong> اختار <strong>password</strong></li>
+<li>أدخل username وpassword (مثلًا <code>offsec</code> / <code>lab</code>)</li>
+<li>اختار <strong>sudo</strong> في <strong>Elevate privileges with</strong>، وأدخل <code>root</code> كـ sudo user ونفس الباسورد</li>
+</ol>
+<blockquote>
+<p>للحصول على قائمة بكل آليات التوثيق المتاحة، نقدر نضغط على dropdown الفئات ونختار <strong>All</strong>.</p>
+</blockquote>
+<p><strong>لأنظمة Linux/macOS</strong>، SSH هو المستخدَم. رغم إن SSH ممكن يُستخدم كمان على Windows، في معظم الحالات هنستخدم <strong>SMB (Server Message Block)</strong> و<strong>WMI (Windows Management Instrumentation)</strong> لتنفيذ فحوصات ثغرات موثَّقة ضد أهداف Windows.</p>
+<p><strong>اعتبارات مهمة للحصول على نتائج ذات معنى:</strong></p>
+<ul>
+<li>لازم نتأكد مفيش firewall بيمنع الاتصالات من الماسح بتاعنا</li>
+<li>برامج <strong>Antivirus (AV)</strong> ممكن تعلّم فحص الثغرات كخبيث وتوقف الاتصال أو تخلّي النتائج عديمة الفايدة — ممكن نضيف استثناء أو نعطّله مؤقتًا</li>
+<li><strong>User Account Control (UAC)</strong> في Windows ممكن يتداخل مع الفحص — ممكن نعدّل إعدادات UAC عشان يسمح بـ Nessus أو نعطّله مؤقتًا، خاصةً لأهداف Windows</li>
+</ul>
+<blockquote>
+<p>المفروض نراجع توثيق Tenable قبل ما نبدأ أول فحص موثَّق لينا.</p>
+</blockquote>
+<p>بعد تنفيذ الفحص ومراجعة النتائج، نقدر نعطّل تجميع النتائج (grouping) بالضغط على أيقونة الترس واختيار <strong>Disable Groups</strong>. هنلاقي قائمة ثغرات من Ubuntu فيها عائلة plugins اسمها <strong>Ubuntu Local Security Checks</strong>.</p>
+<blockquote>
+<p><strong>Plugins</strong> مجمَّعة في <strong>plugin families</strong> بتفحص ثغرات في نفس السياق — مثلًا فيه عائلات منفصلة لفحص ثغرات في قواعد بيانات، firewalls، أو سيرفرات ويب. عائلة <strong>Ubuntu Local Security Checks</strong> فيها مجموعة كبيرة من الـ plugins اللي بتفحص عن ثغرات محلية وpatches ناقصة لـ Ubuntu.</p>
+</blockquote>
+<p>عمود <strong>Name</strong> بيوفّر إصدارات Ubuntu العرضة للخطر ووصف موجز وكمان رقم الـ patch للثغرات.</p>
+<h3>العمل مع Nessus Plugins</h3>
+<p>افتراضيًا، Nessus بيفعّل plugins متعددة وراء الكواليس لما بيشغّل قالب افتراضي. ده مفيد في سيناريوهات كتير، لكن كمان نقدر نضبط الخيارات بدقة عشان نشغّل plugin واحد بسرعة — مفيد للتحقق من نتيجة سابقة أو لاكتشاف سريع لكل الأهداف في بيئة عرضة لثغرة محددة.</p>
+<p><strong>مثال: فحص هل جهاز DESKTOP عرضة لـ CVE-2021-3156</strong></p>
+<p>CVE-2021-3156 ثغرة قابلة للاستغلال محليًا بتسمح لمستخدم غير مميَّز يصعّد صلاحياته لـ root.</p>
+<p>لاستخدام فلتر الـ plugin الديناميكي، نبدأ بـ <strong>New Scan</strong> جديد، ونستخدم المرة دي قالب <strong>Advanced Dynamic Scan</strong>. القالب ده بيسمح لنا نستخدم فلتر plugin ديناميكي بدل تفعيل أو تعطيل plugins يدويًا.</p>
+<p>بعد توفير نفس بيانات اعتماد SSH وsudo (يعني كمان هننفّذ فحص موثَّق)، نقدر نختار الـ plugins اللي عايزينها في فحص الثغرات.</p>
+<p><strong>استخدام الفلتر الديناميكي:</strong></p>
+<ol>
+<li>روح لتبويب <strong>Dynamic Plugins</strong></li>
+<li>في الـ dropdown الشمال، اختار <strong>CVE</strong> لتنقّي ثغرة محددة</li>
+<li>في الـ dropdown النص، اختار سلوك المطابقة</li>
+<li>في الـ dropdown اليمين، أدخل رقم الـ CVE (<code>CVE-2021-3156</code>)</li>
+<li>اضغط <strong>Preview Plugins</strong> (ممكن تاخد كذا دقيقة)</li>
+</ol>
+<blockquote>
+<p><strong>ميزة مفيدة جدًا:</strong> فلتر الـ plugin الديناميكي بيسمح بدمج فلاتر متعددة. بما إننا عارفين إن الهدف نظام Ubuntu Linux، نقدر نستخدم فلتر ثاني لتحديد عائلة الـ plugin ذات الصلة — بإضافة فلتر جديد بالضغط على زر الـ plus جنب الفلتر الأول.</p>
+</blockquote>
+<p>بعد الضغط على <strong>Preview Plugins</strong> تاني، هنلاقي قائمة بالـ plugins اللي الفلاتر بتاعتنا حددتها — نختار <strong>Ubuntu Local Security Checks</strong> من الـ dropdown. Nessus بيعرض معلومات عن الـ plugin، بما فيها إصدارات Ubuntu المتأثرة، وصف موجز، رقم الـ patch، وكمان الـ <strong>Plugin ID</strong>.</p>
+<hr />
+<h2 id="lu3"><span class="num">03</span><span class="htext">فحص الثغرات باستخدام Nmap</span></h2>
+<h3>أهداف الوحدة</h3>
+<p>فهم أساسيات Nmap Scripting Engine (NSE) | تنفيذ فحص ثغرات خفيف الوزن بـ Nmap | التعامل مع سكربتات NSE مخصَّصة</p>
+<p>كبديل لـ Nessus، نقدر كمان نستخدم <strong>NSE (Nmap Scripting Engine)</strong> لتنفيذ فحوصات ثغرات آلية. سكربتات NSE بتوسّع الوظائف الأساسية لـ Nmap عشان تنفّذ مجموعة متنوعة من مهام الشبكات. المهام دي مجمَّعة في فئات حول حالات زي اكتشاف الثغرات، brute forcing، واكتشاف الشبكة. السكربتات كمان ممكن توسّع قدرات تحديد الإصدار وجمع المعلومات بتاعة Nmap.</p>
+<h3>فئات سكربتات NSE</h3>
+<p>سكربت NSE ممكن يكون ليه أكتر من فئة واحدة. مثلًا، ممكن يتصنّف كـ <code>safe</code> و<code>vuln</code>، أو <code>intrusive</code> و<code>vuln</code>.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>الفئة</th>
+<th>الوصف</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>safe</strong></td>
+<td>مفيهاش تأثير محتمل على الاستقرار</td>
+</tr>
+<tr>
+<td><strong>intrusive</strong></td>
+<td>ممكن تخرّب خدمة أو نظام الهدف</td>
+</tr>
+<tr>
+<td><strong>vuln</strong></td>
+<td>بتفحص عن ثغرات محددة</td>
+</tr>
+</tbody>
+</table></div>
+<p>على Kali VM، سكربتات NSE موجودة في دليل <code>/usr/share/nmap/scripts/</code> بصيغة <code>.nse</code>. الدليل ده كمان فيه ملف <code>script.db</code>، اللي بيعمل كفهرس لكل سكربتات NSE المتاحة حاليًا. نقدر نستخدمه عشان نجيب قايمة بالسكربتات في فئة <code>vuln</code>:</p>
+<div class="code-wrap"><pre><code class="language-bash">grep -l &quot;categories.*vuln&quot; /usr/share/nmap/scripts/*.nse
+</code></pre></div>
+<h3>سكربت vulners</h3>
+<p>بعض سكربتات NSE القياسية قديمة نوعًا ما. لحسن الحظ، سكربت <strong>vulners</strong> اتدمج، وده بيوفّر معلومات ثغرات حالية عن إصدارات الخدمات المكتشَفة من قاعدة بيانات <strong>Vulners Vulnerability Database</strong>. السكربت نفسه له الفئات <code>safe</code>، <code>vuln</code>، و<code>external</code>.</p>
+<h3>باراميتر --script</h3>
+<p>قبل ما نبدأ أول فحص ثغرات بـ NSE، نفحص باراميتر <code>--script</code> بتاع Nmap. الباراميتر ده مسؤول عن تحديد أنهي سكربتات NSE هتتنفّذ في فحص معين.</p>
+<p><strong>الأرجومنتات لباراميتر <code>--script</code> ممكن تكون:</strong></p>
+<div class="code-wrap"><pre><code>- فئة (category)                              → --script vuln
+- تعبير Boolean                                → --script &quot;vuln and safe&quot;
+- قايمة فئات مفصولة بفواصل                     → --script &quot;vuln,discovery&quot;
+- اسم كامل أو wildcard لسكربت NSE في script.db  → --script &quot;http-vuln-*&quot;
+- مسار مطلق لسكربت محدد                        → --script /path/to/script.nse
+</code></pre></div>
+<h3>مثال تطبيقي: فحص ثغرات خفيف الوزن</h3>
+<div class="code-wrap"><pre><code class="language-bash">nmap --script vuln -p 80,443 target_ip
+</code></pre></div>
+<p>Nmap اكتشف خدمة Apache بإصدار <strong>2.4.49</strong> وجرّب كل سكربتات NSE من فئة <code>vuln</code>. معظم الخرج جاي من سكربت <strong>vulners</strong>، اللي بيستخدم المعلومات من الخدمة والإصدار المكتشَف عشان يوفّر بيانات ثغرات مرتبطة.</p>
+<p>سكربت vulners مش بس بيوضّح معلومات عن الـ CVEs المكتشَفة، لكن كمان درجات CVSS وروابط لمعلومات إضافية. مثلًا:</p>
+<div class="code-wrap"><pre><code>PORT    STATE SERVICE VERSION
+80/tcp  open  http    Apache httpd 2.4.49
+
+| vulners:
+|   cpe:/a:apache:http_server:2.4.49:
+|       CVE-2021-41773   9.8   https://vulners.com/cve/CVE-2021-41773
+|_      ...
+</code></pre></div>
+<p>Nmap بالاشتراك مع سكربت vulners اكتشف إن الهدف عرضة لـ <strong>CVE-2021-41773</strong> (ثغرة Path Traversal في Apache HTTP Server 2.4.49 المشهورة).</p>
+<hr />
+<h2 id="summary"><span class="htext">الخلاصة العامة للموديول</span></h2>
+<p>الموديول ده وفّر نظرة عامة على فحص الثغرات بـ Nessus وNmap، وأدّى لرؤية في الأنواع والاعتبارات المختلفة لفحص الثغرات.</p>
+<p>فحص الثغرات يقدر يكون مفيد جدًا أثناء أي نوع من التقييم الأمني. لو اتظبط صح، أدوات فحص الثغرات بتوفّر ثروة من البيانات ذات المعنى. مهم نفهم إن المراجعة اليدوية للنتائج لسه مطلوبة، وإن الماسحات تقدر بس تكتشف الثغرات اللي هي مُعدَّة عشانها.</p>
+<blockquote>
+<p><strong>أخيرًا، المفروض نفتكر دايمًا إن أدوات فحص الثغرات ممكن تنفّذ أفعال ممكن تكون ضارة لبعض الشبكات أو الأهداف، فلازم نمارس الحذر لما بنستخدمها.</strong></p>
+</blockquote>
+<hr />
+<p><em>نهاية نوتس الموديول الخامس — OSCP: Vulnerability Scanning</em></p>
+  <div class="footer-note">-- EOF: module-05/vulnerability-scanning.md --</div>
+
+</div>
+</body>
+</html>

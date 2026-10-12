@@ -1,3 +1,4 @@
+
 ---
 import { UNCATEGORIZED } from "@constants/constants";
 import I18nKey from "../i18n/i18nKey";
@@ -34,9 +35,11 @@ if (Array.isArray(categories) && categories.length > 0) {
 /*
  * Courses
  * -------
- * Posts that belong to a course are grouped together.
- * Currently eAIS is the first course using this system.
+ * Course cards are displayed in the Courses Notes category.
+ * eAIS modules come from the posts collection.
+ * OSCP+ modules are served from standalone HTML files.
  */
+
 const coursePosts = posts.filter(
         (post) => post.data.category === "Courses Notes" && post.data.course,
 );
@@ -45,23 +48,34 @@ const standalonePosts = posts.filter(
         (post) => !(post.data.category === "Courses Notes" && post.data.course),
 );
 
+const courses = [
+        ...Array.from(
+                new Set(
+                        coursePosts
+                                .map((post) => post.data.course)
+                                .filter((course): course is string => Boolean(course)),
+                ),
+        ).map((course) => {
+                const modules = coursePosts
+                        .filter((post) => post.data.course === course)
+                        .sort((a, b) => (a.data.module ?? 999) - (b.data.module ?? 999));
 
-const courses = Array.from(
-        new Set(
-                coursePosts
-                        .map((post) => post.data.course)
-                        .filter((course): course is string => Boolean(course)),
-        ),
-).map((course) => {
-        const modules = coursePosts
-                .filter((post) => post.data.course === course)
-                .sort((a, b) => (a.data.module ?? 999) - (b.data.module ?? 999));
+                return {
+                        name: course,
+                        modules,
+                        href: url(`/courses/${course.toLowerCase()}/`),
+                        description: "AI Security Course Notes",
+                };
+        }),
 
-        return {
-                name: course,
-                modules,
-        };
-});
+        {
+                name: "OSCP+",
+                modules: Array.from({ length: 17 }, (_, i) => i + 1),
+                href: url("/courses/oscp/"),
+                description: "Offensive Security Course Notes",
+        },
+];
+
 const groups: { year: number; posts: typeof standalonePosts }[] = (() => {
         const groupedPosts = standalonePosts.reduce(
                 (grouped: { [year: number]: typeof standalonePosts }, post) => {
@@ -124,7 +138,7 @@ function formatTag(tag: string[]) {
                 {
                     courses.map((course) => (
                         <a
-                            href={url(`/courses/${course.name.toLowerCase()}/`)}
+                            href={course.href}
                             aria-label={`${course.name} Course`}
                             class="group btn-plain !block w-full rounded-xl hover:text-[initial] mb-3"
                         >
@@ -152,7 +166,7 @@ function formatTag(tag: string[]) {
                                     </div>
 
                                     <div class="text-sm text-50 mt-1">
-                                        AI Security Course Notes
+                                        {course.description}
                                     </div>
 
                                     <div class="text-xs text-30 mt-1">

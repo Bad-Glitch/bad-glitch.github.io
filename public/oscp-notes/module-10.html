@@ -1,0 +1,1144 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OSCP · Module 10: تحديد موقع الإكسبلويتات العامة</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-0: #0B0B0D;
+    --bg-1: #121214;
+    --surface: #17171A;
+    --surface-2: #1D1D21;
+    --border: #2A2A2F;
+    --border-soft: #232326;
+
+    --text: #E6E6E9;
+    --text-soft: #C4C4CA;
+    --muted: #8A8A92;
+
+    --red: #E1362F;
+    --red-soft: rgba(225,54,47,0.10);
+    --red-border: rgba(225,54,47,0.35);
+    --red-grad: linear-gradient(90deg, #E1362F, #F2794A);
+
+    --amber: #E8A23A;
+    --amber-soft: rgba(232,162,58,0.09);
+    --amber-border: rgba(232,162,58,0.30);
+
+    --green: #3FBF6E;
+    --green-soft: rgba(63,191,110,0.09);
+    --green-border: rgba(63,191,110,0.30);
+
+    --blue: #4EA1D3;
+    --blue-soft: rgba(78,161,211,0.09);
+    --blue-border: rgba(78,161,211,0.30);
+
+    --purple: #A179E8;
+    --purple-soft: rgba(161,121,232,0.10);
+    --purple-border: rgba(161,121,232,0.32);
+
+    --mono: 'IBM Plex Mono', 'Courier New', monospace;
+  }
+
+  html[data-theme="light"]{
+    --bg-0: #F4F3F1;
+    --bg-1: #ECEBE8;
+    --surface: #FFFFFF;
+    --surface-2: #F3F2EF;
+    --border: #DEDCD6;
+    --border-soft: #E6E4DF;
+    --text: #1C1B19;
+    --text-soft: #3C3A36;
+    --muted: #726F68;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    direction: rtl;
+    text-align: right;
+    background: var(--bg-0);
+  }
+
+  body {
+    font-family: 'Cairo', 'Segoe UI', Tahoma, sans-serif;
+    line-height: 1.95;
+    font-size: 16.5px;
+    color: var(--text);
+    background:
+      radial-gradient(900px 420px at 12% -8%, rgba(225,54,47,0.10), transparent 60%),
+      radial-gradient(800px 420px at 90% 6%, rgba(232,162,58,0.06), transparent 60%),
+      linear-gradient(180deg, var(--bg-0) 0%, var(--bg-1) 100%);
+    background-attachment: fixed;
+    transition: background 0.2s ease, color 0.2s ease;
+  }
+
+  html[data-theme="light"] body{
+    background:
+      radial-gradient(900px 420px at 12% -8%, rgba(225,54,47,0.06), transparent 60%),
+      radial-gradient(800px 420px at 90% 6%, rgba(232,162,58,0.05), transparent 60%),
+      linear-gradient(180deg, var(--bg-0) 0%, var(--bg-1) 100%);
+  }
+
+  .progress-rail{
+    position: fixed; top:0; inset-inline:0; height: 3px;
+    background: rgba(255,255,255,0.04); z-index: 60;
+  }
+  html[data-theme="light"] .progress-rail{ background: rgba(0,0,0,0.05); }
+  .progress-bar{
+    height: 100%; width: 0%;
+    background: var(--red-grad);
+    transition: width 0.08s linear;
+  }
+
+  .float-controls{
+    position: fixed; bottom: 22px; left: 22px; z-index: 55;
+    display: flex; flex-direction: column; gap: 10px;
+  }
+  .fctrl-btn{
+    width: 42px; height: 42px; border-radius: 50%;
+    background: var(--surface); border: 1px solid var(--border);
+    color: var(--text-soft); display:flex; align-items:center; justify-content:center;
+    cursor: pointer; font-size: 16px; box-shadow: 0 10px 24px -10px rgba(0,0,0,0.5);
+    transition: transform 0.15s ease, border-color 0.15s ease, opacity 0.2s ease;
+  }
+  .fctrl-btn:hover{ transform: translateY(-2px); border-color: var(--red-border); color: var(--red); }
+  #toTop{ opacity: 0; pointer-events: none; }
+  #toTop.show{ opacity: 1; pointer-events: auto; }
+
+  .page {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 46px 22px 100px;
+  }
+
+  .banner {
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(155deg, var(--surface) 0%, var(--bg-1) 55%, var(--surface) 100%);
+    border: 1px solid var(--border-soft);
+    border-radius: 10px;
+    padding: 0 0 34px;
+    margin-bottom: 26px;
+    box-shadow: 0 20px 50px -20px rgba(0,0,0,0.6);
+  }
+  .term-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 13px 18px;
+    border-bottom: 1px solid var(--border-soft);
+    background: rgba(255,255,255,0.015);
+    direction: ltr;
+  }
+  .term-dot { width: 11px; height: 11px; border-radius: 50%; display: inline-block; }
+  .term-dot.r { background: #E1362F; }
+  .term-dot.y { background: #E8A23A; }
+  .term-dot.g { background: #3FBF6E; }
+  .term-path {
+    margin-inline-start: 12px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .theme-switch{
+    margin-inline-start: auto;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 4px 9px;
+    cursor: pointer;
+  }
+  .theme-switch:hover{ color: var(--amber); border-color: var(--amber-border); }
+  .banner-body { padding: 30px 34px 4px; }
+  .banner .kicker {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 12.5px;
+    letter-spacing: 0.03em;
+    color: var(--red);
+    background: var(--red-soft);
+    border: 1px solid var(--red-border);
+    border-radius: 3px;
+    padding: 5px 12px;
+    margin-bottom: 20px;
+    direction: ltr;
+  }
+  .banner h1 {
+    margin: 0 0 14px;
+    font-size: 28px;
+    font-weight: 800;
+    line-height: 1.5;
+    color: var(--text);
+  }
+  .banner .lede {
+    color: var(--muted);
+    font-size: 15.5px;
+    line-height: 1.95;
+    max-width: 640px;
+    margin: 0 0 24px;
+  }
+  .tags { display: flex; flex-wrap: wrap; gap: 9px; }
+  .tag {
+    font-size: 12.5px;
+    font-family: var(--mono);
+    color: var(--amber);
+    background: var(--amber-soft);
+    border: 1px solid var(--amber-border);
+    border-radius: 3px;
+    padding: 5px 11px;
+  }
+
+  .toc {
+    background: var(--surface);
+    border: 1px solid var(--border-soft);
+    border-radius: 8px;
+    padding: 6px 0 6px;
+    margin-bottom: 50px;
+    overflow: hidden;
+  }
+  .toc-title {
+    font-family: var(--mono);
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--green);
+    padding: 14px 22px;
+    border-bottom: 1px solid var(--border-soft);
+    direction: ltr;
+    text-align: left;
+  }
+  .toc-list { display: flex; flex-direction: column; }
+  .toc-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 22px;
+    color: var(--text-soft);
+    text-decoration: none;
+    font-size: 14.5px;
+    border-bottom: 1px solid rgba(255,255,255,0.03);
+    transition: background 0.15s ease, padding-inline-start 0.15s ease;
+  }
+  .toc-list .toc-item:last-child { border-bottom: none; }
+  .toc-item:hover { background: var(--red-soft); }
+  .toc-num {
+    flex: none;
+    font-family: var(--mono);
+    font-size: 12.5px;
+    font-weight: 600;
+    color: #0F0F10;
+    background: var(--red-grad);
+    border-radius: 3px;
+    padding: 3px 8px;
+    direction: ltr;
+  }
+
+  h1, h2, h3, h4 { font-weight: 700; }
+
+  h2 {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    font-size: 21px;
+    margin: 66px 0 22px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border-soft);
+    color: var(--text);
+  }
+  h2 .num {
+    flex: none;
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 700;
+    color: #0F0F10;
+    background: var(--red-grad);
+    border-radius: 5px;
+    padding: 7px 12px;
+    direction: ltr;
+  }
+  h2 .htext { line-height: 1.5; }
+
+  h3 {
+    font-size: 17px;
+    margin: 34px 0 14px;
+    color: var(--red);
+    display: flex;
+    align-items: center;
+    gap: 9px;
+  }
+  h3::before {
+    content: "#";
+    font-family: var(--mono);
+    color: var(--amber);
+    font-weight: 700;
+  }
+
+  h4 {
+    font-size: 14.8px;
+    margin: 22px 0 10px;
+    color: var(--text-soft);
+    font-family: var(--mono);
+  }
+
+  p { margin: 0 0 17px; color: var(--text); }
+
+  strong { color: var(--text); font-weight: 700; }
+  :root:not([data-theme="light"]) strong { color: #FBFBFC; }
+
+  a { color: var(--amber); text-decoration: none; border-bottom: 1px dashed var(--amber-border); }
+
+  hr {
+    border: none;
+    height: 1px;
+    margin: 50px 0;
+    background: linear-gradient(90deg, transparent, var(--border), transparent);
+  }
+
+  ul, ol {
+    margin: 0 0 18px;
+    padding-inline-start: 24px;
+  }
+  li { margin-bottom: 9px; color: var(--text); }
+  li::marker { color: var(--red); font-family: var(--mono); }
+  li > ul, li > ol { margin-top: 9px; }
+
+  .goals-grid{
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+    gap: 10px;
+    margin: 0 0 22px;
+  }
+  .goal-card{
+    display:flex; gap: 10px; align-items:flex-start;
+    background: var(--surface);
+    border: 1px solid var(--border-soft);
+    border-radius: 7px;
+    padding: 13px 15px;
+    font-size: 14px;
+    color: var(--text-soft);
+  }
+  .goal-card .gi{
+    flex: none; font-family: var(--mono); font-size: 11px; font-weight: 700;
+    color: var(--green); background: var(--green-soft); border: 1px solid var(--green-border);
+    border-radius: 4px; width: 22px; height: 22px; display:flex; align-items:center; justify-content:center;
+  }
+
+  blockquote {
+    margin: 24px 0;
+    padding: 17px 22px;
+    background: var(--red-soft);
+    border: 1px solid var(--red-border);
+    border-inline-start: 3px solid var(--red);
+    border-radius: 6px;
+    color: var(--text-soft);
+  }
+  blockquote p { margin: 0; color: inherit; line-height: 1.85; }
+  blockquote p + p{ margin-top: 10px; }
+  blockquote strong { color: var(--text); }
+
+  .callout{
+    margin: 24px 0;
+    padding: 17px 22px 18px;
+    border-radius: 6px;
+    border: 1px solid var(--border-soft);
+    border-inline-start: 3px solid var(--border);
+    background: var(--surface);
+  }
+  .callout p{ margin: 0; color: var(--text-soft); line-height: 1.85; }
+  .callout p + p{ margin-top: 10px; }
+  .callout-label{
+    display:inline-flex; align-items:center; gap: 7px;
+    font-family: var(--mono); font-size: 11.5px; font-weight: 700;
+    letter-spacing: 0.02em; text-transform: uppercase;
+    margin-bottom: 10px; direction: ltr;
+  }
+  .callout.note{ border-inline-start-color: var(--blue); background: var(--blue-soft); }
+  .callout.note .callout-label{ color: var(--blue); }
+  .callout.warning{ border-inline-start-color: var(--red); background: var(--red-soft); }
+  .callout.warning .callout-label{ color: var(--red); }
+  .callout.tip{ border-inline-start-color: var(--green); background: var(--green-soft); }
+  .callout.tip .callout-label{ color: var(--green); }
+  .callout.examtip{ border-inline-start-color: var(--purple); background: var(--purple-soft); }
+  .callout.examtip .callout-label{ color: var(--purple); }
+  .callout.case{ border-inline-start-color: var(--amber); background: var(--amber-soft); }
+  .callout.case .callout-label{ color: var(--amber); }
+  .callout.definition{ border-inline-start-color: var(--muted); background: var(--surface-2); }
+  .callout.definition .callout-label{ color: var(--text-soft); }
+  .callout.danger{ border-inline-start-color: #FF5A52; background: rgba(255,90,82,0.08); }
+  .callout.danger .callout-label{ color: #FF5A52; }
+
+  .table-wrap {
+    overflow-x: auto;
+    margin: 22px 0;
+    border: 1px solid var(--border-soft);
+    border-radius: 8px;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14.2px;
+    min-width: 480px;
+  }
+  thead th {
+    background: var(--surface-2);
+    color: var(--amber);
+    font-weight: 700;
+    font-family: var(--mono);
+    font-size: 12.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    text-align: start;
+    padding: 13px 15px;
+    border-bottom: 1px solid var(--border-soft);
+    white-space: nowrap;
+  }
+  tbody td {
+    padding: 12px 15px;
+    border-bottom: 1px solid var(--border-soft);
+    color: var(--text-soft);
+    vertical-align: top;
+  }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:nth-child(even) { background: rgba(127,127,127,0.03); }
+  tbody tr:hover { background: var(--red-soft); }
+
+  code {
+    font-family: var(--mono);
+    font-size: 13.3px;
+    background: var(--surface-2);
+    border: 1px solid var(--border-soft);
+    border-radius: 4px;
+    padding: 2px 6px;
+    direction: ltr;
+    unicode-bidi: embed;
+    color: var(--green);
+  }
+  .code-wrap { position: relative; overflow-x: auto; margin: 22px 0; }
+  .code-tag{
+    position: absolute; top: 10px; left: 14px;
+    font-family: var(--mono); font-size: 10.5px; color: var(--muted);
+    letter-spacing: 0.04em; text-transform: uppercase; z-index: 2;
+  }
+  .copy-btn{
+    position: absolute; top: 8px; right: 10px; z-index: 2;
+    font-family: var(--mono); font-size: 11px; color: var(--muted);
+    background: var(--surface-2); border: 1px solid var(--border-soft);
+    border-radius: 4px; padding: 4px 9px; cursor: pointer;
+    direction: ltr;
+  }
+  .copy-btn:hover{ color: var(--amber); border-color: var(--amber-border); }
+  .copy-btn.copied{ color: var(--green); border-color: var(--green-border); }
+  pre {
+    background: var(--bg-0);
+    border: 1px solid var(--border-soft);
+    border-inline-start: 3px solid var(--red);
+    border-radius: 8px;
+    padding: 30px 22px 18px;
+    direction: ltr;
+    text-align: left;
+    margin: 0;
+  }
+  html[data-theme="light"] pre{ background: #16181C; }
+  pre code {
+    background: none;
+    border: none;
+    padding: 0;
+    color: #B9E8C9;
+    font-size: 13.2px;
+    line-height: 1.75;
+  }
+
+  .diagram-card{
+    background: var(--surface);
+    border: 1px solid var(--border-soft);
+    border-radius: 10px;
+    padding: 22px 18px 16px;
+    margin: 24px 0;
+  }
+  .diagram-card svg{ width: 100%; height: auto; display:block; }
+  .diagram-caption{
+    margin-top: 10px; text-align:center; font-family: var(--mono);
+    font-size: 11.5px; color: var(--muted);
+  }
+
+  .takeaways{
+    background: var(--surface);
+    border: 1px solid var(--border-soft);
+    border-radius: 8px;
+    padding: 18px 22px 20px;
+    margin: 30px 0 10px;
+  }
+  .takeaways-title{
+    font-family: var(--mono); font-size: 12.5px; font-weight: 700;
+    color: var(--green); margin-bottom: 12px; direction: ltr; text-align:left;
+    display:flex; align-items:center; gap: 8px;
+  }
+  .takeaways ul{ margin: 0; padding-inline-start: 20px; }
+  .takeaways li{ color: var(--text-soft); font-size: 14.5px; }
+
+  .cheat-section h4{ color: var(--amber); font-size: 13px; margin: 26px 0 8px; }
+
+  .step-track{
+    display: flex; flex-direction: column; gap: 0; margin: 24px 0;
+  }
+  .step-item{
+    position: relative;
+    padding: 0 0 26px 0;
+    padding-inline-end: 0;
+    padding-inline-start: 46px;
+    border-inline-start: 2px solid var(--border-soft);
+  }
+  .step-item:last-child{ border-inline-start: 2px solid transparent; padding-bottom: 4px; }
+  .step-num{
+    position: absolute; inset-inline-start: -17px; top: 0;
+    width: 32px; height: 32px; border-radius: 50%;
+    background: var(--red-grad); color: #0F0F10;
+    font-family: var(--mono); font-weight: 700; font-size: 13px;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .step-title{ font-weight: 700; color: var(--text); margin-bottom: 6px; font-size: 15px; }
+  .step-body{ color: var(--text-soft); font-size: 14.5px; }
+  .step-body p{ margin: 0 0 10px; }
+  .step-body p:last-child{ margin-bottom: 0; }
+
+  .footer-note {
+    margin-top: 70px;
+    padding-top: 26px;
+    border-top: 1px solid var(--border-soft);
+    color: var(--muted);
+    font-size: 13.3px;
+    font-family: var(--mono);
+    text-align: center;
+    direction: ltr;
+  }
+
+  @media print {
+    .float-controls, .progress-rail, .copy-btn, .theme-switch { display: none !important; }
+    body{ background: #fff; color: #000; }
+    .page{ max-width: 100%; }
+  }
+
+  @media (max-width: 640px) {
+    .page { padding: 28px 14px 70px; }
+    .banner-body { padding: 24px 20px 4px; }
+    .banner h1 { font-size: 21px; }
+    h2 { font-size: 18px; gap: 10px; }
+    .float-controls{ left: 12px; bottom: 14px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="progress-rail"><div class="progress-bar" id="progressBar"></div></div>
+
+<div class="float-controls">
+  <button class="fctrl-btn" id="toTop" title="ارجع لفوق" aria-label="ارجع لفوق">↑</button>
+</div>
+
+<div class="page">
+
+  <div class="banner">
+    <div class="term-bar">
+      <span class="term-dot r"></span><span class="term-dot y"></span><span class="term-dot g"></span>
+      <span class="term-path">root@oscp:~/module-10$</span>
+      <button class="theme-switch" id="themeSwitch">theme: dark</button>
+    </div>
+    <div class="banner-body">
+      <span class="kicker">OSCP · PEN-200 · Module 10</span>
+      <h1>تحديد موقع الإكسبلويتات العامة (Locating Public Exploits)</h1>
+      <p class="lede">إزاي تدوّر على إكسبلويت جاهز لثغرة معروفة، تقيّمه بأمان قبل ما تشغّله، وتستخدمه فعليًا — من Exploit-DB وPacket Storm وGitHub، لحد SearchSploit وNmap NSE، وصولًا لتسلسل استغلال كامل (qdPM 9.1) من اكتشاف الخدمة لحد reverse shell.</p>
+      <div class="tags">
+        <span class="tag">exploit-db</span>
+        <span class="tag">searchsploit</span>
+        <span class="tag">nmap-nse</span>
+        <span class="tag">exploit-frameworks</span>
+        <span class="tag">end-to-end-exploitation</span>
+      </div>
+    </div>
+  </div>
+
+
+<nav class="toc"><div class="toc-title">$ ls learning_units/</div><div class="toc-list">
+<a class="toc-item" href="#intro"><span class="toc-num">00</span><span class="toc-label">مقدمة: إيه هو الإكسبلويت</span></a>
+<a class="toc-item" href="#lu1"><span class="toc-num">01</span><span class="toc-label">الأساسيات: مخاطر تشغيل كود غير موثوق</span></a>
+<a class="toc-item" href="#lu2"><span class="toc-num">02</span><span class="toc-label">مصادر إكسبلويت أونلاين</span></a>
+<a class="toc-item" href="#lu3"><span class="toc-num">03</span><span class="toc-label">موارد إكسبلويت أوفلاين</span></a>
+<a class="toc-item" href="#lu4"><span class="toc-num">04</span><span class="toc-label">استغلال هدف — تمرين عملي كامل</span></a>
+<a class="toc-item" href="#cheat"><span class="toc-num">--</span><span class="toc-label">Cheat Sheet مرجعي</span></a>
+<a class="toc-item" href="#summary"><span class="toc-num">--</span><span class="toc-label">الخلاصة العامة للموديول</span></a>
+</div></nav>
+
+<h1 id="intro">Module 10: تحديد موقع الإكسبلويتات العامة</h1>
+<p>الموديول ده بيغطي أربع محاور أساسية:</p>
+<div class="goals-grid">
+  <div class="goal-card"><span class="gi">1</span><span>مقدمة لاستخدام كود إكسبلويت منشور للعامة</span></div>
+  <div class="goal-card"><span class="gi">2</span><span>منصات ويب بتنشر مواد إكسبلويت</span></div>
+  <div class="goal-card"><span class="gi">3</span><span>مستودعات إكسبلويت محلية (أوفلاين)</span></div>
+  <div class="goal-card"><span class="gi">4</span><span>خطوات عملية لإطلاق هجوم ضد نظام عرضة للاستغلال</span></div>
+</div>
+<div class="callout definition">
+<div class="callout-label">⬦ Definition</div>
+<p><strong>الإكسبلويت (Exploit)</strong> هو قطعة سوفت وير، سكربت، أو مجموعة أوامر مصمَّمة عشان تستغل نقطة ضعف أمنية في هدف. حسب الغرض منه، ممكن:</p>
+<p>1) يعطّل خدمة (<strong>Denial of Service — DoS</strong>) &nbsp; 2) يسمح للمهاجم ينفّذ أوامر عشوائية على جهاز بعيد (<strong>Remote Code Execution — RCE</strong>) &nbsp; 3) يصعّد الصلاحيات أبعد من المسموح بيه عاديًا (<strong>Privilege Escalation</strong>)</p>
+</div>
+<p>في مهمات اختبار الاختراق الحقيقية، المحترفين الأمنيين كتير ما بيعتمدوا على كود إكسبلويت منشور بالفعل لما ثغرة معروفة تكون موجودة. فالقدرة على إنك تلاقي، تقيّم، وتعدّل إكسبلويتات عامة بكفاءة بقت مهارة أساسية.</p>
+<p>الموديول ده بيركّز على قواعد بيانات ومجتمعات أونلاين معروفة بتوزّع كود إكسبلويت للثغرات المُفصَح عنها. بالإضافة لكده، بيستكشف أدوات متضمَّنة في Kali Linux بتخزّن سكربتات إكسبلويت محليًا للاستخدام أوفلاين.</p>
+<p>بعد ما نتعلّم إزاي نحدد ونجيب كود إكسبلويت، هنصقل عملية الاختيار عشان نحدد أنهي إكسبلويتات قابلة للتطبيق على بيئة هدف معينة. في نهاية الموديول، هننفّذ enumeration ضد نظام عشان نحدد ثغرات ونطابقها مع إكسبلويتات مناسبة ممكن تؤدي لاختراق ناجح.</p>
+
+<hr />
+
+<h2 id="lu1"><span class="num">01</span><span class="htext">الأساسيات (Foundations)</span></h2>
+<h3>أهداف الوحدة</h3>
+<div class="goals-grid">
+  <div class="goal-card"><span class="gi">1</span><span>إدراك مخاطر تشغيل كود إكسبلويت من مصادر غير موثَّقة</span></div>
+  <div class="goal-card"><span class="gi">2</span><span>فهم ليه مراجعة وفهم وظيفة الإكسبلويت حاسمة قبل التنفيذ</span></div>
+</div>
+<p>في القسم ده، هنحلّل مثال لإكسبلويت عام ضار عشان نوضّح المخاطر المحتملة. تشغيل كود إكسبلويت من غير فحص يقدر يكون خطير، لأن الكود ده ممكن يحتوي أفعال خبيثة مخفية، سلوك تخريبي غير مقصود، أو payloads ممكن تخترق جهاز المختبر نفسه.</p>
+
+<div class="callout warning">
+<div class="callout-label">⚠ Word of Warning</div>
+<p>حاسم إنك تدرك إن الحصول على كود إكسبلويت من مصادر عامة وتشغيله ممكن يحمل مخاطر جسيمة على جهاز المختبر والبيئة المحيطة بيه. تشغيل كود كده من غير فحص مناسب ممكن يؤدي لتلف النظام، فقدان بيانات، أو اختراق غير مقصود. عشان كده، أساسي إنك تراجع وتفهم كويس إيه اللي الإكسبلويت فعلًا بيعمله قبل ما تشغّله.</p>
+</div>
+
+<h3>دراسة حالة: 0pen0wn</h3>
+<p>خُد بالك من حالة <strong>0pen0wn</strong>، أداة اتنشرت بزعم إنها بتستهدف خدمات SSH عن بعد. أثناء فحص الكود المصدري بتاعها، تفصيلة مريبة واحدة لفتت النظر فورًا: البرنامج كان بيطلب صلاحيات root على جهاز المهاجم نفسه.</p>
+<div class="code-wrap"><span class="code-tag">c</span><pre><code>if (geteuid()) {
+puts("Root is required for raw sockets, etc."); return 1;
+}
+</code></pre></div>
+<p>الإكسبلويت الشرعي مش دايمًا محتاج صلاحيات إدارية كاملة على جهاز المهاجم، فالطلب ده أثار شكوك وبرّر فحص أعمق.</p>
+
+<h3>الـ Payload الخبيث المخفي</h3>
+<p>تحليل أعمق كشف متغيّر اسمه <code>jmpcode</code>، معروض كأنه shellcode مُرمَّز:</p>
+<div class="code-wrap"><span class="code-tag">c</span><pre><code>char jmpcode[] =
+"\x72\x6D\x20\x2D\x72\x66\x20\x7e\x20\x2F\x2A\x20\x32\x3e\x20\x2f"
+"\x64\x65\x76\x2f\x6e\x75\x6c\x6c\x20\x26";
+</code></pre></div>
+<p>رغم إنه متنكّر كتعليمات إكسبلويت منخفضة المستوى، فكّ القيم الـ hexadecimal كشف إنه في الحقيقة أمر shell مُخفي:</p>
+<div class="code-wrap"><span class="code-tag">bash</span><pre><code>rm -rf ~ /* 2&gt; /dev/null &amp;
+</code></pre></div>
+<div class="callout danger">
+<div class="callout-label">☠ Payload Decoded</div>
+<p>الأمر ده كان هيمسح recursively كل الملفات عبر نظام ملفات المهاجم المبني على UNIX، وبالتالي يدمّر النظام بالكامل. يعني بدل ما الإكسبلويت يخترق الهدف، كان مصمَّم عشان يخرّب الشخص اللي بيشغّله. وعلى سبيل الطين بلّة، البرنامج كمان كان بيحاول يتصل بسيرفر IRC عام عشان يذيع نشاط المستخدم، وده بيحوّل الحادثة لإحراج عام كمان، مش بس كارثة تقنية.</p>
+</div>
+
+<h3>دروس أساسية في التعامل مع الإكسبلويتات العامة</h3>
+<p>بسبب مخاطر زي دي، المحترفين الأمنيين لازم يتعاملوا مع كود الإكسبلويت العام بحذر:</p>
+<ol>
+<li>متثقش في كود الإكسبلويت عمياني، حتى لو بيبان إنه بيستهدف ثغرة معروفة</li>
+<li>راجع الكود المصدري يدويًا عشان تفهم سلوكه والـ payload بتاعه</li>
+<li>فضّل المستودعات الموثوقة اللي بتعمل تحقق أساسي قبل ما تنشر الإكسبلويتات</li>
+<li>استخدم مراجعة الكود كفرصة تعلّم، خصوصًا لتحسين الإلمام البرمجي</li>
+</ol>
+<div class="callout tip">
+<div class="callout-label">✓ Tip</div>
+<p>برامج الإكسبلويت المكتوبة بلغات منخفضة المستوى (زي C) غالبًا بتتوزّع كـ كود مصدري وكمان كـ binaries مُجمَّعة (compiled). رغم إن تجميع الكود المصدري محتاج مجهود إضافي، ملفات الكود المقروء أسهل بكتير للمراجعة بحثًا عن منطق خبيث من الـ executables المعتمة، اللي عادةً محتاجة مهارات reverse engineering.</p>
+</div>
+
+<div class="takeaways">
+<div class="takeaways-title">$ cat ./lu1_takeaways.txt</div>
+<ul>
+<li>طلب صلاحيات root على جهاز المهاجم نفسه — مش على الهدف — علامة تحذير</li>
+<li>افحص دايمًا الكود يدويًا قبل التنفيذ، خصوصًا أجزاء بتبان مُرمَّزة أو غامضة</li>
+<li>فضّل الكود المصدري المقروء على الـ binaries المجمَّعة لما يكون ممكن</li>
+<li>مستودعات موثوقة بتقلّل الخطر، لكن ما بتلغيهوش بالكامل</li>
+</ul>
+</div>
+
+<hr />
+
+<h2 id="lu2"><span class="num">02</span><span class="htext">مصادر إكسبلويت أونلاين</span></h2>
+<h3>أهداف الوحدة</h3>
+<div class="goals-grid">
+  <div class="goal-card"><span class="gi">1</span><span>التنقّل بين عدة منصات ويب بتنشر كود إكسبلويت</span></div>
+  <div class="goal-card"><span class="gi">2</span><span>تمييز خصائص وموثوقية مصادر مختلفة</span></div>
+  <div class="goal-card"><span class="gi">3</span><span>إدراك المخاطر المحتملة لتحميل إكسبلويتات من الإنترنت</span></div>
+  <div class="goal-card"><span class="gi">4</span><span>استخدام تقنيات بحث متقدمة (Google operators) لإيجاد إكسبلويتات عامة</span></div>
+</div>
+<p>بعد ما نخلّص استطلاع وenumeration للخدمات أثناء اختبار الاختراق، الخطوة المنطقية الجاية هي مقارنة إصدارات السوفت وير المكتشَفة مع ثغرات معروفة. لو لقينا تطابق، المختبر يقدر يدوّر على كود إكسبلويت موجود بيستهدف نقاط الضعف دي.</p>
+
+<h3>Exploit Database</h3>
+<p><strong>Exploit Database</strong> — بيُختصر غالبًا لـ <strong>Exploit-DB أو EDB</strong> — مستودع معروف بتحتفظ بيه <strong>netriders</strong>. بيُعتبر أرشيف متاح للعامة لكود إكسبلويت اتجمع من مساهمات المجتمع، قوائم بريدية أمنية، ومصادر مفتوحة تانية.</p>
+
+<h4>نظرة عامة على الصفحة الرئيسية</h4>
+<p>افتراضيًا، الموقع بيعرض الإكسبلويتات مرتَّبة حسب تاريخ النشر، بالأحدث يظهر الأول. كذا عمود مهم بيدّي رؤية سريعة:</p>
+<div class="table-wrap"><table>
+<thead><tr><th>العمود</th><th>الوظيفة</th></tr></thead>
+<tbody>
+<tr><td><strong>D</strong> (Download)</td><td>رابط مباشر للحصول على ملف الإكسبلويت</td></tr>
+<tr><td><strong>A</strong> (Application)</td><td>روابط للسوفت وير العرضة للاستغلال لو متاحة — مفيدة لاختبار اللاب</td></tr>
+<tr><td><strong>V</strong> (Verified)</td><td>بيوضّح إذا كان مراجعين موثوقين اختبروا الإكسبلويت ونجح معاهم</td></tr>
+<tr><td><strong>Title</strong></td><td>بيعرض السوفت وير المتأثر، الإصدار العرضة للاستغلال، والغرض من الإكسبلويت</td></tr>
+<tr><td><strong>Type</strong></td><td>بيصنّف الإكسبلويت (مثلًا: DoS، local، remote، أو web application)</td></tr>
+<tr><td><strong>Platform</strong></td><td>بيحدد الأنظمة المتأثرة — أنظمة تشغيل، هاردوير، أو خدمات</td></tr>
+<tr><td><strong>Author</strong></td><td>بينسب الفضل للشخص اللي قدّم الإكسبلويت</td></tr>
+</tbody>
+</table></div>
+<blockquote>
+<p>مؤشّر التحقق (<strong>V</strong>) قيّم بشكل خاص لأنه بيدّل على إن الإكسبلويت اتفحص وتأكّد إنه بيشتغل زي ما متوقَّع، وده بيدّي طبقة إضافية من الثقة.</p>
+</blockquote>
+
+<h4>عرض تفاصيل إكسبلويت محدَّد</h4>
+<p>اختيار إدخال معين بيفتح صفحة مخصَّصة فيها تفاصيل موسَّعة. مثلًا، إدخال <em>m1k1o's Blog v1.0 — Authenticated Remote Code Execution</em> بيشمل:</p>
+<ul>
+<li>معرّف فريد اسمه <strong>EDB-ID</strong>، وده كمان بيظهر في رابط الصفحة</li>
+<li>إشارات للـ <strong>CVE</strong> (Common Vulnerabilities and Exposures) المرتبط</li>
+<li>تفاصيل تقنية عن الثغرة</li>
+<li>الكود المصدري الكامل للإكسبلويت للمراجعة</li>
+</ul>
+<p>التخطيط ده بيسمح للمختبرين يفحصوا الكود مباشرة في المتصفح قبل ما يقرروا يحمّلوه ويستخدموه.</p>
+<p><strong>التحديثات والإشعارات:</strong> الإضافات الجديدة للقاعدة بتُعلَن بانتظام عبر قنوات السوشيال ميديا وRSS feeds، وده بيسمح للمحترفين الأمنيين يفضلوا على اطّلاع بالإكسبلويتات المنشورة حديثًا.</p>
+
+<h3>Packet Storm</h3>
+<p><strong>Packet Storm</strong> بوابة أمن سيبراني قديمة وموثوقة بتنشر معلومات حالية متعلقة بالأبحاث الأمنية، الإفصاح عن الثغرات، إصدارات الإكسبلويتات، وأدوات دفاعية. المنصة بتعتبر مركز رئيسي حيث المحترفين والباحثين والطلبة يقدروا يوصلوا لمواد تقنية للتعلّم، التحليل، واختبار اللاب.</p>
+<p>بالإضافة لكود الإكسبلويت، الموقع كمان بيجمّع:</p>
+<ol>
+<li>نشرات أمنية وإعلانات ثغرات</li>
+<li>أوراق بحثية ووثائق تقنية</li>
+<li>أدوات صادرة من موزّعين وباحثين مستقلّين</li>
+<li>موارد تعليمية لممارسة اختبار الاختراق</li>
+</ol>
+<p>شبه مستودعات الإكسبلويت الموثوقة التانية، المنصة بتوزّع تحديثات عبر قنوات السوشيال ميديا وRSS feeds، وده بيسمح للمستخدمين يراقبوا المحتوى الجديد المنشور في الوقت الحقيقي.</p>
+
+<h3>GitHub</h3>
+<p><strong>GitHub</strong> خدمة ويب واسعة الانتشار مصمَّمة لاستضافة الكود المصدري، التحكّم بالإصدارات (version control)، والتطوير التعاوني. بما إنه بيسمح لأي حد ينشر مشاريع، بقى كمان مكان شائع لمشاركة proof-of-concept exploits وأدوات أمنية.</p>
+
+<h4>اعتبارات أمنية</h4>
+<p>الانفتاح اللي بيخلّي GitHub قيّم بيجيب كمان مخاطر كبيرة. على عكس الأرشيفات المنسَّقة، المستودعات على GitHub مش بالضرورة متراجَعة قبل النشر. ده معناه إن جهات خبيثة تقدر ترفع كود ضار متنكّر كإكسبلويت شرعي.</p>
+<div class="callout warning">
+<div class="callout-label">⚠ Documented Risk</div>
+<p>فيه حالات موثَّقة حيث برامج زُعم إنها إكسبلويتات كانت فعليًا بتثبّت backdoors مخفية على جهاز أي حد شغّلها. نتيجة لكده، أي كود متحصَّل من منصات كده لازم يُعامَل كغير موثوق لحد ما يتم فحصه بدقة. ده مش معناه إن مستودعات GitHub خطيرة بطبعها — كتير منها بيعمله باحثين محترمين — لكن التحقق الحذر أساسي قبل الاستخدام.</p>
+</div>
+
+<h4>مميزات استخدام GitHub في أبحاث الإكسبلويت</h4>
+<p>رغم المخاطر، GitHub بيوفّر ميزة مهمة: سرعة التوفّر. لما ثغرة جديدة تتكشف للعامة، الباحثين الأمنيين يقدروا ينشروا كود proof-of-concept بسرعة، غالبًا خلال ساعات. ده بيخلّي المنصة مصدر قيّم للأبحاث الحديثة ومواد الاختبار المبكر.</p>
+<p>مؤسسات زي <strong>eX</strong> بتحتفظ بمستودعات GitHub رسمية فيها أدوات أمنية ومجموعات إكسبلويتات. مثلًا، مستودعهم للإكسبلويتات المُجمَّعة مسبقًا (precompiled) بيوفّر binaries جاهزة للتشغيل، وده بيسهّل الاختبار في بيئات اللاب من غير الحاجة لتجميع يدوي.</p>
+
+<h3>عوامل بحث Google لإيجاد الإكسبلويتات</h3>
+<p>أبعد من المستودعات المخصَّصة، محركات البحث كمان تقدر تُستخدم لاكتشاف مصادر إضافية بتستضيف أبحاث ثغرات وكود إكسبلويت.</p>
+<p>نهج عملي هو البحث باسم السوفت وير المستهدَف والإصدار مع كلمة "exploit"، وبعدين تنقية النتائج باستخدام معدّلات بحث متقدمة بيدعمها محركات زي Google. العوامل دي بتسمح بتنقية دقيقة، وبتساعد المختبرين يلاقوا مواد ذات صلة بكفاءة أكتر.</p>
+<p>مثلًا، لو عايزين نحدد إكسبلويتات بتأثّر على متصفح Microsoft Edge لكن بس من موقع Exploit Database، نقدر نقيّد النتائج للنطاق ده:</p>
+<div class="code-wrap"><span class="code-tag">bash</span><pre><code>firefox --search "Microsoft Edge site:expl-db.com"
+</code></pre></div>
+<p>الاستعلام ده بيرجّع صفحات متعلقة بثغرات Microsoft Edge حصريًا من الموقع المحدَّد.</p>
+
+<h4>معدّلات بحث مفيدة</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>العامل</th><th>الوظيفة</th></tr></thead>
+<tbody>
+<tr><td><code>site:</code></td><td>بيقيّد النتائج لنطاق محدد</td></tr>
+<tr><td><code>inurl:</code></td><td>بيلاقي صفحات فيها مصطلحات معينة جوه الرابط</td></tr>
+<tr><td><code>intitle:</code></td><td>بيبحث عن كلمات مفتاحية جوه عنوان الصفحة</td></tr>
+<tr><td><code>intext:</code></td><td>بيحدد صفحات فيها كلمات معينة جوه نص الصفحة</td></tr>
+</tbody>
+</table></div>
+<p>إتقان التقنيات دي بيسمح لمختبري الاختراق يحددوا مراجع إكسبلويت بسرعة، خصوصًا لما يتعاملوا مع سوفت وير غير شائع أو ثغرات اتكشفت حديثًا.</p>
+<blockquote>
+<p>الإكسبلويتات المكتشَفة عبر مواقع غير موثَّقة لازم تُعامَل بحذر شديد، لأنها ممكن تحتوي كود خبيث أو تطبيقات proof-of-concept غير موثوقة.</p>
+</blockquote>
+
+<hr />
+
+<h2 id="lu3"><span class="num">03</span><span class="htext">موارد إكسبلويت أوفلاين</span></h2>
+<h3>أهداف الوحدة</h3>
+<div class="goals-grid">
+  <div class="goal-card"><span class="gi">1</span><span>استخدام أطر عمل (frameworks) إكسبلويت متاحة محليًا</span></div>
+  <div class="goal-card"><span class="gi">2</span><span>البحث في أرشيفات الإكسبلويت باستخدام أدوات متخصصة</span></div>
+  <div class="goal-card"><span class="gi">3</span><span>الاستفادة من قدرات Nmap scripting للاستغلال</span></div>
+</div>
+<p>قيود الشبكة أو ظروف تشغيلية معينة ممكن تمنع الاتصال بالإنترنت أثناء تقييم. في سيناريوهات حيث الاختبار بيحصل جوه بيئة مجزَّأة (segmented) أو معزولة تمامًا (air-gapped)، الاعتماد على موارد أونلاين مش ممكن.</p>
+<p>لمعالجة ده، Kali Linux بيشمل مجموعة أدوات وقواعد بيانات بتوفّر وصول أوفلاين لكود الإكسبلويت وفحوصات الثغرات. الموارد المدمَجة دي بتسمح للمختبرين يكملوا شغلهم حتى من غير اتصال خارجي. الأدوات دي عادةً تشمل:</p>
+<ol>
+<li>أرشيفات إكسبلويت محلية بتعكس قواعد البيانات الأونلاين</li>
+<li>أدوات command-line للبحث في الثغرات</li>
+<li>مكتبات سكربتات للفحص والاستغلال الآلي</li>
+</ol>
+
+<h3>أطر عمل الإكسبلويت (Exploit Frameworks)</h3>
+<div class="callout definition">
+<div class="callout-label">⬦ Definition</div>
+<p><strong>إطار الإكسبلويت (Exploit Framework)</strong> هو مجموعة أدوات شاملة بتجمع موديولات إكسبلويت مُختبَرة مع أدوات بتسهّل إطلاق هجمات ضد أنظمة عرضة للاستغلال. المنصات دي عادةً بتوفّر واجهة موحَّدة لإعداد الـ payloads، اختيار الأهداف، وتنفيذ الهجمات، سواء كانت الإكسبلويتات مخزَّنة محليًا أو متحصَّلة أونلاين.</p>
+</div>
+
+<div class="table-wrap"><table>
+<thead><tr><th>الإطار</th><th>الوصف</th></tr></thead>
+<tbody>
+<tr><td><strong>Metasploit</strong></td><td>واحد من أشهر منصات الاستغلال، طوّره أصلًا H. D. Moore سنة 2003 واستحوذت عليه Rapid7 بعدين. بيوفّر مجموعة واسعة من موديولات إكسبلويت وpayloads جاهزة، بتكامل مع Meterpreter، وواجهة command-line وgraphical. نسخة مجانية community + نسخة تجارية بميزات أتمتة متقدمة</td></tr>
+<tr><td><strong>Core Impact</strong></td><td>منصة استغلال تجارية طوّرتها HelpSystems لتقييمات أمنية على مستوى المؤسسات. بتشمل تدفقات هجوم آلية، تكامل مع أدوات فحص الثغرات، محاكاة phishing، وتحقق بعد الاستغلال لتأكيد جهود العلاج. مفيش نسخة مجانية، بتُستخدم غالبًا من فرق أمنية محترفة</td></tr>
+<tr><td><strong>CANVAS</strong></td><td>مجموعة استغلال مدفوعة من Immunity. المشتركين بياخدوا تحديثات متكررة بموديولات إكسبلويت جديدة وتحسينات، عشان تفضل الأداة فعّالة ضد ثغرات ناشئة</td></tr>
+<tr><td><strong>BeEF</strong></td><td>(Browser Exploitation Framework) متخصص في سيناريوهات هجوم client-side. بدل استهداف السيرفرات مباشرة، بيركّز على اختراق متصفحات الويب لتقييم نقاط الضعف من منظور المستخدم — اختبار ثغرات المتصفح، محاكاة هندسة اجتماعية، وتوضيح مخاطر أجهزة عميل مخترقة</td></tr>
+</tbody>
+</table></div>
+<p>الأطر دي بتمثّل موارد قوية بتبسّط مهام الاستغلال أثناء التقييمات الأمنية. رغم إن كل منصة بتختلف في نطاقها وتخصّصها، فهم قدراتها بيساعد المختبرين يختاروا الأداة الأنسب لسيناريو معين.</p>
+
+<h3>SearchSploit</h3>
+<p>Exploit Database بتوفّر نسخة أوفلاين قابلة للتحميل بتحتوي كل كود الإكسبلويت المؤرشَف للعامة. في Kali Linux، الأرشيف ده متضمَّن افتراضيًا كجزء من باكيدج <code>exploitdb</code>، وده بيسمح لمختبري الاختراق يوصلوا للإكسبلويتات حتى من غير اتصال إنترنت.</p>
+<p>قبل بداية أي مهمة، أفضل ممارسة إنك تحدّث الباكيدج ده عشان تتأكد إن الأرشيف المحلي فيه أحدث الإضافات:</p>
+<div class="code-wrap"><span class="code-tag">bash</span><pre><code>sudo apt update &amp;&amp; sudo apt install exploitdb
+</code></pre></div>
+<p>الأمر ده بيحدّث الأرشيف المحلي المخزَّن تحت <code>/usr/share/exploitdb/</code>.</p>
+
+<h4>بنية الأرشيف</h4>
+<p>قاعدة البيانات المحلية منظَّمة في مجلدين رئيسيين:</p>
+<div class="table-wrap"><table>
+<thead><tr><th>المجلد</th><th>المحتوى</th></tr></thead>
+<tbody>
+<tr><td><code>exploits/</code></td><td>سكربتات إكسبلويت مصنَّفة حسب المنصة، نظام التشغيل، المعمارية، أو اللغة</td></tr>
+<tr><td><code>shellcodes/</code></td><td>عينات payload shellcode قابلة لإعادة الاستخدام</td></tr>
+</tbody>
+</table></div>
+<p>بجانب المجلدين، فيه ملفات CSV فهرسة بتوثّق كل الإدخالات. الملفات دي بتخزّن metadata شبيهة باللي بتظهر على موقع Exploit-DB، بما فيها: EDB-ID، عنوان الإكسبلويت، المؤلف، المنصة المستهدَفة، وتفاصيل تقنية إضافية.</p>
+<div class="code-wrap"><span class="code-tag">bash</span><pre><code>ls -1 /usr/share/exploitdb/
+exploits
+files_exploits.csv
+files_shellcodes.csv
+shellcodes
+</code></pre></div>
+<p>جوه مجلد <code>exploits</code>، فيه مجلدات فرعية مجمَّعة حسب البيئة (زي Linux، Windows، BSD، تقنيات ويب، وغيرها)، وده بيخلّي التصفح اليدوي ممكن لكن غير فعّال بسبب العدد الهائل من الملفات.</p>
+
+<h4>تقديم SearchSploit</h4>
+<p>عشان نتنقّل بكفاءة في الأرشيف، Kali بيوفّر أداة command-line اسمها <strong>SearchSploit</strong>. الأداة دي بتسمح بالبحث السريع عبر القاعدة بالكامل باستخدام كلمات مفتاحية وفلاتر.</p>
+<p>تشغيلها من غير معطيات بيعرض تعليمات الاستخدام:</p>
+<div class="code-wrap"><span class="code-tag">bash</span><pre><code>searchsploit
+Usage: searchsploit [options] term1 [term2] ... [termN]
+</code></pre></div>
+<p>SearchSploit بتدعم خيارات كتيرة بتسمح بـ: تضييق النتائج حسب العنوان أو تطابق دقيق، تنقية حسب الإصدار، استبعاد إدخالات غير مرغوبة، عرض النتائج بصيغ زي JSON، وعرض المسار الكامل للإكسبلويت.</p>
+
+<h4>تقنيات ونصائح بحث</h4>
+<ul>
+<li>مطابقة case-insensitive افتراضيًا</li>
+<li>إمكانية استخدام كذا كلمة مفتاحية في نفس الوقت</li>
+<li>مطابقة مرنة عبر نطاقات إصدارات</li>
+</ul>
+<p>فلاجز إضافية تقدر تفرض شروط مطابقة أكتر صرامة لما يكون لازم، وده بيقلّل النتائج الإيجابية الكاذبة (false positives).</p>
+
+<div class="callout case">
+<div class="callout-label">✎ مثال: البحث عن إكسبلويتات SMB</div>
+<p>لو عايزين نلاقي إكسبلويتات عن بعد بتستهدف خدمات SMB على أنظمة Microsoft Windows:</p>
+</div>
+<div class="code-wrap"><span class="code-tag">bash</span><pre><code>searchsploit remote smb microsoft windows
+</code></pre></div>
+<p>الخرج بيسرد كل الإكسبلويتات ذات الصلة اللي بتطابق المعايير دي، بما فيها ثغرات معروفة زي <strong>SMBGhost</strong> و<strong>EternalBlue</strong>.</p>
+
+<h4>نسخ إكسبلويتات للتعديل</h4>
+<p>أثناء التقييم، المختبرين غالبًا محتاجين يعدّلوا كود الإكسبلويت. تعديل الملفات مباشرة جوه الأرشيف مش موصى بيه لأن تحديثات باكيدج <code>exploitdb</code> هتمسح أي تعديلات. بدل كده، SearchSploit بتوفّر خيار <code>-m</code> (mirror) عشان تنسخ إكسبلويت للمجلد الحالي اللي بتشتغل فيه:</p>
+<div class="code-wrap"><span class="code-tag">bash</span><pre><code># نسخ باستخدام المسار
+searchsploit -m windows/remote/48537.py
+
+# نسخ باستخدام الـ EDB-ID
+searchsploit -m 42031
+</code></pre></div>
+<p>بعد التنفيذ، ملفات الإكسبلويت المختارة بتتنسخ محليًا، وده بيسهّل تعديلها، تنظيمها، وربطها بأهداف محددة أثناء المهمة.</p>
+<div class="callout tip">
+<div class="callout-label">✓ ليه SearchSploit مهمة</div>
+<p>SearchSploit أداة حاسمة في المواقف اللي فيها: الوصول للإنترنت مقيَّد، الاختبار بيحصل في شبكات معزولة، أو مطلوب بحث سريع عن إكسبلويتات. بالحفاظ على نسخة أوفلاين من بيانات الإكسبلويت وتوفير قدرات بحث قوية، بتضمن إن مختبري الاختراق يقدروا يكملوا شغلهم بكفاءة بغضّ النظر عن قيود الاتصال.</p>
+</div>
+
+<h3>سكربتات Nmap NSE</h3>
+<p>Nmap بيُعتبر على نطاق واسع واحد من أهم الأدوات لاكتشاف الشبكات وenumeration الخدمات. من بين قدراته المتقدمة <strong>Nmap Scripting Engine (NSE)</strong>، اللي بتسمح للمستخدمين يوسّعوا وظائف Nmap عبر سكربتات بتؤتمت مجموعة واسعة من مهام الاختبار الأمني.</p>
+
+<h4>إيه اللي NSE يقدر يعمله</h4>
+<p>محرك السكربتات بيشمل مئات السكربتات الجاهزة المصمَّمة لأنشطة زي:</p>
+<ul>
+<li>كشف الخدمات والثغرات</li>
+<li>جمع المعلومات وenumeration</li>
+<li>اختبار brute-force للتوثيق</li>
+<li>فحص fuzzing للتطبيقات</li>
+<li>استغلال نقاط ضعف معروفة</li>
+</ul>
+<p>السكربتات دي بتعزّز فايدة Nmap بشكل كبير عن طريق السماح للمختبرين ينفّذوا فحوصات معقَّدة بشكل آلي أثناء الفحص. كل سكربتات NSE المتاحة مخزَّنة محليًا في <code>/usr/share/nmap/scripts</code>.</p>
+<p>عشان نحدد بسرعة السكربتات المتعلقة بالاستغلال، أدوات command-line زي <code>grep</code> تقدر تُستخدم للبحث عن كلمات مفتاحية زي "exploit" جوه أوصاف السكربتات.</p>
+
+<h4>تحديد السكربتات المتعلقة بالاستغلال</h4>
+<p>بفحص مجلد السكربتات بحثًا عن إشارات استغلال، المختبرين يقدروا يكتشفوا سكربتات قادرة فعليًا تستغل ثغرات في خدمات أو تطبيقات محددة. أمثلة تشمل سكربتات بتستهدف: سيرفرات antivirus عرضة للاستغلال، تطبيقات ويب فيها ثغرات remote code execution، نقاط ضعف directory traversal، وآليات رفع ملفات غير آمنة.</p>
+
+<h4>عرض تفاصيل سكربت محدَّد</h4>
+<p>Nmap بيوفّر طريقة مدمَجة لعرض توثيق أي سكربت باستخدام خيار <code>--script-help</code>. ده بيكشف: الثغرة اللي السكربت بيستهدفها، وصف لإزاي الإكسبلويت بيشتغل، إصدارات السوفت وير المتأثرة، ومراجع لنشرات أو أبحاث خارجية.</p>
+<div class="code-wrap"><span class="code-tag">bash</span><pre><code>nmap --script-help=clamav-exec.nse
+</code></pre></div>
+<p>الخرج بيشرح إن السكربت بيستهدف إصدارات معينة من ClamAV بتسمح بتنفيذ أوامر خدمة خطيرة من غير توثيق. ممكن كمان يشمل مراجع لتقارير ثغرات أو الباحثين اللي اكتشفوا المشكلة.</p>
+
+<div class="callout tip">
+<div class="callout-label">✓ ليه NSE مهم في اختبار الاختراق</div>
+<p>التحقق من وجود سكربت NSE لخدمة مكتشَفة يقدر يوفّر وقت كبير. بدل صياغة إكسبلويت يدويًا، المختبرين يقدروا يستفيدوا من سكربتات جاهزة للتحقق من الثغرات بسرعة. المزايا الأساسية: أتمتة مهام اختبار متكررة، تنفيذ موثوق لتقنيات هجوم معروفة، تكامل مباشر في سير عمل الفحص، والقدرة على تشغيل كذا سكربت في نفس الوقت. بسبب المزايا دي، سكربتات NSE غالبًا بتُستخدم كجسر بين مرحلتي الاستطلاع والاستغلال.</p>
+</div>
+
+<hr />
+
+<h2 id="lu4"><span class="num">04</span><span class="htext">استغلال هدف — تمرين عملي كامل</span></h2>
+<h3>أهداف الوحدة</h3>
+<div class="goals-grid">
+  <div class="goal-card"><span class="gi">1</span><span>تطبيق نهج منظَّم لتحديد وتحليل نظام هدف</span></div>
+  <div class="goal-card"><span class="gi">2</span><span>إيجاد إكسبلويتات عامة مناسبة لثغرات مكتشَفة</span></div>
+  <div class="goal-card"><span class="gi">3</span><span>اختراق جهاز عرضة للاستغلال باستخدام إكسبلويت متاح</span></div>
+  <div class="goal-card"><span class="gi">4</span><span>الحصول على shell أولي محدود الصلاحيات على جهاز الهدف</span></div>
+</div>
+
+<div class="callout case">
+<div class="callout-label">✎ بيئة السيناريو</div>
+<p>الهدف هو اختراق سيرفر Linux بيشغّل تطبيق ويب معروف إنه فيه ثغرة مُفصَح عنها للعامة.</p>
+<p><strong>IP سيرفر الهدف:</strong> <code>192.168.50.11</code> &nbsp;|&nbsp; <strong>IP جهاز المهاجم (Kali):</strong> <code>192.168.50.129</code></p>
+</div>
+
+<div class="step-track">
+
+<div class="step-item">
+<div class="step-num">1</div>
+<div class="step-title">اكتشاف الخدمات (Service Discovery)</div>
+<div class="step-body">
+<p>فحص الشبكة كشف بورتين مفتوحين: <code>22</code> (SSH) و<code>80</code> (HTTP). بما إن SSH غالبًا بيحتاج بيانات اعتماد ومش عادةً قابل للاستغلال من غير نقاط ضعف إضافية، التركيز اتحوّل لخدمة الويب على بورت 80.</p>
+<p>فتح الموقع عرض صفحة شركتية لشركة تطوير AI. الفحص اليدوي الأولي ما كشفش ثغرات واضحة، رغم إن أسماء وإيميلات موظفين كانت ظاهرة في صفحة "About".</p>
+</div>
+</div>
+
+<div class="step-item">
+<div class="step-num">2</div>
+<div class="step-title">Enumeration الويب</div>
+<div class="step-body">
+<p>باستخدام أداة directory brute-forcing، اتكشف مجلد مشروع مخفي فيه واجهة تسجيل دخول متسمّية كبوابة إدارة مشروع AI.</p>
+<p>فحص مصدر الصفحة كشف اسم التطبيق وإصداره: <strong>qdPM 9.1</strong>. qdPM نظام إدارة مشاريع مبني على الويب، وتحديد إصداره كان حاسم لأبحاث الثغرات.</p>
+</div>
+</div>
+
+<div class="step-item">
+<div class="step-num">3</div>
+<div class="step-title">إيجاد إكسبلويت مطابق</div>
+<div class="step-body">
+<p>البحث في مستودعات إكسبلويت عامة عن الإصدار المحدَّد كشف ثغرة <strong>authenticated remote code execution</strong> بتأثّر على التطبيق. الإكسبلويت المختار:</p>
+<ul>
+<li>بيستهدف qdPM 9.1</li>
+<li>بيحتاج بيانات اعتماد مستخدم صالحة</li>
+<li>بيرفع web shell للسيرفر</li>
+</ul>
+<p>قبل تشغيل أي إكسبلويت، مراجعة الكود المصدري بتوضّح إزاي بيشتغل وإيه المدخلات المطلوبة.</p>
+</div>
+</div>
+
+<div class="step-item">
+<div class="step-num">4</div>
+<div class="step-title">الحصول على بيانات اعتماد صالحة</div>
+<div class="step-body">
+<p>بما إن الإكسبلويت بيحتاج توثيق، الحصول على بيانات اعتماد بقى ضروري. عناوين الإيميل اللي اتلاحظت من الموقع اتستخدمت في هجوم تخمين باسورد (password-guessing) ضد بوابة تسجيل الدخول. في النهاية، بيانات اعتماد صالحة اتكشفت لحساب موظف واحد.</p>
+<p>بعد تسجيل الدخول بنجاح، ميزات التطبيق الداخلية بقت متاحة، وده أكّد إن بيانات الاعتماد شغّالة.</p>
+</div>
+</div>
+
+<div class="step-item">
+<div class="step-num">5</div>
+<div class="step-title">تنفيذ الإكسبلويت</div>
+<div class="step-body">
+<p>سكربت الإكسبلويت اتنسخ محليًا باستخدام أداة زي SearchSploit واتشغّل بـ: رابط الهدف (Target URL)، اسم مستخدم صالح، وباسورد.</p>
+<p>رغم إن السكربت طلّع تحذير في الخرج، فحوصات إضافية أكّدت النجاح — web shell خبيث بصيغة PHP اترفع للسيرفر.</p>
+</div>
+</div>
+
+<div class="step-item">
+<div class="step-num">6</div>
+<div class="step-title">التحقق من تنفيذ الأوامر</div>
+<div class="step-body">
+<p>ببعت أمر عبر السكربت اللي اترفع (مثلًا السؤال عن المستخدم الحالي للنظام)، الرد أكّد تنفيذ أوامر عن بعد تحت حساب سيرفر الويب:</p>
+<div class="code-wrap"><span class="code-tag">output</span><pre><code>www-data
+</code></pre></div>
+<p>ده بيدّل على إن foothold منخفض الصلاحيات اتحصّل عليه.</p>
+</div>
+</div>
+
+<div class="step-item">
+<div class="step-num">7</div>
+<div class="step-title">الترقية لـ Reverse Shell</div>
+<div class="step-body">
+<p>بعد كده، المهاجم بيتأكد إذا كانت أداة شبكة متاحة على الهدف. بعد تأكيد توفّرها، listener بيتبدأ على جهاز المهاجم. أمر reverse shell بعد كده بيتنفّذ عبر الـ web shell، وده بيخلّي سيرفر الهدف يبدأ اتصال يرجع للمهاجم.</p>
+<p>بمجرد ما الاتصال يتم، تنفيذ أوامر تفاعلي على الجهاز المخترَق بقى ممكن.</p>
+</div>
+</div>
+
+</div>
+
+<div class="diagram-card">
+<svg viewBox="0 0 760 170" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="gradStepX" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#E1362F"/>
+      <stop offset="1" stop-color="#F2794A"/>
+    </linearGradient>
+    <marker id="arrowX" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L6,3 L0,6 Z" fill="#E8A23A"/>
+    </marker>
+  </defs>
+  <g font-family="IBM Plex Mono, monospace" font-size="11" fill="#C4C4CA">
+    <rect x="10" y="55" width="100" height="56" rx="7" fill="#17171A" stroke="#2A2A2F"/>
+    <text x="60" y="78" text-anchor="middle" fill="#E8A23A" font-weight="700" font-size="10.5">Scan</text>
+    <text x="60" y="95" text-anchor="middle" font-size="9.5">22 / 80</text>
+
+    <rect x="130" y="55" width="100" height="56" rx="7" fill="#17171A" stroke="#2A2A2F"/>
+    <text x="180" y="78" text-anchor="middle" fill="#E8A23A" font-weight="700" font-size="10.5">Enum Web</text>
+    <text x="180" y="95" text-anchor="middle" font-size="9.5">qdPM 9.1</text>
+
+    <rect x="250" y="55" width="100" height="56" rx="7" fill="#17171A" stroke="#2A2A2F"/>
+    <text x="300" y="78" text-anchor="middle" fill="#E8A23A" font-weight="700" font-size="10.5">Find Exploit</text>
+    <text x="300" y="95" text-anchor="middle" font-size="9.5">auth RCE</text>
+
+    <rect x="370" y="55" width="100" height="56" rx="7" fill="#17171A" stroke="#2A2A2F"/>
+    <text x="420" y="78" text-anchor="middle" fill="#E8A23A" font-weight="700" font-size="10.5">Credentials</text>
+    <text x="420" y="95" text-anchor="middle" font-size="9.5">guessing</text>
+
+    <rect x="490" y="55" width="100" height="56" rx="7" fill="#17171A" stroke="#2A2A2F"/>
+    <text x="540" y="78" text-anchor="middle" fill="#E8A23A" font-weight="700" font-size="10.5">Run Exploit</text>
+    <text x="540" y="95" text-anchor="middle" font-size="9.5">web shell</text>
+
+    <rect x="610" y="55" width="140" height="56" rx="7" fill="#17171A" stroke="url(#gradStepX)" stroke-width="2"/>
+    <text x="680" y="78" text-anchor="middle" fill="#E1362F" font-weight="700" font-size="10.5">Reverse Shell</text>
+    <text x="680" y="95" text-anchor="middle" font-size="9.5">www-data → interactive</text>
+
+    <path d="M110 83 H130" stroke="#E8A23A" stroke-width="2" marker-end="url(#arrowX)"/>
+    <path d="M230 83 H250" stroke="#E8A23A" stroke-width="2" marker-end="url(#arrowX)"/>
+    <path d="M350 83 H370" stroke="#E8A23A" stroke-width="2" marker-end="url(#arrowX)"/>
+    <path d="M470 83 H490" stroke="#E8A23A" stroke-width="2" marker-end="url(#arrowX)"/>
+    <path d="M590 83 H610" stroke="#E8A23A" stroke-width="2" marker-end="url(#arrowX)"/>
+  </g>
+</svg>
+<div class="diagram-caption">تسلسل الاستغلال الكامل: Scan ← Enum Web ← Find Exploit ← Credentials ← Run Exploit ← Reverse Shell</div>
+</div>
+
+<h3>الدروس الأساسية من سير العمل</h3>
+<p>التمرين ده بيوضّح سلسلة الاستغلال النموذجية المستخدَمة في المهمات الحقيقية:</p>
+<ol>
+<li>اكتشاف الخدمات المكشوفة</li>
+<li>تحديد التطبيقات الشغّالة وإصداراتها</li>
+<li>البحث عن ثغرات معروفة</li>
+<li>إيجاد كود إكسبلويت موثوق</li>
+<li>جمع المدخلات المطلوبة (بيانات اعتماد، مسارات، إلخ)</li>
+<li>تنفيذ الإكسبلويت بحذر</li>
+<li>تأسيس وصول أولي</li>
+</ol>
+<div class="callout examtip">
+<div class="callout-label">★ Exam Tip</div>
+<p>درس حاسم هنا هو أهمية مراجعة كود الإكسبلويت قبل الاستخدام عشان تتجنّب تلف غير مقصود أو سلوك خبيث مخفي — بالظبط زي درس <strong>0pen0wn</strong> اللي اتكلّمنا عنه في بداية الموديول. في الامتحان، دايمًا افتح الإكسبلويت واقرا الكود قبل ما تشغّله على أي هدف.</p>
+</div>
+
+<hr />
+
+<h2 id="cheat"><span class="htext">Cheat Sheet مرجعي</span></h2>
+<div class="cheat-section">
+<h4>أوامر SearchSploit الأساسية</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>الأمر</th><th>الوظيفة</th></tr></thead>
+<tbody>
+<tr><td><code>searchsploit &lt;term&gt;</code></td><td>بحث بكلمة أو أكتر عبر الأرشيف المحلي</td></tr>
+<tr><td><code>searchsploit -m &lt;path/EDB-ID&gt;</code></td><td>نسخ إكسبلويت للمجلد الحالي للتعديل</td></tr>
+<tr><td><code>searchsploit --nmap &lt;file.xml&gt;</code></td><td>مطابقة نتائج فحص Nmap مع إكسبلويتات متاحة</td></tr>
+<tr><td><code>searchsploit -w &lt;term&gt;</code></td><td>عرض رابط Exploit-DB أونلاين بدل المسار المحلي</td></tr>
+<tr><td><code>sudo apt update &amp;&amp; sudo apt install exploitdb</code></td><td>تحديث الأرشيف المحلي</td></tr>
+</tbody>
+</table></div>
+
+<h4>مسارات مهمة</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>المسار</th><th>المحتوى</th></tr></thead>
+<tbody>
+<tr><td><code>/usr/share/exploitdb/exploits/</code></td><td>سكربتات الإكسبلويت مصنَّفة حسب المنصة</td></tr>
+<tr><td><code>/usr/share/exploitdb/shellcodes/</code></td><td>عينات shellcode</td></tr>
+<tr><td><code>/usr/share/nmap/scripts/</code></td><td>كل سكربتات NSE</td></tr>
+</tbody>
+</table></div>
+
+<h4>معدّلات بحث Google</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>العامل</th><th>المثال</th></tr></thead>
+<tbody>
+<tr><td><code>site:</code></td><td><code>site:exploit-db.com</code></td></tr>
+<tr><td><code>inurl:</code></td><td><code>inurl:exploit</code></td></tr>
+<tr><td><code>intitle:</code></td><td><code>intitle:"remote code execution"</code></td></tr>
+<tr><td><code>intext:</code></td><td><code>intext:"CVE-2024"</code></td></tr>
+</tbody>
+</table></div>
+
+<h4>أطر عمل الإكسبلويت — مقارنة سريعة</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>الإطار</th><th>مجاني؟</th><th>أفضل استخدام</th></tr></thead>
+<tbody>
+<tr><td>Metasploit</td><td>نسخة Community مجانية</td><td>استغلال عام، Meterpreter، أتمتة سريعة</td></tr>
+<tr><td>Core Impact</td><td>تجاري بالكامل</td><td>تقييمات مؤسسية، تدفقات هجوم آلية</td></tr>
+<tr><td>CANVAS</td><td>تجاري بالكامل</td><td>موديولات حديثة بتحديثات مستمرة</td></tr>
+<tr><td>BeEF</td><td>مفتوح المصدر</td><td>استغلال متصفح / client-side</td></tr>
+</tbody>
+</table></div>
+</div>
+
+<hr />
+
+<h2 id="summary"><span class="htext">الخلاصة العامة للموديول</span></h2>
+<p>في الموديول ده، استكشفنا مخاطر تشغيل سوفت وير من مصادر غير معروفة أو غير موثَّقة. راجعنا منصات متعددة بتوفّر كود إكسبلويت لثغرات مُفصَح عنها للعامة، بما فيها مستودعات أونلاين ومجموعات أوفلاين ممكن يتوصل ليها من غير اتصال.</p>
+<p>بالإضافة لكده، مرّينا على مثال عملي بيوضّح إزاي الموارد دي تساعد في تحديد إكسبلويتات متاحة لإصدارات سوفت وير معينة اتكشفت أثناء عملية enumeration الهدف.</p>
+<blockquote>
+<p><strong>الدرس الأهم في الموديول ده: الثقة مش حاجة تُمنَح تلقائيًا لأي كود عام، مهما كان مصدره يبان موثوق.</strong> دايمًا راجع، افهم، واختبر في بيئة معزولة قبل ما تشغّل أي إكسبلويت على هدف حقيقي.</p>
+</blockquote>
+<hr />
+<p><em>نهاية نوتس الموديول العاشر — OSCP: Locating Public Exploits</em></p>
+  <div class="footer-note">-- EOF: module-10/locating-public-exploits.md --</div>
+
+</div>
+
+<script>
+(function(){
+  var root = document.documentElement;
+  var btn = document.getElementById('themeSwitch');
+  function applyTheme(t){
+    root.setAttribute('data-theme', t);
+    btn.textContent = 'theme: ' + t;
+    try{ localStorage.setItem('oscp-notes-theme', t); }catch(e){}
+  }
+  var saved = 'dark';
+  try{ saved = localStorage.getItem('oscp-notes-theme') || 'dark'; }catch(e){}
+  applyTheme(saved);
+  btn.addEventListener('click', function(){
+    applyTheme(root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
+  });
+
+  var bar = document.getElementById('progressBar');
+  function onScroll(){
+    var h = document.documentElement;
+    var scrolled = h.scrollTop;
+    var height = h.scrollHeight - h.clientHeight;
+    bar.style.width = (height > 0 ? (scrolled/height*100) : 0) + '%';
+    var toTop = document.getElementById('toTop');
+    if(scrolled > 500){ toTop.classList.add('show'); } else { toTop.classList.remove('show'); }
+  }
+  document.addEventListener('scroll', onScroll);
+  onScroll();
+  document.getElementById('toTop').addEventListener('click', function(){
+    window.scrollTo({top:0, behavior:'smooth'});
+  });
+
+  document.querySelectorAll('.code-wrap').forEach(function(wrap){
+    var codeEl = wrap.querySelector('code');
+    if(!codeEl) return;
+    var b = document.createElement('button');
+    b.className = 'copy-btn';
+    b.textContent = 'copy';
+    b.addEventListener('click', function(){
+      var text = codeEl.innerText;
+      if(navigator.clipboard){
+        navigator.clipboard.writeText(text).then(function(){
+          b.textContent = 'copied ✓';
+          b.classList.add('copied');
+          setTimeout(function(){ b.textContent = 'copy'; b.classList.remove('copied'); }, 1500);
+        });
+      }
+    });
+    wrap.appendChild(b);
+  });
+})();
+</script>
+
+</body>
+</html>

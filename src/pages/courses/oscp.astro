@@ -1,0 +1,74 @@
+```astro
+---
+import MainGridLayout from "../../layouts/MainGridLayout.astro";
+
+const modules = [
+    { number: 1, title: "Introduction to Cybersecurity" },
+    { number: 2, title: "Effective Learning Strategies" },
+    { number: 3, title: "Report Writing" },
+    { number: 4, title: "Information Gathering" },
+    { number: 5, title: "Vulnerability Scanning" },
+    { number: 6, title: "Web Application Attacks" },
+    { number: 7, title: "Web Application Attacks" },
+    { number: 8, title: "SQL Injection" },
+    { number: 9, title: "Client-Side Attacks" },
+    { number: 10, title: "Locating Public Exploits" },
+    { number: 11, title: "Fixing Exploits" },
+    { number: 12, title: "Antivirus Evasion" },
+    { number: 13, title: "Password Attacks" },
+    { number: 14, title: "Windows Privilege Escalation" },
+    { number: 15, title: "Linux Privilege Escalation" },
+    { number: 16, title: "Port Redirection and SSH Tunneling" },
+    { number: 17, title: "Tunneling and DPI" },
+];
+---
+
+<MainGridLayout
+    title="OSCP+ Course Notes"
+    description="OSCP+ notes organized into 17 modules."
+>
+    <div class="card-base p-6 md:p-8">
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold mb-3">
+                <span class="text-violet-600 dark:text-violet-400">
+                    OSCP+
+                </span>
+                Course Notes
+            </h1>
+
+            <p class="text-75">
+                Browse all 17 modules and open the corresponding study notes.
+            </p>
+
+            <p class="text-sm text-50 mt-2">
+                {modules.length} Modules Available
+            </p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {modules.map((module) => (
+                <a
+                    href={`/oscp-notes/module-${module.number}.html`}
+                    class="group block rounded-xl border border-[var(--line-color)] p-5 transition-all duration-300 hover:border-violet-500 hover:bg-[var(--btn-plain-bg-hover)] hover:shadow-md"
+                >
+                    <div class="flex items-center gap-4">
+                        <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-violet-100 text-violet-700 dark:bg-violet-500/15 dark:text-violet-300 font-bold transition-all duration-300 group-hover:bg-violet-600 group-hover:text-white">
+                            {String(module.number).padStart(2, "0")}
+                        </div>
+
+                        <div>
+                            <h2 class="font-bold text-lg text-violet-600 dark:text-violet-400 group-hover:text-cyan-500 transition-colors duration-300">
+                                Module {module.number}
+                            </h2>
+
+                            <p class="text-sm text-slate-600 dark:text-slate-300 mt-1 group-hover:text-violet-500 dark:group-hover:text-cyan-400 transition-colors duration-300">
+                                {module.title}
+                            </p>
+                        </div>
+                    </div>
+                </a>
+            ))}
+        </div>
+    </div>
+</MainGridLayout>
+```

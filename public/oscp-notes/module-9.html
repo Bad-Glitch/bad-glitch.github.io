@@ -1,0 +1,1135 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OSCP · Module 9: هجمات من جانب العميل</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-0: #0B0B0D;
+    --bg-1: #121214;
+    --surface: #17171A;
+    --surface-2: #1D1D21;
+    --border: #2A2A2F;
+    --border-soft: #232326;
+
+    --text: #E6E6E9;
+    --text-soft: #C4C4CA;
+    --muted: #8A8A92;
+
+    --red: #E1362F;
+    --red-soft: rgba(225,54,47,0.10);
+    --red-border: rgba(225,54,47,0.35);
+    --red-grad: linear-gradient(90deg, #E1362F, #F2794A);
+
+    --amber: #E8A23A;
+    --amber-soft: rgba(232,162,58,0.09);
+    --amber-border: rgba(232,162,58,0.30);
+
+    --green: #3FBF6E;
+    --green-soft: rgba(63,191,110,0.09);
+    --green-border: rgba(63,191,110,0.30);
+
+    --blue: #4EA1D3;
+    --blue-soft: rgba(78,161,211,0.09);
+    --blue-border: rgba(78,161,211,0.30);
+
+    --purple: #A179E8;
+    --purple-soft: rgba(161,121,232,0.10);
+    --purple-border: rgba(161,121,232,0.32);
+
+    --mono: 'IBM Plex Mono', 'Courier New', monospace;
+  }
+
+  html[data-theme="light"]{
+    --bg-0: #F4F3F1;
+    --bg-1: #ECEBE8;
+    --surface: #FFFFFF;
+    --surface-2: #F3F2EF;
+    --border: #DEDCD6;
+    --border-soft: #E6E4DF;
+    --text: #1C1B19;
+    --text-soft: #3C3A36;
+    --muted: #726F68;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    direction: rtl;
+    text-align: right;
+    background: var(--bg-0);
+  }
+
+  body {
+    font-family: 'Cairo', 'Segoe UI', Tahoma, sans-serif;
+    line-height: 1.95;
+    font-size: 16.5px;
+    color: var(--text);
+    background:
+      radial-gradient(900px 420px at 12% -8%, rgba(225,54,47,0.10), transparent 60%),
+      radial-gradient(800px 420px at 90% 6%, rgba(232,162,58,0.06), transparent 60%),
+      linear-gradient(180deg, var(--bg-0) 0%, var(--bg-1) 100%);
+    background-attachment: fixed;
+    transition: background 0.2s ease, color 0.2s ease;
+  }
+
+  html[data-theme="light"] body{
+    background:
+      radial-gradient(900px 420px at 12% -8%, rgba(225,54,47,0.06), transparent 60%),
+      radial-gradient(800px 420px at 90% 6%, rgba(232,162,58,0.05), transparent 60%),
+      linear-gradient(180deg, var(--bg-0) 0%, var(--bg-1) 100%);
+  }
+
+  /* reading progress bar */
+  .progress-rail{
+    position: fixed; top:0; inset-inline:0; height: 3px;
+    background: rgba(255,255,255,0.04); z-index: 60;
+  }
+  html[data-theme="light"] .progress-rail{ background: rgba(0,0,0,0.05); }
+  .progress-bar{
+    height: 100%; width: 0%;
+    background: var(--red-grad);
+    transition: width 0.08s linear;
+  }
+
+  /* floating controls */
+  .float-controls{
+    position: fixed; bottom: 22px; left: 22px; z-index: 55;
+    display: flex; flex-direction: column; gap: 10px;
+  }
+  .fctrl-btn{
+    width: 42px; height: 42px; border-radius: 50%;
+    background: var(--surface); border: 1px solid var(--border);
+    color: var(--text-soft); display:flex; align-items:center; justify-content:center;
+    cursor: pointer; font-size: 16px; box-shadow: 0 10px 24px -10px rgba(0,0,0,0.5);
+    transition: transform 0.15s ease, border-color 0.15s ease, opacity 0.2s ease;
+  }
+  .fctrl-btn:hover{ transform: translateY(-2px); border-color: var(--red-border); color: var(--red); }
+  #toTop{ opacity: 0; pointer-events: none; }
+  #toTop.show{ opacity: 1; pointer-events: auto; }
+
+  .page {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 46px 22px 100px;
+  }
+
+  .banner {
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(155deg, var(--surface) 0%, var(--bg-1) 55%, var(--surface) 100%);
+    border: 1px solid var(--border-soft);
+    border-radius: 10px;
+    padding: 0 0 34px;
+    margin-bottom: 26px;
+    box-shadow: 0 20px 50px -20px rgba(0,0,0,0.6);
+  }
+  .term-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 13px 18px;
+    border-bottom: 1px solid var(--border-soft);
+    background: rgba(255,255,255,0.015);
+    direction: ltr;
+  }
+  .term-dot { width: 11px; height: 11px; border-radius: 50%; display: inline-block; }
+  .term-dot.r { background: #E1362F; }
+  .term-dot.y { background: #E8A23A; }
+  .term-dot.g { background: #3FBF6E; }
+  .term-path {
+    margin-inline-start: 12px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .theme-switch{
+    margin-inline-start: auto;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 4px 9px;
+    cursor: pointer;
+  }
+  .theme-switch:hover{ color: var(--amber); border-color: var(--amber-border); }
+  .banner-body { padding: 30px 34px 4px; }
+  .banner .kicker {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 12.5px;
+    letter-spacing: 0.03em;
+    color: var(--red);
+    background: var(--red-soft);
+    border: 1px solid var(--red-border);
+    border-radius: 3px;
+    padding: 5px 12px;
+    margin-bottom: 20px;
+    direction: ltr;
+  }
+  .banner h1 {
+    margin: 0 0 14px;
+    font-size: 28px;
+    font-weight: 800;
+    line-height: 1.5;
+    color: var(--text);
+  }
+  .banner .lede {
+    color: var(--muted);
+    font-size: 15.5px;
+    line-height: 1.95;
+    max-width: 640px;
+    margin: 0 0 24px;
+  }
+  .tags { display: flex; flex-wrap: wrap; gap: 9px; }
+  .tag {
+    font-size: 12.5px;
+    font-family: var(--mono);
+    color: var(--amber);
+    background: var(--amber-soft);
+    border: 1px solid var(--amber-border);
+    border-radius: 3px;
+    padding: 5px 11px;
+  }
+
+  .toc {
+    background: var(--surface);
+    border: 1px solid var(--border-soft);
+    border-radius: 8px;
+    padding: 6px 0 6px;
+    margin-bottom: 50px;
+    overflow: hidden;
+  }
+  .toc-title {
+    font-family: var(--mono);
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--green);
+    padding: 14px 22px;
+    border-bottom: 1px solid var(--border-soft);
+    direction: ltr;
+    text-align: left;
+  }
+  .toc-list { display: flex; flex-direction: column; }
+  .toc-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 22px;
+    color: var(--text-soft);
+    text-decoration: none;
+    font-size: 14.5px;
+    border-bottom: 1px solid rgba(255,255,255,0.03);
+    transition: background 0.15s ease, padding-inline-start 0.15s ease;
+  }
+  .toc-list .toc-item:last-child { border-bottom: none; }
+  .toc-item:hover { background: var(--red-soft); }
+  .toc-num {
+    flex: none;
+    font-family: var(--mono);
+    font-size: 12.5px;
+    font-weight: 600;
+    color: #0F0F10;
+    background: var(--red-grad);
+    border-radius: 3px;
+    padding: 3px 8px;
+    direction: ltr;
+  }
+
+  h1, h2, h3, h4 { font-weight: 700; }
+
+  h2 {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    font-size: 21px;
+    margin: 66px 0 22px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border-soft);
+    color: var(--text);
+  }
+  h2 .num {
+    flex: none;
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 700;
+    color: #0F0F10;
+    background: var(--red-grad);
+    border-radius: 5px;
+    padding: 7px 12px;
+    direction: ltr;
+  }
+  h2 .htext { line-height: 1.5; }
+
+  h3 {
+    font-size: 17px;
+    margin: 34px 0 14px;
+    color: var(--red);
+    display: flex;
+    align-items: center;
+    gap: 9px;
+  }
+  h3::before {
+    content: "#";
+    font-family: var(--mono);
+    color: var(--amber);
+    font-weight: 700;
+  }
+
+  h4 {
+    font-size: 14.8px;
+    margin: 22px 0 10px;
+    color: var(--text-soft);
+    font-family: var(--mono);
+  }
+
+  p { margin: 0 0 17px; color: var(--text); }
+
+  strong { color: var(--text); font-weight: 700; }
+  html[data-theme="dark"] strong, :root:not([data-theme="light"]) strong { color: #FBFBFC; }
+
+  a { color: var(--amber); text-decoration: none; border-bottom: 1px dashed var(--amber-border); }
+
+  hr {
+    border: none;
+    height: 1px;
+    margin: 50px 0;
+    background: linear-gradient(90deg, transparent, var(--border), transparent);
+  }
+
+  ul, ol {
+    margin: 0 0 18px;
+    padding-inline-start: 24px;
+  }
+  li { margin-bottom: 9px; color: var(--text); }
+  li::marker { color: var(--red); font-family: var(--mono); }
+  li > ul, li > ol { margin-top: 9px; }
+
+  /* ===== Goals grid (replaces pipe-separated objective lines) ===== */
+  .goals-grid{
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+    gap: 10px;
+    margin: 0 0 22px;
+  }
+  .goal-card{
+    display:flex; gap: 10px; align-items:flex-start;
+    background: var(--surface);
+    border: 1px solid var(--border-soft);
+    border-radius: 7px;
+    padding: 13px 15px;
+    font-size: 14px;
+    color: var(--text-soft);
+  }
+  .goal-card .gi{
+    flex: none; font-family: var(--mono); font-size: 11px; font-weight: 700;
+    color: var(--green); background: var(--green-soft); border: 1px solid var(--green-border);
+    border-radius: 4px; width: 22px; height: 22px; display:flex; align-items:center; justify-content:center;
+  }
+
+  /* ===== Callouts (replace generic blockquote with typed variants) ===== */
+  blockquote {
+    margin: 24px 0;
+    padding: 17px 22px;
+    background: var(--red-soft);
+    border: 1px solid var(--red-border);
+    border-inline-start: 3px solid var(--red);
+    border-radius: 6px;
+    color: var(--text-soft);
+  }
+  blockquote p { margin: 0; color: inherit; line-height: 1.85; }
+  blockquote p + p{ margin-top: 10px; }
+  blockquote strong { color: var(--text); }
+
+  .callout{
+    margin: 24px 0;
+    padding: 17px 22px 18px;
+    border-radius: 6px;
+    border: 1px solid var(--border-soft);
+    border-inline-start: 3px solid var(--border);
+    background: var(--surface);
+  }
+  .callout p{ margin: 0; color: var(--text-soft); line-height: 1.85; }
+  .callout p + p{ margin-top: 10px; }
+  .callout-label{
+    display:inline-flex; align-items:center; gap: 7px;
+    font-family: var(--mono); font-size: 11.5px; font-weight: 700;
+    letter-spacing: 0.02em; text-transform: uppercase;
+    margin-bottom: 10px; direction: ltr;
+  }
+  .callout.note{ border-inline-start-color: var(--blue); background: var(--blue-soft); }
+  .callout.note .callout-label{ color: var(--blue); }
+  .callout.warning{ border-inline-start-color: var(--red); background: var(--red-soft); }
+  .callout.warning .callout-label{ color: var(--red); }
+  .callout.tip{ border-inline-start-color: var(--green); background: var(--green-soft); }
+  .callout.tip .callout-label{ color: var(--green); }
+  .callout.examtip{ border-inline-start-color: var(--purple); background: var(--purple-soft); }
+  .callout.examtip .callout-label{ color: var(--purple); }
+  .callout.case{ border-inline-start-color: var(--amber); background: var(--amber-soft); }
+  .callout.case .callout-label{ color: var(--amber); }
+  .callout.definition{ border-inline-start-color: var(--muted); background: var(--surface-2); }
+  .callout.definition .callout-label{ color: var(--text-soft); }
+
+  .table-wrap {
+    overflow-x: auto;
+    margin: 22px 0;
+    border: 1px solid var(--border-soft);
+    border-radius: 8px;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14.2px;
+    min-width: 480px;
+  }
+  thead th {
+    background: var(--surface-2);
+    color: var(--amber);
+    font-weight: 700;
+    font-family: var(--mono);
+    font-size: 12.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    text-align: start;
+    padding: 13px 15px;
+    border-bottom: 1px solid var(--border-soft);
+    white-space: nowrap;
+  }
+  tbody td {
+    padding: 12px 15px;
+    border-bottom: 1px solid var(--border-soft);
+    color: var(--text-soft);
+    vertical-align: top;
+  }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:nth-child(even) { background: rgba(127,127,127,0.03); }
+  tbody tr:hover { background: var(--red-soft); }
+
+  code {
+    font-family: var(--mono);
+    font-size: 13.3px;
+    background: var(--surface-2);
+    border: 1px solid var(--border-soft);
+    border-radius: 4px;
+    padding: 2px 6px;
+    direction: ltr;
+    unicode-bidi: embed;
+    color: var(--green);
+  }
+  .code-wrap { position: relative; overflow-x: auto; margin: 22px 0; }
+  .code-tag{
+    position: absolute; top: 10px; left: 14px;
+    font-family: var(--mono); font-size: 10.5px; color: var(--muted);
+    letter-spacing: 0.04em; text-transform: uppercase; z-index: 2;
+  }
+  .copy-btn{
+    position: absolute; top: 8px; right: 10px; z-index: 2;
+    font-family: var(--mono); font-size: 11px; color: var(--muted);
+    background: var(--surface-2); border: 1px solid var(--border-soft);
+    border-radius: 4px; padding: 4px 9px; cursor: pointer;
+    direction: ltr;
+  }
+  .copy-btn:hover{ color: var(--amber); border-color: var(--amber-border); }
+  .copy-btn.copied{ color: var(--green); border-color: var(--green-border); }
+  pre {
+    background: var(--bg-0);
+    border: 1px solid var(--border-soft);
+    border-inline-start: 3px solid var(--red);
+    border-radius: 8px;
+    padding: 30px 22px 18px;
+    direction: ltr;
+    text-align: left;
+    margin: 0;
+  }
+  html[data-theme="light"] pre{ background: #16181C; }
+  pre code {
+    background: none;
+    border: none;
+    padding: 0;
+    color: #B9E8C9;
+    font-size: 13.2px;
+    line-height: 1.75;
+  }
+  pre .cm{ color: #6E7681; } /* comment */
+  pre .fl{ color: #E8A23A; } /* flag */
+
+  /* ===== diagram card ===== */
+  .diagram-card{
+    background: var(--surface);
+    border: 1px solid var(--border-soft);
+    border-radius: 10px;
+    padding: 22px 18px 16px;
+    margin: 24px 0;
+  }
+  .diagram-card svg{ width: 100%; height: auto; display:block; }
+  .diagram-caption{
+    margin-top: 10px; text-align:center; font-family: var(--mono);
+    font-size: 11.5px; color: var(--muted);
+  }
+
+  /* ===== key takeaways ===== */
+  .takeaways{
+    background: var(--surface);
+    border: 1px solid var(--border-soft);
+    border-radius: 8px;
+    padding: 18px 22px 20px;
+    margin: 30px 0 10px;
+  }
+  .takeaways-title{
+    font-family: var(--mono); font-size: 12.5px; font-weight: 700;
+    color: var(--green); margin-bottom: 12px; direction: ltr; text-align:left;
+    display:flex; align-items:center; gap: 8px;
+  }
+  .takeaways ul{ margin: 0; padding-inline-start: 20px; }
+  .takeaways li{ color: var(--text-soft); font-size: 14.5px; }
+
+  /* ===== cheat sheet ===== */
+  .cheat-section h4{ color: var(--amber); font-size: 13px; margin: 26px 0 8px; }
+
+  .footer-note {
+    margin-top: 70px;
+    padding-top: 26px;
+    border-top: 1px solid var(--border-soft);
+    color: var(--muted);
+    font-size: 13.3px;
+    font-family: var(--mono);
+    text-align: center;
+    direction: ltr;
+  }
+
+  @media print {
+    .float-controls, .progress-rail, .copy-btn, .theme-switch { display: none !important; }
+    body{ background: #fff; color: #000; }
+    .page{ max-width: 100%; }
+  }
+
+  @media (max-width: 640px) {
+    .page { padding: 28px 14px 70px; }
+    .banner-body { padding: 24px 20px 4px; }
+    .banner h1 { font-size: 21px; }
+    h2 { font-size: 18px; gap: 10px; }
+    .float-controls{ left: 12px; bottom: 14px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="progress-rail"><div class="progress-bar" id="progressBar"></div></div>
+
+<div class="float-controls">
+  <button class="fctrl-btn" id="toTop" title="ارجع لفوق" aria-label="ارجع لفوق">↑</button>
+</div>
+
+<div class="page">
+
+  <div class="banner">
+    <div class="term-bar">
+      <span class="term-dot r"></span><span class="term-dot y"></span><span class="term-dot g"></span>
+      <span class="term-path">root@oscp:~/module-09$</span>
+      <button class="theme-switch" id="themeSwitch">theme: dark</button>
+    </div>
+    <div class="banner-body">
+      <span class="kicker">OSCP · PEN-200 · Module 09</span>
+      <h1>هجمات من جانب العميل (Client-Side Attacks)</h1>
+      <p class="lede">إزاي تتجاوز دفاعات المحيط الخارجي من غير ما تلمس سيرفر واحد — من استطلاع الهدف وclient fingerprinting، لحد استغلال ماكروهات Office وملفات Windows Library، عشان توصل لـ foothold جوه الشبكة الداخلية.</p>
+      <div class="tags">
+        <span class="tag">client-side</span>
+        <span class="tag">phishing</span>
+        <span class="tag">office-macros</span>
+        <span class="tag">library-files</span>
+        <span class="tag">fingerprinting</span>
+      </div>
+    </div>
+  </div>
+
+
+<nav class="toc"><div class="toc-title">$ ls learning_units/</div><div class="toc-list">
+<a class="toc-item" href="#intro"><span class="toc-num">00</span><span class="toc-label">نظرة عامة: ليه الهجمات من جانب العميل فعّالة</span></a>
+<a class="toc-item" href="#lu1"><span class="toc-num">01</span><span class="toc-label">استطلاع الهدف (Target Reconnaissance)</span></a>
+<a class="toc-item" href="#lu2"><span class="toc-num">02</span><span class="toc-label">استغلال مستندات Microsoft Office</span></a>
+<a class="toc-item" href="#lu3"><span class="toc-num">03</span><span class="toc-label">استغلال ملفات Windows Library</span></a>
+<a class="toc-item" href="#cheat"><span class="toc-num">--</span><span class="toc-label">Cheat Sheet مرجعي</span></a>
+<a class="toc-item" href="#summary"><span class="toc-num">--</span><span class="toc-label">الخلاصة العامة للموديول</span></a>
+</div></nav>
+
+<h1 id="intro">Module 9: هجمات من جانب العميل (Client-Side Attacks)</h1>
+<p>الموديول ده بيغطي ثلاث محاور أساسية:</p>
+<div class="goals-grid">
+  <div class="goal-card"><span class="gi">1</span><span>استطلاع الهدف (Target Reconnaissance)</span></div>
+  <div class="goal-card"><span class="gi">2</span><span>هجمات عبر مستندات Microsoft Office</span></div>
+  <div class="goal-card"><span class="gi">3</span><span>استغلال ملفات Windows Library</span></div>
+</div>
+<p>في كتير من مهمات اختبار الاختراق، الهدف بيكون تجاوز الدفاعات الخارجية للمؤسسة والوصول لوجود أولي (initial presence) جوه الشبكة الداخلية. تقليديًا، ده كان معناه فحص الأنظمة المكشوفة على الإنترنت واستغلال خدمات ضعيفة. دلوقتي، اختراق محيط الشبكة من خلال ثغرات تقنية بحتة بقى أصعب بكتير وأقل شيوعًا.</p>
+<blockquote>
+<p>بيانات من جهات زي <strong>Verizon</strong> بتوضّح إن أساليب الهندسة الاجتماعية — وعلى رأسها الـ phishing — بقت من أكتر الطرق فعالية لدخول المهاجمين، وتيجي في المرتبة الثانية بعد هجمات بيانات الاعتماد (credential-based attacks) مباشرة.</p>
+</blockquote>
+
+<h3>ليه الهجمات من جانب العميل فعّالة جدًا</h3>
+<p>حملات الـ phishing بتعتمد غالبًا على استغلال من جانب العميل (client-side exploitation). بدل ما المهاجم يهاجم السيرفرات مباشرة، بيبعت محتوى مُسلّح (weaponized) للموظفين.</p>
+<p>لما المستخدم يفتح مرفق خبيث أو يزور رابط معدّ بعناية، المهاجم ممكن ياخد تنفيذ كود عن بعد على جهاز المستخدم، وده بيكوّن foothold جوه الشبكة.</p>
+<p>الهجمات دي بتستهدف ثغرات في السوفت وير الشغّال على الـ endpoint، زي:</p>
+<ul>
+<li>متصفحات الويب</li>
+<li>مكوّنات نظام التشغيل</li>
+<li>أدوات الإنتاجية المكتبية (Office)</li>
+<li>محركات السكربتات والمفسّرات (script engines / interpreters)</li>
+</ul>
+<p>على عكس استغلال السيرفرات، النجاح هنا غالبًا بيعتمد على التلاعب بسلوك بشري — إقناع الهدف إنه يضغط، يفتح، يفعّل، أو يثبّت حاجة معينة.</p>
+
+<h3>العامل البشري في الأمن</h3>
+<p>عمليات الـ client-side بتوضّح إن البني آدمين ممكن يبقوا أضعف حلقة في أي نظام. المهاجمين الفعّالين بيدرسوا مش بس التكنولوجيا، لكن كمان:</p>
+<ul>
+<li>علم النفس البشري</li>
+<li>عادات مكان العمل</li>
+<li>أسلوب التواصل التنظيمي جوه المؤسسة</li>
+<li>التوقعات الاجتماعية وأنماط الثقة</li>
+</ul>
+<p>فهم إزاي الموظفين بيتعاملوا مع الإيميلات والمستندات والعمليات الداخلية بيسمح للمهاجمين يصمّموا سيناريوهات قابلة للتصديق تتجاوز الشك.</p>
+<div class="callout warning">
+<div class="callout-label">⚠ Ethics</div>
+<p>أثناء التقييمات الأمنية المصرَّح بيها، الحدود الأخلاقية حاسمة. الغرض هو تقييم الوضع الأمني — مش ترهيب أو مضايقة الموظفين أو انتحال شخصية جهات رسمية. المختبرين المحترفين لازم يلتزموا بإرشادات قانونية وأخلاقية صارمة محدَّدة في نطاق المهمة (engagement scope).</p>
+</div>
+
+<h3>ليه محطات العمل الداخلية هدف جذّاب</h3>
+<p>أجهزة المستخدمين جوه البيئات المؤسسية عادةً بتكون:</p>
+<ul>
+<li>مش متاحة مباشرة من الإنترنت</li>
+<li>محمية بـ network segmentation</li>
+<li>بتشغّل أقل عدد من الخدمات المكشوفة خارجيًا</li>
+</ul>
+<p>بسبب العزلة دي، صعب نهاجمها عن بعد بالطرق التقليدية. متجهات الـ client-side بتتجاوز الحماية دي عن طريق خلّي المستخدم نفسه هو اللي بيبدأ الاتصال أو التنفيذ.</p>
+<p>التهديدات دي دفعت تبني استراتيجيات دفاعية أحدث بتركّز على حماية الـ endpoint، تدريب توعية المستخدمين، والكشف السلوكي (behavioral detection).</p>
+
+<h3>طرق توصيل الـ Payload</h3>
+<p>المهاجمين بيستخدموا تقنيات متعددة لتوصيل محتوى خبيث، منها:</p>
+<ol>
+<li>مرفقات إيميل</li>
+<li>روابط لمواقع مُسلّحة</li>
+<li>ملفات قابلة للتحميل خبيثة</li>
+<li>وسائط فيزيائية (زي USB drives مزروعة)</li>
+<li>مواقع موثوقة مخترَقة بيزورها جروب الهدف</li>
+</ol>
+<p>حتى مع فلترة الإيميل المتقدمة، المهاجمين باستمرار بيطوّروا تقنياتهم للتهرب من أنظمة الكشف.</p>
+
+<h3>تحديات توصيل الـ Payload</h3>
+<p>توصيل محتوى خبيث عن طريق الإيميل بقى أصعب بسبب:</p>
+<ol>
+<li>أنظمة فلترة السبام</li>
+<li>sandboxing المرفقات</li>
+<li>فحص الروابط (URL scanning)</li>
+<li>أدوات كشف الـ endpoint</li>
+</ol>
+<p>نتيجة لكده، المهاجمين غالبًا بيعدّلوا الـ payloads عشان تبان شرعية أو يستغلوا صيغ ملفات موثوقة.</p>
+
+<h3>أهمية الاستطلاع (Reconnaissance)</h3>
+<p>قبل ما نختار طريقة هجوم، جمع استخبارات عن بيئة الهدف ضروري. المهاجم لازم يحدد:</p>
+<ol>
+<li>نوع نظام التشغيل</li>
+<li>السوفت وير المثبَّت وإصداراته</li>
+<li>الضوابط الأمنية الموجودة</li>
+<li>صلاحيات المستخدم</li>
+</ol>
+<p>مطابقة الـ payload مع بيئة الهدف بتزوّد احتمالية النجاح بشكل كبير. على سبيل المثال:</p>
+<ul>
+<li>بيئات Windows ممكن تكون عرضة للتنفيذ عبر scripting hosts مدمجة</li>
+<li>ملفات الاختصار (shortcut files) ممكن تشير لموارد خارجية عشان تحفّز سلوك غير مقصود</li>
+<li>تثبيتات Office ممكن تسمح بمستندات فيها كود أتمتة مدمج (embedded automation code)</li>
+</ul>
+<p>لو Microsoft Office موجود، المهاجمين ممكن يستخدموا مستندات فيها ماكروهات ضارة لتنفيذ كود بمجرد ما المستخدم يفعّل المحتوى.</p>
+
+<div class="takeaways">
+<div class="takeaways-title">$ cat ./module_roadmap.txt</div>
+<ul>
+<li>تقنيات بناء بروفايل لبيئة الهدف</li>
+<li>سيناريوهات تتضمّن مستندات Office مُسلّحة</li>
+<li>طرق استغلال وظائف ملفات Windows Library للتنفيذ</li>
+</ul>
+</div>
+
+<hr />
+
+<h2 id="lu1"><span class="num">01</span><span class="htext">استطلاع الهدف — التحضير لعمليات الـ Client-Side</span></h2>
+<h3>أهداف الوحدة</h3>
+<div class="goals-grid">
+  <div class="goal-card"><span class="gi">1</span><span>جمع الاستخبارات اللازمة لتخطيط سيناريوهات هجوم موجّهة للعميل</span></div>
+  <div class="goal-card"><span class="gi">2</span><span>استخدام طرق client fingerprinting لاكتشاف تفاصيل النظام</span></div>
+</div>
+<p>قبل إطلاق أي عملية client-side أثناء اختبار الاختراق، أساسي نحدد مين أنسب الأهداف وإيه التكنولوجيا اللي بيستخدموها. كل ما الاستخبارات عن جهاز المستخدم وبيئة السوفت وير بتاعته كانت أدق، كل ما زادت احتمالية إن الـ payload الموصَّل يشتغل زي ما متوقَّع.</p>
+
+<h3>تحديد الأهداف المحتملين</h3>
+<p>الخطوة الأولى هي اختيار أفراد جوه المؤسسة من المرجَّح إنهم يتفاعلوا مع تواصل خارجي. مصادر مفيدة لتحديد المستخدمين دول تشمل:</p>
+<ul>
+<li>المواقع الرسمية للشركة (أدلة الموظفين، صفحات التواصل، البيانات الصحفية)</li>
+<li>منصات التواصل المهني زي LinkedIn</li>
+<li>بروفايلات عامة على السوشيال ميديا</li>
+<li>مواد مؤتمرات أو مستندات منشورة فيها أسماء ووظائف موظفين</li>
+</ul>
+<p>المصادر دي ممكن تكشف المناصب الوظيفية، المسؤوليات، صيغة الإيميلات، والهيكل الداخلي — كلها معلومات قيّمة لصياغة سيناريوهات قابلة للتصديق.</p>
+
+<h3>جمع المعلومات السلبي</h3>
+<p>على عكس الفحص الفعّال للسيرفرات، استطلاع سيناريوهات الـ client-side غالبًا بيعتمد بشكل كبير على تقنيات سلبية مابتتفاعلش مباشرة مع جهاز الهدف. أمثلة:</p>
+<ol>
+<li>مراجعة مستندات منشورة للعامة بحثًا عن metadata</li>
+<li>مراقبة منشورات الموظفين بحثًا عن إشارات للتكنولوجيا المستخدَمة</li>
+<li>تحليل إعلانات الوظائف اللي بتذكر سوفت وير أو أنظمة مطلوبة</li>
+<li>ملاحظة أسلوب التواصل اللي بتستخدمه المؤسسة</li>
+</ol>
+<p>النهج ده بيقلّل خطر الاكتشاف مع إنه بيوفّر استخبارات ذات معنى.</p>
+
+<h3>التحديات مقارنةً بالاستطلاع التقليدي</h3>
+<p>في اختبار الشبكات القياسي، المختبر عادةً بيتفاعل مباشرة مع أنظمة مكشوفة، وده بيسمح بعمل enumeration عبر الفحص والاستكشاف. في المقابل، مستخدمي الـ endpoint جوه الشبكة المؤسسية نادرًا ما بيكونوا متاحين من الخارج. فالاستطلاع هنا لازم يعتمد على طرق غير مباشرة واستنتاج.</p>
+<p>بما إن مفيش قناة مباشرة للاستعلام عن جهاز الهدف، الإبداع بيبقى مهارة أساسية. المختبرين لازم يجمّعوا تلميحات صغيرة من مصادر متعددة عشان يبنوا بروفايل دقيق للبيئة.</p>
+
+<h3>تقنيات Client Fingerprinting</h3>
+<div class="callout definition">
+<div class="callout-label">⬦ Definition</div>
+<p><strong>Client Fingerprinting</strong> بيشير لتقنيات بتُستخدم عشان نستنتج تفاصيل عن إعدادات نظام المستخدم. ده ممكن يشمل تحديد:</p>
+<p>1) نوع نظام التشغيل وإصداره &nbsp; 2) التطبيقات المثبَّتة &nbsp; 3) المتصفح والإضافات &nbsp; 4) سوفت وير الحماية</p>
+</div>
+<p>المعلومة دي بتساعد نتأكد إن أي payload أو سيناريو اختبار متجهّز متوافق مع بيئة الهدف. الـ fingerprinting يقدر يتحقق عن طريق تفاعلات متحكَّم فيها، محتوى ويب معدّ بعناية، أو تحليل إزاي النظام بيستجيب لعناصر معينة.</p>
+
+<h3>دور الهندسة الاجتماعية</h3>
+<p>بما إن الـ enumeration التقني المباشر محدود، التقنيات اللي بتركّز على البشر غالبًا بتلعب دور مركزي. تواصل مصمَّم بعناية يقدر يشجّع المستخدمين يكشفوا معلومات من غير قصد، زي:</p>
+<ul>
+<li>تأكيد السوفت وير اللي بيستخدموه</li>
+<li>فتح ملفات بتكشف metadata</li>
+<li>زيارة صفحات بتكشف تفاصيل النظام</li>
+</ul>
+<blockquote>
+<p>الطرق دي لازم تفضل دايمًا جوه النطاق القانوني والأخلاقي المحدَّد للتقييم.</p>
+</blockquote>
+
+<h3>جمع المعلومات — استطلاع السوفت وير السلبي</h3>
+<p>في القسم ده، بنفحص تقنيات لاكتشاف إيه السوفت وير الموجود جوه مؤسسة الهدف من غير أي تواصل مباشر مع أنظمتها. الطرق دي قيّمة بشكل خاص لما مفيش طريقة آمنة أو مصرَّح بيها للتفاعل مع الأجهزة الداخلية. بما إن العملية سلبية بالكامل، بتقلّل فرصة تفعيل تنبيهات أمنية أو ترك أثر لنشاط الاستطلاع.</p>
+
+<h4>استخدام المستندات العامة كمصدر استخبارات</h4>
+<p>واحدة من أقوى التقنيات بتتضمّن تحليل metadata مدمَجة جوه ملفات نشرتها المؤسسة أونلاين. كتير من المستندات — زي PDF، ملفات Word، العروض التقديمية، والجداول — بتحتوي حقول وصفية مخفية بتتولّد تلقائيًا من السوفت وير اللي أنشأها.</p>
+<p>رغم إن المؤسسات تقدر تشيل المعلومة دي، غالبًا بيتم تجاهلها. الـ metadata ممكن تكشف تفاصيل زي:</p>
+<ul>
+<li>مؤلف المستند</li>
+<li>تواريخ الإنشاء والتعديل</li>
+<li>اسم السوفت وير وإصداره المستخدَم</li>
+<li>نظام تشغيل جهاز المؤلف</li>
+<li>إعدادات اللغة والمنطقة</li>
+<li>معرّفات داخلية (internal identifiers)</li>
+</ul>
+<p>حتى لو بعض القيم مش مكتوبة صراحةً، أحيانًا ممكن تُستنتج من حقول مرتبطة. مجتمعة، التفاصيل دي بتساعد نبني صورة واقعية للتطبيقات والمنصات الشائع استخدامها عبر المؤسسة.</p>
+
+<div class="callout note">
+<div class="callout-label">ⓘ Limitations</div>
+<p>رغم إن الطريقة دي سرية (stealthy)، مش دايمًا دقيقة تمامًا: الملفات القديمة ممكن تعكس سوفت وير قديم، أقسام مختلفة ممكن تستخدم أدوات مختلفة، والمستندات ممكن تكون اتعدّلت على أجهزة متعددة. رغم القيود دي، تحليل الـ metadata بيفضل نقطة بداية قوية لعمل بروفايل لبيئة الهدف.</p>
+</div>
+
+<h4>إيجاد مستندات ذات صلة</h4>
+<p>الملفات العامة غالبًا ممكن تتكتشف عن طريق استعلامات بحث موجَّهة — زي استخدام عوامل بحث متقدمة لتحديد صيغ ملفات معينة مستضافة على نطاق الشركة. تضييق النتائج بأسماء أقسام أو مواقع بيحسّن النتيجة أكتر.</p>
+<p>لو التفاعل مع الموقع مسموح، أدوات directory enumeration زي <code>Gobuster</code> تقدر تُستخدم لتحديد الملفات حسب الامتداد. لكن النهج ده بيولّد ترافيك ملحوظ وممكن يتسجّل في أنظمة الهدف. البديل الأهدأ هو التصفح اليدوي — استكشاف أقسام التحميلات، صفحات الصحافة، أو مكتبات الموارد اللي المؤسسات عادةً بتنشر فيها المستندات.</p>
+
+<div class="callout case">
+<div class="callout-label">✎ Scenario: فحص Metadata</div>
+<p>تخيّل سيناريو فيه بروشور اتنزّل من موقع شركة. أداة forensic زي <strong>ExifTool</strong> تقدر تستخرج الـ metadata المدمجة من الملف. الخرج النموذجي ممكن يشمل: (1) طوابع زمنية توضّح حداثة المستند، (2) اسم الموظف اللي أنشأه، (3) التطبيق المستخدَم في التأليف، (4) معرّفات مستند فريدة.</p>
+</div>
+
+<h4>تفسير النتائج</h4>
+<p><strong>عمر المستند</strong> — تواريخ الإنشاء والتعديل بتوضّح إذا كانت المعلومة بتعكس ممارسات حالية. الطوابع الزمنية الحديثة بتشير لإن البيانات على الأرجح ذات صلة.</p>
+<p><strong>تحديد الموظف</strong> — حقول المؤلف ممكن تكشف أفراد داخليين. معرفة أسماء محددة تساعد في بناء سيناريوهات تواصل قابلة للتصديق لأن الإشارة لموظفين حقيقيين بتزوّد المصداقية.</p>
+<p><strong>تلميحات السوفت وير والمنصة</strong> — لو الـ metadata بتوضّح إن المستند اتعمل بـ Microsoft PowerPoint من منظومة Microsoft Office، ده بيلمّح بقوة إن أدوات Office منتشرة جوه المؤسسة. غياب الإشارة لمنصات بديلة كمان ممكن يلمّح لنظام التشغيل المستخدَم.</p>
+<p>الاستخبارات دي بتساعد نحدد أنهي تقنيات client-side ممكنة تقنيًا وعلى الأرجح هتنجح.</p>
+
+<h3>Client Fingerprinting — تحديد أنظمة الهدف عن بُعد</h3>
+<p>Client fingerprinting (بيتسمى كمان device fingerprinting) بيشير لتقنيات بتُستخدم عشان نحدد تفاصيل عن جهاز الهدف — زي نظام التشغيل، المتصفح، والبيئة — من غير وصول مباشر للشبكة الداخلية. النهج ده مفيد بشكل خاص لما بنحاول نؤسس وجود أولي أثناء اختبار اختراق مصرَّح بيه حيث الأجهزة الداخلية مش متاحة من الخارج.</p>
+
+<h4>ليه الـ Fingerprinting مهم</h4>
+<p>قبل نشر أي تقنية client-side، حاسم نتأكد إن الطريقة المختارة هتشتغل على نظام الهدف. على سبيل المثال، بعض متجهات الهجوم بتشتغل بس على أنظمة تشغيل معينة أو بتعتمد على تطبيقات محددة مثبَّتة.</p>
+<p>تخيّل إنك جمعت قبل كده إيميل موظف محتمل باستخدام أداة استطلاع زي <code>theHarvester</code>. ممكن تخطّط تبعت ملف مصمَّم عشان يتنفّذ جوه مكوّنات Windows معينة — مثلًا آليات مرتبطة تاريخيًا بمتصفحات زي Internet Explorer أو ميزات توافق قديمة جوه Microsoft Edge. لكن بعت محتوى كده من غير تأكيد البيئة بيحمل خطر فشل لو الهدف بيستخدم منصة مختلفة.</p>
+
+<h3>روابط التتبع لاكتشاف البيئة</h3>
+<p>تقنية شائعة بتتضمّن بعت رابط معدّ بعناية للهدف بيجمع معلومات النظام بصمت لما يتفتح. خدمات زي <strong>Canarytokens</strong> بتولّد روابط فريدة فيها عناصر تتبّع مدمجة.</p>
+<p>لما المستلم يضغط الرابط في متصفحه، الخدمة بتسجّل تفاصيل زي:</p>
+<ul>
+<li>عنوان IP العام</li>
+<li>الموقع الجغرافي التقريبي</li>
+<li>نوع المتصفح وإصداره</li>
+<li>نظام التشغيل</li>
+<li>خصائص الجهاز</li>
+</ul>
+<p>المعلومة دي بتسمح للمختبرين يتأكدوا إذا كانت بيئة الهدف متطابقة مع السيناريو المخطَّط.</p>
+
+<h3>صياغة سياق قابل للتصديق</h3>
+<p>إقناع حد إنه يفتح رابط مش طالبه محتاج قصة معقولة. السيناريو لازم يتماشى مع دور المستلم ومسؤولياته اليومية. مثلًا لو الهدف شغّال في المحاسبة، الرسالة ممكن تشير لتعارض في فاتورة وتوفّر رابط بيدّعي إنه بيعرض screenshot للمشكلة. لما الرابط يتفتح، نظام التتبّع بيلتقط تفاصيل الجهاز وهو بيعرض صفحة فاضية أو محتوى عام غير ضار للمستخدم.</p>
+<p>تطوير سياق زي ده أساسي للمحاكاة الواقعية لأن الطلبات العشوائية غالبًا بتتجاهل.</p>
+
+<h3>مراجعة البيانات المجموعة</h3>
+<p>بمجرد ما الرابط يتفتح، لوحة التتبّع عادةً بتعرض:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>العنصر</th>
+<th>الوصف</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>مؤشرات الموقع</strong></td>
+<td>خريطة بتوضّح المصدر التقريبي للاتصال</td>
+</tr>
+<tr>
+<td><strong>معلومات الشبكة</strong></td>
+<td>عنوان IP واسم المؤسسة المحتمل المرتبط بالاتصال</td>
+</tr>
+<tr>
+<td><strong>User Agent String</strong></td>
+<td>نص بيبعته المتصفح تلقائيًا بيكشف تفاصيل النظام — مثلًا نظام Windows 64-bit بإصدار متصفح محدد. لكن القيمة دي ممكن تتغيّر، فمش دايمًا موثوقة بالكامل</td>
+</tr>
+</tbody>
+</table></div>
+
+<h4>Browser Fingerprinting المتقدّم</h4>
+<p>معلومات أدق تقدر تتجمع باستخدام سكربتات بتتنفّذ جوه المتصفح. السكربتات دي بتحلّل خصائص زي:</p>
+<ul>
+<li>الخطوط المثبَّتة</li>
+<li>دقة الشاشة</li>
+<li>قدرات الهاردوير</li>
+<li>سلوك الـ rendering</li>
+</ul>
+<p>بما إن الخصائص دي أصعب تزويرها مجتمعة، بتوفّر دليل أقوى عن إعدادات الجهاز.</p>
+
+<h4>طرق Fingerprinting بديلة</h4>
+<p>رموز التتبّع (tracking tokens) ممكن كمان تتضمّن جوه أنواع ملفات تانية، بتسمح بجمع بيانات لما الملف يتفتح أو يتشاف. الحوامل المحتملة تشمل: مستندات، ملفات PDF، صور، ومحتوى ويب. أدوات وخدمات تانية — زي <strong>Grabify</strong> أو مكتبات browser fingerprinting زي <strong>FingerprintJS</strong> — تقدر تخدم أغراض مشابهة.</p>
+
+<h4>استخدام النتائج</h4>
+<p>الاستخبارات المجموعة بتحدد الخطوة الجاية:</p>
+<ul>
+<li>لو البيئة متطابقة مع التقنية المخطَّطة، كمّل</li>
+<li>لو مش متطابقة، عدّل النهج عشان يناسب النظام المكتشَف</li>
+<li>أو بدلًا من كده، عدّل السيناريو عشان يشجّع استخدام تطبيق معين</li>
+</ul>
+<p>مثلًا لو الهدف بيستخدم متصفح مختلف عن المطلوب، الرسالة ممكن تقترح إن المحتوى أفضل يتشاف بمتصفح معين.</p>
+<div class="callout tip">
+<div class="callout-label">✓ Key Point</div>
+<p>Client fingerprinting بيوفّر طريقة منخفضة التفاعل لعمل بروفايل للأجهزة الداخلية من خارج الشبكة. فهم بيئة سوفت وير الهدف مُسبقًا بيسمح للمحترفين الأمنيين يصمّموا محاكاة دقيقة وواقعية مع تجنّب التقنيات غير الفعّالة. المرحلة دي خطوة تأسيسية في أي عملية client-side لأن النجاح غالبًا بيعتمد على التوافق بين المحتوى الموصَّل وإعدادات نظام الضحية.</p>
+</div>
+
+<div class="diagram-card">
+<svg viewBox="0 0 760 210" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="gradStep" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#E1362F"/>
+      <stop offset="1" stop-color="#F2794A"/>
+    </linearGradient>
+  </defs>
+  <g font-family="IBM Plex Mono, monospace" font-size="12" fill="#C4C4CA">
+    <!-- step boxes -->
+    <g>
+      <rect x="20" y="70" width="128" height="60" rx="8" fill="#17171A" stroke="#2A2A2F"/>
+      <text x="84" y="96" text-anchor="middle" fill="#E8A23A" font-weight="700">OSINT</text>
+      <text x="84" y="114" text-anchor="middle" font-size="10">LinkedIn / site</text>
+    </g>
+    <g>
+      <rect x="178" y="70" width="128" height="60" rx="8" fill="#17171A" stroke="#2A2A2F"/>
+      <text x="242" y="96" text-anchor="middle" fill="#E8A23A" font-weight="700">Metadata</text>
+      <text x="242" y="114" text-anchor="middle" font-size="10">ExifTool docs</text>
+    </g>
+    <g>
+      <rect x="336" y="70" width="128" height="60" rx="8" fill="#17171A" stroke="#2A2A2F"/>
+      <text x="400" y="96" text-anchor="middle" fill="#E8A23A" font-weight="700">Fingerprint</text>
+      <text x="400" y="114" text-anchor="middle" font-size="10">Canarytokens</text>
+    </g>
+    <g>
+      <rect x="494" y="70" width="128" height="60" rx="8" fill="#17171A" stroke="#2A2A2F"/>
+      <text x="558" y="96" text-anchor="middle" fill="#E8A23A" font-weight="700">Craft</text>
+      <text x="558" y="114" text-anchor="middle" font-size="10">macro / lnk</text>
+    </g>
+    <g>
+      <rect x="610" y="70" width="128" height="60" rx="8" fill="#17171A" stroke="url(#gradStep)" stroke-width="2"/>
+      <text x="674" y="96" text-anchor="middle" fill="#E1362F" font-weight="700">Deliver</text>
+      <text x="674" y="114" text-anchor="middle" font-size="10">foothold</text>
+    </g>
+    <!-- arrows -->
+    <path d="M148 100 H178" stroke="#E8A23A" stroke-width="2" marker-end="url(#arrow)"/>
+    <path d="M306 100 H336" stroke="#E8A23A" stroke-width="2" marker-end="url(#arrow)"/>
+    <path d="M464 100 H494" stroke="#E8A23A" stroke-width="2" marker-end="url(#arrow)"/>
+    <path d="M622 100 H610" stroke="#E8A23A" stroke-width="2"/>
+  </g>
+  <defs>
+    <marker id="arrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L6,3 L0,6 Z" fill="#E8A23A"/>
+    </marker>
+  </defs>
+</svg>
+<div class="diagram-caption">تسلسل عملية الـ client-side: استطلاع سلبي ← fingerprinting ← بناء الـ payload ← التوصيل</div>
+</div>
+
+<hr />
+
+<h2 id="lu2"><span class="num">02</span><span class="htext">استغلال Microsoft Office</span></h2>
+<h3>أهداف الوحدة</h3>
+<div class="goals-grid">
+  <div class="goal-card"><span class="gi">1</span><span>التعرّف على أشكال مختلفة لهجمات Office من جانب العميل</span></div>
+  <div class="goal-card"><span class="gi">2</span><span>فهم إزاي تثبّت Microsoft Office لأغراض الاختبار</span></div>
+  <div class="goal-card"><span class="gi">3</span><span>إنشاء واستغلال ماكروهات في Microsoft Word لاختبار الاختراق</span></div>
+</div>
+
+<h3>نظرة عامة: Microsoft Office كمتجه هجوم</h3>
+<p>Microsoft Office لسه واحد من أكتر المنصات استهدافًا لهجمات الـ client-side. انتشاره الواسع جوه المؤسسات واستخدامه المتكرر في التواصل الداخلي بيخليه وسيط مثالي لتوصيل محتوى خبيث.</p>
+<p>حملات الـ ransomware بالذات غالبًا بتستغل مستندات Office فيها ماكروهات مدمجة عشان توصل لوصول أولي جوه الشبكة.</p>
+<div class="callout definition">
+<div class="callout-label">⬦ Definition</div>
+<p><strong>الماكروهات (Macros)</strong> هي سكربتات صغيرة مدمجة جوه مستندات Office وبتقدر تؤتمت مهام متكررة. رغم إنها مصمَّمة للإنتاجية، المهاجمين يقدروا يعيدوا استخدامها لتنفيذ كود عشوائي على جهاز المستخدم لما الماكرو يتفعّل.</p>
+</div>
+<p>بما إن المستخدمين غالبًا بيثقوا في مستندات من زملاء أو مصادر معروفة، الماكروهات الخبيثة بتمثّل متجه هجوم فعّال جدًا.</p>
+
+<h3>اعتبارات لمستندات Office الخبيثة</h3>
+<p>قبل صياغة ملف Office خبيث، مختبري الاختراق لازم ياخدوا بالهم من عوامل متعددة:</p>
+
+<h4>1. بيئة الهدف</h4>
+<p>تحديد إصدار Office المثبَّت على نظام الهدف (مثلًا Office 2016، 2019، أو Microsoft 365). تحديد نظام التشغيل المستخدَم (Windows، macOS، ...إلخ)، بما إن الماكروهات بتتنفّذ بشكل مختلف عبر المنصات.</p>
+
+<h4>2. إعدادات أمان الماكروهات</h4>
+<p>كتير من المؤسسات بتعطّل الماكروهات افتراضيًا أو بتفرض "Protected View". صياغة سياق مقنع ممكن يزوّد احتمالية إن المستخدم يفعّل الماكروهات.</p>
+
+<h4>3. طريقة التوصيل</h4>
+<p>طرق التوصيل الشائعة تشمل مرفقات إيميل، مشاركات شبكة، أو روابط تخزين سحابي. الهندسة الاجتماعية تقدر تُستخدم لإقناع المستلم إنه يفتح المستند ويفعّل الماكروهات.</p>
+
+<h4>4. أهداف الـ Payload</h4>
+<p>تحديد النتيجة المرغوبة، زي وصول reverse shell، حصاد بيانات الاعتماد (credential harvesting)، أو استطلاع. التأكد إن الماكرو بينفّذ كود متوافق مع بيئة الهدف.</p>
+
+<h3>تثبيت Microsoft Office لأغراض الاختبار</h3>
+<p>لأغراض الاختبار، ثبّت Microsoft Office على جهاز لاب متحكَّم فيه:</p>
+<ol>
+<li>نزّل حزمة التثبيت من المصدر الرسمي</li>
+<li>اتبع خطوات التثبيت، واختار مكوّنات زي Word وExcel وPowerPoint</li>
+<li>فعّل وظيفة الماكروهات في إعدادات Word لأغراض الاختبار (تحت Trust Center ← Macro Settings ← Enable all macros — للاب فقط)</li>
+<li>تأكد إن بيئة اللاب معزولة عشان تمنع انتشار كود خبيث بالغلط</li>
+</ol>
+<div class="callout warning">
+<div class="callout-label">⚠ Lab Isolation</div>
+<p>الاختبار بأمان: دايمًا نفّذ تشغيل الماكروهات جوه آلة افتراضية معزولة لتجنّب اختراق شبكة غير مقصود.</p>
+</div>
+
+<h3>إنشاء مستند Word خبيث</h3>
+<p>لصياغة مستند Word بينفّذ reverse shell:</p>
+<ol>
+<li>افتح Microsoft Word جوه بيئة اللاب</li>
+<li>فعّل تبويب Developer عشان توصل لوظيفة الماكروهات</li>
+<li>اضغط Visual Basic عشان تفتح محرّر VBA</li>
+<li>اكتب سكربت ماكرو بينفّذ الـ payload بتاعك — مثلًا ماكرو بيستدعي أمر PowerShell عشان يتصل برجوع لـ listener متحكَّم فيه جوه اللاب</li>
+<li>تأكد إن الـ payload متوافق مع نظام Windows المستهدَف</li>
+<li>احفظ المستند بصيغة <code>.docm</code> (macro-enabled)</li>
+</ol>
+
+<h3>اعتبارات عملية</h3>
+<div class="callout case">
+<div class="callout-label">✎ Pretext Ideas</div>
+<p>عشان تقنع هدف إنه يفعّل الماكروهات، المستند لازم يبان شرعي. السيناريوهات الشائعة تشمل: تقارير مالية، إعلانات موارد بشرية، ومخرجات مشروع (project deliverables).</p>
+</div>
+<p><strong>كشف التحايل (Anti-Detection):</strong> بعض المؤسسات بتستخدم فحص ماكروهات أو أدوات endpoint detection. اختبر الـ payload بتاعك ضد الضوابط الأمنية عشان تفهم القيود الواقعية.</p>
+
+<div class="takeaways">
+<div class="takeaways-title">$ cat ./lu2_takeaways.txt</div>
+<ul>
+<li>مستندات Microsoft Office لسه من أكتر المتجهات فعالية لهجمات الـ client-side</li>
+<li>الماكروهات بتوفّر آلية مرنة لتنفيذ كود على جهاز المستخدم لو الهدف فعّلها</li>
+<li>الاستطلاع الدقيق، والتحقق من البيئة، والاستخدام الأخلاقي عناصر حاسمة لمحاكاة آمنة للهجمات دي</li>
+<li>فهم ميزات أمان Office وسلوك المستخدم أساسي لاختبار اختراق واقعي</li>
+</ul>
+</div>
+
+<hr />
+
+<h2 id="lu3"><span class="num">03</span><span class="htext">استغلال ملفات Windows Library للتنفيذ من جانب العميل</span></h2>
+<p>مرفقات الـ phishing التقليدية اللي بتعتمد على ماكروهات Office بقت مراقَبة بشكل كبير من أدوات الأمان الحديثة، فلاتر الإيميل، وبرامج توعية المستخدمين. بسبب كده، المهاجمين بشكل متزايد بيدوّروا على أنواع ملفات بديلة تبان غير ضارة لكن لسه بتسمح بتنفيذ كود.</p>
+<div class="callout definition">
+<div class="callout-label">⬦ Definition</div>
+<p>واحد من الخيارات الأقل شهرة هو ملف <strong>Windows Library</strong> اللي بيستخدم امتداد <code>.Library-ms</code>. الملفات دي بتتصرف كمجموعات افتراضية (virtual collections) بتجمّع محتوى من مجلدات محلية، مشاركات شبكة، أو خدمات بعيدة، وبتعرضها جوه Windows Explorer كأنها مجلدات عادية. مظهرها البريء واستخدامها غير الشائع بيخليها آلية توصيل خفية في هجمات الـ client-side.</p>
+</div>
+
+<h3>النهج المكوَّن من مرحلتين</h3>
+<p>نهج الهجوم الشائع باستخدام ملفات Library بيتضمّن مرحلتين:</p>
+<ol>
+<li>في المرحلة الأولى، المهاجم بيبعت للضحية ملف Library معدّ بعناية. لما يتفتح، بيوصّل جهاز الضحية بصمت لموقع بعيد يتحكّم فيه المهاجم، زي مشاركة WebDAV. Windows بعد كده بيعرض الملفات البعيدة جوه Explorer، وبتبان كأنها محتوى محلي.</li>
+<li>في المرحلة التانية، المهاجم بيحط ملف خبيث — غالبًا متنكّر كمستند أو أداة عادية — جوه المجلد البعيد ده. لو الضحية فتح الملف ده، يقدر ينفّذ أوامر على النظام، زي تشغيل reverse shell بيدّي المهاجم تحكّم عن بعد.</li>
+</ol>
+
+<div class="diagram-card">
+<svg viewBox="0 0 720 260" xmlns="http://www.w3.org/2000/svg">
+  <g font-family="IBM Plex Mono, monospace" font-size="11.5" fill="#C4C4CA">
+    <!-- attacker -->
+    <rect x="20" y="20" width="140" height="48" rx="7" fill="#1D1D21" stroke="#E1362F" stroke-width="1.4"/>
+    <text x="90" y="48" text-anchor="middle" fill="#E1362F" font-weight="700">Attacker</text>
+
+    <!-- victim -->
+    <rect x="290" y="20" width="140" height="48" rx="7" fill="#1D1D21" stroke="#2A2A2F"/>
+    <text x="360" y="48" text-anchor="middle" fill="#E8A23A" font-weight="700">Victim host</text>
+
+    <!-- webdav -->
+    <rect x="560" y="20" width="140" height="48" rx="7" fill="#1D1D21" stroke="#2A2A2F"/>
+    <text x="630" y="48" text-anchor="middle" fill="#3FBF6E" font-weight="700">WebDAV share</text>
+
+    <!-- stage1 -->
+    <path d="M160 44 H290" stroke="#8A8A92" stroke-width="1.6" marker-end="url(#arrow2)"/>
+    <text x="225" y="36" text-anchor="middle" font-size="10">1) .Library-ms</text>
+
+    <path d="M360 68 V110" stroke="#8A8A92" stroke-width="1.6" marker-end="url(#arrow2)"/>
+    <text x="440" y="95" font-size="10">يفتح Explorer يتصل تلقائيًا</text>
+
+    <path d="M360 110 H630" stroke="#8A8A92" stroke-width="1.6"/>
+    <path d="M630 110 V68" stroke="#8A8A92" stroke-width="1.6" marker-end="url(#arrow2up)"/>
+
+    <rect x="290" y="110" width="140" height="40" rx="6" fill="#17171A" stroke="#2A2A2F"/>
+    <text x="360" y="134" text-anchor="middle" font-size="10">Explorer يعرض المحتوى البعيد</text>
+
+    <!-- stage 2 -->
+    <path d="M630 150 V190" stroke="#8A8A92" stroke-width="1.6"/>
+    <rect x="560" y="150" width="140" height="40" rx="6" fill="#17171A" stroke="#2A2A2F"/>
+    <text x="630" y="174" text-anchor="middle" font-size="10">.lnk خبيث مزروع</text>
+
+    <path d="M560 170 H430" stroke="#E1362F" stroke-width="1.6" marker-end="url(#arrowRed)"/>
+    <text x="495" y="200" text-anchor="middle" font-size="10" fill="#E1362F">2) الضحية يفتح .lnk</text>
+
+    <rect x="290" y="190" width="140" height="48" rx="7" fill="#1D1D21" stroke="#E1362F" stroke-width="1.4"/>
+    <text x="360" y="212" text-anchor="middle" fill="#E1362F" font-weight="700" font-size="11">PowerShell يتنفّذ</text>
+    <text x="360" y="228" text-anchor="middle" font-size="10">reverse shell → Attacker</text>
+  </g>
+  <defs>
+    <marker id="arrow2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#8A8A92"/></marker>
+    <marker id="arrow2up" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#8A8A92"/></marker>
+    <marker id="arrowRed" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#E1362F"/></marker>
+  </defs>
+</svg>
+<div class="diagram-caption">تدفّق هجوم Library File من مرحلتين: الاتصال بـ WebDAV ← زرع shortcut خبيث ← تنفيذ وreverse shell</div>
+</div>
+
+<h3>استضافة المحتوى البعيد عبر WebDAV</h3>
+<p>عشان يستضيف محتوى بعيد، المهاجم يقدر يعدّ سيرفر WebDAV، اللي بيسمح بالوصول للملفات عبر HTTP كأنها جزء من محرك شبكة. بعد إعداد المشاركة وحط الملفات جواها، المهاجم بينشئ ملف Library مكتوب بصيغة XML بيشير لعنوان WebDAV.</p>
+<p>البنية الـ XML بتحدد metadata زي اسم المكتبة (library's name)، الأيقونة، قالب المجلد، والأهم من كده — الرابط البعيد (remote URL). لما الضحية يضغط دبل كليك على ملف Library، Windows Explorer بيتصل تلقائيًا بالموقع ده ويعرض محتواه بشفافية.</p>
+
+<h3>تحفيز التنفيذ عبر ملفات .lnk</h3>
+<p>لتحفيز تنفيذ الكود، المهاجمين غالبًا بيضمّنوا ملف اختصار Windows (<code>.lnk</code>) جوه المجلد البعيد. ملفات الاختصار تقدر تشغّل برامج بمعطيات (arguments)، فممكن تتعدّ عشان تبدأ محرك سكربتات زي PowerShell وتجيب كود إضافي من سيرفر المهاجم.</p>
+<p>التقنية دي بتتجنّب بعت ملفات executable مباشرة عن طريق الإيميل، اللي على الأرجح هيتمنع. بدلًا من كده، المكوّن الخبيث بيتجاب بس بعد ما الضحية يتفاعل مع الاختصار، وده بيقلّل فرصة الاكتشاف من دفاعات المحيط.</p>
+
+<h3>دور الهندسة الاجتماعية</h3>
+<p>الهندسة الاجتماعية بتلعب دور حاسم في إقناع الضحية إنه يتفاعل مع الملفات. المهاجم ممكن ينتحل شخصية فريق الدعم الفني (IT staff) ويدّعي إن المرفق فيه أداة إعداد أو حزمة تحديث.</p>
+<p>بمجرد ما الضحية يفتح ملف Library وبعدين الاختصار جواه، الأمر الخبيث بيتنفّذ، وممكن يؤسس جلسة عن بعد ترجع لجهاز المهاجم. من هناك، المهاجم بياخد foothold أولي يقدر يُستخدم لأنشطة إضافية جوه الشبكة.</p>
+
+<div class="callout tip">
+<div class="callout-label">✓ Defensive Note</div>
+<p>التقنية دي بتوضّح إزاي ميزات Windows اللي تبان غير ضارة ممكن يُعاد استخدامها للهجوم. ملفات Library نفسها مابتحتويش كود خبيث؛ هي بس بتشير لمحتوى بعيد. لكن بربطها مع ملفات shortcut وتوصيل payload بعيد، المهاجم يقدر يتجاوز كتير من الدفاعات التقليدية. مع ما المؤسسات بتحسّن حماية الماكروهات وفحص المرفقات، تقنيات زي دي بتوضّح أهمية مراقبة أنواع الملفات غير الشائعة وتقييد الاتصالات التلقائية بمشاركات بعيدة غير موثوقة.</p>
+</div>
+
+<hr />
+
+<h2 id="cheat"><span class="htext">Cheat Sheet مرجعي</span></h2>
+<div class="cheat-section">
+<h4>أدوات استطلاع الهدف</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>الأداة</th><th>الاستخدام</th></tr></thead>
+<tbody>
+<tr><td><code>theHarvester</code></td><td>جمع إيميلات وأسماء نطاقات فرعية مرتبطة بالهدف من مصادر عامة</td></tr>
+<tr><td><code>ExifTool</code></td><td>استخراج metadata من مستندات منشورة (PDF, Office files)</td></tr>
+<tr><td>Canarytokens</td><td>توليد روابط/ملفات تتبّع تكشف IP والمتصفح ونظام التشغيل</td></tr>
+<tr><td>Grabify / FingerprintJS</td><td>بدائل لتتبّع وجمع بصمة الجهاز</td></tr>
+</tbody>
+</table></div>
+
+<h4>مراحل بناء مستند Office خبيث</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>#</th><th>الخطوة</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>تحديد إصدار Office ونظام التشغيل المستهدَف</td></tr>
+<tr><td>2</td><td>تفعيل Developer tab ← VBA Editor</td></tr>
+<tr><td>3</td><td>كتابة ماكرو بيستدعي PowerShell listener</td></tr>
+<tr><td>4</td><td>حفظ الملف بصيغة <code>.docm</code></td></tr>
+<tr><td>5</td><td>اختبار داخل لاب معزول قبل أي استخدام فعلي</td></tr>
+</tbody>
+</table></div>
+
+<h4>مكوّنات هجوم Library File</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>المكوّن</th><th>الدور</th></tr></thead>
+<tbody>
+<tr><td><code>.Library-ms</code></td><td>يوصّل Explorer تلقائيًا بمشاركة WebDAV بعيدة</td></tr>
+<tr><td>WebDAV Server</td><td>يستضيف الملفات ويعرضها كأنها محرك شبكة عبر HTTP</td></tr>
+<tr><td><code>.lnk</code></td><td>شورت كت بيشغّل PowerShell بمعطيات لتنفيذ الكود البعيد</td></tr>
+</tbody>
+</table></div>
+</div>
+
+<hr />
+
+<h2 id="summary"><span class="htext">الخلاصة العامة للموديول</span></h2>
+<p>متجهات الهجوم من جانب العميل غالبًا بتكون طريقة فعّالة للحصول على foothold أولي جوه شبكة داخلية غير قابلة للتوجيه (non-routable). هي خطيرة بشكل خاص لأنها بتستغل نقاط ضعف أو وظائف موجودة في سوفت وير العميل نفسه.</p>
+<p>في الموديول ده، اتعلّمنا إزاي نجمع معلومات عن أهدافنا للتحضير لهجمات client-side. بعد كده استخدمنا ماكروهات Microsoft Office، ملفات Windows Library، وملفات الاختصار للحصول على تنفيذ كود واستقبال reverse shells.</p>
+<blockquote>
+<p><strong>مهم ندرك إن النجاح هنا بيعتمد بشكل كبير على جودة الاستطلاع والسياق الاجتماعي، مش بس التقنية نفسها.</strong> مختبرين الاختراق المفروض يهدفوا يدمجوا بين الاستخبارات السلبية الدقيقة وصياغة سيناريوهات قابلة للتصديق، مع الالتزام الصارم بنطاق المهمة وحدودها الأخلاقية.</p>
+</blockquote>
+<hr />
+<p><em>نهاية نوتس الموديول التاسع — OSCP: Client-Side Attacks</em></p>
+  <div class="footer-note">-- EOF: module-09/client-side-attacks.md --</div>
+
+</div>
+
+<script>
+(function(){
+  // theme toggle
+  var root = document.documentElement;
+  var btn = document.getElementById('themeSwitch');
+  function applyTheme(t){
+    root.setAttribute('data-theme', t);
+    btn.textContent = 'theme: ' + t;
+    try{ localStorage.setItem('oscp-notes-theme', t); }catch(e){}
+  }
+  var saved = 'dark';
+  try{ saved = localStorage.getItem('oscp-notes-theme') || 'dark'; }catch(e){}
+  applyTheme(saved);
+  btn.addEventListener('click', function(){
+    applyTheme(root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
+  });
+
+  // reading progress
+  var bar = document.getElementById('progressBar');
+  function onScroll(){
+    var h = document.documentElement;
+    var scrolled = h.scrollTop;
+    var height = h.scrollHeight - h.clientHeight;
+    bar.style.width = (height > 0 ? (scrolled/height*100) : 0) + '%';
+    var toTop = document.getElementById('toTop');
+    if(scrolled > 500){ toTop.classList.add('show'); } else { toTop.classList.remove('show'); }
+  }
+  document.addEventListener('scroll', onScroll);
+  onScroll();
+  document.getElementById('toTop').addEventListener('click', function(){
+    window.scrollTo({top:0, behavior:'smooth'});
+  });
+
+  // copy buttons for code blocks
+  document.querySelectorAll('.code-wrap').forEach(function(wrap){
+    var codeEl = wrap.querySelector('code');
+    if(!codeEl) return;
+    var b = document.createElement('button');
+    b.className = 'copy-btn';
+    b.textContent = 'copy';
+    b.addEventListener('click', function(){
+      var text = codeEl.innerText;
+      if(navigator.clipboard){
+        navigator.clipboard.writeText(text).then(function(){
+          b.textContent = 'copied ✓';
+          b.classList.add('copied');
+          setTimeout(function(){ b.textContent = 'copy'; b.classList.remove('copied'); }, 1500);
+        });
+      }
+    });
+    wrap.appendChild(b);
+  });
+})();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OSCP · Module 6: مقدمة في هجمات تطبيقات الويب</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-0: #0B0B0D;
+    --bg-1: #121214;
+    --surface: #17171A;
+    --surface-2: #1D1D21;
+    --border: #2A2A2F;
+    --border-soft: #232326;
+
+    --text: #E6E6E9;
+    --text-soft: #C4C4CA;
+    --muted: #8A8A92;
+
+    --red: #E1362F;
+    --red-soft: rgba(225,54,47,0.10);
+    --red-border: rgba(225,54,47,0.35);
+    --red-grad: linear-gradient(90deg, #E1362F, #F2794A);
+
+    --amber: #E8A23A;
+    --amber-soft: rgba(232,162,58,0.09);
+    --amber-border: rgba(232,162,58,0.30);
+
+    --green: #3FBF6E;
+
+    --mono: 'IBM Plex Mono', 'Courier New', monospace;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    direction: rtl;
+    text-align: right;
+    background: var(--bg-0);
+  }
+
+  body {
+    font-family: 'Cairo', 'Segoe UI', Tahoma, sans-serif;
+    line-height: 1.95;
+    font-size: 16.5px;
+    color: var(--text);
+    background:
+      radial-gradient(900px 420px at 12% -8%, rgba(225,54,47,0.10), transparent 60%),
+      radial-gradient(800px 420px at 90% 6%, rgba(232,162,58,0.06), transparent 60%),
+      linear-gradient(180deg, var(--bg-0) 0%, var(--bg-1) 100%);
+    background-attachment: fixed;
+  }
+
+  .page {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 46px 22px 100px;
+  }
+
+  .banner {
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(155deg, #17171A 0%, #141416 55%, #18151A 100%);
+    border: 1px solid var(--border-soft);
+    border-radius: 10px;
+    padding: 0 0 34px;
+    margin-bottom: 26px;
+    box-shadow: 0 20px 50px -20px rgba(0,0,0,0.6);
+  }
+  .term-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 13px 18px;
+    border-bottom: 1px solid var(--border-soft);
+    background: rgba(255,255,255,0.015);
+    direction: ltr;
+  }
+  .term-dot { width: 11px; height: 11px; border-radius: 50%; display: inline-block; }
+  .term-dot.r { background: #E1362F; }
+  .term-dot.y { background: #E8A23A; }
+  .term-dot.g { background: #3FBF6E; }
+  .term-path {
+    margin-inline-start: 12px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .banner-body { padding: 30px 34px 4px; }
+  .banner .kicker {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 12.5px;
+    letter-spacing: 0.03em;
+    color: var(--red);
+    background: var(--red-soft);
+    border: 1px solid var(--red-border);
+    border-radius: 3px;
+    padding: 5px 12px;
+    margin-bottom: 20px;
+    direction: ltr;
+  }
+  .banner h1 {
+    margin: 0 0 14px;
+    font-size: 28px;
+    font-weight: 800;
+    line-height: 1.5;
+    color: #F4F4F6;
+  }
+  .banner .lede {
+    color: var(--muted);
+    font-size: 15.5px;
+    line-height: 1.95;
+    max-width: 620px;
+    margin: 0 0 24px;
+  }
+  .tags { display: flex; flex-wrap: wrap; gap: 9px; }
+  .tag {
+    font-size: 12.5px;
+    font-family: var(--mono);
+    color: var(--amber);
+    background: var(--amber-soft);
+    border: 1px solid var(--amber-border);
+    border-radius: 3px;
+    padding: 5px 11px;
+  }
+
+  .toc {
+    background: var(--surface);
+    border: 1px solid var(--border-soft);
+    border-radius: 8px;
+    padding: 6px 0 6px;
+    margin-bottom: 50px;
+    overflow: hidden;
+  }
+  .toc-title {
+    font-family: var(--mono);
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--green);
+    padding: 14px 22px;
+    border-bottom: 1px solid var(--border-soft);
+    direction: ltr;
+    text-align: left;
+  }
+  .toc-list { display: flex; flex-direction: column; }
+  .toc-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 22px;
+    color: var(--text-soft);
+    text-decoration: none;
+    font-size: 14.5px;
+    border-bottom: 1px solid rgba(255,255,255,0.03);
+    transition: background 0.15s ease, padding-inline-start 0.15s ease;
+  }
+  .toc-list .toc-item:last-child { border-bottom: none; }
+  .toc-item:hover { background: rgba(225,54,47,0.06); }
+  .toc-num {
+    flex: none;
+    font-family: var(--mono);
+    font-size: 12.5px;
+    font-weight: 600;
+    color: #0F0F10;
+    background: var(--red-grad);
+    border-radius: 3px;
+    padding: 3px 8px;
+    direction: ltr;
+  }
+
+  h1, h2, h3, h4 { font-weight: 700; }
+
+  h2 {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    font-size: 21px;
+    margin: 66px 0 22px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border-soft);
+    color: #F0F0F2;
+  }
+  h2 .num {
+    flex: none;
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 700;
+    color: #0F0F10;
+    background: var(--red-grad);
+    border-radius: 5px;
+    padding: 7px 12px;
+    direction: ltr;
+  }
+  h2 .htext { line-height: 1.5; }
+
+  h3 {
+    font-size: 17px;
+    margin: 34px 0 14px;
+    color: var(--red);
+    display: flex;
+    align-items: center;
+    gap: 9px;
+  }
+  h3::before {
+    content: "#";
+    font-family: var(--mono);
+    color: var(--amber);
+    font-weight: 700;
+  }
+
+  h4 {
+    font-size: 14.8px;
+    margin: 22px 0 10px;
+    color: var(--text-soft);
+    font-family: var(--mono);
+  }
+
+  p { margin: 0 0 17px; color: var(--text); }
+
+  strong { color: #FBFBFC; font-weight: 700; }
+
+  a { color: var(--amber); text-decoration: none; border-bottom: 1px dashed var(--amber-border); }
+
+  hr {
+    border: none;
+    height: 1px;
+    margin: 50px 0;
+    background: linear-gradient(90deg, transparent, var(--border), transparent);
+  }
+
+  ul, ol {
+    margin: 0 0 18px;
+    padding-inline-start: 24px;
+  }
+  li { margin-bottom: 9px; color: var(--text); }
+  li::marker { color: var(--red); font-family: var(--mono); }
+  li > ul, li > ol { margin-top: 9px; }
+
+  blockquote {
+    margin: 24px 0;
+    padding: 17px 22px;
+    background: var(--red-soft);
+    border: 1px solid var(--red-border);
+    border-inline-start: 3px solid var(--red);
+    border-radius: 6px;
+    color: #EAD9D7;
+  }
+  blockquote p { margin: 0; color: inherit; line-height: 1.85; }
+  blockquote strong { color: #FFB4AE; }
+
+  .table-wrap {
+    overflow-x: auto;
+    margin: 22px 0;
+    border: 1px solid var(--border-soft);
+    border-radius: 8px;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14.2px;
+    min-width: 480px;
+  }
+  thead th {
+    background: var(--surface-2);
+    color: var(--amber);
+    font-weight: 700;
+    font-family: var(--mono);
+    font-size: 12.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    text-align: start;
+    padding: 13px 15px;
+    border-bottom: 1px solid var(--border-soft);
+    white-space: nowrap;
+  }
+  tbody td {
+    padding: 12px 15px;
+    border-bottom: 1px solid var(--border-soft);
+    color: var(--text-soft);
+    vertical-align: top;
+  }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:nth-child(even) { background: rgba(255,255,255,0.012); }
+  tbody tr:hover { background: rgba(225,54,47,0.045); }
+
+  code {
+    font-family: var(--mono);
+    font-size: 13.3px;
+    background: var(--surface-2);
+    border: 1px solid var(--border-soft);
+    border-radius: 4px;
+    padding: 2px 6px;
+    direction: ltr;
+    unicode-bidi: embed;
+    color: var(--green);
+  }
+  .code-wrap { overflow-x: auto; margin: 22px 0; }
+  pre {
+    background: #0E0E10;
+    border: 1px solid var(--border-soft);
+    border-inline-start: 3px solid var(--red);
+    border-radius: 8px;
+    padding: 18px 22px;
+    direction: ltr;
+    text-align: left;
+    margin: 0;
+  }
+  pre code {
+    background: none;
+    border: none;
+    padding: 0;
+    color: #B9E8C9;
+    font-size: 13.2px;
+    line-height: 1.75;
+  }
+
+  .footer-note {
+    margin-top: 70px;
+    padding-top: 26px;
+    border-top: 1px solid var(--border-soft);
+    color: var(--muted);
+    font-size: 13.3px;
+    font-family: var(--mono);
+    text-align: center;
+    direction: ltr;
+  }
+
+  @media (max-width: 640px) {
+    .page { padding: 28px 14px 70px; }
+    .banner-body { padding: 24px 20px 4px; }
+    .banner h1 { font-size: 21px; }
+    h2 { font-size: 18px; gap: 10px; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="banner">
+    <div class="term-bar">
+      <span class="term-dot r"></span><span class="term-dot y"></span><span class="term-dot g"></span>
+      <span class="term-path">root@oscp:~/module-06$</span>
+    </div>
+    <div class="banner-body">
+      <span class="kicker">OSCP · PEN-200 · Module 06</span>
+      <h1>مقدمة في هجمات تطبيقات الويب</h1>
+      <p class="lede">منهجيات الاختبار (White/Black/Grey-box)، أدوات التقييم (Nmap، Wappalyzer، Gobuster، Burp Suite)، enumeration واستغلال APIs عبر مثال كامل، ووصولًا لتصعيد الصلاحيات عبر Stored XSS لحساب WordPress إداري.</p>
+      <div class="tags">
+        <span class="tag">owasp-top-10</span>
+        <span class="tag">burp-suite</span>
+        <span class="tag">gobuster</span>
+        <span class="tag">api-abuse</span>
+        <span class="tag">xss</span>
+      </div>
+    </div>
+  </div>
+
+
+<nav class="toc"><div class="toc-title">$ ls learning_units/</div><div class="toc-list">
+<a class="toc-item" href="#lu1"><span class="toc-num">01</span><span class="toc-label">منهجية تقييم تطبيقات الويب (Web Application Assessment Methodology)</span></a>
+<a class="toc-item" href="#lu2"><span class="toc-num">02</span><span class="toc-label">أدوات تقييم تطبيقات الويب (Web Application Assessment Tools)</span></a>
+<a class="toc-item" href="#lu3"><span class="toc-num">03</span><span class="toc-label">Enumeration تطبيقات الويب (Web Application Enumeration)</span></a>
+<a class="toc-item" href="#lu4"><span class="toc-num">04</span><span class="toc-label">Cross-Site Scripting (XSS)</span></a>
+<a class="toc-item" href="#summary"><span class="toc-num">--</span><span class="toc-label">الخلاصة العامة للموديول</span></a>
+</div></nav>
+
+<h1>Module 6: مقدمة في هجمات تطبيقات الويب (Introduction to Web Application Attacks)</h1>
+<blockquote>
+<p>أطر العمل الحديثة وحلول الاستضافة بسّطت عملية بناء ونشر التطبيقات المبنية على الويب. لكن التطبيقات دي عادةً بتعرّض سطح هجوم كبير بسبب اعتماديات متعددة، إعدادات سيرفر غير آمنة، نقص نضج كود التطبيق، وعيوب تطبيقية خاصة بطبيعة العمل. تطبيقات الويب بتُكتب بلغات وأطر عمل متنوعة، وكل واحدة ممكن تقدّم أنواع محددة من الثغرات. لكن بما إن أشيع الثغرات متشابهة من ناحية المفهوم، هنقدر نتبع مسارات استغلال مشابهة بغض النظر عن الـ stack التقني الأساسي.</p>
+</blockquote>
+<hr />
+<h2 id="lu1"><span class="num">01</span><span class="htext">منهجية تقييم تطبيقات الويب (Web Application Assessment Methodology)</span></h2>
+<h3>أهداف الوحدة</h3>
+<p>فهم متطلبات اختبار أمان تطبيقات الويب | تعلّم الأنواع والمنهجيات المختلفة لاختبار تطبيقات الويب | التعرّف على OWASP Top 10 وأشيع ثغرات الويب</p>
+<h3>أنواع اختبار تطبيقات الويب</h3>
+<p>كمختبر اختراق، نقدر نقيّم تطبيق ويب باستخدام 3 طرق مختلفة، حسب نوع المعلومات المتاحة لنا، النطاق، وقواعد المهمة المحددة:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>النوع</th>
+<th>الوصف</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>White-box Testing</strong></td>
+<td>سيناريوهات فيها وصول غير مقيَّد لكود المصدر بتاع التطبيق، البنية التحتية اللي شغّال عليها، ومستندات التصميم. بما إن النوع ده بيدّي رؤية شاملة أكتر للتطبيق، محتاج مهارات محددة لإيجاد ثغرات في كود المصدر (مراجعة الكود ومنطق التطبيق). الاختبار ده ممكن ياخد وقت أطول نسبةً لحجم قاعدة الكود</td>
+</tr>
+<tr>
+<td><strong>Black-box Testing</strong> (Zero-knowledge test)</td>
+<td>مفيش معلومات عن التطبيق المستهدف، يعني ضروري إن المختبر يستثمر موارد كبيرة في مرحلة الـ enumeration. ده النهج المتّبع في معظم مهام bug bounty</td>
+</tr>
+<tr>
+<td><strong>Grey-box Testing</strong></td>
+<td>بيحصل لما بنتوفّر لنا معلومات محدودة عن نطاق الهدف، بما فيها طرق التوثيق، بيانات اعتماد، أو تفاصيل عن الـ framework</td>
+</tr>
+</tbody>
+</table></div>
+<p>في الموديول ده والموديولات الجاية، هنستكشف enumeration واستغلال ثغرات تطبيقات الويب. رغم إن تعقيد الثغرات والهجمات بيختلف، هنوضّح استغلال عدة ثغرات ويب شائعة في قائمة <strong>OWASP Top 10</strong>.</p>
+<blockquote>
+<p>مؤسسة <strong>OWASP</strong> بتهدف لتحسين أمان السوفت وير عالميًا، وكجزء من الهدف ده، بيطوّروا <strong>OWASP Top 10</strong>، قائمة مُجمَّعة بشكل دوري بأخطر المخاطر الأمنية لتطبيقات الويب. فهم متجهات الهجوم دي هيبقى لبنات البناء الأساسية لتركيب هجمات أكتر تقدمًا هنتعلمها في موديولات تانية.</p>
+</blockquote>
+<hr />
+<h2 id="lu2"><span class="num">02</span><span class="htext">أدوات تقييم تطبيقات الويب (Web Application Assessment Tools)</span></h2>
+<h3>أهداف الوحدة</h3>
+<p>تنفيذ تقنيات enumeration شائعة على تطبيقات الويب | فهم نظرية الـ Web Proxies | تعلّم إزاي Burp Suite proxy بيشتغل لاختبار تطبيقات الويب</p>
+<p>قبل ما ندخل في تفاصيل enumeration تطبيقات الويب، خلّينا نتعرّف على أدوات الصنعة. في الوحدة دي، هنرجع لـ Nmap لـ enumeration خدمات الويب، مع <strong>Wappalyzer</strong>، خدمة أونلاين بتكشف الـ stack التقني ورا تطبيق، و<strong>Gobuster</strong>، أداة لاكتشاف الملفات والمجلدات على الويب.</p>
+<h3>Fingerprinting سيرفرات الويب بـ Nmap</h3>
+<p>زي ما اتغطّى في موديول سابق، Nmap هو الأداة الأساسية للـ enumeration الفعّال الأولي. المفروض نبدأ enumeration تطبيق الويب من مكوّنه الأساسي، سيرفر الويب، بما إن ده القاسم المشترك لأي تطبيق ويب بيعرض خدماته.</p>
+<div class="code-wrap"><pre><code class="language-bash"># بعد ما لقينا بورت 80 مفتوح، نبدأ باكتشاف الخدمة
+nmap -sV -p80 target_ip
+
+# بعدين نستخدم سكربت NSE خاص بالخدمة للـ fingerprinting الأولي
+nmap --script http-enum -p80 target_ip
+</code></pre></div>
+<h3>تحديد الـ Technology Stack بـ Wappalyzer</h3>
+<p>بالإضافة لجمع المعلومات الفعّال اللي عملناه عبر Nmap، نقدر كمان نجيب بشكل سلبي ثروة من المعلومات عن الـ stack التقني للتطبيق عبر <strong>Wappalyzer</strong>. بعد عمل حساب مجاني، نقدر ننفّذ <strong>Technology Lookup</strong> على نطاق الهدف (مثلًا <code>megacorpone.com</code>).</p>
+<p>من التحليل الخارجي السريع من طرف ثالث ده، نتعرّف على نظام التشغيل، UI framework، سيرفر الويب، وأكتر. النتائج كمان بتوفّر معلومات عن مكتبات JavaScript المستخدَمة — دي بيانات قيّمة، لأن بعض إصدارات مكتبات JavaScript معروفة إنها متأثرة بثغرات عديدة.</p>
+<h3>Directory Brute Force بـ Gobuster</h3>
+<p>بمجرد ما اكتشفنا تطبيق شغّال على سيرفر ويب، الخطوة الجاية هي رسم خريطة لكل الملفات والمجلدات المتاحة للعامة. <strong>Gobuster</strong> (مكتوبة بلغة Go) أداة بتساعدنا في النوع ده من الـ enumeration باستخدام wordlists لاكتشاف المجلدات والملفات عن طريق brute forcing.</p>
+<blockquote>
+<p>بسبب طبيعتها المعتمدة على brute forcing، Gobuster ممكن تولّد ترافيك كتير، يعني مش هتكون مفيدة لما نحتاج نفضل تحت الرادار.</p>
+</blockquote>
+<p>Gobuster بتدعم أوضاع enumeration مختلفة، بما فيها <code>fuzz</code> و<code>dns</code>، لكن دلوقتي هنعتمد بس على وضع <code>dir</code>، اللي بيعدّد الملفات والمجلدات:</p>
+<div class="code-wrap"><pre><code class="language-bash">gobuster dir -u http://target_ip -w /path/to/wordlist.txt -t 20
+</code></pre></div>
+<ul>
+<li><code>-u</code> لتحديد الـ IP المستهدف</li>
+<li><code>-w</code> لتحديد الـ wordlist</li>
+<li><code>-t</code> لتحديد عدد الـ threads (الافتراضي 10؛ نقدر نقلل الترافيك بتحديد رقم أقل)</li>
+</ul>
+<h3>اختبار الأمان بـ Burp Suite</h3>
+<p><strong>Burp Suite</strong> منصة متكاملة مبنية على GUI لاختبار أمان تطبيقات الويب، بتوفّر أدوات متعددة عبر نفس الواجهة. بينما الإصدار المجاني <strong>Community Edition</strong> بيحتوي أساسًا أدوات للاختبار اليدوي، النسخ التجارية بتشمل ميزات إضافية، بما فيها ماسح ثغرات تطبيقات ويب قوي.</p>
+<p>نلاقي Burp Suite Community Edition في Kali تحت <code>Applications &gt; 03 Web Application Analysis &gt; burpsuite</code>.</p>
+<h4>إعداد Proxy</h4>
+<p>بشكل عام، الـ <strong>web proxy</strong> هو أي هاردوير أو سوفت وير مخصَّص مُصمَّم لاعتراض الطلبات و/أو الردود بين عميل الويب وسيرفر الويب. ده بيسمح للمسؤولين والمختبرين على حد سواء بتعديل أي طلبات اتعترضت، يدويًا وآليًا.</p>
+<p><strong>إعداد Firefox يستخدم Burp Suite كـ proxy:</strong></p>
+<ol>
+<li>في Firefox، روح لـ <code>about:preferences#general</code></li>
+<li>انزل لـ Network Settings واضغط Settings</li>
+<li>اختار <strong>Manual proxy configuration</strong></li>
+<li>استخدم <code>127.0.0.1</code> وبورت <code>8080</code> (لو الـ proxy والمتصفح على نفس الجهاز)</li>
+</ol>
+<blockquote>
+<p>في بعض سيناريوهات الاختبار، ممكن نحتاج نلتقط ترافيك من أجهزة متعددة، فالـ proxy هيتضبط على IP مستقل، وهنعدّل المتصفح بالـ IP الخارجي للـ proxy.</p>
+</blockquote>
+<h4>Intruder: محاكاة هجوم Brute Force على باسورد</h4>
+<p>أداة <strong>Intruder</strong> في Burp مصمَّمة لأتمتة مجموعة متنوعة من زوايا الهجوم، من الأبسط لأكتر تعقيدًا. خلّينا نحاكي هجوم brute force على باسورد.</p>
+<p><strong>الخطوات:</strong></p>
+<ol>
+<li>نفتح جلسة Burp جديدة ونظبط الـ Proxy</li>
+<li>نروح لـ <code>http://offsecwp/wp-login.php</code> من Firefox، وندخل <code>admin</code> كاسم مستخدم و<code>test</code> كباسورد، ونضغط Log in</li>
+<li>في Burp، نروح لـ <code>Proxy &gt; HTTP History</code>، كليك يمين على طلب الـ POST لـ <code>/wp-login.php</code>، ونختار <strong>Send to Intruder</strong></li>
+<li>في تبويب Intruder، نروح لتبويب <strong>Positions</strong>. بما إن المستخدم <code>admin</code> صحيح، محتاجين بس نعمل brute force لحقل الباسورد — نضغط <strong>Clear</strong> عشان نشيل كل الحقول المُعلَّمة، بعدين نحدد قيمة الـ <code>pwd</code> ونضغط <strong>Add</strong></li>
+<li>في تبويب <strong>Payloads</strong>، نلزق wordlist (مثلًا أول 10 قيم من <code>rockyou.txt</code>)</li>
+<li>نضغط <strong>Start Attack</strong></li>
+</ol>
+<div class="code-wrap"><pre><code># مثال من نتيجة الهجوم:
+Request #4 → Status Code مختلف عن باقي الطلبات
+→ ده مؤشّر على إن الباسورد في الطلب ده صحيح
+</code></pre></div>
+<p>بعد ما الهجوم يخلص، هنلاحظ إن طلب معين (مثلًا الرابع) رجّع كود حالة مختلف — ده بيلمّح إن ممكن يكون ده الباسورد الصحيح. الفرضية دي بتتأكّد لما نجرّب ندخل بنفس الباسورد المكتشَف فعليًا.</p>
+<hr />
+<h2 id="lu3"><span class="num">03</span><span class="htext">Enumeration تطبيقات الويب (Web Application Enumeration)</span></h2>
+<h3>أهداف الوحدة</h3>
+<p>تعلّم إزاي تعمل debug لكود مصدر تطبيق ويب | فهم إزاي تعدّ وتفحص الـ Headers، الـ Cookies، وكود المصدر | تعلّم منهجيات اختبار APIs</p>
+<p>في موديول سابق، اتعلّمنا إزاي جمع المعلومات السلبي يقدر يلعب دور حاسم في رسم خريطة تطبيقات الويب، خاصةً لما مستودعات عامة أو Google dorks بتكشف معلومات حساسة عن هدفنا. سواء بنتعامل مع اعتمادات مسرَّبة أو مجرد توثيق تطبيق، المفروض دايمًا نرجع للمعلومة اللي اتجمعت سلبيًا أثناء الاختبار الفعّال، لأنها ممكن توجّهنا لمسارات مش مستكشَفة.</p>
+<p>مهم نحدد المكونات اللي بتشكّل تطبيق ويب قبل محاولة استغلاله بشكل أعمى. كتير من ثغرات تطبيقات الويب مش مرتبطة بتقنية محددة، لكن بعض الاستغلالات والـ payloads لازم تُصاغ بناءً على الأساس التقني للتطبيق، زي سوفت وير قاعدة البيانات أو نظام التشغيل.</p>
+<h3>Debugging محتوى الصفحة</h3>
+<p>مكان جيد نبدأ منه رسم خريطة معلومات تطبيق الويب هو عنوان الـ URL. امتدادات الملفات، اللي أحيانًا بتكون جزء من الـ URL، ممكن تكشف لغة البرمجة اللي التطبيق اتكتب بيها. بعض الامتدادات، زي <code>.php</code>، واضحة، لكن تانية أكتر غموضًا وبتختلف حسب الـ framework المستخدَم (تطبيق Java ممكن يستخدم <code>.jsp</code>، <code>.do</code>، أو <code>.html</code>).</p>
+<blockquote>
+<p>امتدادات الملفات على صفحات الويب بقت أقل شيوعًا، بما إن كتير من اللغات والـ frameworks دلوقتي بتدعم مفهوم الـ <strong>routes</strong>، اللي بيسمح للمطورين يربطوا URI بجزء من الكود — التطبيقات اللي بتستخدم routes بتخلّي امتدادات الـ URI غير ذات صلة إلى حد كبير.</p>
+</blockquote>
+<p>أداة <strong>Firefox Debugger</strong> (موجودة في قايمة Web Developer) بتعرض موارد ومحتوى الصفحة. أداة الـ Debugger ممكن تعرض JavaScript frameworks، حقول مدخلات مخفية، تعليقات، ضوابط client-side جوه HTML، JavaScript، وأكتر كتير.</p>
+<p><strong>مثال:</strong> لو لاحظنا إن التطبيق بيستخدم jQuery إصدار 3.6.0 (مكتبة JavaScript شائعة)، وكان الكود مُصغَّر (minified) — نقدر "نجمّله" (prettify) في Firefox بالضغط على زرار <strong>Pretty print source</strong> (أيقونة الأقواس المجعَّدة المزدوجة)، وده هيعرض الكود بشكل أسهل للقراءة والمتابعة.</p>
+<p>أداة <strong>Inspector</strong> كمان تقدر نستخدمها للتعمّق في محتوى صفحة محدد — كليك يمين على عنصر في الصفحة واختيار <strong>Inspect</strong> هيفتح الأداة ويظلّل كود الـ HTML الخاص بالعنصر ده.</p>
+<h3>فحص رؤوس استجابة HTTP والـ Sitemaps</h3>
+<p>نقدر كمان نفحص ردود السيرفر بحثًا عن معلومات إضافية. فيه نوعين من الأدوات لده: <strong>proxy</strong> (زي Burp Suite) بيعترض الطلبات والردود بين عميل وسيرفر، أو أداة <strong>Network</strong> بتاعة المتصفح نفسه.</p>
+<blockquote>
+<p>أداة Network بتعرض نشاط الشبكة اللي بيحصل بعد تشغيلها، يعني لازم نريفريش الصفحة عشان نشوف الترافيك.</p>
+</blockquote>
+<p><strong>Response Headers</strong> هي مجموعة فرعية من HTTP headers بتتبعت كرد على طلب HTTP. رأس <strong>Server</strong> عادةً بيكشف على الأقل اسم سوفت وير سيرفر الويب — في كتير من الإعدادات الافتراضية، كمان بيكشف رقم الإصدار.</p>
+<p>رؤوس HTTP مش دايمًا بتتولّد بس من سيرفر الويب — مثلًا، web proxies بتضيف فعليًا رأس <code>X-Forwarded-For</code> عشان توضّح لسيرفر الويب عنوان IP العميل الأصلي.</p>
+<blockquote>
+<p>تاريخيًا، الرؤوس اللي بتبدأ بـ "X-" كانت بتُسمّى رؤوس HTTP غير قياسية. لكن <strong>RFC 6648</strong> دلوقتي بيلغي استخدام "X-" لصالح اتفاقية تسمية أوضح.</p>
+</blockquote>
+<p>أسماء أو قيم رؤوس الاستجابة غالبًا بتكشف معلومات إضافية عن الـ stack التقني للتطبيق. بعض أمثلة الرؤوس غير القياسية: <code>X-Powered-By</code>، <code>x-amz-cf-id</code>، و<code>X-Aspnet-Version</code>. بحث أعمق في الأسماء دي ممكن يكشف معلومات إضافية — مثلًا، رأس <code>x-amz-cf-id</code> بيشير إن التطبيق بيستخدم <strong>Amazon CloudFront</strong>.</p>
+<h3>Sitemaps وrobots.txt</h3>
+<p><strong>Sitemaps</strong> عنصر مهم تاني المفروض ناخده في الاعتبار أثناء enumeration تطبيقات الويب. تطبيقات الويب ممكن تشمل ملفات sitemap عشان تساعد بوتات محركات البحث تزحف وتفهرس مواقعها. الملفات دي كمان بتشمل توجيهات بأنهي URLs ماينفعش تُزحف — غالبًا صفحات حساسة أو وحدات تحكم إدارية، بالظبط نوع الصفحات اللي إحنا مهتمين بيها.</p>
+<div class="code-wrap"><pre><code class="language-bash"># مثال: استرجاع robots.txt من موقع
+curl https://www.google.com/robots.txt
+</code></pre></div>
+<p><strong>Allow</strong> و<strong>Disallow</strong> توجيهات لزواحف الويب بتوضّح أنهي صفحات أو مجلدات الزواحف "المؤدَّبة" يقدروا أو ما يقدروش يوصلوا ليها. في معظم الحالات، الصفحات والمجلدات المدرَجة ممكن ماتكونش مثيرة، وبعضها ممكن يكون حتى غير صالح. مع كده، ملفات sitemap مايجبش نتجاهلها لأنها ممكن تحتوي أدلة عن تخطيط الموقع أو معلومات مثيرة تانية، زي أجزاء من الهدف لسه ما اتستكشفتش.</p>
+<h3>Enumeration واستغلال APIs</h3>
+<p>في حالات كتيرة، هدف اختبار الاختراق بيكون تطبيق ويب مبني داخليًا، كود مغلق، بيشحن مع عدد من APIs. الـ APIs دي مسؤولة عن التفاعل مع منطق الـ backend وتوفير دعامة أساسية من الوظائف للتطبيق.</p>
+<p>نوع محدد من الـ API اسمه <strong>REST (Representational State Transfer)</strong> بيُستخدم لأغراض متنوعة، بما فيها التوثيق.</p>
+<blockquote>
+<p>في سيناريو white-box نموذجي، هنستلم توثيق كامل للـ API يساعدنا نرسم خريطة كاملة لسطح الهجوم. لكن في black-box test، هنحتاج نكتشف الـ API بتاع الهدف بنفسنا.</p>
+</blockquote>
+<h3>مثال تطبيقي كامل: استغلال API</h3>
+<p><strong>الخطوة 1 — Brute Force لمسارات الـ API:</strong></p>
+<p>نقدر نستخدم ميزات Gobuster لعمل brute force لنقاط نهاية الـ API. السيناريو: API gateway على <code>192.168.50.16:5001</code>.</p>
+<p>مسارات الـ API غالبًا متبوعة برقم إصدار، بنمط زي <code>/&lt;api_name&gt;/v&lt;version&gt;</code>. نقدر نجرّب brute force لمسارات الـ API باستخدام wordlist مع ميزة الـ <strong>pattern</strong> بتاعة Gobuster (الخيار <code>-p</code>):</p>
+<div class="code-wrap"><pre><code class="language-bash"># ملف pattern (patterns.txt) يحتوي:
+{GOBUSTER}/v1
+{GOBUSTER}/v2
+
+gobuster dir -u http://192.168.50.16:5001 -w wordlist.txt -p patterns.txt
+</code></pre></div>
+<p>النتيجة كشفت نقطتين مثيرتين: <code>/books/v1</code> و<code>/users/v1</code>.</p>
+<p>لو تصفحنا مسار <code>/ui</code>، هنلاقي توثيق الـ API كامل — ده شائع في white-box testing، لكن مش ترف عادةً متاح في black-box test.</p>
+<p><strong>الخطوة 2 — اكتشاف حسابات مستخدمين:</strong></p>
+<p>التطبيق رجّع 3 حسابات مستخدمين، بما فيهم حساب إداري يستاهل تحقيق إضافي. نقدر نستخدم المعلومة دي لمحاولة brute force تاني بـ gobuster، المرة دي مستهدفين اسم المستخدم <code>admin</code> بـ wordlist أصغر، بتمديد مسار الـ API بإدراج اسم المستخدم <code>admin</code> في الآخر.</p>
+<p><strong>الخطوة 3 — استكشاف مسار الباسورد:</strong></p>
+<div class="code-wrap"><pre><code class="language-bash">curl -X GET http://192.168.50.16:5001/users/v1/admin/password
+# → 405 METHOD NOT ALLOWED
+</code></pre></div>
+<p>بدل <code>404 Not Found</code>، استلمنا <code>405 METHOD NOT ALLOWED</code>، يعني الـ URL المطلوب موجود فعلًا، لكن طريقة HTTP بتاعتنا مش مدعومة. <code>curl</code> افتراضيًا بيستخدم <code>GET</code>، فنقدر نجرّب نتفاعل مع API الباسورد بطريقة تانية زي <code>POST</code> أو <code>PUT</code>. الطريقتين دول، لو مسموح بيهم، ممكن يسمحوا لنا نتجاوز بيانات اعتماد المستخدم (باسورد الـ admin في الحالة دي).</p>
+<p><strong>الخطوة 4 — التحقق من مسار login:</strong></p>
+<div class="code-wrap"><pre><code class="language-bash">curl -X GET http://192.168.50.16:5001/users/v1/login
+# → 404 NOT FOUND, لكن الرسالة: &quot;user not found&quot; (مش path not found)
+</code></pre></div>
+<p>رغم رسالة 404، نص الرسالة بيقول إن <strong>المستخدم</strong> مش موجود — إشارة واضحة تانية إن الـ API نفسه موجود، وإحنا محتاجين بس نلاقي الطريقة الصح للتفاعل معاه.</p>
+<div class="code-wrap"><pre><code class="language-bash">curl -X POST http://192.168.50.16:5001/users/v1/login \
+  -H &quot;Content-Type: application/json&quot; \
+  -d '{&quot;username&quot;:&quot;admin&quot;,&quot;password&quot;:&quot;dummy&quot;}'
+# → &quot;authentication failed&quot; (يعني الباراميترات متشكَّلة صح)
+</code></pre></div>
+<p><strong>الخطوة 5 — تسجيل مستخدم جديد واستغلال ثغرة منطقية:</strong></p>
+<p>بما إننا مش عارفين باسورد admin، نجرّب مسار تاني ونشوف إذا كنا نقدر نسجّل مستخدم جديد:</p>
+<div class="code-wrap"><pre><code class="language-bash">curl -X POST http://192.168.50.16:5001/users/v1/register \
+  -H &quot;Content-Type: application/json&quot; \
+  -d '{&quot;username&quot;:&quot;attacker&quot;,&quot;password&quot;:&quot;Password123&quot;}'
+# → fail: &quot;email required&quot;
+</code></pre></div>
+<p>الـ API ردّ برسالة فشل بتقول إننا لازم نضيف عنوان إيميل. نستغل الفرصة دي عشان نحدد لو فيه مفتاح إداري ممكن نسيء استخدامه — نضيف مفتاح <code>admin</code> بقيمة <code>True</code>:</p>
+<div class="code-wrap"><pre><code class="language-bash">curl -X POST http://192.168.50.16:5001/users/v1/register \
+  -H &quot;Content-Type: application/json&quot; \
+  -d '{&quot;username&quot;:&quot;attacker&quot;,&quot;password&quot;:&quot;Password123&quot;,&quot;email&quot;:&quot;a@a.com&quot;,&quot;admin&quot;:true}'
+</code></pre></div>
+<blockquote>
+<p>نجحنا نسجّل دخول صح واسترجعنا <strong>JWT authentication token</strong>.</p>
+</blockquote>
+<p><strong>الخطوة 6 — تأكيد الاستيلاء على الحساب:</strong></p>
+<p>عشان نحصل على دليل ملموس إننا مستخدم إداري، نستخدم الـ token ده عشان نغيّر باسورد المستخدم admin، بصياغة طلب POST يستهدف API الباسورد:</p>
+<div class="code-wrap"><pre><code class="language-bash">curl -X POST http://192.168.50.16:5001/users/v1/admin/password \
+  -H &quot;Authorization: Bearer &lt;JWT_TOKEN&gt;&quot; \
+  -H &quot;Content-Type: application/json&quot; \
+  -d '{&quot;password&quot;:&quot;NewAdminPass123&quot;}'
+# → &quot;incorrect method&quot;
+</code></pre></div>
+<p>للأسف، التطبيق بيقول إن الطريقة المستخدَمة غلط. طريقة <strong>PUT</strong> (مع <strong>PATCH</strong>) غالبًا بتُستخدم لاستبدال قيمة بدل إنشائها عبر POST، فنجرّب نحددها صراحةً:</p>
+<div class="code-wrap"><pre><code class="language-bash">curl -X PUT http://192.168.50.16:5001/users/v1/admin/password \
+  -H &quot;Authorization: Bearer &lt;JWT_TOKEN&gt;&quot; \
+  -H &quot;Content-Type: application/json&quot; \
+  -d '{&quot;password&quot;:&quot;NewAdminPass123&quot;}'
+# → مفيش رسالة خطأ
+</code></pre></div>
+<p>المرة دي ملقيناش رسالة خطأ، فنقدر نفترض إن منطق الـ backend ما رفضش العملية. عشان نثبت إن الهجوم نجح، نجرّب ندخل كـ admin بالباسورد الجديد:</p>
+<div class="code-wrap"><pre><code class="language-bash">curl -X POST http://192.168.50.16:5001/users/v1/login \
+  -H &quot;Content-Type: application/json&quot; \
+  -d '{&quot;username&quot;:&quot;admin&quot;,&quot;password&quot;:&quot;NewAdminPass123&quot;}'
+# → تسجيل دخول ناجح!
+</code></pre></div>
+<blockquote>
+<p><strong>نجحنا نستولي على حساب admin باستغلال bug منطقي في تصعيد الصلاحيات موجود في API التسجيل.</strong> أخطاء برمجية من النوع ده بتحصل بدرجات متفاوتة عند بناء تطبيقات ويب بتعتمد على APIs مخصَّصة، غالبًا بسبب نقص الاختبار وممارسات البرمجة الآمنة.</p>
+</blockquote>
+<h3>إعادة بناء الهجوم في Burp</h3>
+<p>الاعتماد على <code>curl</code> يدويًا مش هيتوسّع كويس لما عدد الـ APIs يكبر. نقدر نعيد بناء كل الخطوات اللي فاتت من جوه Burp بإضافة <code>--proxy 127.0.0.1:8080</code> لأمر curl. بعد كده، من تبويب <strong>Repeater</strong> بتاع Burp، نقدر ننشئ طلب فاضي جديد ونملاه بنفس البيانات.</p>
+<blockquote>
+<p>من <strong>Burp's Site map</strong> (تبويب <code>Target &gt; Site map</code>)، نقدر نتابع الـ APIs اللي اكتشفناها ونمرّر أي طلب محفوظ لـ Repeater أو Intruder لاختبار إضافي.</p>
+</blockquote>
+<hr />
+<h2 id="lu4"><span class="num">04</span><span class="htext">Cross-Site Scripting (XSS)</span></h2>
+<h3>أهداف الوحدة</h3>
+<p>فهم أنواع ثغرة Cross-Site Scripting | استغلال XSS أساسي | تنفيذ تصعيد صلاحيات عبر XSS</p>
+<p>واحدة من أهم خصائص تطبيق ويب محمي كويس هي <strong>data sanitization</strong> — عملية بتتم فيها معالجة مدخل المستخدم بحيث كل الحروف أو النصوص الخطيرة بتتشال أو تتحوّل. بيانات غير منقّاة بتسمح للمهاجم يحقن، وربما ينفّذ، كود خبيث.</p>
+<blockquote>
+<p><strong>Cross-Site Scripting (XSS)</strong> هي ثغرة بتستغل ثقة المستخدم في موقع عن طريق حقن محتوى ديناميكي في الصفحة اللي متصفح المستخدم بيعرضها.</p>
+</blockquote>
+<h3>نظرية Stored مقابل Reflected XSS</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>النوع</th>
+<th>الوصف</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Stored XSS</strong> (Persistent XSS)</td>
+<td>الـ payload بيتخزّن في قاعدة بيانات أو يتخزّن مؤقتًا عن طريق السيرفر. تطبيق الويب بعدين بيسترجع الـ payload ده ويعرضه لأي حد بيزور صفحة عرضة للخطر. ثغرة Stored XSS واحدة ممكن تهاجم كل مستخدمي الموقع. شائعة في سوفت وير المنتديات، خاصةً أقسام التعليقات، مراجعات المنتجات، أو أي مكان محتوى المستخدم ممكن يتخزّن ويتراجع لاحقًا</td>
+</tr>
+<tr>
+<td><strong>Reflected XSS</strong></td>
+<td>الـ payload عادةً متضمَّن في طلب أو لينك مصمَّم. تطبيق الويب بياخد القيمة دي ويحطها في محتوى الصفحة. النوع ده بيهاجم بس الشخص اللي قدّم الطلب أو زار اللينك. شائعة في حقول ونتائج البحث، وأي مكان مدخل المستخدم بيتضمَّن في رسائل خطأ</td>
+</tr>
+</tbody>
+</table></div>
+<p>أي من النوعين دول ممكن يظهر على جانب العميل (المتصفح) أو السيرفر؛ كمان ممكن تكون <strong>DOM-based</strong>.</p>
+<blockquote>
+<p><strong>DOM-based XSS</strong> بتحصل حصريًا جوه Document Object Model (DOM) بتاع الصفحة. المتصفحات بتحلّل محتوى HTML الخاص بالصفحة وبتولّد تمثيل DOM داخلي. النوع ده من XSS بيحصل لما DOM الصفحة بيتعدّل بقيم يتحكم فيها المستخدم. ممكن تكون مخزَّنة أو reflected؛ المفتاح هو إن هجمات DOM-based XSS بتحصل لما المتصفح بيحلّل محتوى الصفحة وJavaScript المحقون بيتنفّذ.</p>
+</blockquote>
+<p>بغض النظر عن إزاي الـ XSS payload بيتوصّل وينفّذ، السكربتات المحقونة بتشتغل جوه سياق المستخدم اللي بيزور الصفحة المتأثرة — يعني متصفح المستخدم، مش تطبيق الويب، هو اللي بينفّذ الـ XSS payload.</p>
+<h3>مراجعة JavaScript سريعة</h3>
+<p>JavaScript لغة برمجة عالية المستوى بقت واحدة من المكونات الأساسية لتطبيقات الويب الحديثة. لما المتصفح بيعالج استجابة HTTP من السيرفر فيها HTML، المتصفح بينشئ شجرة DOM ويعرضها. الـ DOM بيتكوّن من كل الـ forms، inputs، صور...إلخ المرتبطة بصفحة الويب.</p>
+<p>دور JavaScript هو الوصول وتعديل DOM الصفحة، مما ينتج تجربة مستخدم أكتر تفاعلية. من منظور المهاجم، ده كمان بيعني إنه لو قدرنا نحقن كود JavaScript في التطبيق، نقدر نوصل ونعدّل DOM الصفحة. بوصول للـ DOM، نقدر نحوّل نماذج تسجيل الدخول، نستخرج باسوردات، ونسرق session cookies.</p>
+<h3>تحديد ثغرات XSS</h3>
+<p>نقدر نلاقي نقاط دخول محتملة لـ XSS بفحص تطبيق الويب وتحديد حقول مدخل (زي حقول البحث) بتقبل مدخل غير منقّى، وبعدين بيتعرض كخرج في صفحات لاحقة. بمجرد ما نحدد نقطة دخول، نقدر ندخل حروف خاصة ونراقب الخرج لنحدد إذا كان أي من الحروف الخاصة بيرجع من غير فلترة.</p>
+<p><strong>أشيع الحروف الخاصة المستخدَمة لهذا الغرض:</strong></p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>الحرف</th>
+<th>الاستخدام</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>&lt;</code> و <code>&gt;</code></td>
+<td>HTML بتستخدمهم لتحديد العناصر، المكونات المختلفة اللي بتشكّل مستند HTML</td>
+</tr>
+<tr>
+<td><code>{</code> و <code>}</code></td>
+<td>JavaScript بتستخدمهم في إعلانات الدوال</td>
+</tr>
+<tr>
+<td><code>'</code> و <code>"</code></td>
+<td>بتستخدم لتحديد النصوص (strings)</td>
+</tr>
+<tr>
+<td><code>;</code></td>
+<td>بتستخدم لتحديد نهاية جملة برمجية</td>
+</tr>
+</tbody>
+</table></div>
+<p>لو التطبيق ما شالش أو ما شفّرش الحروف دي، ممكن يكون عرضة لـ XSS لأن التطبيق بيفسّر الحروف كجزء من الكود، وده بدوره بيمكّن كود إضافي.</p>
+<h3>الترميز (Encoding)</h3>
+<p>فيه أنواع ترميز متعددة، لكن أشيعها في تطبيقات الويب هم <strong>HTML encoding</strong> و<strong>URL encoding</strong>:</p>
+<ul>
+<li><strong>URL encoding</strong> (أحيانًا بيُشار له بـ percent encoding) — بيُستخدم لتحويل الحروف غير-ASCII والمحجوزة في الـ URLs — مثلًا تحويل مسافة لـ <code>%20</code></li>
+<li><strong>HTML encoding</strong> (character references) — بتُستخدم لعرض حروف عادةً ليها معاني خاصة، زي عناصر tag. مثلًا، <code>&amp;lt;</code> هو character reference لـ <code>&lt;</code>. لما المتصفح يقابل الترميز ده، مش هيفسّر الحرف كبداية عنصر، لكن هيعرض الحرف الفعلي زي ما هو</li>
+</ul>
+<p>لو قدرنا نحقن الحروف الخاصة دي في الصفحة، المتصفح هيعاملها كعناصر كود. بعدين نقدر نبدأ نبني كود هينفّذ في متصفح الضحية بمجرد ما يحمّل كود JavaScript المحقون الخبيث.</p>
+<blockquote>
+<p>ممكن نحتاج نستخدم مجموعات حروف مختلفة حسب مكان إدخالنا. مثلًا، لو مدخلنا بيتضاف بين <code>div</code> tags، هنحتاج نضمّن <code>&lt;script&gt;</code> tags بتاعتنا الخاصة ونحتاج نقدر نحقن <code>&lt;</code> و<code>&gt;</code> كجزء من الـ payload. لو مدخلنا بيتضاف جوه <code>&lt;script&gt;</code> tag موجود أصلًا، ممكن نحتاج بس علامات اقتباس وفواصل منقوطة عشان نضيف كودنا.</p>
+</blockquote>
+<h3>مثال تطبيقي كامل: استغلال Stored XSS</h3>
+<p><strong>السيناريو:</strong> تثبيت WordPress شغّال عليه plugin اسمه <strong>Visitors</strong> عرضة لـ stored XSS. الميزة الأساسية للـ plugin هي تسجيل بيانات زوار الموقع، بما فيها IP، المصدر، وحقل <strong>User-Agent</strong>.</p>
+<p><strong>الخطوة 1 — فحص الكود المصدري (white-box):</strong></p>
+<p>لو فحصنا ملف <code>database.php</code> بتاع الـ plugin، نلاقي دالة PHP مسؤولة عن تحليل رؤوس طلب HTTP مختلفة، بما فيها الـ User-Agent، اللي بيتخزّن في قيمة سجل <code>useragent</code>. كل مرة مدير WordPress بيحمّل لوحة تحكم الـ Visitors plugin، الكود في <code>start.php</code> بيسترجع قيمة سجل <code>useragent</code> من قاعدة البيانات ويُدخلها مباشرة جوه الـ HTML tag بتاع الجدول (<code>td</code>)، <strong>من غير أي نوع تنقية بيانات</strong>.</p>
+<blockquote>
+<p>بما إن رأس User-Agent تحت تحكم المستخدم، نقدر نصمّم هجوم XSS بإدخال <code>&lt;script&gt;</code> tag بينادي دالة <code>alert()</code> عشان نولّد رسالة pop-up — طريقة شائعة جدًا للتحقق إن التطبيق عرضة لـ XSS.</p>
+</blockquote>
+<p><strong>الخطوة 2 — تنفيذ الهجوم (black-box عبر Burp):</strong></p>
+<p>بـ Burp مضبوط كـ proxy والـ Intercept معطَّل، نبدأ بتصفح <code>http://offsecwp/</code> بـ Firefox. بعدين، في <code>Burp Proxy &gt; HTTP History</code>، كليك يمين على الطلب ونختار <strong>Send to Repeater</strong>.</p>
+<p>في تبويب <strong>Repeater</strong>، نستبدل قيمة الـ User-Agent الافتراضية بـ:</p>
+<div class="code-wrap"><pre><code class="language-html">&lt;script&gt;alert(42)&lt;/script&gt;
+</code></pre></div>
+<p>ونبعت الطلب. لو السيرفر رد برسالة <code>200 OK</code>، نقدر نكون واثقين إن الـ payload اتخزّن دلوقتي في قاعدة بيانات WordPress.</p>
+<p><strong>الخطوة 3 — التحقق من نجاح الحقن:</strong></p>
+<p>نسجّل دخول للوحة تحكم admin على <code>http://offsecwp/wp-login.php</code> بالاعتمادات <code>admin</code>/<code>password</code>. لما نروح للوحة تحكم الـ Visitors plugin، هنتقابل بـ pop-up banner بيعرض الرقم 42 — دليل إن حقن الكود بتاعنا نجح.</p>
+<blockquote>
+<p>حقنّا XSS payload في قاعدة بيانات التطبيق، وهيتعرض لأي مدير بيحمّل الـ plugin. رسالة alert بسيطة مثال تافه نسبيًا لإيه اللي ممكن يتعمل بـ XSS، فخلّينا نجرّب حاجة أكتر إثارة، زي إنشاء حساب إداري جديد.</p>
+</blockquote>
+<h3>تصعيد الصلاحيات عبر XSS</h3>
+<p>بما إننا دلوقتي قادرين نخزّن كود JavaScript جوه تطبيق WordPress المستهدَف وخليه ينفّذ من مستخدم admin لما يحمّل الصفحة، إحنا جاهزين نبقى أكتر إبداعًا ونستكشف طرق مختلفة للحصول على صلاحيات إدارية.</p>
+<p><strong>محاولة سرقة الكوكيز:</strong></p>
+<p>ممكن نستفيد من الـ XSS بتاعنا عشان نسرق كوكيز ومعلومات الجلسة لو التطبيق بيستخدم إعداد إدارة جلسة غير آمن. لو قدرنا نسرق كوكي مستخدم موثَّق، نقدر ننتحل شخصية المستخدم ده جوه الموقع المستهدف.</p>
+<p>مواقع الويب بتستخدم كوكيز لتتبّع حالة ومعلومات المستخدمين. الكوكيز ممكن تتضبط بعلامات اختيارية، بما فيها اتنين مهمين جدًا لينا كمختبري اختراق:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>العلامة</th>
+<th>الوظيفة</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Secure</strong></td>
+<td>بتوجّه المتصفح إنه يبعت الكوكي بس عبر اتصالات مشفَّرة زي HTTPS — ده بيحمي الكوكي من إنها تتبعت كنص واضح وتتلقط على الشبكة</td>
+</tr>
+<tr>
+<td><strong>HttpOnly</strong></td>
+<td>بتوجّه المتصفح إنه يمنع وصول JavaScript للكوكي. لو العلامة دي مش متحددة، نقدر نستخدم XSS payload نسرق الكوكي</td>
+</tr>
+</tbody>
+</table></div>
+<p>بفحص كوكيز جلسة WordPress (عبر <code>Web Developer Tools &gt; Storage &gt; Cookies</code>)، لقينا 6 كوكيز مختلفة مخزَّنة، لكن 4 بس منهم session cookies. من الـ 4 دول، لو استبعدنا <code>wordpress_test_cookie</code> اللي مش مهم، كلهم بيدعموا ميزة <strong>HttpOnly</strong>.</p>
+<blockquote>
+<p>بما إن كل كوكيز الجلسة بتتبعت عبر HTTP بس، للأسف مش ممكن نسترجعها عبر JavaScript من خلال متجه الهجوم بتاعنا. هنحتاج نلاقي زاوية جديدة.</p>
+</blockquote>
+<h3>الاستفادة من تنفيذ JavaScript بدل سرقة الكوكيز</h3>
+<p>لما الـ admin بيحمّل لوحة تحكم الـ Visitors plugin اللي فيها JavaScript المحقون، هيتنفّذ أي حاجة قدّمناها كـ payload — سواء alert pop-up أو دالة JavaScript أعقد. مثلًا، نقدر نصمّم دالة JavaScript بتضيف حساب إداري WordPress تاني، بحيث بمجرد ما الـ admin الحقيقي ينفّذ الكود المحقون، الدالة هتتنفّذ من وراه.</p>
+<h3>فهم الـ Nonce وCSRF</h3>
+<p>عشان ننجح في زاوية الهجوم دي، لازم نغطّي فئة هجوم تطبيق ويب تانية. أول حاجة، هنعمل دالة JS بتجيب الـ WordPress admin <strong>nonce</strong>.</p>
+<blockquote>
+<p>الـ <strong>nonce</strong> هو توكِن بيتولّد من السيرفر ومتضمَّن في كل طلب HTTP عشان يضيف عشوائية ويمنع هجمات <strong>Cross-Site-Request-Forgery (CSRF)</strong>.</p>
+</blockquote>
+<p>هجوم <strong>CSRF</strong> بيحصل عبر social engineering، حيث الضحية بتدوس على لينك خبيث بينفّذ فعل مُعدّ مسبقًا نيابةً عن المستخدم. اللينك الخبيث ممكن يتخفّى بوصف ظاهريًا غير ضار، غالبًا بيجذب الضحية تدوس عليه. لو اللينك ده اتضمَّن جوه كود HTML في إيميل، المستخدم هيقدر يشوف بس وصف اللينك، مش المورد الفعلي اللي بيشير له. الهجوم ده هينجح لو المستخدم أصلًا مسجّل دخول بجلسة صالحة على نفس الموقع.</p>
+<p>في حالتنا، بتضمين وفحص الـ nonce شبه العشوائي، WordPress بتمنع النوع ده من الهجوم، بما إن المهاجم مش هيكون عنده معرفة مسبقة بالتوكِن. لكن، زي ما هنوضّح، الـ nonce مش هيكون عقبة لثغرة الـ stored XSS اللي اكتشفناها في الـ plugin.</p>
+<h3>بناء هجوم إنشاء حساب admin</h3>
+<p><strong>الخطوة 1 — جلب الـ nonce ديناميكيًا:</strong></p>
+<div class="code-wrap"><pre><code class="language-javascript">// الدالة بتبعت طلب HTTP جديد لـ /wp-admin/user-new.php
+// وبتحفظ قيمة الـ nonce الموجودة في استجابة HTTP بناءً على regular expression
+// النمط بيطابق أي قيمة alphanumeric محصورة بين النص /ser&quot; value=&quot; وعلامات اقتباس مزدوجة
+</code></pre></div>
+<p><strong>الخطوة 2 — صياغة دالة إنشاء حساب admin جديد:</strong></p>
+<p>الدالة الأساسية بتستخدم الـ nonce اللي جبناه عشان تنشئ حساب admin backdoor جديد. لو الهجوم نجح، هنقدر نوصل لصلاحيات إدارية على تثبيت WordPress كامل.</p>
+<p><strong>الخطوة 3 — تصغير (minify) وترميز الـ payload:</strong></p>
+<p>عشان نضمن إن الـ JavaScript payload بتاعنا هيتعامل معاه Burp والتطبيق المستهدف صح، لازم أولًا نصغّره، بعدين نرمّزه:</p>
+<div class="code-wrap"><pre><code class="language-bash"># نستخدم JS Compress أو أداة مشابهة عشان نصغّر الكود لسطر واحد
+</code></pre></div>
+<p>كخطوة أخيرة، بنرمّز كود الـ JavaScript المُصغَّر، عشان أي حروف "سيئة" ما تتعارضش مع إرسال الـ payload:</p>
+<div class="code-wrap"><pre><code class="language-javascript">function encode_to_javascript(str) {
+  let result = '';
+  for (let i = 0; i &lt; str.length; i++) {
+    result += str.charCodeAt(i) + ',';
+  }
+  return result;
+}
+</code></pre></div>
+<p>الدالة دي بتحلّل قيمة سلسلة الـ JS المصغَّرة، وبتحوّل كل حرف لكود UTF-16 integer المقابل باستخدام الدالة <code>charCodeAt</code>.</p>
+<p><strong>الخطوة 4 — فك الترميز والتنفيذ:</strong></p>
+<p>هنفكّ ترميز ونفّذ السلسلة المرمَّزة أولًا بفكها عبر دالة <code>fromCharCode</code>، بعدين تشغيلها عبر <code>eval()</code>:</p>
+<div class="code-wrap"><pre><code class="language-javascript">eval(String.fromCharCode(/* الكود المرمَّز هنا */));
+</code></pre></div>
+<p><strong>الخطوة 5 — إطلاق الهجوم عبر curl وBurp:</strong></p>
+<p>بمجرد نسخ السلسلة المرمَّزة، نقدر ندخّلها في أمر curl ونطلق الهجوم:</p>
+<div class="code-wrap"><pre><code class="language-bash">curl -A &quot;&lt;script&gt;eval(String.fromCharCode(...))&lt;/script&gt;&quot; \
+  --proxy 127.0.0.1:8080 \
+  -k http://offsecwp/
+</code></pre></div>
+<p>قبل ما نشغّل أمر الهجوم بـ curl، نبدأ Burp ونسيب <strong>Intercept</strong> مفعَّل. وجّهنا curl إنه يبعت طلب HTTP مصمَّم خصيصًا برأس User-Agent فيه الـ payload الخبيث بتاعنا، بعدين نمرّره لـ Burp عشان نفحصه أكتر.</p>
+<p>بعد تشغيل أمر curl، نفحص الطلب في Burp — لو كل حاجة شكلها صح، نمرّر الطلب بالضغط على <strong>Forward</strong>، وبعدين نعطّل Intercept.</p>
+<p><strong>الخطوة 6 — التحقق من النجاح:</strong></p>
+<p>في النقطة دي، استغلال XSS بتاعنا المفروض يكون اتخزّن في قاعدة بيانات WordPress. محتاجين بس نحاكي التنفيذ بتسجيل دخول لـ OffSec WP instance كـ admin، بعدين الدوس على لوحة تحكم الـ Visitors plugin.</p>
+<blockquote>
+<p>هنلاحظ إن إدخال واحد بس موجود، ومفيش User-Agent اتسجّل ظاهريًا — ده لأن حقل الـ User-Agent احتوى هجومنا مُضمَّن جوه <code>&lt;script&gt;</code> tags، فالمتصفح مايقدرش يعرض أي نص منه. بتحميل إحصائيات الـ plugin، المفروض نكون نفّذنا السكربت الخبيث — نتحقق بالضغط على قايمة <strong>Users</strong> في اللوحة الشمال.</p>
+<p><strong>لو حساب admin جديد ظهر في القايمة، يبقى نجحنا نصعّد صلاحياتنا من ثغرة stored XSS بسيطة لحساب إداري كامل جديد على التطبيق.</strong></p>
+</blockquote>
+<hr />
+<h2 id="summary"><span class="htext">الخلاصة العامة للموديول</span></h2>
+<p>في الموديول ده، ركّزنا على تحديد وعمل enumeration لثغرات تطبيقات الويب الشائعة. استغللنا كمان عدة ثغرات شائعة، بما فيها إعدادات API خاطئة وCross-Site Scripting.</p>
+<p>ختمنا الموديول بالاستفادة من ثغرة XSS للحصول على صلاحيات إدارية على تطبيق ويب عرضة للخطر عبر طلب HTTP مصمَّم خصيصًا.</p>
+<hr />
+<p><em>نهاية نوتس الموديول السادس — OSCP: Introduction to Web Application Attacks</em></p>
+  <div class="footer-note">-- EOF: module-06/intro-to-web-application-attacks.md --</div>
+
+</div>
+</body>
+</html>

