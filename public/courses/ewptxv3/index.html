@@ -1,0 +1,138 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0b1020">
+  <meta name="description" content="eWPTXv3 Advanced Web Application Penetration Testing course notes.">
+  <title>eWPTXv3 Notes | Bad-Glitch</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0b1020;
+      --panel: #121a2d;
+      --border: #26334d;
+      --text: #e8eefb;
+      --muted: #9aaac4;
+      --accent: #69e0c1;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: radial-gradient(ellipse at top, #172541 0%, var(--bg) 58%);
+      color: var(--text);
+      font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+      line-height: 1.6;
+    }
+    .container { width: min(100% - 32px, 1000px); margin: auto; }
+    header { padding: 24px 0; }
+    .back { color: var(--accent); text-decoration: none; font-size: .95rem; }
+    .hero { padding: 55px 0 38px; }
+    .eyebrow {
+      color: var(--accent);
+      font-size: .8rem;
+      font-weight: 700;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+    }
+    h1 { margin: 12px 0; font-size: clamp(2.2rem, 7vw, 4rem); line-height: 1.1; }
+    .subtitle { max-width: 680px; color: var(--muted); font-size: 1.05rem; }
+    .stats { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 24px; }
+    .stat {
+      padding: 8px 13px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: #121a2d99;
+      color: var(--muted);
+      font-size: .9rem;
+    }
+    h2 { margin: 18px 0; font-size: 1.35rem; }
+    .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; padding-bottom: 55px; }
+    .module {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      min-height: 175px;
+      padding: 22px;
+      color: inherit;
+      text-decoration: none;
+      background: linear-gradient(145deg, #151f35, var(--panel));
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      transition: transform .18s ease, border-color .18s ease;
+    }
+    .module:hover { transform: translateY(-3px); border-color: var(--accent); }
+    .number { color: var(--accent); font-size: .78rem; font-weight: 750; letter-spacing: .1em; }
+    .module-title { font-size: 1.08rem; font-weight: 650; }
+    .open { margin-top: auto; color: var(--muted); font-size: .88rem; }
+    footer { padding: 22px 0 35px; border-top: 1px solid var(--border); color: var(--muted); font-size: .9rem; }
+    @media (max-width: 620px) {
+      .hero { padding-top: 35px; }
+      .grid { grid-template-columns: 1fr; }
+      .module { min-height: 150px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { transition: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <header class="container">
+    <a class="back" href="/archive/category/Courses%20Notes/">← Back to Courses Notes</a>
+  </header>
+  <main class="container">
+    <section class="hero">
+      <div class="eyebrow">Course Notes</div>
+      <h1>eWPTXv3</h1>
+      <p class="subtitle">
+        Advanced Web Application Penetration Testing — organized study notes
+        covering authentication, injection, APIs, WAF bypass, and server-side attacks.
+      </p>
+      <div class="stats">
+        <span class="stat">6 Modules</span>
+        <span class="stat">Web Application Security</span>
+        <span class="stat">Study Reference</span>
+      </div>
+    </section>
+    <section>
+      <h2>Course Modules</h2>
+      <div class="grid">
+              <a class="module" href="./module-01/">
+        <span class="number">MODULE 01</span>
+        <span class="module-title">Intro to Advanced Web Application Penetration Testing</span>
+        <span class="open">Open notes ↗</span>
+      </a>
+      <a class="module" href="./module-02/">
+        <span class="number">MODULE 02</span>
+        <span class="module-title">Authentication and SSO Attacks</span>
+        <span class="open">Open notes ↗</span>
+      </a>
+      <a class="module" href="./module-03/">
+        <span class="number">MODULE 03</span>
+        <span class="module-title">Advanced Injection Attacks</span>
+        <span class="open">Open notes ↗</span>
+      </a>
+      <a class="module" href="./module-04/">
+        <span class="number">MODULE 04</span>
+        <span class="module-title">API Penetration Testing</span>
+        <span class="open">Open notes ↗</span>
+      </a>
+      <a class="module" href="./module-05/">
+        <span class="number">MODULE 05</span>
+        <span class="module-title">Filter Evasion &amp; WAF Bypass Techniques</span>
+        <span class="open">Open notes ↗</span>
+      </a>
+      <a class="module" href="./module-06/">
+        <span class="number">MODULE 06</span>
+        <span class="module-title">Server Side Attacks</span>
+        <span class="open">Open notes ↗</span>
+      </a>
+      </div>
+    </section>
+  </main>
+  <footer>
+    <div class="container">Bad-Glitch · eWPTXv3 Notes</div>
+  </footer>
+</body>
+</html>

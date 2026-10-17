@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>eWPTXv3 · Module 05: تجاوز الفلاتر وأنظمة WAF</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-0:#0B0B0D;--bg-1:#121214;--surface:#17171A;--surface-2:#1D1D21;
+    --border:#2A2A2F;--border-soft:#232326;
+    --text:#E6E6E9;--text-soft:#C4C4CA;--muted:#8A8A92;
+    --red:#E1362F;--red-soft:rgba(225,54,47,0.10);--red-border:rgba(225,54,47,0.35);
+    --red-grad:linear-gradient(90deg,#E1362F,#F2794A);
+    --amber:#E8A23A;--amber-soft:rgba(232,162,58,0.09);--amber-border:rgba(232,162,58,0.30);
+    --green:#3FBF6E;--green-soft:rgba(63,191,110,0.09);--green-border:rgba(63,191,110,0.30);
+    --blue:#4EA1D3;--blue-soft:rgba(78,161,211,0.09);--blue-border:rgba(78,161,211,0.30);
+    --purple:#A179E8;--purple-soft:rgba(161,121,232,0.10);--purple-border:rgba(161,121,232,0.32);
+    --mono:'IBM Plex Mono','Courier New',monospace;
+  }
+  html[data-theme="light"]{
+    --bg-0:#F4F3F1;--bg-1:#ECEBE8;--surface:#FFFFFF;--surface-2:#F3F2EF;
+    --border:#DEDCD6;--border-soft:#E6E4DF;--text:#1C1B19;--text-soft:#3C3A36;--muted:#726F68;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;direction:rtl;text-align:right;background:var(--bg-0);}
+  body{font-family:'Cairo','Segoe UI',Tahoma,sans-serif;line-height:1.95;font-size:16.5px;color:var(--text);
+    background:radial-gradient(900px 420px at 12% -8%,rgba(225,54,47,0.10),transparent 60%),
+               radial-gradient(800px 420px at 90% 6%,rgba(232,162,58,0.06),transparent 60%),
+               linear-gradient(180deg,var(--bg-0) 0%,var(--bg-1) 100%);
+    background-attachment:fixed;transition:background 0.2s ease,color 0.2s ease;}
+  html[data-theme="light"] body{background:radial-gradient(900px 420px at 12% -8%,rgba(225,54,47,0.06),transparent 60%),radial-gradient(800px 420px at 90% 6%,rgba(232,162,58,0.05),transparent 60%),linear-gradient(180deg,var(--bg-0) 0%,var(--bg-1) 100%);}
+  .progress-rail{position:fixed;top:0;inset-inline:0;height:3px;background:rgba(255,255,255,0.04);z-index:60;}
+  html[data-theme="light"] .progress-rail{background:rgba(0,0,0,0.05);}
+  .progress-bar{height:100%;width:0%;background:var(--red-grad);transition:width 0.08s linear;}
+  .float-controls{position:fixed;bottom:22px;left:22px;z-index:55;display:flex;flex-direction:column;gap:10px;}
+  .fctrl-btn{width:42px;height:42px;border-radius:50%;background:var(--surface);border:1px solid var(--border);color:var(--text-soft);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;box-shadow:0 10px 24px -10px rgba(0,0,0,0.5);transition:transform 0.15s ease,border-color 0.15s ease,opacity 0.2s ease;}
+  .fctrl-btn:hover{transform:translateY(-2px);border-color:var(--red-border);color:var(--red);}
+  #toTop{opacity:0;pointer-events:none;}
+  #toTop.show{opacity:1;pointer-events:auto;}
+  .page{max-width:860px;margin:0 auto;padding:46px 22px 100px;}
+  .banner{position:relative;overflow:hidden;background:linear-gradient(155deg,var(--surface) 0%,var(--bg-1) 55%,var(--surface) 100%);border:1px solid var(--border-soft);border-radius:10px;padding:0 0 34px;margin-bottom:26px;box-shadow:0 20px 50px -20px rgba(0,0,0,0.6);}
+  .term-bar{display:flex;align-items:center;gap:8px;padding:13px 18px;border-bottom:1px solid var(--border-soft);background:rgba(255,255,255,0.015);direction:ltr;}
+  .term-dot{width:11px;height:11px;border-radius:50%;display:inline-block;}
+  .term-dot.r{background:#E1362F;}.term-dot.y{background:#E8A23A;}.term-dot.g{background:#3FBF6E;}
+  .term-path{margin-inline-start:12px;font-family:var(--mono);font-size:12px;color:var(--muted);}
+  .theme-switch{margin-inline-start:auto;font-family:var(--mono);font-size:11px;color:var(--muted);background:transparent;border:1px solid var(--border);border-radius:4px;padding:4px 9px;cursor:pointer;}
+  .theme-switch:hover{color:var(--amber);border-color:var(--amber-border);}
+  .banner-body{padding:30px 34px 4px;}
+  .banner .kicker{display:inline-block;font-family:var(--mono);font-size:12.5px;letter-spacing:0.03em;color:var(--red);background:var(--red-soft);border:1px solid var(--red-border);border-radius:3px;padding:5px 12px;margin-bottom:20px;direction:ltr;}
+  .banner h1{margin:0 0 14px;font-size:28px;font-weight:800;line-height:1.5;color:var(--text);}
+  .banner .lede{color:var(--muted);font-size:15.5px;line-height:1.95;max-width:640px;margin:0 0 24px;}
+  .tags{display:flex;flex-wrap:wrap;gap:9px;}
+  .tag{font-size:12.5px;font-family:var(--mono);color:var(--amber);background:var(--amber-soft);border:1px solid var(--amber-border);border-radius:3px;padding:5px 11px;}
+  .toc{background:var(--surface);border:1px solid var(--border-soft);border-radius:8px;padding:6px 0 6px;margin-bottom:50px;overflow:hidden;}
+  .toc-title{font-family:var(--mono);font-weight:600;font-size:13px;color:var(--green);padding:14px 22px;border-bottom:1px solid var(--border-soft);direction:ltr;text-align:left;}
+  .toc-list{display:flex;flex-direction:column;}
+  .toc-item{display:flex;align-items:center;gap:14px;padding:12px 22px;color:var(--text-soft);text-decoration:none;font-size:14.5px;border-bottom:1px solid rgba(255,255,255,0.03);transition:background 0.15s ease;}
+  .toc-list .toc-item:last-child{border-bottom:none;}
+  .toc-item:hover{background:var(--red-soft);}
+  .toc-num{flex:none;font-family:var(--mono);font-size:12.5px;font-weight:600;color:#0F0F10;background:var(--red-grad);border-radius:3px;padding:3px 8px;direction:ltr;}
+  h1,h2,h3,h4{font-weight:700;}
+  h2{display:flex;align-items:center;gap:14px;font-size:21px;margin:66px 0 22px;padding-bottom:16px;border-bottom:1px solid var(--border-soft);color:var(--text);}
+  h2 .num{flex:none;font-family:var(--mono);font-size:13px;font-weight:700;color:#0F0F10;background:var(--red-grad);border-radius:5px;padding:7px 12px;direction:ltr;}
+  h2 .htext{line-height:1.5;}
+  h3{font-size:17px;margin:34px 0 14px;color:var(--red);display:flex;align-items:center;gap:9px;}
+  h3::before{content:"#";font-family:var(--mono);color:var(--amber);font-weight:700;}
+  h4{font-size:14.8px;margin:22px 0 10px;color:var(--text-soft);font-family:var(--mono);}
+  p{margin:0 0 17px;color:var(--text);}
+  strong{color:var(--text);font-weight:700;}
+  :root:not([data-theme="light"]) strong{color:#FBFBFC;}
+  a{color:var(--amber);text-decoration:none;border-bottom:1px dashed var(--amber-border);}
+  hr{border:none;height:1px;margin:50px 0;background:linear-gradient(90deg,transparent,var(--border),transparent);}
+  ul,ol{margin:0 0 18px;padding-inline-start:24px;}
+  li{margin-bottom:9px;color:var(--text);}
+  li::marker{color:var(--red);font-family:var(--mono);}
+  li>ul,li>ol{margin-top:9px;}
+  .goals-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px;margin:0 0 22px;}
+  .goal-card{display:flex;gap:10px;align-items:flex-start;background:var(--surface);border:1px solid var(--border-soft);border-radius:7px;padding:13px 15px;font-size:14px;color:var(--text-soft);}
+  .goal-card .gi{flex:none;font-family:var(--mono);font-size:11px;font-weight:700;color:var(--green);background:var(--green-soft);border:1px solid var(--green-border);border-radius:4px;width:22px;height:22px;display:flex;align-items:center;justify-content:center;}
+  blockquote{margin:24px 0;padding:17px 22px;background:var(--red-soft);border:1px solid var(--red-border);border-inline-start:3px solid var(--red);border-radius:6px;color:var(--text-soft);}
+  blockquote p{margin:0;color:inherit;line-height:1.85;}
+  blockquote p+p{margin-top:10px;}
+  blockquote strong{color:var(--text);}
+  .callout{margin:24px 0;padding:17px 22px 18px;border-radius:6px;border:1px solid var(--border-soft);border-inline-start:3px solid var(--border);background:var(--surface);}
+  .callout p{margin:0;color:var(--text-soft);line-height:1.85;}
+  .callout p+p{margin-top:10px;}
+  .callout ul{margin:6px 0 0;}
+  .callout-label{display:inline-flex;align-items:center;gap:7px;font-family:var(--mono);font-size:11.5px;font-weight:700;letter-spacing:0.02em;text-transform:uppercase;margin-bottom:10px;direction:ltr;}
+  .callout.note{border-inline-start-color:var(--blue);background:var(--blue-soft);}
+  .callout.note .callout-label{color:var(--blue);}
+  .callout.warning{border-inline-start-color:var(--red);background:var(--red-soft);}
+  .callout.warning .callout-label{color:var(--red);}
+  .callout.tip{border-inline-start-color:var(--green);background:var(--green-soft);}
+  .callout.tip .callout-label{color:var(--green);}
+  .callout.examtip{border-inline-start-color:var(--purple);background:var(--purple-soft);}
+  .callout.examtip .callout-label{color:var(--purple);}
+  .callout.case{border-inline-start-color:var(--amber);background:var(--amber-soft);}
+  .callout.case .callout-label{color:var(--amber);}
+  .callout.definition{border-inline-start-color:var(--muted);background:var(--surface-2);}
+  .callout.definition .callout-label{color:var(--text-soft);}
+  .callout.danger{border-inline-start-color:#FF5A52;background:rgba(255,90,82,0.08);}
+  .callout.danger .callout-label{color:#FF5A52;}
+  .table-wrap{overflow-x:auto;margin:22px 0;border:1px solid var(--border-soft);border-radius:8px;}
+  table{width:100%;border-collapse:collapse;font-size:14.2px;min-width:480px;}
+  thead th{background:var(--surface-2);color:var(--amber);font-weight:700;font-family:var(--mono);font-size:12.5px;text-transform:uppercase;letter-spacing:0.02em;text-align:start;padding:13px 15px;border-bottom:1px solid var(--border-soft);white-space:nowrap;}
+  tbody td{padding:12px 15px;border-bottom:1px solid var(--border-soft);color:var(--text-soft);vertical-align:top;}
+  tbody tr:last-child td{border-bottom:none;}
+  tbody tr:nth-child(even){background:rgba(127,127,127,0.03);}
+  tbody tr:hover{background:var(--red-soft);}
+  code{font-family:var(--mono);font-size:13.3px;background:var(--surface-2);border:1px solid var(--border-soft);border-radius:4px;padding:2px 6px;direction:ltr;unicode-bidi:embed;color:var(--green);}
+  .code-wrap{position:relative;overflow-x:auto;margin:22px 0;}
+  .code-tag{position:absolute;top:10px;left:14px;font-family:var(--mono);font-size:10.5px;color:var(--muted);letter-spacing:0.04em;text-transform:uppercase;z-index:2;}
+  .copy-btn{position:absolute;top:8px;right:10px;z-index:2;font-family:var(--mono);font-size:11px;color:var(--muted);background:var(--surface-2);border:1px solid var(--border-soft);border-radius:4px;padding:4px 9px;cursor:pointer;direction:ltr;}
+  .copy-btn:hover{color:var(--amber);border-color:var(--amber-border);}
+  .copy-btn.copied{color:var(--green);border-color:var(--green-border);}
+  pre{background:var(--bg-0);border:1px solid var(--border-soft);border-inline-start:3px solid var(--red);border-radius:8px;padding:30px 22px 18px;direction:ltr;text-align:left;margin:0;}
+  html[data-theme="light"] pre{background:#16181C;}
+  pre code{background:none;border:none;padding:0;color:#B9E8C9;font-size:13.2px;line-height:1.75;}
+  .diagram-card{background:var(--surface);border:1px solid var(--border-soft);border-radius:10px;padding:22px 18px 16px;margin:24px 0;}
+  .diagram-card svg{width:100%;height:auto;display:block;}
+  .diagram-caption{margin-top:10px;text-align:center;font-family:var(--mono);font-size:11.5px;color:var(--muted);}
+  .takeaways{background:var(--surface);border:1px solid var(--border-soft);border-radius:8px;padding:18px 22px 20px;margin:30px 0 10px;}
+  .takeaways-title{font-family:var(--mono);font-size:12.5px;font-weight:700;color:var(--green);margin-bottom:12px;direction:ltr;text-align:left;display:flex;align-items:center;gap:8px;}
+  .takeaways ul{margin:0;padding-inline-start:20px;}
+  .takeaways li{color:var(--text-soft);font-size:14.5px;}
+  .cheat-section h4{color:var(--amber);font-size:13px;margin:26px 0 8px;}
+  .step-track{display:flex;flex-direction:column;gap:0;margin:24px 0;}
+  .step-item{position:relative;padding:0 0 26px 0;padding-inline-start:46px;border-inline-start:2px solid var(--border-soft);}
+  .step-item:last-child{border-inline-start:2px solid transparent;padding-bottom:4px;}
+  .step-num{position:absolute;inset-inline-start:-17px;top:0;width:32px;height:32px;border-radius:50%;background:var(--red-grad);color:#0F0F10;font-family:var(--mono);font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;}
+  .step-title{font-weight:700;color:var(--text);margin-bottom:6px;font-size:15px;}
+  .step-body{color:var(--text-soft);font-size:14.5px;}
+  .step-body p{margin:0 0 10px;}
+  .step-body p:last-child{margin-bottom:0;}
+  .method-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px;margin:22px 0;}
+  .method-card{background:var(--surface);border:1px solid var(--border-soft);border-radius:8px;padding:14px 16px;}
+  .method-card .mnum{font-family:var(--mono);font-size:11px;font-weight:700;color:#0F0F10;background:var(--red-grad);border-radius:4px;padding:2px 8px;display:inline-block;margin-bottom:8px;direction:ltr;}
+  .method-card .mtitle{font-weight:700;color:var(--text);font-size:14px;margin-bottom:5px;}
+  .method-card .mdesc{color:var(--text-soft);font-size:13.3px;line-height:1.75;}
+  .footer-note{margin-top:70px;padding-top:26px;border-top:1px solid var(--border-soft);color:var(--muted);font-size:13.3px;font-family:var(--mono);text-align:center;direction:ltr;}
+  .dsvg-box{fill:var(--surface-2);stroke:var(--border-soft);stroke-width:1;}
+  .dsvg-box-r{fill:var(--red-soft);stroke:var(--red-border);stroke-width:1;}
+  .dsvg-box-g{fill:var(--green-soft);stroke:var(--green-border);stroke-width:1;}
+  .dsvg-box-b{fill:var(--blue-soft);stroke:var(--blue-border);stroke-width:1;}
+  .dsvg-box-a{fill:var(--amber-soft);stroke:var(--amber-border);stroke-width:1;}
+  .dsvg-box-p{fill:var(--purple-soft);stroke:var(--purple-border);stroke-width:1;}
+  .dsvg-line{stroke:var(--border);stroke-width:1.5;fill:none;}
+  .dsvg-arr{fill:var(--border);}
+  .dsvg-arr-r{fill:var(--red);}
+  .dsvg-txt{fill:var(--text);font-family:IBM Plex Mono,monospace;}
+  .dsvg-muted{fill:var(--muted);font-family:IBM Plex Mono,monospace;}
+  .dsvg-red{fill:var(--red);}
+  .dsvg-green{fill:var(--green);}
+  .dsvg-amber{fill:var(--amber);}
+  .dsvg-blue{fill:var(--blue);}
+  @media print{.float-controls,.progress-rail,.copy-btn,.theme-switch{display:none !important;}body{background:#fff;color:#000;}.page{max-width:100%;}}
+  @media(max-width:640px){.page{padding:28px 14px 70px;}.banner-body{padding:24px 20px 4px;}.banner h1{font-size:21px;}h2{font-size:18px;gap:10px;}.float-controls{left:12px;bottom:14px;}}
+</style>
+</head>
+<body>
+
+<div class="progress-rail"><div class="progress-bar" id="progressBar"></div></div>
+<div class="float-controls">
+  <button class="fctrl-btn" id="toTop" title="ارجع لفوق">↑</button>
+</div>
+
+<div class="page">
+
+<div class="banner">
+  <div class="term-bar">
+    <span class="term-dot r"></span><span class="term-dot y"></span><span class="term-dot g"></span>
+    <span class="term-path">root@ewptx:~/module-05$</span>
+    <button class="theme-switch" id="themeSwitch">theme: dark</button>
+  </div>
+  <div class="banner-body">
+    <span class="kicker">eWPTXv3 · INE · Module 05</span>
+    <h1>تجاوز الفلاتر وأنظمة WAF (Filter Evasion & WAF Bypass Techniques)</h1>
+    <p class="lede">من أساسيات الترميز (HTML، URL، Base64) ودورها في تجاوز الفلاتر، مرورًا بآليات تصفية المدخلات من جهة العميل والسيرفر، ووصولًا لتقنيات تجاوز WAFs والبروكسيات مثل Squid.</p>
+    <div class="tags">
+      <span class="tag">encoding</span>
+      <span class="tag">html-encoding</span>
+      <span class="tag">url-encoding</span>
+      <span class="tag">base64</span>
+      <span class="tag">input-filtering</span>
+      <span class="tag">waf-bypass</span>
+      <span class="tag">evasion</span>
+      <span class="tag">proxy-bypass</span>
+    </div>
+  </div>
+</div>
+
+<nav class="toc"><div class="toc-title">$ ls learning_units/</div><div class="toc-list">
+  <a class="toc-item" href="#lu1"><span class="toc-num">01</span><span>أساسيات الترميز على الويب</span></a>
+  <a class="toc-item" href="#lu2"><span class="toc-num">02</span><span>مجموعات الأحرف (ASCII · Unicode · UTF)</span></a>
+  <a class="toc-item" href="#lu3"><span class="toc-num">03</span><span>ترميز HTML (HTML Entity Encoding)</span></a>
+  <a class="toc-item" href="#lu4"><span class="toc-num">04</span><span>ترميز الروابط (URL Encoding)</span></a>
+  <a class="toc-item" href="#lu5"><span class="toc-num">05</span><span>ترميز Base64</span></a>
+  <a class="toc-item" href="#lu6"><span class="toc-num">06</span><span>مقدمة في تصفية المدخلات</span></a>
+  <a class="toc-item" href="#lu7"><span class="toc-num">07</span><span>آليات أمان تطبيقات الويب</span></a>
+  <a class="toc-item" href="#lu8"><span class="toc-num">08</span><span>آليات الدفاع وتقنيات التحايل (Evasion)</span></a>
+  <a class="toc-item" href="#lu9"><span class="toc-num">09</span><span>تجاوز Squid Proxy</span></a>
+  <a class="toc-item" href="#methodology"><span class="toc-num">--</span><span>منهجية تجاوز الفلاتر خطوة بخطوة</span></a>
+  <a class="toc-item" href="#cheat"><span class="toc-num">--</span><span>Cheat Sheet مرجعي</span></a>
+  <a class="toc-item" href="#summary"><span class="toc-num">--</span><span>الخلاصة العامة للموديول</span></a>
+</div></nav>
+
+<!-- ══════════════════════════════════ LU1 -->
+<h2 id="lu1"><span class="num">01</span><span class="htext">أساسيات الترميز على الويب</span></h2>
+
+<h3>تعريف الترميز (Encoding)</h3>
+<p>عملية تمثيل البيانات والمعلومات بصيغة مهيكلة تسمح بنقلها وتخزينها وتفسيرها من الحاسبات والبشر — مكوّن حيوي في نقل وعرض المعلومات على الإنترنت. يضمن إن البيانات (نصوص، صور، ملفات، وسائط) تنتقل وتُعرَض بشكل صحيح عبر تقنيات الويب، عادة بتحويل البيانات من شكلها الأصلي لصيغة مناسبة للنقل والتخزين الرقمي مع الحفاظ على معناها وسلامتها.</p>
+
+<div class="callout note">
+<div class="callout-label">أهميته في اختبار الاختراق</div>
+<p>الترميز جانب أساسي في اختبار اختراق تطبيقات الويب — خصوصًا في التحقق من المدخلات ونقل البيانات ومتجهات الهجوم. فحص كيف يستجيب التطبيق للبيانات المُرمَّزة بيكشف ثغرات محتملة تؤدي لهجمات زي SQL Injection وXSS وهجمات حقن أخرى.</p>
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU2 -->
+<h2 id="lu2"><span class="num">02</span><span class="htext">مجموعات الأحرف (ASCII · Unicode · UTF)</span></h2>
+
+<h3>ما هو الـ Charset؟</h3>
+<p>مجموعة من الأحرف والرموز المرتبطة بأكواد رقمية فريدة (Code Points) — بتحدّد إزاي البيانات النصية تُحوَّل لقيم ثنائية في أنظمة الحوسبة. أمثلة: ASCII، Unicode، Latin-1.</p>
+
+<h3>ASCII</h3>
+<p>American Standard Code for Information Interchange — معيار ترميز شهير يحتوي 128 حرف، طُوِّر في الستينيات. بيستخدم 7 بتات لكل حرف، ويغطّي الحروف الإنجليزية الكبيرة (A-Z، 65-90) والصغيرة (a-z، 97-122) والأرقام (0-9، 48-57) وعلامات الترقيم والرموز التحكّمية. محدود — مش بيدعم لغات تانية زي الصينية.</p>
+
+<h3>Unicode وUTF</h3>
+<p>معيار ترميز يهدف لاحتواء أحرف من كل أنظمة الكتابة واللغات حول العالم — بيمكّن الحواسيب من التعامل مع نصوص متعدّدة اللغات. "UTF" تعني Unicode Transformation Format، وهي مخططات ترميز مختلفة لتمثيل أحرف Unicode كبيانات ثنائية.</p>
+<div class="method-grid">
+<div class="method-card"><span class="mnum">UTF-8</span><div class="mtitle">ترميز متغيّر الطول (8-bit)</div><div class="mdesc">أحرف ASCII بتُمثَّل بـ Byte واحد (توافق رجعي)، والأحرف غير ASCII بتستخدم عدة بايتات حسب الـ Code Point. الأكثر استخدامًا على الويب لكفاءته وتوافقه مع ASCII.</div></div>
+<div class="method-card"><span class="mnum">UTF-16</span><div class="mtitle">ترميز متغيّر الطول (16-bit)</div><div class="mdesc">أحرف بـ Code Points أقل من 65536 (BMP) بتُمثَّل بـ 2 بايت، والأعلى بـ4 بايت (Surrogate Pairs). شائع في Java وأنظمة ويندوز.</div></div>
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU3 -->
+<h2 id="lu3"><span class="num">03</span><span class="htext">ترميز HTML (HTML Entity Encoding)</span></h2>
+<p>تحويل الأحرف الخاصة والرموز المحجوزة لكيانات HTML المقابلة لها (HTML Entities) لضمان عرضها بشكل صحيح في المتصفحات وتجنّب أي تفسير غير مقصود كـ كود HTML. حاسم جدًا للحفاظ على سلامة محتوى الويب ومنع هجمات XSS. كيانات HTML بتبدأ بـ <code>&amp;</code> وتنتهي بـ <code>;</code> — لما المتصفح يصادف كيان في صفحة HTML، هيعرض الرمز للمستخدم بدل ما يفسّره كعنصر لغة HTML.</p>
+
+<div class="table-wrap"><table>
+<thead><tr><th>الكيان</th><th>الرمز الأصلي</th></tr></thead>
+<tbody>
+<tr><td><code>&amp;lt;</code></td><td>&lt; (أصغر من)</td></tr>
+<tr><td><code>&amp;gt;</code></td><td>&gt; (أكبر من)</td></tr>
+<tr><td><code>&amp;amp;</code></td><td>&amp; (علامة العطف)</td></tr>
+<tr><td><code>&amp;quot;</code></td><td>" (علامة اقتباس مزدوجة)</td></tr>
+<tr><td><code>&amp;apos;</code></td><td>' (فاصلة علوية)</td></tr>
+<tr><td><code>&amp;nbsp;</code></td><td>مسافة غير قابلة للكسر</td></tr>
+</tbody>
+</table></div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU4 -->
+<h2 id="lu4"><span class="num">04</span><span class="htext">ترميز الروابط (URL Encoding)</span></h2>
+<p>يُعرف أيضًا بـ Percent-Encoding — عملية لترميز الأحرف الخاصة والمحجوزة وغير ASCII لصيغة آمنة للنقل داخل الروابط (URLs/URIs). بيستبدل الأحرف غير الآمنة بعلامة <code>%</code> متبوعة برقمين سداسي عشري يمثّلان كود ASCII للحرف.</p>
+
+<h3>الأحرف المحجوزة وغير المحجوزة</h3>
+<ul>
+<li><strong>أحرف غير محجوزة (Unreserved):</strong> <code>[a-zA-Z] [0-9] [- . _ ~]</code> — آمنة بدون ترميز</li>
+<li><strong>أحرف محجوزة (Reserved):</strong> <code>: / ? # [ ] @ ! $ & " ( ) * + , ; = %</code> — لازم تُرمَّز لما مالهاش دور خاص جوه الرابط</li>
+</ul>
+
+<div class="table-wrap"><table>
+<thead><tr><th>المتصفح</th><th><code>?arg=test with spaces</code></th><th><code>?arg=&lt;h1&gt;hello world&lt;/h1&gt;</code></th></tr></thead>
+<tbody>
+<tr><td>Firefox / Chrome / Opera</td><td><code>arg=%20test%20with%20spaces</code></td><td><code>arg=%3Ch1%3Ehello%20world%3C/h1%3E</code></td></tr>
+<tr><td>Internet Explorer</td><td><code>arg= test with spaces</code></td><td><code>arg=&lt;h1&gt;hello world&lt;/h1&gt;</code> (بدون ترميز)</td></tr>
+</tbody>
+</table></div>
+<div class="callout warning">
+<div class="callout-label">ملاحظة أمنية مهمة</div>
+<p>URL-Encoding بيحصل تلقائيًا في المتصفح — وبالرغم إنه بيبان كميزة أمنية، هو مش كده فعليًا. ده طريقة لإرسال البيانات عبر الإنترنت بس، لكن ممكن يقلّل (أو يوسّع) سطح الهجوم في حالات معيّنة — فروقات المتصفحات في التعامل مع الترميز (زي IE اللي مبيرمّزش أحيانًا) ممكن تفتح فرص تجاوز فلاتر مش متوقَّعة.</p>
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU5 -->
+<h2 id="lu5"><span class="num">05</span><span class="htext">ترميز Base64</span></h2>
+<p>طريقة لترميز بيانات ثنائية (صور، ملفات صوت، بيانات غير نصية) لصيغة نصية — شائع الاستخدام في سياقات بتدعم بيانات نصية بس (رسائل بريد إلكتروني، روابط).</p>
+
+<h3>آلية العمل</h3>
+<ul>
+<li><strong>مجموعة الأحرف:</strong> 64 حرف (حروف كبيرة وصغيرة، أرقام، ورمزان إضافيان غالبًا <code>+</code> و<code>/</code>)</li>
+<li><strong>الحشو (Padding):</strong> بما إن البيانات الثنائية ممكن متكونش قابلة للقسمة على 3، بيُضاف حرف حشو (<code>=</code>) في آخر السلسلة المُرمَّزة</li>
+<li><strong>تعيين 3-إلى-4:</strong> كل 3 بايت (24 بت) من البيانات الأصلية بتتقسّم لـ4 وحدات من 6 بت، وكل وحدة بتتحوّل لحرف Base64 مقابل</li>
+</ul>
+
+<h3>حالات الاستخدام</h3>
+<ul>
+<li>تضمين بيانات ثنائية في سياقات نصية (HTML، JSON) — الصور داخل Data URLs مثلًا</li>
+<li>تقليل عدد الطلبات للسيرفر بتضمين صور أو أيقونات صغيرة مباشرة في CSS/HTML</li>
+<li>تبسيط إدارة الموارد بدون الحاجة لمسارات ملفات أو روابط منفصلة</li>
+<li>تخزين أوفلاين في تطبيقات صفحة واحدة (Local Storage/IndexedDB)</li>
+</ul>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU6 -->
+<h2 id="lu6"><span class="num">06</span><span class="htext">مقدمة في تصفية المدخلات</span></h2>
+<p>ممارسة فحص والتحكّم في بيانات الإدخال والإخراج في تطبيق الويب لمنع الثغرات الأمنية والحماية من أنواع مختلفة من الهجمات — ممارسة قياسية شائعة لحماية التطبيقات بجانب ترميز المخرجات.</p>
+
+<h3>تقنيات تصفية المدخلات</h3>
+<div class="goals-grid">
+  <div class="goal-card"><span class="gi">1</span><span><strong>Data Validation</strong> — التحقق إن البيانات الواردة مطابقة لصيغ وقيود متوقَّعة</span></div>
+  <div class="goal-card"><span class="gi">2</span><span><strong>Input Validation</strong> — فحص المدخلات بحثًا عن تهديدات أمنية محتملة (حمولات SQLi، سكريبتات خبيثة)</span></div>
+  <div class="goal-card"><span class="gi">3</span><span><strong>Input Sanitization</strong> — تنظيف أو Escaping الأحرف الخطيرة (تحويلها لكيانات HTML مثلًا)</span></div>
+  <div class="goal-card"><span class="gi">4</span><span><strong>Content Security Policy (CSP)</strong> — تحديد مصادر المحتوى المسموحة للتحميل</span></div>
+  <div class="goal-card"><span class="gi">5</span><span><strong>CSRF Protection</strong> — ضمان صحة Anti-CSRF Tokens في الطلبات الواردة</span></div>
+  <div class="goal-card"><span class="gi">6</span><span><strong>WAFs</strong> — تصفية طلبات HTTP الواردة بقواعد وAlgorithms محدَّدة مسبقًا</span></div>
+</div>
+<div class="callout tip">
+<div class="callout-label">فلترة Regex</div>
+<p>التعبيرات النمطية (Regex) بتُستخدَم لفلترة والتحقق من البيانات مقابل أنماط معقّدة — لكن الاستخدام غير الدقيق للـ Regex ممكن يُدخِل ثغرات أمنية بنفسه، فلازم صياغة واختبار دقيق جدًا لأي نمط.</p>
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU7 -->
+<h2 id="lu7"><span class="num">07</span><span class="htext">آليات أمان تطبيقات الويب</span></h2>
+<p>ضمانات وإجراءات بتُطبَّق لحماية تطبيقات الويب من مجموعة واسعة من التهديدات والثغرات الأمنية — أساسية لضمان السرّية والسلامة والتوافر.</p>
+
+<div class="table-wrap"><table>
+<thead><tr><th>الآلية</th><th>الوظيفة</th></tr></thead>
+<tbody>
+<tr><td>Authentication</td><td>التحقق من هوية المستخدمين والتأكد من صلاحيتهم للوصول (كلمة مرور، MFA، بيومترية)</td></tr>
+<tr><td>Authorization</td><td>تحديد الإجراءات والموارد المسموح للمستخدم المصادَق عليه الوصول إليها</td></tr>
+<tr><td>Input Validation/Filtering</td><td>التحقق وتنقية البيانات لمنع SQLi وXSS وحقن الأوامر</td></tr>
+<tr><td>Session Management</td><td>إنشاء وإدارة وتأمين جلسات المستخدمين — Timeouts، توكنات آمنة، حماية من Session Fixation</td></tr>
+<tr><td>CSRF Protection</td><td>منع المهاجمين من خداع المستخدمين لتنفيذ طلبات غير مصرَّح بها</td></tr>
+<tr><td>Security Headers</td><td>رؤوس HTTP زي CSP، X-Content-Type-Options، X-Frame-Options للتحكّم في عرض وأمان الصفحة</td></tr>
+<tr><td>Rate Limiting</td><td>تقييد عدد الطلبات من مستخدم أو IP خلال فترة زمنية — يمنع Brute-force وDDoS</td></tr>
+</tbody>
+</table></div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU8 -->
+<h2 id="lu8"><span class="num">08</span><span class="htext">آليات الدفاع وتقنيات التحايل (Evasion)</span></h2>
+
+<h3>آليات الدفاع الاستباقية</h3>
+<ul>
+<li><strong>WAFs:</strong> أدوات أو خدمات أمنية بتقف بين تطبيق الويب والعميل، بتراقب وتفلتر الترافيك الوارد وتكتشف وتمنع هجمات شائعة زي SQLi وXSS وDDoS على مستوى التطبيق</li>
+<li><strong>IDS/IPS:</strong> أنظمة بتفحص ترافيك الشبكة والتطبيق بحثًا عن نشاط مشبوه — IDS بيكتشف وينبّه، IPS بياخد إجراءات استباقية لمنع الترافيك الخبيث</li>
+<li><strong>Proxies:</strong> سيرفرات وسيطة بين متصفح المستخدم وسيرفر التطبيق — أغراض متعدّدة من تحسين الأمان والخصوصية لتحسين الأداء وإدارة الترافيك</li>
+</ul>
+
+<h3>تعريف Evasion</h3>
+<p>استخدام تقنيات وطرق متنوّعة لتجاوز أو الالتفاف حول آليات وضوابط الأمان الموضوعة لحماية تطبيق الويب — الهدف الأساسي: خداع الإجراءات الأمنية (جدران نارية، IDS، فلاتر تحقق) لتوصيل حمولات خبيثة أو استغلال ثغرات.</p>
+
+<h3>تقنيات Evasion الأساسية</h3>
+<ul>
+<li>تجاوز قواعد WAFs/Proxies — عبر الترميز، التمويه (Obfuscation)، أو تجزئة الحمولة الخبيثة لتفادي قواعد الكشف</li>
+<li>تفادي IDS — إخفاء أو تعديل حمولة الهجوم بحيث ميُكتشَفش من النظام</li>
+<li>الالتفاف حول فلاتر التحقق من المدخلات — صياغة مدخل يبدو شرعيًا لكنه لسه قادر على استغلال الثغرة</li>
+<li>تجنّب آليات Rate Limiting والمصادقة — تفادي تفعيل آليات تقييد الطلبات أو تجاوز ضوابط المصادقة والتفويض</li>
+</ul>
+
+<h3>WAFs مقابل Proxies</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>الخاصية</th><th>WAF</th><th>Proxy</th></tr></thead>
+<tbody>
+<tr><td>الغرض الأساسي</td><td>أمان تطبيقات الويب</td><td>متعدّد الأغراض — مش بالضرورة مركَّز على الأمان</td></tr>
+<tr><td>التعامل مع الترافيك</td><td>يحلّل ويفلتر ترافيك الويب</td><td>وسيط لأغراض متنوّعة</td></tr>
+<tr><td>التركيز الأمني</td><td>متخصّص جدًا في أمان تطبيقات الويب</td><td>حالات استخدام أوسع من الأمان</td></tr>
+<tr><td>مجموعات القواعد</td><td>قواعد أمنية محدَّدة مسبقًا</td><td>قواعد وسياسات أكثر مرونة وتنوّعًا</td></tr>
+<tr><td>التهديدات المستهدَفة</td><td>SQLi، XSS، وهجمات تطبيقات أخرى</td><td>فلترة محتوى، حجب جغرافي، حجب IP، Rate Limiting</td></tr>
+</tbody>
+</table></div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU9 -->
+<h2 id="lu9"><span class="num">09</span><span class="htext">تجاوز Squid Proxy</span></h2>
+<p>Squid سيرفر بروكسي وCache مفتوح المصدر وواسع الانتشار — بيعمل كوسيط بين الأجهزة والسيرفرات، بيُستخدَم عادة لتحسين الأداء وتعزيز الأمان وإدارة الوصول للإنترنت.</p>
+
+<h3>مميزات Squid الأساسية</h3>
+<div class="method-grid">
+<div class="method-card"><span class="mnum">Caching</span><div class="mtitle">تخزين مؤقت للمحتوى</div><div class="mdesc">بيخزّن المحتوى المطلوب بتكرار محليًا — لما عميل يطلب صفحة مخزَّنة بالفعل، بيتقدَّم المحتوى من الـ Cache بدل جلبه من السيرفر الأصلي.</div></div>
+<div class="method-card"><span class="mnum">Access Control</span><div class="mtitle">ضبط الوصول</div><div class="mdesc">آليات ضبط وصول قوية — الأدمنز يقدروا يضبطوا قواعد تحدّد مين يقدر يوصل لمواقع أو خدمات معيّنة.</div></div>
+<div class="method-card"><span class="mnum">Content Filtering</span><div class="mtitle">فلترة المحتوى</div><div class="mdesc">حجب الوصول لمواقع أو فئات مواقع معيّنة (سوشيال ميديا، محتوى للبالغين) — غالبًا لفرض سياسات استخدام مقبول في المؤسسات.</div></div>
+</div>
+<div class="callout note">
+<div class="callout-label">مفهوم التجاوز</div>
+<p>قيود البروكسي القائمة على المتصفح (زي حجب مواقع معيّنة عبر Squid) غالبًا بتعتمد على فحص الرابط أو النطاق — تقنيات زي تغيير الـ User-Agent، استخدام بروتوكولات بديلة، أو الوصول عبر مسارات غير متوقَّعة ممكن تساعد في تفادي هذه القيود لو الإعداد غير محكَم.</p>
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ METHODOLOGY -->
+<h2 id="methodology"><span class="num">--</span><span class="htext">منهجية تجاوز الفلاتر خطوة بخطوة</span></h2>
+
+<div class="step-track">
+<div class="step-item">
+<div class="step-num">1</div>
+<div class="step-title">تحديد نوع الفلتر</div>
+<div class="step-body"><p>هل الفلتر من جهة العميل (JavaScript) أم من جهة السيرفر؟ وهل فيه WAF أو Proxy وسيط؟ فلتر جهة العميل أسهل بكتير في التجاوز لأنه قابل للتعطيل أو التلاعب مباشرة.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">2</div>
+<div class="step-title">فهم منطق الفلترة</div>
+<div class="step-body"><p>هل بيستخدم Blacklist (كلمات محظورة) أم Whitelist (أنماط مسموحة)؟ Blacklist أسهل في التجاوز عادة لأنها غالبًا غير شاملة.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">3</div>
+<div class="step-title">تجربة الترميز المختلف</div>
+<div class="step-body"><p>جرّب HTML Encoding، URL Encoding (بما فيه Double Encoding)، أو Base64 — الفلاتر غالبًا بتفحص النمط الخام بس، مش كل أشكال الترميز الممكنة.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">4</div>
+<div class="step-title">التلاعب في بنية الحمولة</div>
+<div class="step-body"><p>تغيير حالة الأحرف (Case Variation)، إضافة تعليقات (Comments) جوه الحمولة، أو تقسيمها (Fragmentation) لتفادي التوقيعات (Signatures) المعروفة.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">5</div>
+<div class="step-title">التحقق والتكرار</div>
+<div class="step-body"><p>اختبر كل تقنية على حدة ووثّق أي حمولة نجحت — التجاوز غالبًا محتاج دمج أكتر من تقنية مع بعض.</p></div>
+</div>
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ CHEAT SHEET -->
+<h2 id="cheat"><span class="num">--</span><span class="htext">Cheat Sheet مرجعي</span></h2>
+<div class="cheat-section">
+
+<h4>مرجع سريع لأنواع الترميز</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>النوع</th><th>مثال</th><th>الاستخدام الشائع في التجاوز</th></tr></thead>
+<tbody>
+<tr><td>HTML Entity</td><td><code>&amp;#60;script&amp;#62;</code></td><td>تجاوز فلاتر XSS السطحية</td></tr>
+<tr><td>URL Encoding</td><td><code>%3Cscript%3E</code></td><td>تجاوز فلاتر تفحص النص الخام فقط</td></tr>
+<tr><td>Double URL Encoding</td><td><code>%253Cscript%253E</code></td><td>تجاوز فلاتر بتفك الترميز مرة واحدة بس</td></tr>
+<tr><td>Base64</td><td><code>PHNjcmlwdD4=</code></td><td>تمرير حمولات عبر فلاتر مش بتفحص المحتوى المُرمَّز</td></tr>
+<tr><td>Unicode</td><td><code>\u003Cscript\u003E</code></td><td>تجاوز فلاتر بتبحث عن أحرف ASCII محدَّدة بس</td></tr>
+</tbody>
+</table></div>
+
+<h4>تقنيات تجاوز WAF شائعة</h4>
+<ul>
+<li>Payload Manipulation — تغيير حالة الأحرف، إضافة مسافات أو تعليقات غير ضارة</li>
+<li>Traffic Shaping — إرسال الحمولة على أجزاء (Chunks) بدل دفعة واحدة</li>
+<li>ترميز بديل أو غير قياسي — استخدام أشكال ترميز الـ WAF مش متوقّعها</li>
+<li>طلبات HTTP غير قياسية — تعديل Headers أو Methods لتفادي قواعد محدَّدة</li>
+</ul>
+
+<h4>WAFs شائعة يُنصَح بالتدرّب على تجاوزها</h4>
+<ul>
+<li>ModSecurity</li>
+<li>Cloudflare</li>
+<li>Imperva</li>
+</ul>
+
+<h4>Quick Wins — أسرع المسارات في تجاوز الفلاتر</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>#</th><th>التحقق</th><th>الطريقة</th><th>النتيجة المحتملة</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>الفلتر من جهة العميل بس (JavaScript)؟</td><td>تعطيل JS أو إرسال الطلب مباشرة عبر Burp</td><td>تجاوز كامل بدون أي تلاعب في الحمولة</td></tr>
+<tr><td>2</td><td>الفلتر بيفحص نمط واحد فقط (Blacklist)؟</td><td>تجربة أشكال ترميز مختلفة للحمولة نفسها</td><td>تجاوز فلاتر Signature-based</td></tr>
+<tr><td>3</td><td>WAF بيرفض طلبات كبيرة الحجم؟</td><td>تقسيم الحمولة على عدة طلبات (Chunking)</td><td>تفادي حدود حجم الفحص</td></tr>
+<tr><td>4</td><td>فيه فرق سلوك بين المتصفحات في الترميز؟</td><td>مراجعة جدول فروقات المتصفحات (IE مقابل Chrome/Firefox)</td><td>استغلال ثغرة ترميز خاصة بمتصفح معيّن</td></tr>
+</tbody>
+</table></div>
+
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ SUMMARY -->
+<h2 id="summary"><span class="htext">الخلاصة العامة للموديول</span></h2>
+<p>الموديول ده غطّى أساسيات الترميز على الويب ودورها الحيوي في تجاوز الفلاتر، وآليات تصفية المدخلات من جهة العميل والسيرفر، ومقدمة شاملة في آليات الدفاع وتقنيات Evasion الخاصة بـ WAFs والبروكسيات.</p>
+
+<div class="takeaways">
+<div class="takeaways-title">$ cat ./ewptx_module05_summary.txt</div>
+<ul>
+<li>الترميز (HTML، URL، Base64) أداة مزدوجة — ضرورية لوظيفة الويب الطبيعية، وأيضًا أداة أساسية لتجاوز الفلاتر الأمنية</li>
+<li>فروقات المتصفحات في التعامل مع URL Encoding ممكن تفتح فرص تجاوز غير متوقَّعة</li>
+<li>تصفية المدخلات مش طبقة واحدة — بتشمل Validation وSanitization وCSP وCSRF Protection وWAFs مجتمعين</li>
+<li>فلاتر جهة العميل دايمًا أضعف من فلاتر جهة السيرفر — لازم تُختبَر بشكل منفصل</li>
+<li>Evasion بيستهدف خداع آليات الكشف (WAF، IDS، فلاتر تحقق) مش استغلال الثغرة نفسها مباشرة</li>
+<li>WAFs متخصّصة في أمان تطبيقات الويب، بينما Proxies أدوات أعمّ بأغراض متعدّدة قد تشمل الأمان</li>
+<li>تجاوز الفلاتر البدائية (زي Squid) غالبًا ممكن عبر فهم منطق الفحص والتلاعب في بنية الطلب</li>
+</ul>
+</div>
+
+<blockquote>
+<p><strong>الفكرة الجوهرية للموديول:</strong> أي فلتر أو WAF بيعتمد على التعرّف على نمط معروف مسبقًا — والترميز والتمويه هما الأداتان الأساسيتان لكسر التطابق مع النمط ده من غير ما يتغيّر المعنى الفعلي للحمولة بالنسبة للتطبيق الهدف. المختبر المحترف بيفكّر زي الفلتر نفسه عشان يعرف منين هيفلت.</p>
+</blockquote>
+
+<div class="callout examtip">
+<div class="callout-label">Professional Mindset</div>
+<p>قبل ما تحاول تجاوز أي فلتر، افهم أولًا إيه اللي بيمنعك بالظبط — هل هو رفض كامل للطلب، تنقية للمحتوى، أم رسالة خطأ بس؟ جرّب دايمًا الحمولة الخام الأبسط أولًا، وبعدين صعّد الترميز والتمويه تدريجيًا. ووثّق أي Bypass ناجح بدقة — غالبًا بيكون مفيد في اختبارات تانية لنفس الـ WAF أو إصدارات مشابهة منه.</p>
+</div>
+
+<hr />
+<p><em>نهاية نوتس الموديول الخامس — Filter Evasion & WAF Bypass Techniques (eWPTXv3)</em></p>
+<div class="footer-note">-- EOF: ewptx-module-05/filter-evasion-waf-bypass.md --</div>
+
+</div>
+
+<script>
+(function(){
+  var root=document.documentElement,btn=document.getElementById('themeSwitch');
+  function applyTheme(t){root.setAttribute('data-theme',t);btn.textContent='theme: '+t;try{localStorage.setItem('oscp-notes-theme',t);}catch(e){}}
+  var saved='dark';try{saved=localStorage.getItem('oscp-notes-theme')||'dark';}catch(e){}
+  applyTheme(saved);
+  btn.addEventListener('click',function(){applyTheme(root.getAttribute('data-theme')==='dark'?'light':'dark');});
+  var bar=document.getElementById('progressBar');
+  function onScroll(){var h=document.documentElement,s=h.scrollTop,ht=h.scrollHeight-h.clientHeight;bar.style.width=(ht>0?(s/ht*100):0)+'%';var t=document.getElementById('toTop');s>500?t.classList.add('show'):t.classList.remove('show');}
+  document.addEventListener('scroll',onScroll);onScroll();
+  document.getElementById('toTop').addEventListener('click',function(){window.scrollTo({top:0,behavior:'smooth'});});
+  document.querySelectorAll('.code-wrap').forEach(function(wrap){
+    var c=wrap.querySelector('code');if(!c)return;
+    var b=document.createElement('button');b.className='copy-btn';b.textContent='copy';
+    b.addEventListener('click',function(){if(navigator.clipboard){navigator.clipboard.writeText(c.innerText).then(function(){b.textContent='copied ✓';b.classList.add('copied');setTimeout(function(){b.textContent='copy';b.classList.remove('copied');},1500);});}});
+    wrap.appendChild(b);
+  });
+})();
+</script>
+</body>
+</html>

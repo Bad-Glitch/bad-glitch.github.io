@@ -37,7 +37,7 @@ if (Array.isArray(categories) && categories.length > 0) {
  * -------
  * Course cards are displayed in the Courses Notes category.
  * eAIS modules come from the posts collection.
- * OSCP+ and CEHv13 modules are served from standalone HTML files.
+ * OSCP+, CEHv13, and eWPTXv3 modules are served from standalone HTML files.
  */
 
 const coursePosts = posts.filter(
@@ -80,6 +80,13 @@ const courses = [
                 modules: Array.from({ length: 17 }, (_, i) => i + 1),
                 href: url("/courses/cehv13/"),
                 description: "Certified Ethical Hacker v13 Notes",
+        },
+
+        {
+                name: "eWPTXv3",
+                modules: Array.from({ length: 6 }, (_, i) => i + 1),
+                href: url("/courses/ewptxv3/"),
+                description: "Advanced Web Application Penetration Testing Notes",
         },
 ];
 

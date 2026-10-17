@@ -1,0 +1,879 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>eWPTXv3 · Module 02: اختبار المصادقة وإدارة الجلسات</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-0:#0B0B0D;--bg-1:#121214;--surface:#17171A;--surface-2:#1D1D21;
+    --border:#2A2A2F;--border-soft:#232326;
+    --text:#E6E6E9;--text-soft:#C4C4CA;--muted:#8A8A92;
+    --red:#E1362F;--red-soft:rgba(225,54,47,0.10);--red-border:rgba(225,54,47,0.35);
+    --red-grad:linear-gradient(90deg,#E1362F,#F2794A);
+    --amber:#E8A23A;--amber-soft:rgba(232,162,58,0.09);--amber-border:rgba(232,162,58,0.30);
+    --green:#3FBF6E;--green-soft:rgba(63,191,110,0.09);--green-border:rgba(63,191,110,0.30);
+    --blue:#4EA1D3;--blue-soft:rgba(78,161,211,0.09);--blue-border:rgba(78,161,211,0.30);
+    --purple:#A179E8;--purple-soft:rgba(161,121,232,0.10);--purple-border:rgba(161,121,232,0.32);
+    --mono:'IBM Plex Mono','Courier New',monospace;
+  }
+  html[data-theme="light"]{
+    --bg-0:#F4F3F1;--bg-1:#ECEBE8;--surface:#FFFFFF;--surface-2:#F3F2EF;
+    --border:#DEDCD6;--border-soft:#E6E4DF;--text:#1C1B19;--text-soft:#3C3A36;--muted:#726F68;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;direction:rtl;text-align:right;background:var(--bg-0);}
+  body{font-family:'Cairo','Segoe UI',Tahoma,sans-serif;line-height:1.95;font-size:16.5px;color:var(--text);
+    background:radial-gradient(900px 420px at 12% -8%,rgba(225,54,47,0.10),transparent 60%),
+               radial-gradient(800px 420px at 90% 6%,rgba(232,162,58,0.06),transparent 60%),
+               linear-gradient(180deg,var(--bg-0) 0%,var(--bg-1) 100%);
+    background-attachment:fixed;transition:background 0.2s ease,color 0.2s ease;}
+  html[data-theme="light"] body{background:radial-gradient(900px 420px at 12% -8%,rgba(225,54,47,0.06),transparent 60%),radial-gradient(800px 420px at 90% 6%,rgba(232,162,58,0.05),transparent 60%),linear-gradient(180deg,var(--bg-0) 0%,var(--bg-1) 100%);}
+  .progress-rail{position:fixed;top:0;inset-inline:0;height:3px;background:rgba(255,255,255,0.04);z-index:60;}
+  html[data-theme="light"] .progress-rail{background:rgba(0,0,0,0.05);}
+  .progress-bar{height:100%;width:0%;background:var(--red-grad);transition:width 0.08s linear;}
+  .float-controls{position:fixed;bottom:22px;left:22px;z-index:55;display:flex;flex-direction:column;gap:10px;}
+  .fctrl-btn{width:42px;height:42px;border-radius:50%;background:var(--surface);border:1px solid var(--border);color:var(--text-soft);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;box-shadow:0 10px 24px -10px rgba(0,0,0,0.5);transition:transform 0.15s ease,border-color 0.15s ease,opacity 0.2s ease;}
+  .fctrl-btn:hover{transform:translateY(-2px);border-color:var(--red-border);color:var(--red);}
+  #toTop{opacity:0;pointer-events:none;}
+  #toTop.show{opacity:1;pointer-events:auto;}
+  .page{max-width:860px;margin:0 auto;padding:46px 22px 100px;}
+  .banner{position:relative;overflow:hidden;background:linear-gradient(155deg,var(--surface) 0%,var(--bg-1) 55%,var(--surface) 100%);border:1px solid var(--border-soft);border-radius:10px;padding:0 0 34px;margin-bottom:26px;box-shadow:0 20px 50px -20px rgba(0,0,0,0.6);}
+  .term-bar{display:flex;align-items:center;gap:8px;padding:13px 18px;border-bottom:1px solid var(--border-soft);background:rgba(255,255,255,0.015);direction:ltr;}
+  .term-dot{width:11px;height:11px;border-radius:50%;display:inline-block;}
+  .term-dot.r{background:#E1362F;}.term-dot.y{background:#E8A23A;}.term-dot.g{background:#3FBF6E;}
+  .term-path{margin-inline-start:12px;font-family:var(--mono);font-size:12px;color:var(--muted);}
+  .theme-switch{margin-inline-start:auto;font-family:var(--mono);font-size:11px;color:var(--muted);background:transparent;border:1px solid var(--border);border-radius:4px;padding:4px 9px;cursor:pointer;}
+  .theme-switch:hover{color:var(--amber);border-color:var(--amber-border);}
+  .banner-body{padding:30px 34px 4px;}
+  .banner .kicker{display:inline-block;font-family:var(--mono);font-size:12.5px;letter-spacing:0.03em;color:var(--red);background:var(--red-soft);border:1px solid var(--red-border);border-radius:3px;padding:5px 12px;margin-bottom:20px;direction:ltr;}
+  .banner h1{margin:0 0 14px;font-size:28px;font-weight:800;line-height:1.5;color:var(--text);}
+  .banner .lede{color:var(--muted);font-size:15.5px;line-height:1.95;max-width:640px;margin:0 0 24px;}
+  .tags{display:flex;flex-wrap:wrap;gap:9px;}
+  .tag{font-size:12.5px;font-family:var(--mono);color:var(--amber);background:var(--amber-soft);border:1px solid var(--amber-border);border-radius:3px;padding:5px 11px;}
+  .toc{background:var(--surface);border:1px solid var(--border-soft);border-radius:8px;padding:6px 0 6px;margin-bottom:50px;overflow:hidden;}
+  .toc-title{font-family:var(--mono);font-weight:600;font-size:13px;color:var(--green);padding:14px 22px;border-bottom:1px solid var(--border-soft);direction:ltr;text-align:left;}
+  .toc-list{display:flex;flex-direction:column;}
+  .toc-item{display:flex;align-items:center;gap:14px;padding:12px 22px;color:var(--text-soft);text-decoration:none;font-size:14.5px;border-bottom:1px solid rgba(255,255,255,0.03);transition:background 0.15s ease;}
+  .toc-list .toc-item:last-child{border-bottom:none;}
+  .toc-item:hover{background:var(--red-soft);}
+  .toc-num{flex:none;font-family:var(--mono);font-size:12.5px;font-weight:600;color:#0F0F10;background:var(--red-grad);border-radius:3px;padding:3px 8px;direction:ltr;}
+  h1,h2,h3,h4{font-weight:700;}
+  h2{display:flex;align-items:center;gap:14px;font-size:21px;margin:66px 0 22px;padding-bottom:16px;border-bottom:1px solid var(--border-soft);color:var(--text);}
+  h2 .num{flex:none;font-family:var(--mono);font-size:13px;font-weight:700;color:#0F0F10;background:var(--red-grad);border-radius:5px;padding:7px 12px;direction:ltr;}
+  h2 .htext{line-height:1.5;}
+  h3{font-size:17px;margin:34px 0 14px;color:var(--red);display:flex;align-items:center;gap:9px;}
+  h3::before{content:"#";font-family:var(--mono);color:var(--amber);font-weight:700;}
+  h4{font-size:14.8px;margin:22px 0 10px;color:var(--text-soft);font-family:var(--mono);}
+  p{margin:0 0 17px;color:var(--text);}
+  strong{color:var(--text);font-weight:700;}
+  :root:not([data-theme="light"]) strong{color:#FBFBFC;}
+  a{color:var(--amber);text-decoration:none;border-bottom:1px dashed var(--amber-border);}
+  hr{border:none;height:1px;margin:50px 0;background:linear-gradient(90deg,transparent,var(--border),transparent);}
+  ul,ol{margin:0 0 18px;padding-inline-start:24px;}
+  li{margin-bottom:9px;color:var(--text);}
+  li::marker{color:var(--red);font-family:var(--mono);}
+  li>ul,li>ol{margin-top:9px;}
+  .goals-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px;margin:0 0 22px;}
+  .goal-card{display:flex;gap:10px;align-items:flex-start;background:var(--surface);border:1px solid var(--border-soft);border-radius:7px;padding:13px 15px;font-size:14px;color:var(--text-soft);}
+  .goal-card .gi{flex:none;font-family:var(--mono);font-size:11px;font-weight:700;color:var(--green);background:var(--green-soft);border:1px solid var(--green-border);border-radius:4px;width:22px;height:22px;display:flex;align-items:center;justify-content:center;}
+  blockquote{margin:24px 0;padding:17px 22px;background:var(--red-soft);border:1px solid var(--red-border);border-inline-start:3px solid var(--red);border-radius:6px;color:var(--text-soft);}
+  blockquote p{margin:0;color:inherit;line-height:1.85;}
+  blockquote p+p{margin-top:10px;}
+  blockquote strong{color:var(--text);}
+  .callout{margin:24px 0;padding:17px 22px 18px;border-radius:6px;border:1px solid var(--border-soft);border-inline-start:3px solid var(--border);background:var(--surface);}
+  .callout p{margin:0;color:var(--text-soft);line-height:1.85;}
+  .callout p+p{margin-top:10px;}
+  .callout ul{margin:6px 0 0;}
+  .callout-label{display:inline-flex;align-items:center;gap:7px;font-family:var(--mono);font-size:11.5px;font-weight:700;letter-spacing:0.02em;text-transform:uppercase;margin-bottom:10px;direction:ltr;}
+  .callout.note{border-inline-start-color:var(--blue);background:var(--blue-soft);}
+  .callout.note .callout-label{color:var(--blue);}
+  .callout.warning{border-inline-start-color:var(--red);background:var(--red-soft);}
+  .callout.warning .callout-label{color:var(--red);}
+  .callout.tip{border-inline-start-color:var(--green);background:var(--green-soft);}
+  .callout.tip .callout-label{color:var(--green);}
+  .callout.examtip{border-inline-start-color:var(--purple);background:var(--purple-soft);}
+  .callout.examtip .callout-label{color:var(--purple);}
+  .callout.case{border-inline-start-color:var(--amber);background:var(--amber-soft);}
+  .callout.case .callout-label{color:var(--amber);}
+  .callout.definition{border-inline-start-color:var(--muted);background:var(--surface-2);}
+  .callout.definition .callout-label{color:var(--text-soft);}
+  .callout.danger{border-inline-start-color:#FF5A52;background:rgba(255,90,82,0.08);}
+  .callout.danger .callout-label{color:#FF5A52;}
+  .table-wrap{overflow-x:auto;margin:22px 0;border:1px solid var(--border-soft);border-radius:8px;}
+  table{width:100%;border-collapse:collapse;font-size:14.2px;min-width:480px;}
+  thead th{background:var(--surface-2);color:var(--amber);font-weight:700;font-family:var(--mono);font-size:12.5px;text-transform:uppercase;letter-spacing:0.02em;text-align:start;padding:13px 15px;border-bottom:1px solid var(--border-soft);white-space:nowrap;}
+  tbody td{padding:12px 15px;border-bottom:1px solid var(--border-soft);color:var(--text-soft);vertical-align:top;}
+  tbody tr:last-child td{border-bottom:none;}
+  tbody tr:nth-child(even){background:rgba(127,127,127,0.03);}
+  tbody tr:hover{background:var(--red-soft);}
+  code{font-family:var(--mono);font-size:13.3px;background:var(--surface-2);border:1px solid var(--border-soft);border-radius:4px;padding:2px 6px;direction:ltr;unicode-bidi:embed;color:var(--green);}
+  .code-wrap{position:relative;overflow-x:auto;margin:22px 0;}
+  .code-tag{position:absolute;top:10px;left:14px;font-family:var(--mono);font-size:10.5px;color:var(--muted);letter-spacing:0.04em;text-transform:uppercase;z-index:2;}
+  .copy-btn{position:absolute;top:8px;right:10px;z-index:2;font-family:var(--mono);font-size:11px;color:var(--muted);background:var(--surface-2);border:1px solid var(--border-soft);border-radius:4px;padding:4px 9px;cursor:pointer;direction:ltr;}
+  .copy-btn:hover{color:var(--amber);border-color:var(--amber-border);}
+  .copy-btn.copied{color:var(--green);border-color:var(--green-border);}
+  pre{background:var(--bg-0);border:1px solid var(--border-soft);border-inline-start:3px solid var(--red);border-radius:8px;padding:30px 22px 18px;direction:ltr;text-align:left;margin:0;}
+  html[data-theme="light"] pre{background:#16181C;}
+  pre code{background:none;border:none;padding:0;color:#B9E8C9;font-size:13.2px;line-height:1.75;}
+  .diagram-card{background:var(--surface);border:1px solid var(--border-soft);border-radius:10px;padding:22px 18px 16px;margin:24px 0;}
+  .diagram-card svg{width:100%;height:auto;display:block;}
+  .diagram-caption{margin-top:10px;text-align:center;font-family:var(--mono);font-size:11.5px;color:var(--muted);}
+  .takeaways{background:var(--surface);border:1px solid var(--border-soft);border-radius:8px;padding:18px 22px 20px;margin:30px 0 10px;}
+  .takeaways-title{font-family:var(--mono);font-size:12.5px;font-weight:700;color:var(--green);margin-bottom:12px;direction:ltr;text-align:left;display:flex;align-items:center;gap:8px;}
+  .takeaways ul{margin:0;padding-inline-start:20px;}
+  .takeaways li{color:var(--text-soft);font-size:14.5px;}
+  .cheat-section h4{color:var(--amber);font-size:13px;margin:26px 0 8px;}
+  .step-track{display:flex;flex-direction:column;gap:0;margin:24px 0;}
+  .step-item{position:relative;padding:0 0 26px 0;padding-inline-start:46px;border-inline-start:2px solid var(--border-soft);}
+  .step-item:last-child{border-inline-start:2px solid transparent;padding-bottom:4px;}
+  .step-num{position:absolute;inset-inline-start:-17px;top:0;width:32px;height:32px;border-radius:50%;background:var(--red-grad);color:#0F0F10;font-family:var(--mono);font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;}
+  .step-title{font-weight:700;color:var(--text);margin-bottom:6px;font-size:15px;}
+  .step-body{color:var(--text-soft);font-size:14.5px;}
+  .step-body p{margin:0 0 10px;}
+  .step-body p:last-child{margin-bottom:0;}
+  .method-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px;margin:22px 0;}
+  .method-card{background:var(--surface);border:1px solid var(--border-soft);border-radius:8px;padding:14px 16px;}
+  .method-card .mnum{font-family:var(--mono);font-size:11px;font-weight:700;color:#0F0F10;background:var(--red-grad);border-radius:4px;padding:2px 8px;display:inline-block;margin-bottom:8px;direction:ltr;}
+  .method-card .mtitle{font-weight:700;color:var(--text);font-size:14px;margin-bottom:5px;}
+  .method-card .mdesc{color:var(--text-soft);font-size:13.3px;line-height:1.75;}
+  .footer-note{margin-top:70px;padding-top:26px;border-top:1px solid var(--border-soft);color:var(--muted);font-size:13.3px;font-family:var(--mono);text-align:center;direction:ltr;}
+  .dsvg-box{fill:var(--surface-2);stroke:var(--border-soft);stroke-width:1;}
+  .dsvg-box-r{fill:var(--red-soft);stroke:var(--red-border);stroke-width:1;}
+  .dsvg-box-g{fill:var(--green-soft);stroke:var(--green-border);stroke-width:1;}
+  .dsvg-box-b{fill:var(--blue-soft);stroke:var(--blue-border);stroke-width:1;}
+  .dsvg-box-a{fill:var(--amber-soft);stroke:var(--amber-border);stroke-width:1;}
+  .dsvg-box-p{fill:var(--purple-soft);stroke:var(--purple-border);stroke-width:1;}
+  .dsvg-line{stroke:var(--border);stroke-width:1.5;fill:none;}
+  .dsvg-arr{fill:var(--border);}
+  .dsvg-arr-r{fill:var(--red);}
+  .dsvg-txt{fill:var(--text);font-family:IBM Plex Mono,monospace;}
+  .dsvg-muted{fill:var(--muted);font-family:IBM Plex Mono,monospace;}
+  .dsvg-red{fill:var(--red);}
+  .dsvg-green{fill:var(--green);}
+  .dsvg-amber{fill:var(--amber);}
+  .dsvg-blue{fill:var(--blue);}
+  @media print{.float-controls,.progress-rail,.copy-btn,.theme-switch{display:none !important;}body{background:#fff;color:#000;}.page{max-width:100%;}}
+  @media(max-width:640px){.page{padding:28px 14px 70px;}.banner-body{padding:24px 20px 4px;}.banner h1{font-size:21px;}h2{font-size:18px;gap:10px;}.float-controls{left:12px;bottom:14px;}}
+</style>
+</head>
+<body>
+
+<div class="progress-rail"><div class="progress-bar" id="progressBar"></div></div>
+<div class="float-controls">
+  <button class="fctrl-btn" id="toTop" title="ارجع لفوق">↑</button>
+</div>
+
+<div class="page">
+
+<div class="banner">
+  <div class="term-bar">
+    <span class="term-dot r"></span><span class="term-dot y"></span><span class="term-dot g"></span>
+    <span class="term-path">root@ewptx:~/module-02$</span>
+    <button class="theme-switch" id="themeSwitch">theme: dark</button>
+  </div>
+  <div class="banner-body">
+    <span class="kicker">eWPTXv3 · INE · Module 02</span>
+    <h1>اختبار المصادقة وإدارة الجلسات (Authentication & Session Management Testing)</h1>
+    <p class="lede">من مفاهيم المصادقة الأساسية وحتى أحدث هجمات JWT وOAuth وتجاوز 2FA. تعداد أسماء المستخدمين، كسر سياسات كلمات المرور، تجاوز الـ CAPTCHA، اختطاف وتثبيت الجلسات، CSRF، وتحليل عميق لتوكنات المصادقة الحديثة.</p>
+    <div class="tags">
+      <span class="tag">authentication</span>
+      <span class="tag">session-management</span>
+      <span class="tag">wstg-athn</span>
+      <span class="tag">cookies</span>
+      <span class="tag">csrf</span>
+      <span class="tag">jwt</span>
+      <span class="tag">oauth</span>
+      <span class="tag">2fa-bypass</span>
+    </div>
+  </div>
+</div>
+
+<nav class="toc"><div class="toc-title">$ ls learning_units/</div><div class="toc-list">
+  <a class="toc-item" href="#lu1"><span class="toc-num">01</span><span>المصادقة في تطبيقات الويب</span></a>
+  <a class="toc-item" href="#lu2"><span class="toc-num">02</span><span>آليات المصادقة وإدارة الجلسات</span></a>
+  <a class="toc-item" href="#lu3"><span class="toc-num">03</span><span>منهجية اختبار المصادقة (WSTG-ATHN)</span></a>
+  <a class="toc-item" href="#lu4"><span class="toc-num">04</span><span>تعداد أسماء المستخدمين</span></a>
+  <a class="toc-item" href="#lu5"><span class="toc-num">05</span><span>اختبار سياسة كلمة المرور الضعيفة</span></a>
+  <a class="toc-item" href="#lu6"><span class="toc-num">06</span><span>آليات القفل الضعيفة وتجاوز الـ CAPTCHA</span></a>
+  <a class="toc-item" href="#lu7"><span class="toc-num">07</span><span>تجاوز مخطط المصادقة</span></a>
+  <a class="toc-item" href="#lu8"><span class="toc-num">08</span><span>إدارة الجلسات ومعرّفات الجلسة</span></a>
+  <a class="toc-item" href="#lu9"><span class="toc-num">09</span><span>الكوكيز ومعاملاتها الأمنية</span></a>
+  <a class="toc-item" href="#lu10"><span class="toc-num">10</span><span>اختبار مخطط الجلسة والتلاعب بالكوكيز</span></a>
+  <a class="toc-item" href="#lu11"><span class="toc-num">11</span><span>اختطاف الجلسة وتثبيت الجلسة</span></a>
+  <a class="toc-item" href="#lu12"><span class="toc-num">12</span><span>تزوير الطلبات عبر المواقع (CSRF)</span></a>
+  <a class="toc-item" href="#lu13"><span class="toc-num">13</span><span>مقدمة في المصادقة القائمة على التوكنات</span></a>
+  <a class="toc-item" href="#lu14"><span class="toc-num">14</span><span>JSON Web Tokens (JWT) بالتفصيل</span></a>
+  <a class="toc-item" href="#lu15"><span class="toc-num">15</span><span>ثغرة الخوارزمية None في JWT</span></a>
+  <a class="toc-item" href="#lu16"><span class="toc-num">16</span><span>مقدمة في OAuth وهجماته الشائعة</span></a>
+  <a class="toc-item" href="#lu17"><span class="toc-num">17</span><span>المصادقة الثنائية (2FA) وتجاوزها</span></a>
+  <a class="toc-item" href="#methodology"><span class="toc-num">--</span><span>دورة اختبار المصادقة والجلسات الكاملة</span></a>
+  <a class="toc-item" href="#cheat"><span class="toc-num">--</span><span>Cheat Sheet مرجعي</span></a>
+  <a class="toc-item" href="#summary"><span class="toc-num">--</span><span>الخلاصة العامة للموديول</span></a>
+</div></nav>
+
+<!-- ══════════════════════════════════ LU1 -->
+<h2 id="lu1"><span class="num">01</span><span class="htext">المصادقة في تطبيقات الويب</span></h2>
+
+<h3>تعريف المصادقة (Authentication)</h3>
+<p>عملية أساسية في أمن المعلومات، مسؤولة عن التحقق من هوية المستخدمين أو الأنظمة اللي بتحاول الوصول للموارد. الهدف الأساسي: ضمان إن المستخدمين الشرعيين بس هم اللي يقدروا يوصلوا للبيانات أو الأنظمة أو الوظائف الحساسة.</p>
+
+<h3>المصادقة مقابل التفويض (Authentication vs Authorization)</h3>
+<p>المصادقة بتتحقّق من <strong>هوية</strong> المستخدم، بينما التفويض بيحدّد <strong>إيه اللي المستخدم المصادَق عليه مسموح له يعمله</strong>.</p>
+<div class="table-wrap"><table>
+<thead><tr><th>الجانب</th><th>Authentication</th><th>Authorization</th></tr></thead>
+<tbody>
+<tr><td>التعريف</td><td>التحقق من هوية المستخدم أو النظام</td><td>تحديد ما يُسمح للمستخدم المصادَق عليه بفعله</td></tr>
+<tr><td>الغرض</td><td>إثبات "مين المستخدم"</td><td>تحديد الموارد والإجراءات المتاحة له</td></tr>
+<tr><td>العملية</td><td>فحص بيانات اعتماد (كلمات مرور، توكنات)</td><td>فحص الصلاحيات والأدوار مقابل الموارد</td></tr>
+<tr><td>النتيجة</td><td>هوية مؤكَّدة (مسجَّل دخول أو لا)</td><td>منح أو رفض الوصول لمورد/إجراء محدَّد</td></tr>
+<tr><td>مثال</td><td>تسجيل الدخول باسم مستخدم وكلمة مرور</td><td>تحديد هل المستخدم المسجَّل يقدر يوصل لمورد معيّن</td></tr>
+</tbody>
+</table></div>
+<div class="callout note">
+<div class="callout-label">أهمية المصادقة</div>
+<p>هي خط الدفاع الأول ضد الوصول غير المصرَّح به — بتحمي من اختراق البيانات، الاستيلاء على الحسابات، وغيرها من التهديدات، عبر ضمان إن المستخدمين الشرعيين بس هم اللي يتفاعلوا مع مناطق التطبيق المقيَّدة.</p>
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU2 -->
+<h2 id="lu2"><span class="num">02</span><span class="htext">آليات المصادقة وإدارة الجلسات</span></h2>
+
+<h3>أنواع آليات المصادقة</h3>
+<div class="goals-grid">
+  <div class="goal-card"><span class="gi">1</span><span><strong>Password-Based</strong> — اسم مستخدم + كلمة مرور</span></div>
+  <div class="goal-card"><span class="gi">2</span><span><strong>MFA</strong> — دمج عاملين مستقلين أو أكتر (شيء تعرفه، شيء تملكه، شيء أنت هو)</span></div>
+  <div class="goal-card"><span class="gi">3</span><span><strong>2FA</strong> — نوع محدَّد من MFA يتطلّب عاملين بالضبط</span></div>
+  <div class="goal-card"><span class="gi">4</span><span><strong>Token-Based</strong> — توكنات زي JWT أو OAuth بعد تسجيل الدخول الناجح</span></div>
+  <div class="goal-card"><span class="gi">5</span><span><strong>SSO</strong> — تسجيل دخول واحد للوصول لعدة تطبيقات (SAML/OAuth)</span></div>
+  <div class="goal-card"><span class="gi">6</span><span><strong>OTP</strong> — كلمة مرور مؤقتة لمرة واحدة عبر SMS أو بريد إلكتروني</span></div>
+</div>
+
+<h3>إدارة الجلسات (Session Management)</h3>
+<p>عملية إنشاء وصيانة وتأمين جلسة المستخدم بعد المصادقة. بما إن HTTP بروتوكول عديم الحالة (Stateless)، إدارة الجلسات ضرورية لتتبّع هوية المستخدم عبر طلبات متعددة. الوظائف الأساسية: <strong>إنشاء الجلسة</strong> (توليد Session ID عند المصادقة)، <strong>صيانة الجلسة</strong> (تذكّر المستخدم عبر الطلبات)، <strong>أمان الجلسة</strong> (حماية من Hijacking/Fixation عبر HTTPS وأعلام الكوكيز الآمنة)، و<strong>إنهاء الجلسة</strong> (بعد فترة خمول أو تسجيل خروج).</p>
+
+<h3>العلاقة بين المصادقة وإدارة الجلسات</h3>
+<ol>
+<li>المصادقة هي نقطة البداية — بتتحقّق من الهوية</li>
+<li>إنشاء الجلسة بعد المصادقة مباشرة — Session ID فريد</li>
+<li>إدارة الجلسة بتحافظ على استمرارية الهوية عبر الطلبات المتعددة</li>
+<li>أمان الجلسة بعد المصادقة — Timeouts، كوكيز آمنة، آليات قائمة على التوكنات</li>
+<li>إنهاء الجلسة وإعادة المصادقة عند تسجيل الخروج أو انتهاء الصلاحية</li>
+</ol>
+<div class="callout tip">
+<div class="callout-label">فرق دقيق</div>
+<p>إدارة الجلسات مش دايمًا مرتبطة بالمصادقة — تطبيقات الويب الحديثة ممكن تبدأ جلسات حتى قبل المصادقة، لتتبّع مستخدمين مجهولين (مثلًا لحفظ تفضيل اللغة من أول طلب).</p>
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU3 -->
+<h2 id="lu3"><span class="num">03</span><span class="htext">منهجية اختبار المصادقة (WSTG-ATHN)</span></h2>
+<p>اختبار المصادقة هو عملية فحص واستغلال نقاط الضعف في آليات التحقق من الهوية — نماذج تسجيل الدخول، إعادة تعيين كلمة المرور، MFA، وآليات القفل. الهدف: تحديد واستغلال نقاط ضعف تسمح بالوصول غير المصرَّح به أو تصعيد الصلاحيات أو اختطاف الجلسات الشرعية.</p>
+
+<div class="table-wrap"><table>
+<thead><tr><th>ID</th><th>الاختبار</th><th>الوصف</th></tr></thead>
+<tbody>
+<tr><td>ATHN-01</td><td>نقل بيانات الاعتماد عبر قناة مشفَّرة</td><td>التحقق من نقل بيانات الاعتماد عبر HTTPS لمنع الاعتراض أو التلاعب</td></tr>
+<tr><td>ATHN-02</td><td>بيانات اعتماد افتراضية</td><td>فحص وجود بيانات اعتماد افتراضية لسه مستخدَمة</td></tr>
+<tr><td>ATHN-03</td><td>آلية قفل ضعيفة</td><td>تقييم آليات القفل لمنع هجمات Brute-force على الحسابات</td></tr>
+<tr><td>ATHN-04</td><td>تجاوز مخطط المصادقة</td><td>تحديد عيوب تسمح بتجاوز عملية المصادقة بالكامل</td></tr>
+<tr><td>ATHN-05</td><td>دالة "تذكّرني" ضعيفة</td><td>تقييم إذا كانت ميزة Remember Me مُطبَّقة بأمان</td></tr>
+<tr><td>ATHN-06</td><td>ضعف ذاكرة التخزين المؤقت للمتصفح</td><td>التأكد إن معلومات حساسة مش متخزّنة بشكل غير آمن في الكاش</td></tr>
+<tr><td>ATHN-07</td><td>سياسة كلمة مرور ضعيفة</td><td>فحص إنفاذ التعقيد وانتهاء صلاحية كلمات المرور</td></tr>
+<tr><td>ATHN-08</td><td>مصادقة ضعيفة في قنوات بديلة</td><td>اختبار قنوات مصادقة بديلة (APIs، تطبيقات موبايل) لممارسات أمنية أضعف</td></tr>
+</tbody>
+</table></div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU4 -->
+<h2 id="lu4"><span class="num">04</span><span class="htext">تعداد أسماء المستخدمين</span></h2>
+<p>تقنية لاختبار هل المهاجم يقدر يحدّد إن اسم مستخدم معيّن موجود في النظام — غالبًا بتُنفَّذ على نماذج تسجيل الدخول والتسجيل واسترجاع كلمة المرور. الهدف: تجميع مجموعة أسماء مستخدمين صالحة عبر التفاعل مع آلية المصادقة، وده مفيد لاختبار Brute-force لاحقًا.</p>
+<div class="callout warning">
+<div class="callout-label">كيف تحدث الثغرة</div>
+<p>التطبيق بيستجيب بشكل مختلف حسب صحة اسم المستخدم — مثلًا رسالة خطأ منفصلة لـ "اسم مستخدم غير صحيح" مقابل "كلمة مرور غير صحيحة". المهاجم يقدر يستخدم الفرق ده لتأكيد أسماء مستخدمين صالحة، ثم يستخدمها في هجوم Brute-force موجَّه. الثغرة ممكن تظهر كمان في شكل رموز HTTP مختلفة، أوقات تحميل مختلفة، أو رسائل خطأ مختلفة.</p>
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU5 -->
+<h2 id="lu5"><span class="num">05</span><span class="htext">اختبار سياسة كلمة المرور الضعيفة (ATHN-07)</span></h2>
+<p>تقييم هل التطبيق بيفرض سياسة كلمة مرور قوية — جزء حرج من اختبار المصادقة لضمان عدم قبول كلمات مرور ضعيفة أو سهلة التخمين.</p>
+<ul>
+<li><strong>Dictionary Attack:</strong> استخدام قائمة كلمات مرور شائعة محدَّدة مسبقًا</li>
+<li><strong>Brute Force Attack:</strong> تجربة كل التركيبات الممكنة منهجيًا</li>
+</ul>
+
+<div class="method-grid">
+<div class="method-card"><span class="mnum">تركيز</span><div class="mtitle">مناطق الفحص</div><div class="mdesc">تعقيد كلمة المرور (الطول، أنواع الأحرف)، آليات القفل/Rate Limits، ووضوح رسائل الخطأ (هل بتكشف معلومات عن صحة كلمة المرور؟).</div></div>
+<div class="method-card"><span class="mnum">نتائج</span><div class="mtitle">ما قد يُكتشَف</div><div class="mdesc">سياسة ضعيفة جدًا تقبل كلمات بسيطة، حماية غير كافية من Brute-force، رسائل خطأ غير متسقة بتسرّب معلومات، أو تجاوز كامل لأمان تسجيل الدخول.</div></div>
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU6 -->
+<h2 id="lu6"><span class="num">06</span><span class="htext">آليات القفل الضعيفة وتجاوز الـ CAPTCHA (ATHN-03)</span></h2>
+<p>تقييم هل آليات القفل زي CAPTCHA فعّالة في منع محاولات تسجيل دخول آلية بعد محاولات فاشلة متعددة. CAPTCHA ضعيفة أو مُطبَّقة بشكل سيئ ممكن تُتجاوَز، وده بيكشف إزاي آليات القفل الضعيفة ممكن تؤدّي لاختراق حسابات.</p>
+
+<h3>أنواع CAPTCHA من الأضعف للأقوى</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>النوع</th><th>القوة</th><th>الثغرات</th></tr></thead>
+<tbody>
+<tr><td>Arithmetic-based</td><td>ضعيف</td><td>حل حسابي بسيط — يُتجاوَز بـ Brute-force أو خدمات حل CAPTCHA زي 2Captcha</td></tr>
+<tr><td>Text-based</td><td>أساسي</td><td>عرضة لبوتات تستخدم تقنية OCR، التشويه البسيط سهل الكسر</td></tr>
+<tr><td>Image-based</td><td>متوسط</td><td>محتاج نماذج AI أكثر تطورًا، لكن مش منيع</td></tr>
+<tr><td>reCAPTCHA v2</td><td>متوسط-قوي</td><td>مربّع "لست روبوت" + مهام صور أحيانًا</td></tr>
+<tr><td>reCAPTCHA v3</td><td>قوي جدًا</td><td>بيعمل في الخلفية بالكامل، بيقيّم سلوك المستخدم بدون تفاعل</td></tr>
+</tbody>
+</table></div>
+<div class="callout tip">
+<div class="callout-label">هدف الاختبار</div>
+<p>تقييم هل CAPTCHA أو آليات القفل التانية ممكن تُتجاوَز لمواصلة محاولات تسجيل دخول آلية (Brute-force أو Dictionary attack).</p>
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU7 -->
+<h2 id="lu7"><span class="num">07</span><span class="htext">تجاوز مخطط المصادقة (ATHN-04)</span></h2>
+<p>تحديد نقاط ضعف في عمليات المصادقة بتسمح للمهاجمين بتجاوز آليات المصادقة بالكامل. الهدف: اكتشاف أخطاء إعداد أو تطبيقات غير آمنة، تحديد مسارات أو Endpoints بديلة توفّر وصول غير مصرَّح به، والتحقق من Endpoints غير محمية.</p>
+
+<div class="goals-grid">
+  <div class="goal-card"><span class="gi">1</span><span><strong>Endpoints غير محمية</strong> — لوحات أدمن أو ملفات إعداد مكشوفة بدون تسجيل دخول</span></div>
+  <div class="goal-card"><span class="gi">2</span><span><strong>بيانات اعتماد افتراضية/مضمَّنة</strong> — تُترك في الكود أو ملفات الإعداد بدون تغيير</span></div>
+  <div class="goal-card"><span class="gi">3</span><span><strong>ضوابط وصول ضعيفة أو مفقودة</strong> — صفحات بدون فحص صلاحيات كافٍ</span></div>
+  <div class="goal-card"><span class="gi">4</span><span><strong>التلاعب بالمعاملات (Parameter Manipulation)</strong> — تعديل URL Parameters أو الكوكيز أو الـ Headers أو POST Data لخداع التطبيق</span></div>
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU8 -->
+<h2 id="lu8"><span class="num">08</span><span class="htext">إدارة الجلسات ومعرّفات الجلسة</span></h2>
+
+<h3>دورة إنشاء وإدارة الجلسة</h3>
+<ol>
+<li><strong>إنشاء الجلسة:</strong> عند أول وصول (غالبًا عبر تسجيل الدخول)، السيرفر بينشئ جلسة فريدة وبيخزّن بيانات المستخدم بشكل آمن، وبيخصّص Session ID</li>
+<li><strong>إدارة الجلسة بالكوكيز:</strong> السيرفر بيبعت Session ID للمتصفح في كوكي — المتصفح بيضمّنها تلقائيًا في الطلبات التالية</li>
+<li><strong>دور Session ID:</strong> الرابط الأساسي بين العميل وبيانات الجلسة على السيرفر — لازم يكون غير قابل للتنبؤ ومخزَّن بأمان</li>
+</ol>
+
+<h3>طرق تطبيق Session ID</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>الطريقة</th><th>الوصف</th><th>ملاحظة أمنية</th></tr></thead>
+<tbody>
+<tr><td>Cookie-Based</td><td>الأكثر شيوعًا — Session ID في كوكي بيتبعت مع كل طلب</td><td>يمكن حمايتها بـ HttpOnly/Secure/SameSite</td></tr>
+<tr><td>URL-Based</td><td>Session ID مُلحَق بالرابط كمعامل</td><td>غير آمن — يظهر في سجل المتصفح واللوجات</td></tr>
+<tr><td>Token-Based</td><td>توكنات زي JWT — تحتوي معلومات مشفَّرة وممكن تكون Stateless</td><td>مُستخدَم بكثرة في APIs والتطبيقات الحديثة</td></tr>
+<tr><td>Header-Based</td><td>Session ID في Header مخصَّص — شائع في RESTful APIs</td><td>أكثر أمانًا شوية لأنه بعيد عن الرابط والكوكيز</td></tr>
+</tbody>
+</table></div>
+
+<h3>اختبارات إدارة الجلسة</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>الاختبار</th><th>الوصف</th></tr></thead>
+<tbody>
+<tr><td>Session Management Schema</td><td>التحقق من تخزين معرّفات الجلسة بأمان ومش سهل تخمينها</td></tr>
+<tr><td>Cookie Attributes</td><td>فحص إعدادات HttpOnly/Secure/SameSite لمنع سرقة الكوكي عبر XSS</td></tr>
+<tr><td>Session Fixation</td><td>تقييم هل المهاجم يقدر يحدّد أو يتنبّأ بـ Session ID قبل تسجيل الدخول</td></tr>
+<tr><td>Session Expiration</td><td>ضمان انتهاء الجلسة بعد فترة خمول أو تسجيل خروج</td></tr>
+<tr><td>Session Timeout</td><td>تقييم هل الجلسات مُعدَّة لإنهاء نفسها بعد فترة معقولة</td></tr>
+</tbody>
+</table></div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU9 -->
+<h2 id="lu9"><span class="num">09</span><span class="htext">الكوكيز ومعاملاتها الأمنية</span></h2>
+<p>قطع بيانات صغيرة مخزَّنة على متصفح المستخدم بواسطة المواقع اللي بيزورها — بتحتفظ بمعلومات بين الجلسات زي حالة تسجيل الدخول والتفضيلات.</p>
+
+<div class="method-grid">
+<div class="method-card"><span class="mnum">HttpOnly</span><div class="mtitle">منع وصول JavaScript</div><div class="mdesc">بيمنع سكريبتات جهة العميل من الوصول للكوكي — حماية من سرقة بيانات الكوكي عبر هجمات XSS.</div></div>
+<div class="method-card"><span class="mnum">Secure</span><div class="mtitle">نقل عبر HTTPS فقط</div><div class="mdesc">الكوكي بتُنقَل بس عبر اتصالات HTTPS — حماية من الاعتراض عبر HTTP غير المشفَّر وهجمات Man-in-the-Middle.</div></div>
+<div class="method-card"><span class="mnum">SameSite</span><div class="mtitle">تقييد الطلبات العابرة للمواقع</div><div class="mdesc"><strong>Strict:</strong> تُرسَل بس في سياق الموقع نفسه. <strong>Lax:</strong> مرونة أكتر شوية مع طلبات GET الأساسية. <strong>None:</strong> تُرسَل في كل السياقات (تتطلّب Secure). بتقلّل خطر CSRF.</div></div>
+<div class="method-card"><span class="mnum">Expiration</span><div class="mtitle">عمر الكوكي</div><div class="mdesc">كوكيز الجلسة بتُحذَف عند إغلاق المتصفح، والكوكيز الدائمة بتفضل لمدة محدَّدة — تقليل مدة الصلاحية بيقلّل نافذة سوء الاستخدام.</div></div>
+</div>
+
+<div class="code-wrap"><span class="code-tag">example — setting a secure session cookie</span><pre><code>POST /login HTTP/1.1
+Host: example.com
+Content-Type: application/x-www-form-urlencoded
+
+username=testuser&password=examplepassword
+
+HTTP/1.1 200 OK
+Set-Cookie: session_id=abc123xyz; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=3600
+Content-Type: text/html
+</code></pre></div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU10 -->
+<h2 id="lu10"><span class="num">10</span><span class="htext">اختبار مخطط الجلسة والتلاعب بالكوكيز (SESS-01)</span></h2>
+<p>تقييم أمان تصميم وقوة مخطط إدارة الجلسات — فحص إزاي التطبيق بيدير إنشاء وصيانة وإنهاء توكنات الجلسة.</p>
+
+<h3>نمط الهجوم النموذجي</h3>
+<ol>
+<li><strong>جمع الكوكيز:</strong> تجميع عدد كافٍ من عيّنات الكوكي</li>
+<li><strong>هندسة عكسية للكوكي:</strong> تحليل خوارزمية توليد الكوكي</li>
+<li><strong>التلاعب بالكوكي:</strong> تزوير كوكي صالح لتنفيذ الهجوم — ممكن يحتاج محاولات كتيرة (Cookie Brute-force)</li>
+</ol>
+
+<h3>أهداف الاختبار الرئيسية</h3>
+<ul>
+<li>تحديد ضعف بنية توكن الجلسة — هل التوكن قابل للتنبؤ أو فيه أنماط قابلة للاستغلال</li>
+<li>التأكد من معالجة آمنة للجلسة — إعادة توليد التوكن عند تسجيل الدخول والخروج</li>
+<li>اختبار فشل ضوابط التفويض — هل معلومات حساسة (أدوار المستخدم) مضمَّنة في كوكي قابل للتعديل</li>
+<li>تقييم آليات انتهاء وإبطال الجلسة</li>
+<li>التحقق من نقل الكوكي الآمن (HTTPS فقط) والأعلام المناسبة</li>
+</ul>
+
+<div class="table-wrap"><table>
+<thead><tr><th>التقنية</th><th>الوصف</th><th>الثغرة</th></tr></thead>
+<tbody>
+<tr><td>Predictable Session IDs</td><td>تحليل عشوائية التوكنات</td><td>المهاجم يقدر يخمّن أو يولّد توكنات صالحة</td></tr>
+<tr><td>Session Fixation</td><td>تثبيت Session ID قبل التسجيل</td><td>استيلاء على الجلسة بعد مصادقة الضحية</td></tr>
+<tr><td>Session Expiration</td><td>التحقق من انتهاء الجلسة بعد Timeout وتسجيل الخروج</td><td>جلسات لا تنتهي ممكن تُعاد استخدامها</td></tr>
+<tr><td>Session Hijacking</td><td>إعادة تشغيل كوكي الجلسة من أجهزة/مواقع مختلفة</td><td>اختطاف لو التوكن مش مرتبط بخصائص المستخدم</td></tr>
+<tr><td>Cookie Security Flags</td><td>فحص HttpOnly/Secure/SameSite</td><td>غيابها يعرّض لـ XSS وCSRF وMitM</td></tr>
+<tr><td>Session Token in URLs</td><td>التأكد إن التوكنات مش في الرابط</td><td>تسريب عبر Referrer headers واللوجات والتاريخ</td></tr>
+</tbody>
+</table></div>
+
+<h3>الهندسة العكسية والتلاعب بالكوكي</h3>
+<p>فحص بنية الكوكي بحثًا عن أنماط قابلة للتنبؤ أو معلومات مُرمَّزة (Base64/URL encoding) ممكن تكشف بيانات حساسة لو مش مشفَّرة فعليًا. مثال شائع: تعديل معامل <code>role=guest</code> إلى <code>role=admin</code> — لو التطبيق مش بيتحقّق من الصلاحيات من جهة السيرفر، ده ممكن يمنح صلاحيات غير مصرَّح بها.</p>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU11 -->
+<h2 id="lu11"><span class="num">11</span><span class="htext">اختطاف الجلسة وتثبيت الجلسة</span></h2>
+
+<div class="method-grid">
+<div class="method-card"><span class="mnum">بعد المصادقة</span><div class="mtitle">Session Hijacking</div><div class="mdesc">المهاجم بيسرق توكن جلسة نشط <strong>بعد</strong> ما المستخدم يسجّل دخوله، وبيقدر ينتحل شخصيته مباشرة.</div></div>
+<div class="method-card"><span class="mnum">قبل المصادقة</span><div class="mtitle">Session Fixation</div><div class="mdesc">المهاجم بيحدّد Session ID مسبقًا <strong>قبل</strong> ما المستخدم يسجّل دخوله، والضحية بيستخدمه من غير ما يعرف، فيسمح للمهاجم بالوصول بعد المصادقة.</div></div>
+</div>
+
+<h3>كيف يعمل Session Hijacking</h3>
+<div class="step-track">
+<div class="step-item">
+<div class="step-num">1</div>
+<div class="step-title">إنشاء الجلسة</div>
+<div class="step-body"><p>عند تسجيل الدخول، السيرفر بيولّد Session ID ويخصّصه للمستخدم — غالبًا في كوكي أو معامل URL أو Header.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">2</div>
+<div class="step-title">اعتراض Session ID</div>
+<div class="step-body"><p>عبر Sniffing (التقاط ترافيك غير مشفَّر)، Man-in-the-Middle، XSS (حقن سكريبت لسرقة الكوكي)، أو استغلال خوارزميات توليد ضعيفة لتوكنات قابلة للتنبؤ.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">3</div>
+<div class="step-title">الاستيلاء على الجلسة</div>
+<div class="step-body"><p>المهاجم بيستخدم Session ID المسروق لانتحال المستخدم الشرعي — السيرفر مش قادر يفرّق بين المهاجم والمستخدم الحقيقي.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">4</div>
+<div class="step-title">الاستغلال</div>
+<div class="step-body"><p>المهاجم بيقدر ينفّذ إجراءات كمستخدم شرعي — عرض بيانات حساسة، معاملات غير مصرَّح بها، أو تعديل إعدادات الحساب.</p></div>
+</div>
+</div>
+
+<h3>كيف يعمل Session Fixation</h3>
+<div class="step-track">
+<div class="step-item">
+<div class="step-num">1</div>
+<div class="step-title">المهاجم بيحدّد Session ID</div>
+<div class="step-body"><p>بينشئ أو يحصل على Session ID صالح (مثلًا ببدء جلسة مع التطبيق الهدف) أو بيخمّن واحد قابل للتنبؤ، وبيبعته للضحية عبر رابط أو كوكي أو حقن JavaScript.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">2</div>
+<div class="step-title">الضحية بيسجّل دخوله بالمعرّف المفروض</div>
+<div class="step-body"><p>الضحية من غير ما يعرف بيستخدم Session ID اللي زرعه المهاجم — التطبيق بيربط المعرّف ده بجلسة الضحية المصادَق عليها.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">3</div>
+<div class="step-title">المهاجم بيحصل على الوصول</div>
+<div class="step-body"><p>بما إن المهاجم أصلًا عارف Session ID، بيقدر يستخدمه للوصول لجلسة الضحية بدون الحاجة لبيانات اعتماد الدخول.</p></div>
+</div>
+</div>
+
+<h3>أسباب ثغرات Session Fixation</h3>
+<ul>
+<li>عدم إعادة توليد Session ID عند تسجيل الدخول — كتير من التطبيقات بتعيد استخدام نفس المعرّف بعد المصادقة</li>
+<li>تخصيص Session ID غير آمن عبر معاملات URL أو كوكيز أو حقول Form مخفية</li>
+<li>توليد Session ID ضعيف أو قابل للتنبؤ (تسلسلي)</li>
+<li>وجود Session IDs في الروابط — عرضة للاعتراض عبر Referrer headers واللوجات</li>
+<li>غياب أعلام الحماية (Secure, HttpOnly, SameSite) على الكوكيز</li>
+<li>غياب انتهاء صلاحية أو Timeout للجلسة</li>
+</ul>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU12 -->
+<h2 id="lu12"><span class="num">12</span><span class="htext">تزوير الطلبات عبر المواقع (CSRF)</span></h2>
+<p>ثغرة أمنية بتخلّي المهاجم يخدع المستخدم عشان ينفّذ إجراءات على تطبيق ويب من غير علمه أو موافقته — الهجوم بيستغل الثقة اللي التطبيق عنده في متصفح المستخدم.</p>
+
+<h3>منهجية هجوم CSRF</h3>
+<ol>
+<li>التطبيق بيثق إن الطلبات القادمة من متصفح المستخدم شرعية — المهاجم بيستغل الثقة دي</li>
+<li>معظم التطبيقات بتستخدم كوكيز للمصادقة، وبتتبعت تلقائيًا مع كل طلب</li>
+<li>المهاجم بيصنع طلب خبيث (مثلًا تغيير بريد إلكتروني أو كلمة مرور) ويضمّنه في صفحة ويب أو إيميل</li>
+<li>المهاجم بيستدرج الضحية لتحميل المحتوى ده وهو مسجّل دخوله على التطبيق الهدف</li>
+<li>متصفح الضحية بيبعت الطلب الخبيث تلقائيًا، بما فيه كوكي المصادقة</li>
+<li>التطبيق، واثق في الطلب بسبب الكوكي، بينفّذه — وحساب الضحية يتأثّر</li>
+</ol>
+<div class="callout danger">
+<div class="callout-label">التأثير المحتمل</div>
+<p>تغييرات غير مصرَّح بها في إعدادات الحساب، تحويلات أموال أو إجراءات نيابة عن المستخدم بدون موافقته، أو إجراءات خبيثة زي تغيير كلمات المرور والبريد الإلكتروني ومعلومات البروفايل.</p>
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU13 -->
+<h2 id="lu13"><span class="num">13</span><span class="htext">مقدمة في المصادقة القائمة على التوكنات</span></h2>
+<p>طريقة حديثة للتحقق والتفويض الآمن للمستخدمين أو التطبيقات — بدل الاحتفاظ بحالة الجلسة على السيرفر، التوكنات بتتصدر للعميل وبتُمرَّر ذهابًا وإيابًا لمصادقة الطلبات.</p>
+
+<h3>أنواع التوكنات</h3>
+<div class="method-grid">
+<div class="method-card"><span class="mnum">01</span><div class="mtitle">Bearer Tokens</div><div class="mdesc">تنسيق بسيط بيمنح وصول عند تقديمه — شائع في APIs. السيرفر بيفترض إن حامل التوكن مُخوَّل. لازم تفضل سرّية ومحدودة المدة لتقليل خطر سوء الاستخدام لو اتسرّبت.</div></div>
+<div class="method-card"><span class="mnum">02</span><div class="mtitle">JWT</div><div class="mdesc">توكن مكتفٍ ذاتيًا (Self-contained) بثلاثة أجزاء: Header وPayload وSignature — محمول وStateless، بيخلّي السيرفر يستغني عن تخزين الجلسة.</div></div>
+<div class="method-card"><span class="mnum">03</span><div class="mtitle">OAuth Tokens</div><div class="mdesc"><strong>Access Tokens:</strong> صلاحية الوصول للموارد. <strong>Refresh Tokens:</strong> الحصول على Access Token جديد بدون إعادة مصادقة.</div></div>
+</div>
+
+<h3>مكان التوكن في الطلب</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>الموقع</th><th>الاستخدام</th><th>ملاحظة أمنية</th></tr></thead>
+<tbody>
+<tr><td>Authorization Header</td><td>الأكثر شيوعًا وأمانًا — <code>Authorization: Bearer &lt;token&gt;</code></td><td>يبعد التوكن عن الرابط، يمنع تسريبه عبر اللوجات</td></tr>
+<tr><td>Query Parameters</td><td>التوكن مُلحَق بالرابط</td><td>خطر — يظهر في التاريخ واللوجات ويُخزَّن Cache</td></tr>
+<tr><td>Request Body</td><td>غالبًا في طلبات POST</td><td>مناسب لإرسال بيانات، تجنّبه في GET</td></tr>
+<tr><td>Cookies</td><td>تُضاف تلقائيًا للطلبات لنفس النطاق</td><td>يحتاج HttpOnly + Secure، وعرضة لـ CSRF بدون حماية إضافية</td></tr>
+<tr><td>Custom Headers</td><td>Header مخصَّص (مثلًا <code>X-Auth-Token</code>)</td><td>أقل قياسية لكن مفيد لأنظمة بمتطلبات أمنية خاصة</td></tr>
+</tbody>
+</table></div>
+<div class="callout tip">
+<div class="callout-label">أفضل الممارسات</div>
+<p>استخدم Authorization Header دايمًا ما أمكن، تجنّب معاملات الرابط، أمّن أي توكن في كوكيز بـ HttpOnly وSecure وSameSite، وشفّر النقل دايمًا بـ HTTPS بغضّ النظر عن مكان التوكن.</p>
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU14 -->
+<h2 id="lu14"><span class="num">14</span><span class="htext">JSON Web Tokens (JWT) بالتفصيل</span></h2>
+<p>طريقة مدمجة وآمنة للرابط (URL-safe) ومكتفية ذاتيًا لنقل المعلومات بأمان بين الأطراف — بتُستخدم بكثرة للمصادقة والتفويض وتبادل المعلومات. بتتكوّن من ثلاثة أجزاء مفصولة بنقاط: <code>HEADER.PAYLOAD.SIGNATURE</code>.</p>
+
+<div class="code-wrap"><span class="code-tag">example jwt (base64-encoded)</span><pre><code>eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWUsImV4cCI6MTcxNjQ1NDY2MH0.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c
+</code></pre></div>
+
+<h3>مكوّنات JWT</h3>
+<ul>
+<li><strong>Header:</strong> Metadata عن التوكن — خوارزمية التوقيع (HS256، RS256) ونوع التوكن</li>
+<li><strong>Payload:</strong> الـ Claims — بيانات عن المستخدم أو الجلسة (ID، أدوار، انتهاء الصلاحية). مُرمَّز بـ Base64 <strong>مش</strong> مشفَّر — قابل للقراءة لو فُكّ ترميزه</li>
+<li><strong>Signature:</strong> توقيع تشفيري للـ Header والـ Payload بمفتاح سرّي (خوارزميات متماثلة) أو خاص (خوارزميات غير متماثلة) — يضمن عدم العبث بالتوكن</li>
+</ul>
+<div class="callout warning">
+<div class="callout-label">ترتيب حرج</div>
+<p>الـ Header دايمًا أولًا، بعده الـ Payload، وأخيرًا الـ Signature — التوقيع بيتولّد من تجزئة Header وPayload معًا، وأي تبديل في الترتيب ده بيُبطِل التوكن.</p>
+</div>
+
+<h3>أنواع الـ Claims</h3>
+<div class="method-grid">
+<div class="method-card"><span class="mnum">Registered</span><div class="mtitle">Claims معيارية</div><div class="mdesc"><code>iss</code> (المُصدِر)، <code>sub</code> (الموضوع/ID المستخدم)، <code>aud</code> (الجمهور المستهدَف)، <code>exp</code> (وقت الانتهاء)، <code>iat</code> (وقت الإصدار)، <code>nbf</code> (غير صالح قبل).</div></div>
+<div class="method-card"><span class="mnum">Public</span><div class="mtitle">Claims عامة</div><div class="mdesc">مخصَّصة من المطوّر، لازم تكون فريدة لتجنّب التعارض — مثل <code>role</code>، <code>email</code>، <code>permissions</code>.</div></div>
+<div class="method-card"><span class="mnum">Private</span><div class="mtitle">Claims خاصة</div><div class="mdesc">متفَق عليها بين الأطراف المتبادلة للتوكن، غير معيارية — مثل <code>department</code>، <code>cartId</code>.</div></div>
+</div>
+
+<div class="code-wrap"><span class="code-tag">signature formula — hs256</span><pre><code>HMACSHA256(
+  base64UrlEncode(header) + "." + base64UrlEncode(payload),
+  secret
+)
+</code></pre></div>
+
+<h3>دور JWT في المصادقة وإدارة الجلسات</h3>
+<p>عند تسجيل الدخول الناجح، السيرفر بيولّد JWT يحتوي Claims خاصة بالمستخدم، بيوقّعه بمفتاح سرّي/خاص، وبيبعته للعميل. في الطلبات التالية، العميل بيضمّن الـ JWT في Authorization header، والسيرفر بيتحقّق منه لمصادقة المستخدم — بدون أي تخزين جلسة من جهة السيرفر (Stateless)، وده بيحسّن قابلية التوسّع والمصادقة عبر الأنظمة الموزَّعة.</p>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU15 -->
+<h2 id="lu15"><span class="num">15</span><span class="htext">ثغرة الخوارزمية None في JWT</span></h2>
+<p>بتحدث لما يُوقَّع JWT بخوارزمية <code>none</code> — ده بيسمح للمهاجم بالتلاعب في التوكن وتجاوز آليات التحقق لأن التوقيع إما مفقود أو مُتجاهَل.</p>
+
+<h3>أسباب الثغرة</h3>
+<ul>
+<li>سوء إعداد في تطبيق مكتبات JWT — بعض المكتبات بتدعم <code>none</code> لأغراض الاختبار، ولو مش مُعدَّة صح ممكن تقبل توكنات بدون التحقق من سلامتها</li>
+<li>فشل فرض الحاجة لتوقيع تشفيري صالح</li>
+<li>ثقة غير سليمة في حقل <code>alg</code> بالـ Header — لو التطبيق بيثق فيه بدون تحقق، المهاجم يقدر يعدّله لـ <code>none</code> ويتجاوز التحقق من التوقيع</li>
+</ul>
+
+<h3>كيف تُستغَل</h3>
+<div class="step-track">
+<div class="step-item">
+<div class="step-num">1</div>
+<div class="step-title">استغلال الـ Header</div>
+<div class="step-body"><p>المهاجم بيصنع JWT بحقل <code>alg</code> مضبوط على <code>none</code> — ده بيخبر السيرفر إنه مش هيتحقّق من التوقيع.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">2</div>
+<div class="step-title">إزالة التوقيع</div>
+<div class="step-body"><p>المهاجم بيعدّل التوكن ويشيل التوقيع — جزء التوقيع بعد النقطة الثانية بيفضل فارغ.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">3</div>
+<div class="step-title">تجاوز المصادقة</div>
+<div class="step-body"><p>السيرفر بيعتبر التوكن صالح لأنه مش بيتحقّق من التوقيع لما <code>alg</code> يكون <code>none</code> — المهاجم يقدر يعدّل الـ Payload لانتحال أي مستخدم أو تصعيد الصلاحيات.</p></div>
+</div>
+</div>
+
+<div class="code-wrap"><span class="code-tag">forged jwt — alg: none</span><pre><code>{
+  "alg": "none",
+  "typ": "JWT"
+}
+
+eyJhbGciOiJub25lIiwidHlwIjoiSldUIn0.eyJ1c2VyIjoiYWRtaW4ifQ.
+</code></pre></div>
+<div class="callout danger">
+<div class="callout-label">أشكال الاستغلال</div>
+<p>تصعيد الصلاحيات (تغيير <code>role: "user"</code> إلى <code>role: "admin"</code>)، انتحال الهوية (تزوير توكنات لمستخدمين آخرين)، واختطاف الجلسة بالكامل عبر Payload مستخدم شرعي مزوَّر.</p>
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU16 -->
+<h2 id="lu16"><span class="num">16</span><span class="htext">مقدمة في OAuth وهجماته الشائعة</span></h2>
+<p>OAuth2 هو المعيار الأساسي للويب للتفويض بين الخدمات — بيُستخدم لتفويض تطبيقات طرف ثالث للوصول لخدمات أو بيانات من مزوّد عندك حساب فيه.</p>
+
+<h3>مكوّنات OAuth</h3>
+<ul>
+<li><strong>Resource Owner:</strong> الكيان اللي يقدر يمنح وصول لمورد محمي — عادة المستخدم النهائي</li>
+<li><strong>Client:</strong> التطبيق اللي بيطلب الوصول نيابة عن Resource Owner</li>
+<li><strong>Resource Server:</strong> السيرفر المستضيف للموارد المحمية (الـ API)</li>
+<li><strong>Authorization Server:</strong> بيصادق على Resource Owner ويصدر Access Tokens (مزوّد الهوية)</li>
+<li><strong>User Agent:</strong> الأداة اللي Resource Owner بيتفاعل بيها مع Client (متصفح أو تطبيق موبايل)</li>
+</ul>
+
+<h3>أنواع تدفّق OAuth (Flows)</h3>
+<ul>
+<li><strong>Authorization Code Grant:</strong> الـ Client بيوجّه المستخدم للـ Authorization Server، بيحصل على Authorization Code يبدّله بـ Access Token</li>
+<li><strong>Implicit Grant:</strong> تبسيط — الـ Client بيحصل على Access Token مباشرة بدون Authorization Code</li>
+<li><strong>Resource Owner Password Credentials:</strong> الـ Client بيحصل على Access Token باستخدام اسم مستخدم وكلمة مرور Resource Owner مباشرة</li>
+<li><strong>Client Credentials Grant:</strong> الـ Client بيحصل على Access Token ببيانات اعتماده هو</li>
+</ul>
+
+<h3>أهم هجمات OAuth الشائعة</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>الهجوم</th><th>الآلية</th></tr></thead>
+<tbody>
+<tr><td>Unvalidated Redirect URI</td><td>عدم التحقق من إن redirect_uri ملك للـ Client → Open Redirect واختطاف حساب عبر سرقة Authorization Code</td></tr>
+<tr><td>Weak Authorization Codes</td><td>أكواد تفويض ضعيفة يمكن تخمينها عند Token Endpoint خصوصًا لو client secret مخترَق أو غير مُتحقَّق منه</td></tr>
+<tr><td>Everlasting Authorization Codes</td><td>أكواد تفويض غير منتهية الصلاحية بتوسّع نافذة استغلال الأكواد الملتقَطة أو المخمَّنة</td></tr>
+<tr><td>Codes Not Bound to Client</td><td>إمكانية تبديل كود تفويض مُلتقَط/مخمَّن مع Client آخر للحصول على Access Token</td></tr>
+<tr><td>Weak Handle-Based Tokens</td><td>توكنات وصول/تجديد ضعيفة يمكن تخمينها عند Resource Server أو Token Endpoint</td></tr>
+<tr><td>Insecure Token Storage</td><td>تخزين التوكنات كنص عادي غير مُجزَّأ في قاعدة البيانات</td></tr>
+<tr><td>Refresh Token Not Bound to Client</td><td>استبدال Refresh Token صادر لـ Client بتوكن Client آخر لو الربط غير مُتحقَّق منه</td></tr>
+</tbody>
+</table></div>
+
+<div class="code-wrap"><span class="code-tag">example — redirect_uri manipulation</span><pre><code># الرابط الأصلي اللي بيستخدمه الـ Client:
+http://gallery:3005/OAuth/authorize?response_type=code&redirect_uri=http%3A%2F%2Fphotoprint%3A3000%2Fcallback&scope=view_gallery&client_id=photoprint
+
+# تعديل قيمة redirect_uri لجهة المهاجم:
+http://gallery:3005/OAuth/authorize?response_type=code&redirect_uri=http%3A%2F%2Fattacker%3A1337%2Fcallback&scope=view_gallery&client_id=photoprint
+</code></pre></div>
+<div class="callout case">
+<div class="callout-label">سيناريو هجوم واقعي (Open Bank Project)</div>
+<p>معامل <code>redirectUrl</code> كان عرضة لـ Reflected XSS بسبب تنظيف غير كافٍ للمدخلات. المهاجم حقن JavaScript خبيث، أنشأ Iframe خفي لصفحة تسجيل الدخول (بسبب <code>X-Frame-Options: SAMEORIGIN</code>)، واستغلّ تفعيل Autocomplete لسرقة بيانات اعتماد المستخدم عبر مستمع Netcat. السلسلة دمجت XSS مع ضعف X-Frame-Options مع CSRF على وظيفة إنشاء API Key.</p>
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU17 -->
+<h2 id="lu17"><span class="num">17</span><span class="htext">المصادقة الثنائية (2FA) وتجاوزها</span></h2>
+<p>إجراء أمني بيتطلّب من المستخدم إثبات هويته بعاملين مستقلين — شيء يعرفه وشيء يملكه — بيقلّل خطر الوصول غير المصرَّح به حتى لو اتسرّبت كلمة المرور.</p>
+
+<h3>أنواع 2FA</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>النوع</th><th>الإيجابيات</th><th>السلبيات</th></tr></thead>
+<tbody>
+<tr><td>SMS-based</td><td>سهل الاستخدام ومنتشر</td><td>عرضة لـ SIM Swapping والاعتراض والتصيّد</td></tr>
+<tr><td>Email-based</td><td>مش محتاج جهاز إضافي</td><td>خطير لو البريد الإلكتروني نفسه مخترَق</td></tr>
+<tr><td>TOTP</td><td>أكثر أمانًا من SMS/Email</td><td>محتاج إعداد وجهاز ثانوي</td></tr>
+<tr><td>Authenticator Apps</td><td>بدون اعتماد على قنوات اتصال خارجية</td><td>غير مريح لو الجهاز ضاع أو اتعطّل</td></tr>
+</tbody>
+</table></div>
+
+<h3>تقنيات تجاوز 2FA</h3>
+<div class="method-grid">
+<div class="method-card"><span class="mnum">هندسة اجتماعية</span><div class="mtitle">Phishing / Vishing / SMiShing</div><div class="mdesc">صفحات تسجيل دخول مزيّفة، انتحال دعم فني عبر الهاتف، أو رسائل SMS احتيالية — كلها للحصول على OTP مباشرة من الضحية.</div></div>
+<div class="method-card"><span class="mnum">عيوب التطبيق</span><div class="mtitle">ضعف آليات الاسترجاع والتحقق</div><div class="mdesc">استغلال أسئلة الأمان أو أكواد الاسترجاع الضعيفة، Session Fixation قبل مصادقة 2FA، أو تحقق توكن ضعيف يسمح بهجمات Replay أو تلاعب.</div></div>
+<div class="method-card"><span class="mnum">اعتراض التوكن</span><div class="mtitle">MITM / SIM Swapping / SSL Stripping</div><div class="mdesc">اعتراض توكنات 2FA عبر قنوات غير مشفَّرة، نقل رقم هاتف الضحية لشريحة جديدة، أو تخفيض اتصال HTTPS لـ HTTP لاعتراض الـ OTPs.</div></div>
+</div>
+
+<h3>منهجية اختبار 2FA</h3>
+<ol>
+<li><strong>جمع المعلومات:</strong> تحديد نوع 2FA المستخدَم، فهم مسار التطبيق بالكامل (تسجيل، تفعيل 2FA، استرجاع)، مراجعة إعدادات الأمان (طول التوكن، مدة الصلاحية، Rate Limiting)</li>
+<li><strong>اختبار تدفّق المصادقة:</strong> التحقق من قوة الـ OTP (قابل للتنبؤ أو قصير؟)، محاولة إعادة استخدام توكن مُعترَض (Token Replay)، فحص نقل التوكنات عبر قنوات مشفَّرة</li>
+<li><strong>Rate Limiting وآليات القفل:</strong> محاولة Brute-force للـ OTPs بأدوات زي Burp Intruder، تعداد OTPs صالحة عبر فروق الاستجابة</li>
+<li><strong>تقنيات متقدّمة:</strong> فحص ثغرات OAuth/OpenID اللي ممكن تسمح بتجاوز 2FA، إعادة تشغيل OTPs في أجزاء مختلفة من التطبيق، وفحص هل التحقق من التوكن بيحصل من جهة السيرفر أو العميل</li>
+</ol>
+
+<h3>أمان OTP</h3>
+<p>كلمات مرور مؤقتة أحادية الاستخدام بتُولَّد وتُرسَل لجهاز المستخدم المسجَّل للتحقق من هويته. ميزتها الأساسية: حساسة للوقت وتنتهي بسرعة، مما يصعّب إعادة استخدامها من المهاجمين. <strong>TOTP</strong> بيولّد أكواد مبنية على مفتاح سرّي مشترك ووقت متزامن، صالحة عادة لـ30 ثانية فقط. <strong>Rate Limiting</strong> أساسي لمنع هجمات Brute-force على الـ OTPs — تقييد عدد محاولات التحقق خلال فترة زمنية محدَّدة.</p>
+
+<hr />
+
+<!-- ══════════════════════════════════ METHODOLOGY -->
+<h2 id="methodology"><span class="num">--</span><span class="htext">دورة اختبار المصادقة والجلسات الكاملة</span></h2>
+
+<div class="diagram-card">
+<svg viewBox="0 0 700 150" xmlns="http://www.w3.org/2000/svg">
+  <rect x="5" y="55" width="105" height="55" rx="7" class="dsvg-box-b"/>
+  <text x="57" y="78" text-anchor="middle" class="dsvg-blue" font-size="10.5" font-weight="700">اختبار المصادقة</text>
+  <text x="57" y="95" text-anchor="middle" class="dsvg-muted" font-size="8">Username / Password</text>
+
+  <rect x="150" y="55" width="110" height="55" rx="7" class="dsvg-box-a"/>
+  <text x="205" y="78" text-anchor="middle" class="dsvg-amber" font-size="10.5" font-weight="700">اختبار الجلسات</text>
+  <text x="205" y="95" text-anchor="middle" class="dsvg-muted" font-size="8">Cookies / Hijacking</text>
+
+  <rect x="300" y="55" width="110" height="55" rx="7" class="dsvg-box"/>
+  <text x="355" y="78" text-anchor="middle" class="dsvg-txt" font-size="10.5" font-weight="700">CSRF</text>
+  <text x="355" y="95" text-anchor="middle" class="dsvg-muted" font-size="8">ثقة المتصفح</text>
+
+  <rect x="450" y="55" width="110" height="55" rx="7" class="dsvg-box-r"/>
+  <text x="505" y="78" text-anchor="middle" class="dsvg-red" font-size="10.5" font-weight="700">JWT / OAuth</text>
+  <text x="505" y="95" text-anchor="middle" class="dsvg-muted" font-size="8">توكنات حديثة</text>
+
+  <rect x="600" y="55" width="95" height="55" rx="7" class="dsvg-box-g"/>
+  <text x="647" y="78" text-anchor="middle" class="dsvg-green" font-size="10.5" font-weight="700">2FA Bypass</text>
+  <text x="647" y="95" text-anchor="middle" class="dsvg-muted" font-size="8">الطبقة الأخيرة</text>
+
+  <line x1="110" y1="82" x2="150" y2="82" class="dsvg-line"/>
+  <line x1="260" y1="82" x2="300" y2="82" class="dsvg-line"/>
+  <line x1="410" y1="82" x2="450" y2="82" class="dsvg-line"/>
+  <line x1="560" y1="82" x2="600" y2="82" class="dsvg-line"/>
+</svg>
+<div class="diagram-caption">من اختبار المصادقة الأساسي وحتى طبقات الحماية المتقدّمة — الترتيب المنطقي لتغطية الموديول بالكامل</div>
+</div>
+
+<ul>
+<li>ابدأ باختبار المصادقة الأساسية (تعداد المستخدمين، سياسة كلمة المرور، آليات القفل) قبل أي شيء آخر — ده بيحدّد نقطة الدخول الأضعف</li>
+<li>انتقل لإدارة الجلسات والكوكيز — فحص الأعلام والبنية والتلاعب</li>
+<li>اختبر CSRF كطبقة منفصلة لأنه بيعتمد على ثقة المتصفح وليس على ضعف التوكن نفسه</li>
+<li>لو التطبيق بيستخدم JWT أو OAuth، افحصهم كمسار منفصل كامل (البنية، التوقيع، التدفّق)</li>
+<li>اختبر 2FA في النهاية — هو طبقة الحماية الأخيرة، وتجاوزها غالبًا بيحتاج دمج ثغرات من الخطوات السابقة</li>
+</ul>
+
+<hr />
+
+<!-- ══════════════════════════════════ CHEAT SHEET -->
+<h2 id="cheat"><span class="num">--</span><span class="htext">Cheat Sheet مرجعي</span></h2>
+<div class="cheat-section">
+
+<h4>قائمة اختبارات WSTG-ATHN السريعة</h4>
+<ul>
+<li>ATHN-01: قناة مشفَّرة لبيانات الاعتماد</li>
+<li>ATHN-02: بيانات اعتماد افتراضية</li>
+<li>ATHN-03: آلية قفل ضعيفة / CAPTCHA</li>
+<li>ATHN-04: تجاوز مخطط المصادقة</li>
+<li>ATHN-05: دالة Remember Me</li>
+<li>ATHN-06: ذاكرة تخزين المتصفح</li>
+<li>ATHN-07: سياسة كلمة مرور ضعيفة</li>
+<li>ATHN-08: قنوات مصادقة بديلة</li>
+</ul>
+
+<h4>فحص سريع لأعلام الكوكي</h4>
+<div class="code-wrap"><span class="code-tag">quick check</span><pre><code># ابحث في Set-Cookie headers عن:
+HttpOnly   → غيابه = عرضة لسرقة عبر XSS
+Secure     → غيابه = عرضة للاعتراض عبر HTTP
+SameSite   → غيابه أو None بدون Secure = عرضة لـ CSRF
+Max-Age    → طويل جدًا أو غائب = جلسات لا تنتهي
+</code></pre></div>
+
+<h4>فحص JWT سريع</h4>
+<div class="code-wrap"><span class="code-tag">quick jwt checks</span><pre><code># جرّب تعديل alg إلى none وإزالة التوقيع
+# جرّب تبديل الخوارزمية من RS256 إلى HS256 (Algorithm Confusion)
+# افحص الـ exp — هل منتهي الصلاحية بيُرفَض فعليًا؟
+# افحص الـ Payload — هل فيه بيانات حساسة غير مشفَّرة؟
+# جرّب تعديل role/admin claims وأعد توقيع التوكن بمفاتيح مُخمَّنة أو مكشوفة
+</code></pre></div>
+
+<h4>قائمة فحص هجمات OAuth</h4>
+<ul>
+<li>هل redirect_uri بيتحقّق منه السيرفر بدقة؟</li>
+<li>هل أكواد التفويض قوية العشوائية ومحدودة الصلاحية؟</li>
+<li>هل التوكنات مربوطة بـ Client ID محدَّد؟</li>
+<li>هل التوكنات مخزَّنة مُجزَّأة (Hashed) في قاعدة البيانات؟</li>
+</ul>
+
+<h4>Quick Wins — أسرع المسارات في اختبار المصادقة والجلسات</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>#</th><th>التحقق</th><th>الأداة/الطريقة</th><th>النتيجة المحتملة</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>رسائل خطأ تسجيل الدخول مختلفة لاسم المستخدم/كلمة المرور؟</td><td>فحص يدوي + Burp Repeater</td><td>Username Enumeration</td></tr>
+<tr><td>2</td><td>فيه Rate Limiting على محاولات الدخول؟</td><td>Burp Intruder</td><td>Brute-force ممكن</td></tr>
+<tr><td>3</td><td>Session ID بيتغيّر بعد تسجيل الدخول؟</td><td>مقارنة الكوكي قبل/بعد</td><td>Session Fixation</td></tr>
+<tr><td>4</td><td>JWT بدون تحقق صارم من alg؟</td><td>jwt_tool / تعديل يدوي</td><td>None Algorithm Bypass</td></tr>
+<tr><td>5</td><td>redirect_uri في OAuth بدون Whitelist صارمة؟</td><td>تعديل المعامل يدويًا</td><td>Token Theft / Open Redirect</td></tr>
+</tbody>
+</table></div>
+
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ SUMMARY -->
+<h2 id="summary"><span class="htext">الخلاصة العامة للموديول</span></h2>
+<p>الموديول ده غطّى اختبار المصادقة وإدارة الجلسات بعمق — من المفاهيم الأساسية ومنهجية WSTG-ATHN، مرورًا بالجلسات والكوكيز وCSRF، ووصولًا لتحليل متقدّم لـ JWT وOAuth وتقنيات تجاوز 2FA.</p>
+
+<div class="takeaways">
+<div class="takeaways-title">$ cat ./ewptx_module02_summary.txt</div>
+<ul>
+<li>المصادقة بتتحقّق من الهوية، والتفويض بيحدّد الصلاحيات — فهم الفرق أساسي لتحديد نطاق كل اختبار</li>
+<li>منهجية WSTG-ATHN بتوفّر 8 اختبارات معيارية تغطي كل جوانب أمان المصادقة</li>
+<li>تعداد أسماء المستخدمين وسياسات كلمات المرور الضعيفة من أبسط نقاط الدخول وأكثرها شيوعًا</li>
+<li>CAPTCHA مش كلها متساوية — من Arithmetic الضعيف جدًا وحتى reCAPTCHA v3 القوي جدًا</li>
+<li>إدارة الجلسات الآمنة تعتمد على أعلام الكوكي الصحيحة (HttpOnly، Secure، SameSite) وتوليد توكنات غير قابلة للتنبؤ</li>
+<li>Session Hijacking بيحدث بعد المصادقة، وSession Fixation قبلها — الفرق في التوقيت حاسم للتصنيف والاستغلال</li>
+<li>CSRF بيستغل ثقة التطبيق في كوكيز المتصفح، مش ضعف في التوكن نفسه</li>
+<li>JWT مكتفٍ ذاتيًا وStateless — لكن ثغرة الخوارزمية None وAlgorithm Confusion من أخطر عيوبه الشائعة</li>
+<li>هجمات OAuth غالبًا بتتمركز حول redirect_uri غير المُتحقَّق منه وأكواد/توكنات ضعيفة أو غير مربوطة بـ Client محدَّد</li>
+<li>2FA طبقة حماية قوية لكنها مش منيعة — الهندسة الاجتماعية واعتراض التوكن أهم مسارات التجاوز</li>
+</ul>
+</div>
+
+<blockquote>
+<p><strong>الفكرة الجوهرية للموديول:</strong> المصادقة وإدارة الجلسات مترابطتان بشكل عميق — ثغرة في أي طرف من السلسلة (كلمة مرور، جلسة، توكن، أو عامل ثانٍ) ممكن تُسقِط الدفاع بالكامل. المختبر المحترف بيفحص السلسلة كلها كوحدة واحدة، مش كل مكوّن بمعزل عن التاني.</p>
+</blockquote>
+
+<div class="callout examtip">
+<div class="callout-label">Professional Mindset</div>
+<p>في أي تقييم: ابدأ دايمًا بفهم نوع آلية المصادقة والجلسة المستخدَمة قبل أي استغلال. افحص رسائل الخطأ بعناية — غالبًا هي مصدر التسريب الأول. لو التطبيق بيستخدم JWT أو OAuth، خصّص وقت كافٍ لفحص بنية التوكن والتحقق من التوقيع قبل الانتقال لأي هجوم متقدّم. ووثّق كل خطوة، حتى الفاشلة.</p>
+</div>
+
+<hr />
+<p><em>نهاية نوتس الموديول الثاني — Authentication & Session Management Testing (eWPTXv3)</em></p>
+<div class="footer-note">-- EOF: ewptx-module-02/auth-session-mgmt-testing.md --</div>
+
+</div>
+
+<script>
+(function(){
+  var root=document.documentElement,btn=document.getElementById('themeSwitch');
+  function applyTheme(t){root.setAttribute('data-theme',t);btn.textContent='theme: '+t;try{localStorage.setItem('oscp-notes-theme',t);}catch(e){}}
+  var saved='dark';try{saved=localStorage.getItem('oscp-notes-theme')||'dark';}catch(e){}
+  applyTheme(saved);
+  btn.addEventListener('click',function(){applyTheme(root.getAttribute('data-theme')==='dark'?'light':'dark');});
+  var bar=document.getElementById('progressBar');
+  function onScroll(){var h=document.documentElement,s=h.scrollTop,ht=h.scrollHeight-h.clientHeight;bar.style.width=(ht>0?(s/ht*100):0)+'%';var t=document.getElementById('toTop');s>500?t.classList.add('show'):t.classList.remove('show');}
+  document.addEventListener('scroll',onScroll);onScroll();
+  document.getElementById('toTop').addEventListener('click',function(){window.scrollTo({top:0,behavior:'smooth'});});
+  document.querySelectorAll('.code-wrap').forEach(function(wrap){
+    var c=wrap.querySelector('code');if(!c)return;
+    var b=document.createElement('button');b.className='copy-btn';b.textContent='copy';
+    b.addEventListener('click',function(){if(navigator.clipboard){navigator.clipboard.writeText(c.innerText).then(function(){b.textContent='copied ✓';b.classList.add('copied');setTimeout(function(){b.textContent='copy';b.classList.remove('copied');},1500);});}});
+    wrap.appendChild(b);
+  });
+})();
+</script>
+</body>
+</html>
