@@ -90,6 +90,8 @@ const courses = [
         },
 ];
 
+const standaloneCourses = ["OSCP+", "CEHv13", "eWPTXv3"];
+
 const groups: { year: number; posts: typeof standalonePosts }[] = (() => {
         const groupedPosts = standalonePosts.reduce(
                 (grouped: { [year: number]: typeof standalonePosts }, post) => {
@@ -154,6 +156,11 @@ function formatTag(tag: string[]) {
                         <a
                             href={course.href}
                             aria-label={`${course.name} Course`}
+                            data-no-swup={
+                                standaloneCourses.includes(course.name)
+                                    ? ""
+                                    : undefined
+                            }
                             class="group btn-plain !block w-full rounded-xl hover:text-[initial] mb-3"
                         >
                             <div class="flex flex-row justify-start items-center min-h-20 py-3">
