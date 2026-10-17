@@ -1,0 +1,893 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CEHv13 · Module 06: اختراق الأنظمة (System Hacking)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-0:#0B0B0D;--bg-1:#121214;--surface:#17171A;--surface-2:#1D1D21;
+    --border:#2A2A2F;--border-soft:#232326;
+    --text:#E6E6E9;--text-soft:#C4C4CA;--muted:#8A8A92;
+    --red:#E1362F;--red-soft:rgba(225,54,47,0.10);--red-border:rgba(225,54,47,0.35);
+    --red-grad:linear-gradient(90deg,#E1362F,#F2794A);
+    --amber:#E8A23A;--amber-soft:rgba(232,162,58,0.09);--amber-border:rgba(232,162,58,0.30);
+    --green:#3FBF6E;--green-soft:rgba(63,191,110,0.09);--green-border:rgba(63,191,110,0.30);
+    --blue:#4EA1D3;--blue-soft:rgba(78,161,211,0.09);--blue-border:rgba(78,161,211,0.30);
+    --purple:#A179E8;--purple-soft:rgba(161,121,232,0.10);--purple-border:rgba(161,121,232,0.32);
+    --mono:'IBM Plex Mono','Courier New',monospace;
+  }
+  html[data-theme="light"]{
+    --bg-0:#F4F3F1;--bg-1:#ECEBE8;--surface:#FFFFFF;--surface-2:#F3F2EF;
+    --border:#DEDCD6;--border-soft:#E6E4DF;--text:#1C1B19;--text-soft:#3C3A36;--muted:#726F68;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;direction:rtl;text-align:right;background:var(--bg-0);}
+  body{font-family:'Cairo','Segoe UI',Tahoma,sans-serif;line-height:1.95;font-size:16.5px;color:var(--text);
+    background:radial-gradient(900px 420px at 12% -8%,rgba(225,54,47,0.10),transparent 60%),
+               radial-gradient(800px 420px at 90% 6%,rgba(232,162,58,0.06),transparent 60%),
+               linear-gradient(180deg,var(--bg-0) 0%,var(--bg-1) 100%);
+    background-attachment:fixed;transition:background 0.2s ease,color 0.2s ease;}
+  html[data-theme="light"] body{background:radial-gradient(900px 420px at 12% -8%,rgba(225,54,47,0.06),transparent 60%),radial-gradient(800px 420px at 90% 6%,rgba(232,162,58,0.05),transparent 60%),linear-gradient(180deg,var(--bg-0) 0%,var(--bg-1) 100%);}
+  .progress-rail{position:fixed;top:0;inset-inline:0;height:3px;background:rgba(255,255,255,0.04);z-index:60;}
+  html[data-theme="light"] .progress-rail{background:rgba(0,0,0,0.05);}
+  .progress-bar{height:100%;width:0%;background:var(--red-grad);transition:width 0.08s linear;}
+  .float-controls{position:fixed;bottom:22px;left:22px;z-index:55;display:flex;flex-direction:column;gap:10px;}
+  .fctrl-btn{width:42px;height:42px;border-radius:50%;background:var(--surface);border:1px solid var(--border);color:var(--text-soft);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;box-shadow:0 10px 24px -10px rgba(0,0,0,0.5);transition:transform 0.15s ease,border-color 0.15s ease,opacity 0.2s ease;}
+  .fctrl-btn:hover{transform:translateY(-2px);border-color:var(--red-border);color:var(--red);}
+  #toTop{opacity:0;pointer-events:none;}
+  #toTop.show{opacity:1;pointer-events:auto;}
+  .page{max-width:860px;margin:0 auto;padding:46px 22px 100px;}
+  .banner{position:relative;overflow:hidden;background:linear-gradient(155deg,var(--surface) 0%,var(--bg-1) 55%,var(--surface) 100%);border:1px solid var(--border-soft);border-radius:10px;padding:0 0 34px;margin-bottom:26px;box-shadow:0 20px 50px -20px rgba(0,0,0,0.6);}
+  .term-bar{display:flex;align-items:center;gap:8px;padding:13px 18px;border-bottom:1px solid var(--border-soft);background:rgba(255,255,255,0.015);direction:ltr;}
+  .term-dot{width:11px;height:11px;border-radius:50%;display:inline-block;}
+  .term-dot.r{background:#E1362F;}.term-dot.y{background:#E8A23A;}.term-dot.g{background:#3FBF6E;}
+  .term-path{margin-inline-start:12px;font-family:var(--mono);font-size:12px;color:var(--muted);}
+  .theme-switch{margin-inline-start:auto;font-family:var(--mono);font-size:11px;color:var(--muted);background:transparent;border:1px solid var(--border);border-radius:4px;padding:4px 9px;cursor:pointer;}
+  .theme-switch:hover{color:var(--amber);border-color:var(--amber-border);}
+  .banner-body{padding:30px 34px 4px;}
+  .banner .kicker{display:inline-block;font-family:var(--mono);font-size:12.5px;letter-spacing:0.03em;color:var(--red);background:var(--red-soft);border:1px solid var(--red-border);border-radius:3px;padding:5px 12px;margin-bottom:20px;direction:ltr;}
+  .banner h1{margin:0 0 14px;font-size:28px;font-weight:800;line-height:1.5;color:var(--text);}
+  .banner .lede{color:var(--muted);font-size:15.5px;line-height:1.95;max-width:640px;margin:0 0 24px;}
+  .tags{display:flex;flex-wrap:wrap;gap:9px;}
+  .tag{font-size:12.5px;font-family:var(--mono);color:var(--amber);background:var(--amber-soft);border:1px solid var(--amber-border);border-radius:3px;padding:5px 11px;}
+  .toc{background:var(--surface);border:1px solid var(--border-soft);border-radius:8px;padding:6px 0 6px;margin-bottom:50px;overflow:hidden;}
+  .toc-title{font-family:var(--mono);font-weight:600;font-size:13px;color:var(--green);padding:14px 22px;border-bottom:1px solid var(--border-soft);direction:ltr;text-align:left;}
+  .toc-list{display:flex;flex-direction:column;}
+  .toc-item{display:flex;align-items:center;gap:14px;padding:12px 22px;color:var(--text-soft);text-decoration:none;font-size:14.5px;border-bottom:1px solid rgba(255,255,255,0.03);transition:background 0.15s ease;}
+  .toc-list .toc-item:last-child{border-bottom:none;}
+  .toc-item:hover{background:var(--red-soft);}
+  .toc-num{flex:none;font-family:var(--mono);font-size:12.5px;font-weight:600;color:#0F0F10;background:var(--red-grad);border-radius:3px;padding:3px 8px;direction:ltr;}
+  h1,h2,h3,h4{font-weight:700;}
+  h2{display:flex;align-items:center;gap:14px;font-size:21px;margin:66px 0 22px;padding-bottom:16px;border-bottom:1px solid var(--border-soft);color:var(--text);}
+  h2 .num{flex:none;font-family:var(--mono);font-size:13px;font-weight:700;color:#0F0F10;background:var(--red-grad);border-radius:5px;padding:7px 12px;direction:ltr;}
+  h2 .htext{line-height:1.5;}
+  h3{font-size:17px;margin:34px 0 14px;color:var(--red);display:flex;align-items:center;gap:9px;}
+  h3::before{content:"#";font-family:var(--mono);color:var(--amber);font-weight:700;}
+  h4{font-size:14.8px;margin:22px 0 10px;color:var(--text-soft);font-family:var(--mono);}
+  p{margin:0 0 17px;color:var(--text);}
+  strong{color:var(--text);font-weight:700;}
+  :root:not([data-theme="light"]) strong{color:#FBFBFC;}
+  a{color:var(--amber);text-decoration:none;border-bottom:1px dashed var(--amber-border);}
+  hr{border:none;height:1px;margin:50px 0;background:linear-gradient(90deg,transparent,var(--border),transparent);}
+  ul,ol{margin:0 0 18px;padding-inline-start:24px;}
+  li{margin-bottom:9px;color:var(--text);}
+  li::marker{color:var(--red);font-family:var(--mono);}
+  li>ul,li>ol{margin-top:9px;}
+  .info-strip{display:flex;flex-wrap:wrap;align-items:center;gap:10px 28px;background:var(--surface);border:1px solid var(--border-soft);border-radius:8px;padding:16px 20px;margin:0 0 26px;font-size:13.8px;color:var(--text-soft);}
+  .goals-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px;margin:0 0 22px;}
+  .goal-card{display:flex;gap:10px;align-items:flex-start;background:var(--surface);border:1px solid var(--border-soft);border-radius:7px;padding:13px 15px;font-size:14px;color:var(--text-soft);}
+  .goal-card .gi{flex:none;font-family:var(--mono);font-size:11px;font-weight:700;color:var(--green);background:var(--green-soft);border:1px solid var(--green-border);border-radius:4px;width:22px;height:22px;display:flex;align-items:center;justify-content:center;}
+  blockquote{margin:24px 0;padding:17px 22px;background:var(--red-soft);border:1px solid var(--red-border);border-inline-start:3px solid var(--red);border-radius:6px;color:var(--text-soft);}
+  blockquote p{margin:0;color:inherit;line-height:1.85;}
+  blockquote p+p{margin-top:10px;}
+  blockquote strong{color:var(--text);}
+  .callout{margin:24px 0;padding:17px 22px 18px;border-radius:6px;border:1px solid var(--border-soft);border-inline-start:3px solid var(--border);background:var(--surface);}
+  .callout p{margin:0;color:var(--text-soft);line-height:1.85;}
+  .callout p+p{margin-top:10px;}
+  .callout ul,.callout ol{margin:6px 0 0;}
+  .callout-label{display:inline-flex;align-items:center;gap:7px;font-family:var(--mono);font-size:11.5px;font-weight:700;letter-spacing:0.02em;text-transform:uppercase;margin-bottom:10px;direction:ltr;}
+  .callout.note{border-inline-start-color:var(--blue);background:var(--blue-soft);}
+  .callout.note .callout-label{color:var(--blue);}
+  .callout.warning{border-inline-start-color:var(--red);background:var(--red-soft);}
+  .callout.warning .callout-label{color:var(--red);}
+  .callout.tip{border-inline-start-color:var(--green);background:var(--green-soft);}
+  .callout.tip .callout-label{color:var(--green);}
+  .callout.examtip{border-inline-start-color:var(--purple);background:var(--purple-soft);}
+  .callout.examtip .callout-label{color:var(--purple);}
+  .callout.case{border-inline-start-color:var(--amber);background:var(--amber-soft);}
+  .callout.case .callout-label{color:var(--amber);}
+  .callout.definition{border-inline-start-color:var(--muted);background:var(--surface-2);}
+  .callout.definition .callout-label{color:var(--text-soft);}
+  .callout.danger{border-inline-start-color:#FF5A52;background:rgba(255,90,82,0.08);}
+  .callout.danger .callout-label{color:#FF5A52;}
+  .table-wrap{overflow-x:auto;margin:22px 0;border:1px solid var(--border-soft);border-radius:8px;}
+  table{width:100%;border-collapse:collapse;font-size:14.2px;min-width:480px;}
+  thead th{background:var(--surface-2);color:var(--amber);font-weight:700;font-family:var(--mono);font-size:12.5px;text-transform:uppercase;letter-spacing:0.02em;text-align:start;padding:13px 15px;border-bottom:1px solid var(--border-soft);white-space:nowrap;}
+  tbody td{padding:12px 15px;border-bottom:1px solid var(--border-soft);color:var(--text-soft);vertical-align:top;}
+  tbody tr:last-child td{border-bottom:none;}
+  tbody tr:nth-child(even){background:rgba(127,127,127,0.03);}
+  tbody tr:hover{background:var(--red-soft);}
+  code{font-family:var(--mono);font-size:13.3px;background:var(--surface-2);border:1px solid var(--border-soft);border-radius:4px;padding:2px 6px;direction:ltr;unicode-bidi:embed;color:var(--green);}
+  .code-wrap{position:relative;overflow-x:auto;margin:22px 0;}
+  .code-tag{position:absolute;top:10px;left:14px;font-family:var(--mono);font-size:10.5px;color:var(--muted);letter-spacing:0.04em;text-transform:uppercase;z-index:2;}
+  .copy-btn{position:absolute;top:8px;right:10px;z-index:2;font-family:var(--mono);font-size:11px;color:var(--muted);background:var(--surface-2);border:1px solid var(--border-soft);border-radius:4px;padding:4px 9px;cursor:pointer;direction:ltr;}
+  .copy-btn:hover{color:var(--amber);border-color:var(--amber-border);}
+  .copy-btn.copied{color:var(--green);border-color:var(--green-border);}
+  pre{background:var(--bg-0);border:1px solid var(--border-soft);border-inline-start:3px solid var(--red);border-radius:8px;padding:30px 22px 18px;direction:ltr;text-align:left;margin:0;}
+  html[data-theme="light"] pre{background:#16181C;}
+  pre code{background:none;border:none;padding:0;color:#B9E8C9;font-size:13.2px;line-height:1.75;}
+  .takeaways{background:var(--surface);border:1px solid var(--border-soft);border-radius:8px;padding:18px 22px 20px;margin:30px 0 10px;}
+  .takeaways-title{font-family:var(--mono);font-size:12.5px;font-weight:700;color:var(--green);margin-bottom:12px;direction:ltr;text-align:left;display:flex;align-items:center;gap:8px;}
+  .takeaways ul{margin:0;padding-inline-start:20px;}
+  .takeaways li{color:var(--text-soft);font-size:14.5px;}
+  .cheat-section h4{color:var(--amber);font-size:13px;margin:26px 0 8px;}
+  .step-track{display:flex;flex-direction:column;gap:0;margin:24px 0;}
+  .step-item{position:relative;padding:0 0 26px 0;padding-inline-start:46px;border-inline-start:2px solid var(--border-soft);}
+  .step-item:last-child{border-inline-start:2px solid transparent;padding-bottom:4px;}
+  .step-num{position:absolute;inset-inline-start:-17px;top:0;width:32px;height:32px;border-radius:50%;background:var(--red-grad);color:#0F0F10;font-family:var(--mono);font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;}
+  .step-title{font-weight:700;color:var(--text);margin-bottom:6px;font-size:15px;}
+  .step-body{color:var(--text-soft);font-size:14.5px;}
+  .step-body p{margin:0 0 10px;}
+  .step-body p:last-child{margin-bottom:0;}
+  .step-body ul,.step-body ol{margin:8px 0 0;}
+  .method-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px;margin:22px 0;}
+  .method-card{background:var(--surface);border:1px solid var(--border-soft);border-radius:8px;padding:14px 16px;}
+  .method-card .mnum{font-family:var(--mono);font-size:11px;font-weight:700;color:#0F0F10;background:var(--red-grad);border-radius:4px;padding:2px 8px;display:inline-block;margin-bottom:8px;direction:ltr;}
+  .method-card .mtitle{font-weight:700;color:var(--text);font-size:14px;margin-bottom:5px;}
+  .method-card .mdesc{color:var(--text-soft);font-size:13.3px;line-height:1.75;}
+  .footer-note{margin-top:70px;padding-top:26px;border-top:1px solid var(--border-soft);color:var(--muted);font-size:13.3px;font-family:var(--mono);text-align:center;direction:ltr;}
+  @media print{.float-controls,.progress-rail,.copy-btn,.theme-switch{display:none !important;}body{background:#fff;color:#000;}.page{max-width:100%;}}
+  @media(max-width:640px){.page{padding:28px 14px 70px;}.banner-body{padding:24px 20px 4px;}.banner h1{font-size:21px;}h2{font-size:18px;gap:10px;}.float-controls{left:12px;bottom:14px;}}
+</style>
+</head>
+<body>
+
+<div class="progress-rail"><div class="progress-bar" id="progressBar"></div></div>
+<div class="float-controls">
+  <button class="fctrl-btn" id="toTop" title="ارجع لفوق">↑</button>
+</div>
+
+<div class="page">
+
+<div class="banner">
+  <div class="term-bar">
+    <span class="term-dot r"></span><span class="term-dot y"></span><span class="term-dot g"></span>
+    <span class="term-path">root@ceh:~/module-06$</span>
+    <button class="theme-switch" id="themeSwitch">theme: dark</button>
+  </div>
+  <div class="banner-body">
+    <span class="kicker">EC-Council · CEHv13 · Module 06</span>
+    <h1>اختراق الأنظمة (System Hacking)</h1>
+    <p class="lede">المراحل الأربع الكاملة لاختراق النظام: اكتساب الوصول عبر تكسير كلمات المرور واستغلال الثغرات، تصعيد الصلاحيات، الحفاظ على الوصول عبر البرمجيات الخبيثة والجذور الخفية والإخفاء، ووصولاً لإخفاء آثار الاختراق بالكامل.</p>
+    <div class="tags">
+      <span class="tag">password-cracking</span>
+      <span class="tag">privilege-escalation</span>
+      <span class="tag">keyloggers</span>
+      <span class="tag">spyware</span>
+      <span class="tag">rootkits</span>
+      <span class="tag">steganography</span>
+      <span class="tag">covering-tracks</span>
+      <span class="tag">buffer-overflow</span>
+    </div>
+  </div>
+</div>
+
+<nav class="toc"><div class="toc-title">$ ls learning_units/</div><div class="toc-list">
+  <a class="toc-item" href="#lu1"><span class="toc-num">01</span><span>اكتساب الوصول — تكسير كلمات المرور واستغلال الثغرات</span></a>
+  <a class="toc-item" href="#lu2"><span class="toc-num">02</span><span>تصعيد الصلاحيات</span></a>
+  <a class="toc-item" href="#lu3"><span class="toc-num">03</span><span>الحفاظ على الوصول</span></a>
+  <a class="toc-item" href="#lu4"><span class="toc-num">04</span><span>إخفاء آثار الاختراق</span></a>
+  <a class="toc-item" href="#methodology"><span class="toc-num">--</span><span>منهجية اختراق النظام الكاملة (4 مراحل)</span></a>
+  <a class="toc-item" href="#cheat"><span class="toc-num">--</span><span>Cheat Sheet مرجعي</span></a>
+  <a class="toc-item" href="#summary"><span class="toc-num">--</span><span>الخلاصة العامة للموديول</span></a>
+</div></nav>
+
+<!-- ══════════════════════════════════ LU1 -->
+<h2 id="lu1"><span class="num">01</span><span class="htext">اكتساب الوصول — تكسير كلمات المرور واستغلال الثغرات</span></h2>
+
+<p>اختراق الأنظمة غالبًا الهدف النهائي للمهاجم. المهاجم بيجمع معلومات عبر Footprinting والفحص والتعداد وتحليل الثغرات، وبعدين بيستخدم المعلومات دي لاختراق النظام المستهدَف. منهجية CEH (CHM) بتشمل خطوات متعدّدة — وأول خطوة هي اكتساب الوصول عبر تكسير كلمات المرور، استغلال Buffer Overflows، واستغلال الثغرات المكتشَفة.</p>
+
+<h3>آليات مصادقة Windows</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>الآلية</th><th>الوصف</th></tr></thead>
+<tbody>
+<tr><td>SAM Database</td><td>Windows بيستخدم قاعدة بيانات Security Accounts Manager (أو Active Directory Database) لإدارة الحسابات وكلمات المرور بصيغة هاش (دالة اتجاه واحد). الملف مُقفَل حصريًا بواسطة Kernel، ومخزَّن في <code>%SystemRoot%\system32\config\SAM</code> ومُحمَّل في <code>HKEY_LOCAL_MACHINE\SAM</code></td></tr>
+<tr><td>NTLM Authentication</td><td>نظام مصادقة افتراضي بأسلوب Challenge/Response، يشمل بروتوكولَي NTLM وLAN Manager (LM) — كل واحد بيستخدم خوارزمية هاش مختلفة</td></tr>
+<tr><td>Kerberos Authentication</td><td>بروتوكول مصادقة شبكي بيوفّر مصادقة قوية عبر تشفير المفتاح السري، مع مصادقة متبادلة وحماية من هجمات Replay والتنصّت</td></tr>
+</tbody>
+</table></div>
+
+<h3>أنواع هجمات كلمات المرور</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>النوع</th><th>الوصف</th></tr></thead>
+<tbody>
+<tr><td>Non-Electronic Attacks</td><td>بدون أي معرفة تقنية — Shoulder Surfing (مراقبة المستخدم أثناء الكتابة)، الهندسة الاجتماعية، Dumpster Diving</td></tr>
+<tr><td>Active Online Attacks</td><td>المهاجم بيتواصل مباشرةً مع الجهاز المستهدَف — Password Guessing، Dictionary/Brute-Force، Password Spraying، Mask Attack، Hash Injection، Kerberos Cracking، NTLM Relay</td></tr>
+<tr><td>Passive Online Attacks</td><td>بدون تواصل مباشر — مراقبة البيانات المارّة على القناة (Wire Sniffing، MITM، Replay)</td></tr>
+<tr><td>Offline Attacks</td><td>تكسير الهاشات بدون الحاجة لتواصل مع النظام المستهدَف — مثل Distributed Network Attack (DNA)</td></tr>
+</tbody>
+</table></div>
+
+<h3>تقنيات الهجوم النشط عبر الإنترنت (Active Online)</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>التقنية</th><th>الوصف</th></tr></thead>
+<tbody>
+<tr><td>Dictionary Attack</td><td>تحميل ملف قاموس (كلمات شائعة الاستخدام ككلمات مرور) وتجربته ضد الحسابات</td></tr>
+<tr><td>Brute-Force Attack</td><td>تجربة كل توليفة ممكنة من الأحرف حتى تنكسر كلمة المرور</td></tr>
+<tr><td>Rule-based Attack</td><td>يُستخدَم لما يكون عند المهاجم معلومة جزئية عن كلمة المرور (مثلًا تحتوي رقمين أو ثلاثة) — أقوى من Dictionary وBrute-Force</td></tr>
+<tr><td>Password Spraying</td><td>استهداف عدّة حسابات بكلمة مرور واحدة أو مجموعة صغيرة شائعة، بدل استهداف حساب واحد بكلمات كتير (أداة thc-hydra)</td></tr>
+<tr><td>Mask Attack</td><td>شبيه بـ Brute-Force لكن بنمط أضيق من الأحرف بناءً على معلومة معروفة عن كلمة المرور (أداة hashcat)</td></tr>
+</tbody>
+</table></div>
+
+<h3>LLMNR/NBT-NS Poisoning</h3>
+<p>LLMNR وNBT-NS بيوفّروا حل أسماء للأجهزة على نفس الرابط، مفعَّلين افتراضيًا في Windows. لما الـ DNS يفشل في حل اسم، الجهاز بيعمل Broadcast UDP غير مُصادَق يسأل كل الأجهزة.</p>
+<div class="step-track">
+<div class="step-item"><div class="step-num">1</div><div class="step-title">المستخدم بيكتب اسم مضيف خاطئ بالغلط</div><div class="step-body"><p>مثلًا يحاول الوصول لـ <code>\\DataServer</code> لكن يكتبه <code>\\DtaServr</code> بالغلط.</p></div></div>
+<div class="step-item"><div class="step-num">2</div><div class="step-title">السيرفر الحقيقي يرفض معرفة الاسم</div><div class="step-body"><p><code>\\DataServer</code> يرد إنه مش عارف مضيف بالاسم ده.</p></div></div>
+<div class="step-item"><div class="step-num">3</div><div class="step-title">المستخدم يعمل Broadcast LLMNR/NBT-NS</div><div class="step-body"><p>يسأل الشبكة كلها هل حد عارف المضيف <code>\\DtaServr</code>.</p></div></div>
+<div class="step-item"><div class="step-num">4</div><div class="step-title">المهاجم يرد منتحلًا الهوية</div><div class="step-body"><p>المهاجم يرد إنه هو <code>\\DataServer</code>، يستقبل هاش NTLMv2 الخاص بالمستخدم، ويرد عليه برسالة خطأ.</p></div></div>
+</div>
+<p>أداة <strong>Responder</strong> (github.com) هي الأداة المرجعية لتسميم LLMNR وNBT-NS وmDNS — بترد افتراضيًا على طلبات File Server Service الخاصة بـ SMB.</p>
+
+<h3>Internal Monologue Attack</h3>
+<p>شبيه بهجوم Mimikatz، لكن من غير تفريغ ذاكرة LSASS — وده بيتجنّب Windows Credential Guard ومضادات الفيروسات. Mimikatz أداة ما بعد الاستغلال بتستخرج كلمات مرور Plaintext وتذاكر Kerberos وهاشات NTLM من ذاكرة LSASS.</p>
+<ol>
+<li>تعطيل ضوابط NetNTLMv1 الأمنية عبر تعديل قيم LMCompatibilityLevel وNTLMMinClientSec وRestrictSendingNTLMTraffic</li>
+<li>استخراج كل Non-Network Logon Tokens من العمليات النشطة لانتحال المستخدمين الشرعيين</li>
+<li>التفاعل محليًا مع NTLM SSP لكل مستخدم منتحَل للحصول على Response NetNTLMv1</li>
+<li>إرجاع الإعدادات لقيمها الأصلية</li>
+<li>استخدام Rainbow Tables لتكسير هاش NTLM للردود الملتقَطة</li>
+<li>استخدام الهاشات المكسورة للوصول بمستوى النظام</li>
+</ol>
+
+<h3>تكسير Kerberos — Kerberoasting وAS-REP Roasting</h3>
+<p>المهاجمون بيستهدفوا بروتوكول Kerberos بطريقتين أساسيتين: تكسير TGS (Kerberoasting) وتكسير TGT (AS-REP Roasting).</p>
+<div class="table-wrap"><table>
+<thead><tr><th>الهجوم</th><th>المتطلّبات</th><th>المنهجية المختصرة</th></tr></thead>
+<tbody>
+<tr><td>AS-REP Roasting</td><td>حساب بدون Kerberos Pre-Authentication + اتصال بالـ DC (حساب دومين اختياري لتسهيل الإيجاد عبر LDAP)</td><td>فحص AD لإيجاد حسابات بدون Pre-Auth ← إرسال AS-REQ ← استخراج TGT المشفَّرة من الرد (عبر GetNPUsers.py أو Rubeus) ← تكسير أوفلاين بـ hashcat/John the Ripper</td></tr>
+<tr><td>Kerberoasting</td><td>أي حساب دومين صالح (مفيش صلاحيات خاصة مطلوبة)</td><td>مصادقة بحساب عادي للحصول على TGT ← طلب TGS لحسابات خدمة (SPNs) مشفَّرة بـ RC4 ← استخراج التذاكر من الذاكرة (Rubeus) ← تكسير أوفلاين</td></tr>
+</tbody>
+</table></div>
+
+<h3>Pass-the-Ticket وNTLM Relay</h3>
+<ul>
+<li><strong>Pass-the-Ticket:</strong> مصادقة باستخدام تذاكر Kerberos (TGT أو ST) بدون معرفة كلمة المرور — Silver Tickets للوصول لخدمة محدَّدة، Golden Tickets (باستخدام هاش KRBTGT) لتزوير TGT لأي هوية في الدومين. أدوات: Mimikatz، Rubeus، Windows Credentials Editor</li>
+<li><strong>NTLM Relay Attack:</strong> المهاجم بيعترض ويُعيد توجيه طلبات مصادقة NTLM بين عميل وسيرفر لانتحال العميل — عبر أدوات زي Responder وntlmrelayx وMetasploit؛ بعد نجاح الاتصال، هاشات SAM الخاصة بالنظام المستهدَف بتتفرّغ</li>
+</ul>
+
+<h3>تقنيات هجوم أخرى نشطة</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>التقنية</th><th>الوصف</th></tr></thead>
+<tbody>
+<tr><td>Combinator Attack</td><td>دمج إدخالات قاموسين مختلفين لإنتاج أسماء كاملة وكلمات مركّبة</td></tr>
+<tr><td>PRINCE Attack</td><td>نسخة متقدّمة من Combinator — بيبني سلاسل كلمات من قاموس إدخال واحد بدل قاموسين</td></tr>
+<tr><td>Markov-Chain Attack</td><td>تقسيم قاعدة بيانات كلمات مرور لمقاطع 2 و3 أحرف، بناء أبجدية جديدة، ودمجها في كلمات بطول أقصى 8 أحرف ثم تطبيق Dictionary Attack</td></tr>
+<tr><td>GPU-based Attack</td><td>استغلال APIs الرسوميات (زي OpenGL) عبر هندسة اجتماعية لتثبيت برنامج خبيث يتتبّع نشاط المستخدم ويسرق كلمات المرور عبر Side-Channel Leaks</td></tr>
+</tbody>
+</table></div>
+
+<h3>الهجمات السلبية (Passive) والأوفلاين</h3>
+<ul>
+<li><strong>Wire Sniffing:</strong> التقاط حركة المرور لسرقة بيانات اعتماد (بريد، SMB، FTP، SQL) — الضحية مش واعي بالعملية</li>
+<li><strong>MITM/Replay:</strong> طرف ثالث بيتنصّت على الاتصال بين طرفين من غير علمهم، ويمرّر الحركة — شائع في Telnet والتقنيات اللاسلكية</li>
+<li><strong>Distributed Network Attack (DNA):</strong> استخدام قوة المعالجة غير المستغلَّة لأجهزة موزَّعة على الشبكة لفك تشفير كلمات المرور — عبر مدير DNA مركزي وعملاء DNA (مثل أداة Exterro PRTK)</li>
+</ul>
+
+<h3>أدوات استخراج وتكسير كلمات المرور</h3>
+<div class="method-grid">
+<div class="method-card"><div class="mtitle">pwdump7</div><div class="mdesc">يستخرج هاشات LM وNTLM لحسابات المستخدمين المحليين من قاعدة بيانات SAM.</div></div>
+<div class="method-card"><div class="mtitle">L0phtCrack</div><div class="mdesc">أداة تدقيق واسترجاع كلمات مرور Windows عبر Dictionary وHybrid وRainbow Table وBrute-Force، وفحص قوة كلمة المرور.</div></div>
+<div class="method-card"><div class="mtitle">RainbowCrack</div><div class="mdesc">يكسر الهاشات باستخدام Rainbow Tables وخوارزمية Time-Memory Trade-off — حساب مسبَق لأزواج Plaintext/Hash وتخزينها لتكسير سريع لاحقًا.</div></div>
+<div class="method-card"><div class="mtitle">Elcomsoft Distributed Password Recovery</div><div class="mdesc">يكسر كلمات مرور معقَّدة ويسترجع مفاتيح تشفير قوية ويفتح مستندات مقفَلة في بيئة إنتاجية.</div></div>
+</div>
+<p>أدوات إضافية: hashID، Patator، Brutus، BruteX، Secure Shell Bruteforcer.</p>
+
+<h3>تحصين كلمات المرور — Password Salting</h3>
+<p>إضافة سلسلة عشوائية من الأحرف لكلمة المرور قبل حساب الهاش — بيصعّب عكس الهاش ويهزم هجمات الهاشات المحسوبة مسبقًا (Rainbow Tables). نفس كلمة المرور بتنتج هاشات مختلفة لمستخدمين مختلفين، وده بيصعّب التكسير بشكل كبير.</p>
+
+<hr />
+
+<h3>استغلال الثغرات (Vulnerability Exploitation)</h3>
+<p>استغلال الثغرات بيتضمّن تنفيذ خطوات معقَّدة ومترابطة متعدّدة للوصول لنظام بعيد — المهاجمون بينفّذوا الاستغلال فقط بعد اكتشاف ثغرات في النظام المستهدَف.</p>
+<div class="step-track">
+<div class="step-item"><div class="step-num">1</div><div class="step-title">تحديد الثغرة</div><div class="step-body"><p>باستخدام تقنيات Footprinting والفحص والتعداد وتحليل الثغرات، ومواقع زي Exploit Database وPacket Storm.</p></div></div>
+<div class="step-item"><div class="step-num">2</div><div class="step-title">تحديد المخاطرة المرتبطة بالثغرة</div><div class="step-body"><p>هل استغلال الثغرة هيتجاوز الإجراءات الأمنية الموجودة على النظام المستهدَف؟</p></div></div>
+<div class="step-item"><div class="step-num">3</div><div class="step-title">تحديد إمكانية الاستغلال</div><div class="step-body"><p>لو المخاطرة منخفضة، يحدّد المهاجم إمكانية استغلال الثغرة للوصول البعيد.</p></div></div>
+<div class="step-item"><div class="step-num">4</div><div class="step-title">تطوير الـ Exploit</div><div class="step-body"><p>استخدام Exploits جاهزة من Exploit Database، أو تطوير Exploit خاص بأدوات زي Metasploit.</p></div></div>
+<div class="step-item"><div class="step-num">5</div><div class="step-title">اختيار طريقة التوصيل — محلي أو بعيد</div><div class="step-body"><p>استغلال بعيد عبر الشبكة، أو استغلال محلي للتصعيد لو كان عند المهاجم وصول مسبَق.</p></div></div>
+<div class="step-item"><div class="step-num">6</div><div class="step-title">توليد وتوصيل الـ Payload</div><div class="step-body"><p>توليد Payload خبيث بأدوات زي Metasploit وتوصيله عبر هندسة اجتماعية أو الشبكة — حقن Shellcode بينشئ Shell بعيد عند التنفيذ.</p></div></div>
+<div class="step-item"><div class="step-num">7</div><div class="step-title">الحصول على وصول بعيد</div><div class="step-body"><p>تشغيل الـ Exploit للحصول على Shell بعيد، وتنفيذ أوامر خبيثة والتحكّم بالنظام.</p></div></div>
+</div>
+
+<div class="callout note">
+<div class="callout-label">Proof-of-Concept (PoC)</div>
+<p>PoC هو إثبات وجود وأثر ثغرة في برمجية أو شبكة — غالبًا كود أو تعليمات أو سكربت. يساعد الباحثين على تأكيد خطورة الثغرة المكتشَفة وفهم أثرها المحتمل، ويوجّه أصحاب المصلحة لمعالجة سريعة. نشر كود PoC قبل تصحيح الثغرة ممكن يُطلق استغلال Zero-Day. مواقع مرجعية: Exploit Database، OSV، MITRE CVE. أداة <strong>WES-NG</strong> بتقارن مخرجات <code>systeminfo.exe</code> بقاعدة بيانات ثغرات محدَّثة لاقتراح Exploits مناسبة.</p>
+</div>
+
+<h3>أدوات استغلال ثغرات بالذكاء الاصطناعي</h3>
+<div class="method-grid">
+<div class="method-card"><div class="mtitle">Nebula</div><div class="mdesc">تحوّل جذري في القرصنة الأخلاقية — تسخّر الذكاء الاصطناعي لإحداث ثورة في كشف واستغلال الثغرات.</div></div>
+<div class="method-card"><div class="mtitle">DeepExploit</div><div class="mdesc">يستخدم نموذج تعلّم عميق (A3C) لأتمتة تحديد واستغلال الثغرات تلقائيًا وبشكل مستقل في الأنظمة المستهدَفة.</div></div>
+</div>
+
+<h3>Buffer Overflow</h3>
+<p>الـ Buffer منطقة ذاكرة متجاورة مخصَّصة لبرنامج للتعامل مع بياناته وقت التشغيل. Buffer Overflow ثغرة شائعة بتحدث لما التطبيق يستقبل بيانات أكتر من حجم الـ Buffer المخصَّص — ده بيسمح بالكتابة خارج الـ Buffer والكتابة فوق مواقع ذاكرة مجاورة، وبيؤدي لتوقّف النظام، سلوك غير مستقر، أو تنفيذ كود خبيث.</p>
+<div class="table-wrap"><table>
+<thead><tr><th>النوع</th><th>الوصف</th></tr></thead>
+<tbody>
+<tr><td>Stack-Based</td><td>الـ Stack بيُستخدَم للتخصيص الثابت للذاكرة بنظام LIFO. السجلّات الأساسية: EBP (عنوان أول عنصر)، ESP (عنوان العنصر التالي)، EIP (عنوان التعليمة التالية — الأهم للاستغلال)، ESI/EDI. لو التطبيق عرضة للهجوم، المهاجم بيتحكّم في EIP ليستبدل عنوان الإرجاع بكود خبيث</td></tr>
+<tr><td>Heap-Based</td><td>الـ Heap بيُستخدَم للتخصيص الديناميكي — التخصيص والتحرير بيتم يدويًا (<code>malloc()</code>/<code>free()</code>). الـ Overflow بيحدث لما بيانات تُكتب بدون فحص حدود، بيكتب فوق مؤشّرات ديناميكية وHeap Headers وجداول Virtual Function — أسلوب استغلاله مختلف وغير منتظم عن Stack-Based</td></tr>
+</tbody>
+</table></div>
+
+<h3>خطوات استغلال Buffer Overflow على Windows</h3>
+<div class="step-track">
+<div class="step-item"><div class="step-num">1</div><div class="step-title">Spiking</div><div class="step-body"><p>إرسال حزم TCP/UDP مُصمَّمة خصيصًا للسيرفر المستهدَف عشان يتعطّل، لتحديد الدوال المعرَّضة لـ Buffer Overflow — باستخدام Netcat للاتصال وSpike Templates لتحديد صيغة الحزم.</p></div></div>
+<div class="step-item"><div class="step-num">2</div><div class="step-title">Fuzzing</div><div class="step-body"><p>إرسال كمية كبيرة من البيانات للسيرفر المستهدَف للتسبّب في Buffer Overflow والكتابة فوق EIP، لتحديد عدد البايتات المطلوبة لتعطيل السيرفر.</p></div></div>
+<div class="step-item"><div class="step-num">3</div><div class="step-title">تحديد الـ Offset</div><div class="step-body"><p>استخدام أداة <code>pattern_create.rb</code> لتوليد بيانات عشوائية، ثم <code>pattern_offset.rb</code> لتحديد الـ Offset الدقيق للبايتات في EIP.</p></div></div>
+<div class="step-item"><div class="step-num">4</div><div class="step-title">الكتابة فوق EIP</div><div class="step-body"><p>التأكد من التحكّم الكامل في سجلّ EIP باستخدام الـ Offset المكتشَف.</p></div></div>
+<div class="step-item"><div class="step-num">5</div><div class="step-title">تحديد الأحرف السيّئة (Bad Characters)</div><div class="step-body"><p>تحديد الأحرف اللي بتكسر الـ Payload أو بتُفسَّر بشكل خاطئ من قِبل التطبيق المستهدَف.</p></div></div>
+<div class="step-item"><div class="step-num">6</div><div class="step-title">تحديد الوحدة المناسبة (Module)</div><div class="step-body"><p>إيجاد وحدة بدون حماية ASLR/DEP لاستخدام عنوانها كنقطة قفز موثوقة.</p></div></div>
+<div class="step-item"><div class="step-num">7</div><div class="step-title">توليد Shellcode</div><div class="step-body"><p>توليد Shellcode (باستثناء الأحرف السيّئة المكتشَفة) ليُنفَّذ عند الوصول لـ EIP.</p></div></div>
+<div class="step-item"><div class="step-num">8</div><div class="step-title">الحصول على وصول Root</div><div class="step-body"><p>تنفيذ الاستغلال الكامل للحصول على Shell بامتيازات إدارية على النظام المستهدَف.</p></div></div>
+</div>
+
+<h3>تقنيات تجاوز الحماية المتقدّمة</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>التقنية</th><th>الوصف</th></tr></thead>
+<tbody>
+<tr><td>Return-Oriented Programming (ROP)</td><td>تنفيذ كود خبيث تعسّفي رغم وجود حمايات زي Code Signing وExecutable Space Protection — بالاستيلاء على تدفّق التحكّم عبر Call Stack وتنفيذ تعليمات موجودة فعلًا (Gadgets تنتهي بـ RET) بترتيب مُختار</td></tr>
+<tr><td>ASLR و DEP</td><td>ASLR بيُعشِّي عناوين الذاكرة، DEP بيمنع تنفيذ كود من مناطق ذاكرة غير قابلة للتنفيذ — آليتان أساسيتان لمنع الاستغلال</td></tr>
+<tr><td>Heap Spraying</td><td>إغراق مساحة الـ Heap الحرّة بنسخ متعدّدة من الكود الخبيث لزيادة احتمالية تنفيذه رغم ASLR، واستخدام ROP Gadgets لتجاوز DEP — شائع في استغلال متصفحات الويب</td></tr>
+<tr><td>JIT Spraying</td><td>صياغة كود JavaScript خبيث يستغلّ ثغرات في مُجمِّع JIT بالمتصفح (أخطاء إفساد ذاكرة أو Buffer Overflow) للتلاعب بالكود المُولَّد آليًا وتوجيه التنفيذ للـ Payload الخبيث</td></tr>
+<tr><td>Exploit Chaining</td><td>دمج عدّة Exploits أو ثغرات متتالية لاختراق الهدف من جذوره — استطلاع، تعداد ثغرات متسلسل، استغلال أولي، ثم التعمّق بالثغرات المكتشَفة لوصول بمستوى Kernel/Root بدون كشف</td></tr>
+</tbody>
+</table></div>
+
+<h3>رسم خريطة واستغلال دومين AD — BloodHound وPowerView</h3>
+<p><strong>BloodHound</strong> تطبيق ويب بيستخدم نظرية الرسوم البيانية لكشف علاقات خفية وغير مقصودة داخل بيئة AD — بيسهّل على المهاجمين تحديد مسارات هجوم معقَّدة. <strong>PowerView</strong> أداة PowerShell لتعداد AD بعد تعطيل مراقبة الأمان (<code>Set-MpPreference -DisableRealtimeMonitoring $true</code>) — تعداد الدومينات، سياسات الدومين، DCs، المستخدمين، الأجهزة، المجموعات، المشاركات، سياسات المجموعة والـ OUs، قوائم التحكّم بالوصول (ACLs)، وعلاقات الثقة بين الدومينات والغابات.</p>
+<p><strong>GhostPack Seatbelt</strong> مشروع C# بيجري فحوصات أمان شاملة على المضيف (إعدادات أمان PowerShell، تذاكر Kerberos، عناصر سلّة المحذوفات) لإيجاد نقاط ضعف قابلة للاستغلال.</p>
+
+<h3>أدوات كشف Buffer Overflow والدفاعات</h3>
+<p>أدوات كشف: Veracode، Flawfinder، Kiuwan، Splint، Valgrind.</p>
+<div class="callout tip">
+<div class="callout-label">الدفاعات الأساسية</div>
+<ul>
+<li>اتّباع ممارسات البرمجة الآمنة، واستخدام ASLR لتعشية عناوين مناطق البيانات</li>
+<li>التحقق من كل بيانات الإدخال طولًا ومحتوى، خصوصًا من مصادر غير موثوقة</li>
+<li>مراجعة الكود المصدري بأدوات تحليل ثابتة وديناميكية، وتمكين الـ Compiler من إضافة حدود للـ Buffers</li>
+<li>حماية مؤشّر الإرجاع على الـ Stack، ومنع تنفيذ أي كود خارج مساحة الكود</li>
+<li>تصحيح التطبيقات وأنظمة التشغيل بانتظام، وتفعيل DEP (Stacks غير قابلة للتنفيذ)</li>
+</ul>
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU2 -->
+<h2 id="lu2"><span class="num">02</span><span class="htext">تصعيد الصلاحيات</span></h2>
+
+<p>تصعيد الصلاحيات هو المرحلة الثانية من اختراق النظام — المهاجم بيستخدم كلمات المرور اللي حصل عليها في المرحلة الأولى للوصول للنظام، وبعدين بيحاول الحصول على صلاحيات أعلى، مستغلًّا عيوب التصميم وأخطاء البرمجة والثغرات والإعدادات الخاطئة.</p>
+
+<div class="table-wrap"><table>
+<thead><tr><th>النوع</th><th>الوصف</th></tr></thead>
+<tbody>
+<tr><td>Horizontal Privilege Escalation</td><td>مستخدم غير مصرَّح له بيحاول الوصول لموارد وصلاحيات مستخدم تاني له نفس مستوى الصلاحيات (مثلًا مستخدم A يوصل لحساب بنكي لمستخدم B)</td></tr>
+<tr><td>Vertical Privilege Escalation</td><td>مستخدم غير مصرَّح له بيحاول الوصول لموارد ووظائف مستخدم بصلاحيات أعلى (مثلًا مستخدم عادي يوصل لوظائف إدارية في الموقع)</td></tr>
+</tbody>
+</table></div>
+
+<h3>تقنيات التصعيد الأساسية</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>التقنية</th><th>الوصف</th></tr></thead>
+<tbody>
+<tr><td>DLL Hijacking</td><td>أغلب تطبيقات Windows بتبحث عن DLL في المجلّد اللي اتحمّلت منه أولًا بدل المسار الكامل — المهاجم بيحط DLL خبيث في مجلّد التطبيق فينفّذه بدل الأصلي. أدوات: Spartacus، DLLirant، ImpulsiveDLLHijack، PowerSploit</td></tr>
+<tr><td>Dylib Hijacking (macOS)</td><td>مشابه لـ DLL Hijacking — استغلال طرق تحميل Dynamic Libraries ضعيفة (زي متغيّر DYLD_INSERT_LIBRARIES) لحقن Dylib خبيث يتحمّل وقت التشغيل</td></tr>
+<tr><td>Spectre و Meltdown</td><td>ثغرات تصميم في معالجات حديثة (AMD، ARM، Intel) ناتجة عن تحسينات أداء — بتسمح بقراءة بيانات مقيَّدة (بيانات اعتماد، مفاتيح تشفير) عبر استغلال Speculative Execution وBranch Prediction</td></tr>
+<tr><td>Named Pipe Impersonation</td><td>استغلال آلية التواصل بين العمليات عبر Named Pipes لتصعيد الصلاحيات — أداة Metasploit بأمر <code>getsystem</code></td></tr>
+<tr><td>Misconfigured Services</td><td>Unquoted Service Paths (مسارات بدون علامات اقتباس تسمح بحقن تنفيذي)، Service Object Permissions (صلاحيات ضعيفة تسمح بتعديل الخدمة)، تثبيتات بدون إشراف، وRegistry Autoruns قابلة للتعديل</td></tr>
+<tr><td>Misconfigured NFS</td><td>استغلال إعدادات NFS الخاطئة (بورت 2049) للحصول على وصول Root من حساب عادي منخفض الصلاحيات</td></tr>
+<tr><td>Bypassing UAC</td><td>استغلال تطبيقات Windows لتصعيد الصلاحيات بدون إطلاق تنبيه UAC — تقنيات Metasploit متعدّدة (أدناه)</td></tr>
+</tbody>
+</table></div>
+
+<h3>تقنيات تجاوز UAC عبر Metasploit</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>الإكسبلويت</th><th>الآلية</th></tr></thead>
+<tbody>
+<tr><td><code>bypassuac</code></td><td>تجاوز UAC عبر حقن العمليات — ينشئ جلسة أو Shell جديد بدون علامة UAC</td></tr>
+<tr><td><code>bypassuac_injection</code></td><td>يستخدم آليات Reflective DLL لحقن Payload بصيغة DLL فقط، للحصول على صلاحيات AUTHORITY\SYSTEM</td></tr>
+<tr><td><code>bypassuac_fodhelper</code></td><td>يخطف مفتاح خاص من HKCU registry hive ويربطه بـ fodhelper.exe</td></tr>
+<tr><td><code>bypassuac_eventvwr</code></td><td>يخطف مفتاح من HKCU مرتبط بـ Event Viewer — يُمسَح تلقائيًا بعد التنفيذ</td></tr>
+<tr><td><code>bypassuac_comhijack</code></td><td>ينشئ إدخالات Registry لمعالج COM داخل الـ Hive الحالي، تؤدي لتحميل DLLs يتحكّم فيها المهاجم</td></tr>
+</tbody>
+</table></div>
+
+<h3>Pivoting و Relaying</h3>
+<p>تقنيتان لاكتشاف معلومات تفصيلية عن الشبكة المستهدَفة بعد اختراق نظام ناجح، للوصول لأنظمة وموارد غير متاحة مباشرةً من شبكة المهاجم.</p>
+<div class="table-wrap"><table>
+<thead><tr><th>التقنية</th><th>الوصف</th></tr></thead>
+<tbody>
+<tr><td>Pivoting</td><td>فتح Shell بعيد على النظام المستهدَف يمرّ عبر النفق من الـ Shell الأولي على النظام المخترَق. الخطوات: اكتشاف أجهزة فعّالة (ARP Scan)، إعداد قواعد التوجيه (<code>route add</code>)، فحص بورتات الأجهزة الفعّالة، استغلال الخدمات الضعيفة المكتشَفة</td></tr>
+<tr><td>Relaying</td><td>الوصول لموارد موجودة على أنظمة تانية عبر النظام المخترَق بحيث تبدو الطلبات صادرة من النظام المخترَق نفسه — عبر إعداد قواعد Port Forwarding ثم الوصول للموارد البعيدة بعميل مناسب</td></tr>
+</tbody>
+</table></div>
+
+<h3>تجاوز سياسة الدومين — DCSync، AdminSDHolder، ADCS</h3>
+<ul>
+<li><strong>تعديل سياسة الدومين:</strong> تغيير Group Policy وعلاقات الثقة بين الدومينات لزرع DC وهمي والحفاظ على موطئ قدم — عبر <code>nltest /domain_trusts</code> لجمع معلومات الثقة بين الدومينات</li>
+<li><strong>DCSync Attack:</strong> المهاجم بيحصل على صلاحيات تكرار (Replicating Directory Changes/All/Filtered Set) وبينتحل شخصية DC لطلب هاشات NTLM من الدومين الحقيقي — عبر Mimikatz: <code>lsadump::dcsync /domain:&lt;domain&gt; /user:Administrator</code></li>
+<li><strong>ADCS Abuse:</strong> قوالب AD Certificate Services المُهيَّأة بشكل خاطئ (زي ESC1) ممكن تُستغَل لسرقة بيانات اعتماد والتصعيد عبر أداة Certipy</li>
+<li><strong>AdminSDHolder:</strong> Object في AD بيحمي الحسابات المميَّزة — المهاجمون بيستغلّوا عملية SDProp لإضافة مستخدم لقائمة التحكّم بالوصول الخاصة به والحصول على صلاحيات GenericAll مساوية لـ Domain Admin، مع تكرار التغييرات كل ساعة تلقائيًا</li>
+</ul>
+
+<h3>تقنيات تصعيد إضافية</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>التقنية</th><th>الوصف</th></tr></thead>
+<tbody>
+<tr><td>Access Token Manipulation</td><td>تعديل Access Tokens بحيث تبدو العملية مملوكة لمستخدم مختلف عن اللي شغّلها فعليًا</td></tr>
+<tr><td>Parent PID Spoofing</td><td>انتحال معرّف العملية الأب (PPID) لتجاوز أدوات تحليل العلاقات الأبوية والحفاظ على الاستمرارية</td></tr>
+<tr><td>Path Interception</td><td>وضع ملف تنفيذي في مسار معيّن بحيث يُنفَّذ بدل الهدف الشرعي — عبر مسارات بدون اقتباس أو سوء تهيئة متغيّر PATH</td></tr>
+<tr><td>SID-History Injection</td><td>استغلال خاصية SID-History (المستخدَمة عند ترحيل المستخدمين بين الدومينات) لحقن قيم SID إضافية</td></tr>
+<tr><td>Launch Daemon (macOS)</td><td>إنشاء Launch Daemon خبيث جديد يُنفَّذ وقت الإقلاع بصلاحيات Root</td></tr>
+<tr><td>Plist Modification (macOS)</td><td>تعديل ملفات Property List للتحكّم في وقت وطريقة تنفيذ البرامج</td></tr>
+<tr><td>Setuid و Setgid</td><td>على Linux/macOS، تطبيقات تستخدم setuid/setgid بتنفَّذ بصلاحيات المالك/المجموعة بدل المستخدم الحالي</td></tr>
+<tr><td>Abusing macOS Elevation API</td><td>استغلال AuthorizationExecuteWithPrivileges API (بدون تحقق كافٍ من مصدر الطلب) للحصول على صلاحيات Root</td></tr>
+</tbody>
+</table></div>
+
+<h3>أدوات تصعيد الصلاحيات</h3>
+<div class="method-grid">
+<div class="method-card"><div class="mtitle">BeRoot</div><div class="mdesc">أداة ما بعد الاستغلال للتحقق من الإعدادات الخاطئة الشائعة اللي تسمح بتصعيد الصلاحيات (صلاحيات الخدمات، مجلّدات قابلة للكتابة، صلاحيات مفاتيح الإقلاع).</div></div>
+<div class="method-card"><div class="mtitle">pwncat</div><div class="mdesc">يحدّد ويستغلّ ثغرات مرتبطة بحسابات وجلسات المستخدمين للتصعيد — عبر أوامر Enumerate ثم Escalate.</div></div>
+</div>
+<p>أدوات إضافية: PowerSploit، Traitor، PEASS-ng، FullPowers، WinPEAS (لتعداد الصلاحيات المتاحة للتصعيد).</p>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU3 -->
+<h2 id="lu3"><span class="num">03</span><span class="htext">الحفاظ على الوصول</span></h2>
+
+<p>بعد اكتساب الوصول وتصعيد الصلاحيات، المهاجم بيحاول الحفاظ على وصوله لمزيد من الاستغلال، أو يحوّل النظام المخترَق لمنصّة إطلاق لمهاجمة أنظمة تانية. بيُنفَّذ برامج خبيثة (Keyloggers، Spyware) ويُخفيها عبر Rootkits وSteganography وNTFS Data Streams.</p>
+
+<h3>تنفيذ التطبيقات الخبيثة</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>النوع</th><th>الوصف</th></tr></thead>
+<tbody>
+<tr><td>Backdoors</td><td>برنامج مصمَّم لتعطيل أو تعطيل عملية النظام، جمع معلومات تؤدي لاستغلال أو فقدان خصوصية، أو الوصول غير المصرَّح به للموارد</td></tr>
+<tr><td>Crackers</td><td>مكوّنات برمجية مصمَّمة لتكسير الأكواد أو كلمات المرور</td></tr>
+<tr><td>Keyloggers</td><td>عتاد أو برمجية بتسجّل كل ضغطة مفتاح على لوحة المفاتيح</td></tr>
+<tr><td>Spyware</td><td>برمجية تجسّس قد تلتقط لقطات شاشة وترسلها لمكان يحدّده المهاجم، بعد تثبيت Backdoors إضافية للوصول المستقبلي</td></tr>
+</tbody>
+</table></div>
+
+<h3>تقنيات تنفيذ الكود عن بُعد</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>التقنية</th><th>الوصف</th></tr></thead>
+<tbody>
+<tr><td>Web-Browser-Based Exploitation</td><td>استهداف المتصفح عبر روابط Spear Phishing أو Drive-by Compromise — لا يحتاج تدخّل من المستخدم للتنفيذ</td></tr>
+<tr><td>Office-Applications-Based Exploitation</td><td>استهداف تطبيقات مكتبية (Microsoft Office) عبر Spear Phishing — يحتاج المستخدم يفتح مستند خبيث لتشغيل الاستغلال</td></tr>
+<tr><td>Service Execution</td><td>تنفيذ ملفات ثنائية أو أوامر تتواصل مع خدمات Windows (Service Control Manager) — عبر إنشاء خدمة جديدة أو تعديل خدمة موجودة</td></tr>
+<tr><td>WMI</td><td>التفاعل مع النظام المستهدَف عن بُعد، جمع معلومات الموارد، وتنفيذ كود للحفاظ على الوصول — يُستخدَم كثيرًا في الحركة الجانبية</td></tr>
+<tr><td>WinRM</td><td>بروتوكول بيسمح بتشغيل ملف تنفيذي لتعديل خدمات النظام والـ Registry عن بُعد — عبر أمر <code>winrm</code></td></tr>
+</tbody>
+</table></div>
+<p>أدوات تنفيذ تطبيقات: Dameware Remote Support، Ninja، Pupy، PDQ Deploy، ManageEngine Endpoint Central، PsExec.</p>
+
+<h3>Keyloggers</h3>
+<p>برامج أو أجهزة بتسجّل ضغطات المفاتيح لمستخدم أو شبكة حواسيب، وبتخزّنها في ملف نصّي أو ترسلها لسيرفر بعيد. قدراتها الشائعة: تسجيل كل ضغطة مفتاح، التقاط لقطات شاشة دورية، تتبّع عناوين النوافذ والتطبيقات المفتوحة، مراقبة المواقع المزارة، تسجيل محادثات الدردشة، تسجيل بيانات الدخول وأرقام البطاقات حتى لو ظهرت بنجوم، إرسال المعلومات لسيرفر بعيد، وتشفير البيانات لتفادي الكشف.</p>
+<div class="table-wrap"><table>
+<thead><tr><th>النوع</th><th>الفئة</th><th>الوصف</th></tr></thead>
+<tbody>
+<tr><td>PC/BIOS Embedded</td><td>Hardware</td><td>تعديل Firmware مستوى BIOS المسؤول عن إدارة ضغطات المفاتيح — يحتاج وصول فيزيائي أو إداري</td></tr>
+<tr><td>Keylogger Keyboard</td><td>Hardware</td><td>دائرة إلكترونية متّصلة بكابل لوحة المفاتيح، تسجّل كل الضغطات في ذاكرتها الداخلية — غير متعلّق بنظام التشغيل</td></tr>
+<tr><td>PS/2 و USB Keylogger</td><td>Hardware</td><td>شفّاف تمامًا لعمل الحاسوب، لا يحتاج برمجيات أو Drivers</td></tr>
+<tr><td>Acoustic/CAM Keylogger</td><td>Hardware</td><td>يحوّل موجات صوتية كهرومغناطيسية لبيانات ضغطات، أو يستخدم كاميرا لتسجيل الشاشة</td></tr>
+<tr><td>Bluetooth Keylogger</td><td>Hardware</td><td>وصول فيزيائي مرة واحدة للتثبيت، ثم استرجاع البيانات لاحقًا عبر الاتصال بالبلوتوث</td></tr>
+<tr><td>Wi-Fi Keylogger</td><td>Hardware</td><td>يتصل بنقطة وصول Wi-Fi محلية ويرسل بيانات الضغطات بالبريد الإلكتروني أو عبر TCP/IP</td></tr>
+<tr><td>Application Keylogger</td><td>Software</td><td>يسجّل كل ما يكتبه المستخدم في البريد والدردشة والتطبيقات، بما فيها كلمات المرور</td></tr>
+<tr><td>Kernel/Rootkit Keylogger</td><td>Software</td><td>يعمل على مستوى Kernel كـ Driver للوحة المفاتيح — نادر الاستخدام لصعوبة كتابته، لكن صعب جدًا كشفه</td></tr>
+<tr><td>Hypervisor-Based Keylogger</td><td>Software</td><td>يعمل داخل Hypervisor خبيث يشغّل نظام التشغيل</td></tr>
+<tr><td>Form-Grabbing-Based Keylogger</td><td>Software</td><td>يسجّل بيانات نماذج الويب عند الإرسال، متجاوزًا تشفير HTTPS</td></tr>
+<tr><td>JavaScript-Based Keylogger</td><td>Software</td><td>حقن JavaScript خبيث في صفحة ويب مخترَقة للاستماع لأحداث <code>onKeyUp()</code> و<code>onKeyDown()</code></td></tr>
+<tr><td>Memory-Injection-Based Keylogger</td><td>Software</td><td>تعديل جداول الذاكرة المرتبطة بالمتصفح ووظائف النظام لتسجيل الضغطات، ويُستخدَم أيضًا لتجاوز UAC</td></tr>
+</tbody>
+</table></div>
+
+<h3>Remote Keylogger عبر Metasploit</h3>
+<div class="code-wrap"><span class="code-tag">meterpreter — remote keylogging</span><pre><code># عرض العمليات الجارية وأخذ PID
+ps
+
+# الانتقال (Migrate) لعملية مستقرة زي explorer.exe لتفادي إغلاق الجلسة
+getpid
+migrate &lt;PID&gt;
+
+# بدء تسجيل ضغطات المفاتيح
+keyscan_start
+
+# استخراج الضغطات المسجَّلة وعرضها
+keyscan_dump
+
+# إيقاف التسجيل
+keyscan_stop
+</code></pre></div>
+<p>أدوات Keyloggers للعتاد: KeyGrabber، KeyCarbon، Keyboard Logger، KeyGhost، KEYKatcher. أدوات Windows: Spyrix Personal Monitor، REFOG Personal Monitor، All In One Keylogger، Revealer Keylogger Pro، NetBull، Spytector. أدوات macOS: Hoverwatch، Spyrix for Mac، CleverControl، FlexiSPY، KidLogger.</p>
+
+<h3>Spyware</h3>
+<p>برمجية مراقبة خفية بتسجّل كل نشاط المستخدم سرًّا، وبترسل السجلّات لمهاجم بعيد عبر الإنترنت (بريد، FTP، HTTP، DNS). بتنتشر عبر "الالتصاق" ببرامج تانية أو عبر Drive-by Downloading، وبتخفي عملياتها وملفاتها لتفادي الكشف.</p>
+<div class="table-wrap"><table>
+<thead><tr><th>النوع</th><th>الوصف</th></tr></thead>
+<tbody>
+<tr><td>Desktop Spyware</td><td>تسجيل مباشر لنشاط سطح المكتب، الأنشطة على الإنترنت، استخدام البرمجيات وتوقيتها</td></tr>
+<tr><td>Email Spyware</td><td>مراقبة وتسجيل وإعادة توجيه كل البريد الوارد والصادر، ورسائل فورية</td></tr>
+<tr><td>Internet Spyware</td><td>تسجيل زمني لكل صفحات الويب المُزارة، يعمل في الخلفية بوضع تخفّي</td></tr>
+<tr><td>Child-Monitoring Spyware</td><td>تتبّع نشاط الأطفال أونلاين وأوفلاين بوضع تخفّي كامل</td></tr>
+<tr><td>Audio Spyware</td><td>برنامج مراقبة صوتية يسجّل الصوت عبر الحاسوب بدون صلاحيات إدارية</td></tr>
+<tr><td>Video Spyware</td><td>مراقبة فيديو مجدولة عبر الكاميرا بدون علم المستخدم</td></tr>
+<tr><td>Telephone/Cellphone Spyware</td><td>سجلّ المكالمات، الرسائل النصّية (حتى المحذوفة)، تاريخ المواقع، تتبّع GPS</td></tr>
+<tr><td>GPS Spyware</td><td>تتبّع موقع الهاتف أو المركبة عبر GPS، وإرسال نقاط الموقع لبريد محدَّد</td></tr>
+</tbody>
+</table></div>
+<p>أدوات: Spytech SpyAgent، Spyrix Personal Monitor، وأدوات تتبّع الهاتف زي mSpy، XNSPY، iKeyMonitor، ONESPY، Highster Mobile، وأدوات GPS زي SPYERA، Snoopza، MobiStealth، FlexiSPY، Mobile Tracker Free.</p>
+
+<hr />
+
+<h3>Rootkits</h3>
+<p>برامج مصمَّمة للوصول لحاسوب بدون اكتشاف — بتساعد المهاجم على الوصول غير المصرَّح به وتنفيذ أنشطة خبيثة. الهدف هو الحصول على صلاحيات Root، وبناء عملية دخول خلفية في نظام التشغيل تتجاوز عملية الدخول العادية.</p>
+<div class="callout definition">
+<div class="callout-label">أهداف Rootkit</div>
+<ul>
+<li>السيطرة على النظام والوصول الخلفي عن بُعد، مع إخفاء آثار المهاجم والعمليات الخبيثة</li>
+<li>جمع بيانات حساسة وحركة شبكية كان المهاجم مقيَّد عن الوصول لها</li>
+<li>تخزين برامج خبيثة إضافية والعمل كموارد خادم لتحديثات Botnet</li>
+<li>تأمين وصول مستمر عبر إعادة التشغيل والتحديثات ومحاولات إزالة البرمجية الخبيثة</li>
+<li>التجسّس على نشاط المستخدم والتحكّم عن بُعد في النظام المخترَق</li>
+</ul>
+</div>
+<div class="table-wrap"><table>
+<thead><tr><th>النوع</th><th>الوصف</th></tr></thead>
+<tbody>
+<tr><td>Hypervisor-Level</td><td>يستغلّ ميزات عتاد (Intel VT، AMD-V) ويعمل في Ring-1 مستضيفًا نظام التشغيل كآلة افتراضية — يعترض كل نداءات العتاد</td></tr>
+<tr><td>Hardware/Firmware</td><td>يستخدم Firmware الجهاز لإنشاء صورة برمجية خبيثة دائمة (هارد ديسك، BIOS، كرت شبكة) — نادرًا ما يُفحَص لسلامة الكود</td></tr>
+<tr><td>Kernel-Level</td><td>يعمل في Ring-0 بأعلى صلاحيات نظام التشغيل — عبر Drivers أو Kernel Modules معدَّلة — صعب الكشف لأنه بنفس صلاحيات النظام</td></tr>
+<tr><td>Boot-Loader-Level (Bootkit)</td><td>يعدّل أو يستبدل Boot Loader الشرعي — يُفعَّل قبل بدء نظام التشغيل، ويُسهّل اختراق مفاتيح التشفير وكلمات المرور</td></tr>
+<tr><td>Memory (Volatile) Rootkits</td><td>يقيم فقط في ذاكرة RAM بدون أي أثر على القرص — أصعب كشفًا من الـ Rootkits التقليدية</td></tr>
+</tbody>
+</table></div>
+<p>آلية العمل الأساسية: <strong>System Hooking</strong> — استبدال مؤشّر الدالة الأصلي بمؤشّر يوفّره الـ Rootkit بوضع تخفّي. <strong>Inline Function Hooking</strong> تقنية بتعدّل بايتات دالة داخل DLLs أساسية (kernel32.dll، ntdll.dll) بحيث أي استدعاء يمرّ بالـ Rootkit أولًا.</p>
+
+<h3>Rootkits شهيرة</h3>
+<div class="method-grid">
+<div class="method-card"><div class="mtitle">FudModule Rootkit</div><div class="mdesc">يستغلّ ثغرة Zero-Day من Admin إلى Kernel في Driver AppLocker (appid.sys) — يستخدم تقنيات DKOM لتعطيل آليات أمان Kernel، ويخفي نفسه من أدوات المراقبة ويعطّل حلول زي Microsoft Defender وCrowdStrike Falcon.</div></div>
+<div class="method-card"><div class="mtitle">Fire Chili Rootkit</div><div class="mdesc">يستغلّ ثغرة Log4Shell للتجسّس وتسريب البيانات — يعمل بمستوى Kernel، يخفي الاتصالات والملفات، ويستخدم قنوات مشفَّرة للتواصل ويتجاوز الكشف بالتوقيع.</div></div>
+</div>
+
+<h3>طرق كشف Rootkits</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>الطريقة</th><th>الوصف</th></tr></thead>
+<tbody>
+<tr><td>Integrity-Based Detection</td><td>إنشاء خط أساس (Baseline) من ملفات نظام نظيف (أدوات زي Tripwire وAIDE) ومقارنته باللقطة الحالية لإيجاد اختلافات</td></tr>
+<tr><td>Signature-Based Detection</td><td>مقارنة خصائص العمليات والملفات بقاعدة بيانات بصمات Rootkits معروفة — فعّالية أقل لأن الـ Rootkit بيقاطع مسار تنفيذ أداة الكشف</td></tr>
+<tr><td>Runtime Execution Path Profiling</td><td>مقارنة ملف تعريف مسار التنفيذ وقت التشغيل لكل العمليات — الـ Rootkit بيضيف كود جديد قرب مسار تنفيذ روتين معيّن فيخلخله</td></tr>
+<tr><td>Alternative Trusted Medium</td><td>الطريقة الأكثر موثوقية على مستوى نظام التشغيل — إيقاف النظام المصاب وإقلاعه من وسيط موثوق بديل (USB قابل للإقلاع) ثم فحص التخزين</td></tr>
+</tbody>
+</table></div>
+
+<hr />
+
+<h3>NTFS Data Streams (ADS)</h3>
+<p>نظام NTFS بيخزّن الملف بمساعدة Data Streams — واحد لوصف الأمان (الصلاحيات) وواحد للبيانات نفسها. ADS (Alternate Data Streams) نوع من Named Data Streams الإضافية داخل أي ملف — بتسمح بإدماج بيانات في ملفات موجودة من غير تغيير وظيفتها أو حجمها الظاهر، وبتتيح للمهاجم حقن كود خبيث وتنفيذه بدون اكتشاف المستخدم.</p>
+<div class="code-wrap"><span class="code-tag">cmd — ntfs ads manipulation</span><pre><code># إخفاء Trojan.exe داخل Readme.txt (stream)
+type c:\Trojan.exe &gt; c:\Readme.txt:Trojan.exe
+
+# إنشاء اختصار (رابط) لتشغيل الملف المخفي من الـ Stream
+mklink backdoor.exe Readme.txt:Trojan.exe
+
+# تنفيذ البرنامج المخفي عبر الاختصار
+backdoor.exe
+</code></pre></div>
+<div class="callout note">
+<div class="callout-label">ملاحظة</div>
+<p>الـ Notepad تطبيق متوافق مع ADS — ممكن تفتح Stream مخفي مباشرةً، مثلًا <code>notepad sample.txt:secret.txt</code>. لا يُنصح باستخدام Alternate Data Streams لتخزين معلومات حرجة.</p>
+</div>
+
+<hr />
+
+<h3>Steganography</h3>
+<p>تقنية إخفاء رسالة سرّية داخل رسالة عادية واستخراجها في الوجهة للحفاظ على سرّية البيانات — استخدام صورة كغطاء هو الأسلوب الأكثر شيوعًا. المهاجمون بيستخدموا Steganography لإخفاء قوائم سيرفرات مخترَقة، كود أدوات اختراق، أو خطط هجمات مستقبلية — حتى لما التشفير مش عملي، لأن الرسالة بتفضل مخفية حتى لو اتكتشف الملف.</p>
+
+<h3>تصنيف الـ Steganography</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>الفئة</th><th>التقنيات</th></tr></thead>
+<tbody>
+<tr><td>Technical Steganography</td><td>Invisible Ink (حبر غير مرئي يظهر بالحرارة أو الضوء)، Microdots (نص أو صورة مصغَّرة لحجم نقطة)، طرق حاسوبية رقمية</td></tr>
+<tr><td>Linguistic Steganography — Semagrams</td><td>Visual Semagrams (إخفاء في رسمة أو موسيقى)، Text Semagrams (تغيير حجم الخط أو إضافة مسافات)</td></tr>
+<tr><td>Linguistic Steganography — Open Codes</td><td>Covered Ciphers بفرعيها Null Ciphers (خلط البيانات الحقيقية بين بيانات عديمة الفائدة) وGrille Ciphers (تشفير عبر ورقة مثقوبة)</td></tr>
+</tbody>
+</table></div>
+
+<h3>تقنيات Steganography الحاسوبية</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>التقنية</th><th>الوصف</th></tr></thead>
+<tbody>
+<tr><td>Substitution Techniques</td><td>استبدال البتات غير المهمّة في الغطاء بالرسالة السرّية</td></tr>
+<tr><td>Transform Domain Techniques</td><td>إخفاء المعلومات في أجزاء مهمّة من الصورة (قص، ضغط، معالجة صور) — أصعب في الاستهداف</td></tr>
+<tr><td>Statistical Techniques</td><td>تعديل خصائص إحصائية للغطاء عند نقل بت معيّن، للتمييز بين الأغطية المعدَّلة وغير المعدَّلة</td></tr>
+<tr><td>Spread Spectrum Techniques</td><td>إشارات اتصال تشغل Bandwidth أكبر من المطلوب — أقل عرضة للاعتراض والتشويش</td></tr>
+</tbody>
+</table></div>
+
+<h3>أنواع Steganography حسب وسيط الغطاء</h3>
+<p>Image، Document، Folder، Video، Audio، Whitespace، Web، Spam/Email، Natural Text، Hidden OS، C++ Source-Code، Compressed Data.</p>
+<p>أدوات: <strong>OpenStego</strong> (إخفاء بيانات وعلامات مائية غير مرئية لاكتشاف النسخ غير المصرَّح به)، <strong>StegoStick</strong> (إخفاء أي ملف داخل صورة أو صوت أو فيديو أو أي صيغة أخرى)، <strong>OmniHide PRO</strong> (إخفاء ملف سرّي داخل صورة/فيديو/موسيقى، مع حماية بكلمة مرور).</p>
+
+<h3>Audio Steganography</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>الطريقة</th><th>الوصف</th></tr></thead>
+<tbody>
+<tr><td>LSB Coding</td><td>إدراج رسالة ثنائية سرّية في أقل بت أهمية لكل عيّنة صوتية — يسمح بإخفاء كمية كبيرة من البيانات، لكن سهل الكشف عبر ضوضاء القناة وإعادة أخذ العيّنات</td></tr>
+<tr><td>Tone Insertion</td><td>إدخال نغمات منخفضة الطاقة غير مسموعة وسط إشارة صوتية أعلى طاقة بكثير</td></tr>
+<tr><td>Phase Encoding</td><td>استبدال مقطع صوتي أولي بطور مرجعي يمثّل البيانات — ترميز ناعم من حيث نسبة الإشارة للضوضاء</td></tr>
+</tbody>
+</table></div>
+
+<hr />
+
+<h3>Steganalysis</h3>
+<p>العملية العكسية للـ Steganography — اكتشاف وجود معلومات مخفية في وسيط. المحلّل (Steganalyst) بيحاول كشف الرسائل المخفية داخل صور ونصوص وصوت وفيديو. ليها مرحلتان: الكشف (ملاحظة العلاقات بين أدوات Steganography والوسيط والرسالة) والتشويه (استخراج الرسالة المُدمَجة من Stego-Media).</p>
+<div class="table-wrap"><table>
+<thead><tr><th>نوع الهجوم</th><th>المعلومات المتاحة للمحلّل</th></tr></thead>
+<tbody>
+<tr><td>Stego-Only Attack</td><td>فقط وسيط الـ Stego — لازم يجرّب كل خوارزميات Steganography الممكنة</td></tr>
+<tr><td>Known-Stego Attack</td><td>الخوارزمية + الكائن الأصلي والـ Stego معًا</td></tr>
+<tr><td>Known-Message Attack</td><td>الرسالة ووسيط الـ Stego — يكشف التقنية المستخدَمة للإخفاء</td></tr>
+<tr><td>Known-Cover Attack</td><td>كائن الـ Stego ووسيط الغطاء الأصلي — المقارنة تكشف التغييرات</td></tr>
+<tr><td>Chosen-Stego Attack</td><td>كائن الـ Stego وأداة/خوارزمية الإخفاء المستخدَمة</td></tr>
+<tr><td>Chi-Square Attack</td><td>تحليل احتمالي لاختبار هل الفرق بين بيانات الـ Stego والأصلية يساوي صفرًا تقريبًا (= لا توجد بيانات مُدمَجة) أم لا</td></tr>
+<tr><td>Distinguishing Statistical Attack</td><td>تحليل الخوارزمية المُدمَجة لرصد تغيّرات إحصائية مميِّزة وطول البيانات المُدمَجة</td></tr>
+<tr><td>Blind Classifier Attack</td><td>كاشف أعمى يتعلّم مظهر البيانات الأصلية من زوايا متعدّدة، ثم يُدرَّب مصنِّف لتمييز الفرق بين كائن الـ Stego والبيانات الأصلية</td></tr>
+</tbody>
+</table></div>
+
+<hr />
+
+<h3>تقنيات الاستمرارية (Persistence)</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>التقنية</th><th>الوصف</th></tr></thead>
+<tbody>
+<tr><td>Windows Sticky Keys</td><td>استغلال ميزة Sticky Keys بعد تصعيد الصلاحيات (عبر bypassuac) باستخدام وحدة <code>sticky_keys</code> في Metasploit — الضغط على Shift خمس مرات بيفتح Command Prompt بصلاحيات SYSTEM</td></tr>
+<tr><td>Registry Run Keys</td><td>استغلال خدمات مرتبطة بمفتاح Registry Run عند تسجيل دخول مستخدم مصرَّح — تعداد الصلاحيات عبر WinPEAS</td></tr>
+<tr><td>Startup Folder</td><td>حقن تطبيقات خبيثة (RATs) في مجلّد Startup بحيث تُنفَّذ تلقائيًا عند تسجيل الدخول — فحص الصلاحيات عبر <code>icacls</code> أو <code>accesschk.exe</code></td></tr>
+<tr><td>Remote Code Execution + DPAPI</td><td>إنشاء مستخدم وهمي على DC عبر WMI (<code>wmic /node:... process call create "net user /add ..."</code>) وإضافته لمجموعة Admins</td></tr>
+<tr><td>Malicious Replication</td><td>تكرار بيانات حسّاسة زي krbtgt عبر خطوات DCSync لإنشاء نسخة مطابقة من بيانات المستخدم</td></tr>
+<tr><td>Skeleton Key Attack</td><td>برمجية خبيثة مقيمة في الذاكرة بتحقن بيانات اعتماد مزيَّفة في DCs لإنشاء كلمة مرور خلفية رئيسية — يتطلّب صلاحيات DA ووصول للـ DC</td></tr>
+<tr><td>Golden Ticket Attack</td><td>تزوير TGT عبر سرقة هاش KRBTGT (DCSync) ثم <code>kerberos::golden</code> بـ Mimikatz — سيطرة كاملة على الدومين بانتحال أي هوية</td></tr>
+<tr><td>Silver Ticket Attack</td><td>تزوير TGS لخدمة واحدة فقط باستخدام هاش حساب خدمة محلي — بدون أي تواصل مع الـ DC</td></tr>
+<tr><td>WMI Event Subscription</td><td>استغلال خاصية WMI Event Subscription لتنفيذ محتوى خبيث عند أحداث معيّنة، مع البقاء نشطًا حتى بعد إعادة التشغيل</td></tr>
+<tr><td>Overpass-the-Hash (OPtH)</td><td>امتداد لـ Pass-the-Ticket/Pass-the-Hash — استخدام NTLM Hash مُستخرَج من LSASS لطلب TGT Kerberos وإعادة استخدامه للوصول لموارد الشبكة</td></tr>
+</tbody>
+</table></div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU4 -->
+<h2 id="lu4"><span class="num">04</span><span class="htext">إخفاء آثار الاختراق</span></h2>
+
+<p>إخفاء الآثار (Covering Tracks) من أهم مراحل اختراق النظام — المهاجم بيحاول تجنّب الاكتشاف عبر إخفاء كل "الآثار" أو السجلّات المُولَّدة أثناء الوصول للشبكة أو الحاسوب المستهدَف. محو الأدلّة ضروري لأي مهاجم عايز يفضل غير مكتشَف — بيبدأ بمسح السجلّات الملوَّثة ورسائل الخطأ، وتعديل إعدادات النظام بحيث متسجّلش الأنشطة المستقبلية.</p>
+
+<h3>تقنيات إخفاء الآثار</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>التقنية</th><th>الوصف</th></tr></thead>
+<tbody>
+<tr><td>Disabling Auditing</td><td>تعطيل ميزات التدقيق (Auditing) الخاصة بالنظام المستهدَف</td></tr>
+<tr><td>Clearing Logs</td><td>مسح/حذف إدخالات سجلّ النظام المرتبطة بأنشطة المهاجم</td></tr>
+<tr><td>Manipulating Logs</td><td>التلاعب بالسجلّات بحيث لا تدين المهاجم في أي إجراء قانوني لاحق</td></tr>
+<tr><td>Covering Tracks on the Network</td><td>استخدام Reverse HTTP Shells، أنفاق ICMP عكسية، DNS Tunneling، ومعاملات TCP لإخفاء الآثار الشبكية</td></tr>
+<tr><td>Deleting Files</td><td>استخدام أدوات سطر أوامر زي Cipher.exe لحذف البيانات بشكل يمنع استرجاعها لاحقًا</td></tr>
+<tr><td>Disabling Windows Functionality</td><td>تعطيل وظائف زي Last Access Timestamp، Hibernation، Virtual Memory، ونقاط استعادة النظام</td></tr>
+<tr><td>Hiding Artifacts</td><td>إخفاء الآثار الخبيثة داخل آثار نظام التشغيل الشرعية لتفادي الكشف</td></tr>
+</tbody>
+</table></div>
+
+<h3>تعطيل التدقيق — Auditpol</h3>
+<div class="code-wrap"><span class="code-tag">cmd — auditpol</span><pre><code># تفعيل التدقيق
+auditpol /set /category:"system","account logon" /success:enable /failure:enable
+
+# تعطيل التدقيق
+auditpol /set /category:"system","account logon" /success:disable /failure:disable
+
+# عرض إعدادات التدقيق الحالية
+auditpol /get /category:*
+</code></pre></div>
+
+<h3>مسح السجلّات</h3>
+<div class="code-wrap"><span class="code-tag">meterpreter — clearev</span><pre><code>clearev
+# يمسح كل سجلّات Windows (Security, System, Application) عبر جلسة Meterpreter
+</code></pre></div>
+<div class="code-wrap"><span class="code-tag">powershell — clear-eventlog</span><pre><code># مسح سجلّ PowerShell كاملًا
+Clear-EventLog "Windows PowerShell"
+
+# مسح أنواع سجلّات محدَّدة من أنظمة محلية أو بعيدة
+Clear-EventLog -LogName ODiag, OSession localhost, Server02
+
+# مسح كل السجلّات المحدَّدة مع عرض قائمة السجلّات بعد المسح
+Clear-EventLog -LogName application, system -confirm
+</code></pre></div>
+<p>أداة <code>Clear_Event_Viewer_Logs.bat</code> سكربت BAT بيمسح سجلّات الأمان والنظام والتطبيقات دفعة واحدة عبر صلاحيات إدارية.</p>
+
+<h3>مسح الآثار الأونلاين</h3>
+<p>تصفّح خاص، حذف سجلّ عنوان المتصفح، تعطيل تخزين السجلّ، حذف البيانات الخاصة، مسح الكوكيز والـ Cache عند الخروج، حذف التنزيلات، تعطيل مدير كلمات المرور ومسح بياناته، حذف الجلسات المحفوظة، وحذف JavaScript المخصَّص للمستخدم.</p>
+
+<h3>إخفاء الآثار على الشبكة</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>التقنية</th><th>الوصف</th></tr></thead>
+<tbody>
+<tr><td>Reverse HTTP Shells</td><td>تثبيت Shell عكسي بصيغة HTTP على جهاز الضحية يطلب أوامر من سيد خارجي بشكل دوري</td></tr>
+<tr><td>Reverse ICMP Tunnels</td><td>استخدام حزم ICMP Echo/Reply كحاملات لبيانات TCP — يتجاوز قواعد الـ Firewall لأن أغلب المؤسسات بتفحص حركة ICMP الواردة فقط مش الصادرة</td></tr>
+<tr><td>DNS Tunneling</td><td>ترميز محتوى خبيث داخل استعلامات وردود DNS، لإنشاء قناة خلفية (Backchannel) للوصول عن بُعد وتسريب بيانات حسّاسة</td></tr>
+</tbody>
+</table></div>
+
+<h3>إخفاء الآثار على نظام التشغيل</h3>
+<div class="code-wrap"><span class="code-tag">windows ntfs — hiding files via ads</span><pre><code># إخفاء SecretFile.txt خلف LegitFile.txt
+type C:\SecretFile.txt &gt;C:\LegitFile.txt:SecretFile.txt
+
+# عرض الملف المخفي (محتاج تعرف اسمه)
+more &lt; C:\LegitFile.txt:SecretFile.txt
+</code></pre></div>
+<p>على UNIX/Linux، الملفات ممكن تتخفى بإضافة نقطة (.) قبل الاسم — بتُخزَّن عادةً في <code>/dev</code> و<code>/tmp</code> و<code>/etc</code>. لتفادي ظهور أمر فتح الملف في <code>.bash_history</code>، المهاجمون بيستخدموا <code>export HISTSIZE=0</code>.</p>
+
+<h3>حذف آمن — Cipher.exe</h3>
+<p>أداة سطر أوامر مدمَجة في Windows لحذف البيانات بشكل آمن عبر الكتابة فوقها لمنع استرجاعها — بتساعد كمان في تشفير وفك تشفير بيانات على أقسام NTFS. الملفات الاحتياطية المُولَّدة أثناء التشفير ممكن تُستعاد بأدوات استرجاع البيانات لو لم تُحذَف بشكل آمن.</p>
+
+<h3>حذف Windows Activity History</h3>
+<p>حذف سجلّ النشاط اللي بيسجّل الوصول للملفات واستخدام التطبيقات وتاريخ التصفّح — إخفاء هذه البيانات بيخفي وجود المهاجم وأنشطته على النظام المخترَق.</p>
+
+<h3>تقنيات مكافحة التحقيق الجنائي (Anti-Forensics)</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>التقنية</th><th>الوصف</th></tr></thead>
+<tbody>
+<tr><td>Data/File Deletion</td><td>الحذف العادي بيترك البيانات في سلّة المحذوفات — المهاجم بيحذف أو يخفي البيانات الوصفية المرتبطة لمنع الاسترجاع</td></tr>
+<tr><td>Password Protection</td><td>حماية الملفات بكلمة مرور وتشفيرها لمنع الهندسة العكسية واستخراج المعلومات وأدوات الاسترجاع</td></tr>
+<tr><td>Data Hiding in File System Structures</td><td>استخدام $BadClus (ملف Sparse) أو Host-Protected Areas (HPA) أو DPA أو Slack Spaces لإخفاء بيانات غير مرئية للـ BIOS أو نظام التشغيل</td></tr>
+<tr><td>Trail Obfuscation</td><td>حذف الأدلّة وإخفاء الآثار عبر التلاعب بالسجلّات، تزوير رؤوس البريد، تعديل الطوابع الزمنية، وتعديل رؤوس الملفات — أدوات زي Timestomp وTransmogrify</td></tr>
+<tr><td>Minimizing Footprints</td><td>تنفيذ الهجوم بأقل أثر ممكن — هويات مسروقة، أجهزة افتراضية، بنية سحابية، عملات رقمية غير قابلة للتتبّع، وتشغيل النظام من Live USB</td></tr>
+<tr><td>Access Anonymization</td><td>إخفاء البصمة الرقمية عبر Proxy Servers، خدمات التعمية، شبكة Tor، Traffic Padding، وقنوات اتصال مجهولة</td></tr>
+</tbody>
+</table></div>
+<p>أدوات إخفاء الآثار: DBAN، Privacy Eraser Free، Wipe، BleachBit، east-tec Eraser.</p>
+
+<hr />
+
+<!-- ══════════════════════════════════ METHODOLOGY -->
+<h2 id="methodology"><span class="htext">منهجية اختراق النظام الكاملة (4 مراحل)</span></h2>
+
+<div class="step-track">
+<div class="step-item">
+<div class="step-num">1</div>
+<div class="step-title">اكتساب الوصول (Gaining Access)</div>
+<div class="step-body"><p>استخدام المعلومات المجمَّعة في مراحل Footprinting والفحص والتعداد وتحليل الثغرات لتكسير كلمات المرور (Spraying، AS-REP Roasting، Kerberoasting) أو استغلال ثغرة Buffer Overflow أو ثغرة معروفة والحصول على أول Shell على النظام المستهدَف.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">2</div>
+<div class="step-title">تصعيد الصلاحيات (Escalating Privileges)</div>
+<div class="step-body"><p>تحويل الوصول المحدود لصلاحيات إدارية أو SYSTEM عبر DLL Hijacking، استغلال خدمات مُهيَّأة بشكل خاطئ، تجاوز UAC، أو استغلال سياسة الدومين (DCSync، ADCS).</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">3</div>
+<div class="step-title">الحفاظ على الوصول (Maintaining Access)</div>
+<div class="step-body"><p>تثبيت Keyloggers أو Spyware أو Rootkits، إخفاؤها عبر NTFS ADS أو Steganography، وتأمين الاستمرارية عبر Golden/Silver Tickets، WMI Event Subscription، أو تعديل مفاتيح Registry للتشغيل التلقائي.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">4</div>
+<div class="step-title">إخفاء الآثار (Covering Tracks)</div>
+<div class="step-body"><p>تعطيل التدقيق، مسح السجلّات (Security/System/Application/PowerShell)، إخفاء الحركة الشبكية عبر أنفاق DNS/ICMP، وتطبيق تقنيات Anti-Forensics لمنع أي تحقيق جنائي لاحق من تتبّع المصدر.</p></div>
+</div>
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ CHEAT SHEET -->
+<h2 id="cheat"><span class="htext">Cheat Sheet مرجعي</span></h2>
+<div class="cheat-section">
+
+<h4>أوامر Mimikatz الأساسية للموديول</h4>
+<div class="code-wrap"><span class="code-tag">mimikatz — quick reference</span><pre><code>lsadump::dcsync /domain:&lt;domain&gt; /user:krbtgt
+kerberos::golden /domain:&lt;domain&gt; /sid:&lt;SID&gt; /rc4:&lt;KRBTGT_hash&gt; /user:&lt;user&gt;
+sekurlsa::logonpasswords
+</code></pre></div>
+
+<h4>تجاوز UAC — مرجع سريع</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>الإكسبلويت</th><th>الاستخدام</th></tr></thead>
+<tbody>
+<tr><td><code>bypassuac</code></td><td>حقن عمليات أساسي</td></tr>
+<tr><td><code>bypassuac_injection</code></td><td>حقن DLL انعكاسي</td></tr>
+<tr><td><code>bypassuac_fodhelper</code></td><td>اختطاف مفتاح fodhelper</td></tr>
+<tr><td><code>bypassuac_comhijack</code></td><td>اختطاف معالج COM</td></tr>
+</tbody>
+</table></div>
+
+<h4>إخفاء الآثار — مرجع سريع</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>الهدف</th><th>الأمر</th></tr></thead>
+<tbody>
+<tr><td>تعطيل التدقيق</td><td><code>auditpol /set /category:"system" /success:disable /failure:disable</code></td></tr>
+<tr><td>مسح كل سجلّات Windows (Meterpreter)</td><td><code>clearev</code></td></tr>
+<tr><td>مسح سجلّ PowerShell</td><td><code>Clear-EventLog "Windows PowerShell"</code></td></tr>
+<tr><td>تفريغ ضغطات المفاتيح (Meterpreter)</td><td><code>keyscan_start</code> ← <code>keyscan_dump</code> ← <code>keyscan_stop</code></td></tr>
+</tbody>
+</table></div>
+
+<h4>تصنيف أنواع Rootkits حسب مستوى التشغيل</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>المستوى</th><th>النوع</th></tr></thead>
+<tbody>
+<tr><td>Ring -1</td><td>Hypervisor-Level</td></tr>
+<tr><td>Ring 0</td><td>Kernel-Level</td></tr>
+<tr><td>قبل إقلاع النظام</td><td>Boot-Loader-Level</td></tr>
+<tr><td>ذاكرة فقط (RAM)</td><td>Memory (Volatile)</td></tr>
+</tbody>
+</table></div>
+
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ SUMMARY -->
+<h2 id="summary"><span class="htext">الخلاصة العامة للموديول</span></h2>
+<p>الموديول ده ناقش بالتفصيل المراحل المختلفة لاختراق النظام — اكتساب الوصول، تصعيد الصلاحيات، الحفاظ على الوصول، وإخفاء الآثار. غطّى الأدوات والتقنيات المختلفة اللي بيستخدمها المهاجمون للوصول لنظام مستهدَف، وتصعيد صلاحياتهم. شرح تقنيات زي تنفيذ التطبيقات الخبيثة (Keyloggers، Spyware، Rootkits)، تلاعب NTFS Streams، وSteganography وSteganalysis، اللي بيستخدمها المهاجمون للحفاظ على وصول بعيد وسرقة معلومات حرجة. كمان فصّل التقنيات المختلفة لمحو كل أدلّة الاختراق من النظام المستهدَف.</p>
+
+<div class="takeaways">
+<div class="takeaways-title">$ cat ./module06_summary.txt</div>
+<ul>
+<li>اكتساب الوصول بيعتمد على تكسير كلمات المرور (Active/Passive/Offline) أو استغلال ثغرة مكتشَفة (Buffer Overflow أو غيرها) — وكلاهما يتطلّب معلومات دقيقة من مراحل الاستطلاع السابقة</li>
+<li>تصعيد الصلاحيات أفقي أو رأسي — ومعظم التقنيات بتستغلّ إعدادات خاطئة (خدمات، DLLs، UAC) أكتر من كونها ثغرات Zero-Day</li>
+<li>الحفاظ على الوصول بيعتمد على برمجيات خبيثة خفية (Keyloggers، Spyware، Rootkits) وتقنيات إخفاء (NTFS ADS، Steganography) تصعب على الكشف التقليدي رصدها</li>
+<li>Rootkits مستوى Kernel أو Hypervisor أصعب كشفًا بكثير من غيرها — وأفضل طريقة كشف موثوقة هي الإقلاع من وسيط بديل موثوق</li>
+<li>إخفاء الآثار آخر خطوة لكنها حرجة — تعطيل التدقيق ومسح السجلّات وتقنيات Anti-Forensics بتحدّد هل المهاجم هيُكتشَف أم لا</li>
+<li>كل مرحلة من المراحل الأربع مترابطة — ضعف في أي مرحلة (سجلّ مش متمسوح، Rootkit مكتشَف) ممكن يكشف الهجوم بالكامل بأثر رجعي</li>
+</ul>
+</div>
+
+<blockquote>
+<p><strong>اختراق النظام مش حدث واحد — هو سلسلة قرارات متتالية.</strong> كل مرحلة بتبني على نجاح اللي قبلها: وصول أولي ضعيف يفشل في التصعيد، وتصعيد ناجح بدون استمرارية بيضيع بإعادة تشغيل واحدة، واستمرارية بدون إخفاء آثار بتنكشف في أول مراجعة سجلّات. فهم السلسلة دي بالكامل — مش مرحلة واحدة بمعزل عن الباقي — هو اللي بيفرّق بين اختراق تجريبي واختراق فعلي يصمد قدام فريق استجابة الحوادث.</p>
+</blockquote>
+
+<div class="callout examtip">
+<div class="callout-label">Exam Tip</div>
+<p>ركّز على الفرق بين Horizontal وVertical Privilege Escalation، أنواع Rootkits حسب مستوى التشغيل (Ring -1/0)، الفرق بين Golden وSilver Ticket، وأنواع هجمات Steganalysis الثمانية (خصوصًا Stego-Only وKnown-Cover). أسئلة السيناريو غالبًا بتربط بين أداة معيّنة (Mimikatz، Rubeus، Metasploit module) والتقنية اللي بتنفّذها.</p>
+</div>
+
+<hr />
+<p><em>نهاية نوتس الموديول السادس — System Hacking</em></p>
+<div class="footer-note">-- EOF: module-06/system-hacking.md --</div>
+
+</div>
+
+<script>
+(function(){
+  var root=document.documentElement,btn=document.getElementById('themeSwitch');
+  function applyTheme(t){root.setAttribute('data-theme',t);btn.textContent='theme: '+t;try{localStorage.setItem('oscp-notes-theme',t);}catch(e){}}
+  var saved='dark';try{saved=localStorage.getItem('oscp-notes-theme')||'dark';}catch(e){}
+  applyTheme(saved);
+  btn.addEventListener('click',function(){applyTheme(root.getAttribute('data-theme')==='dark'?'light':'dark');});
+  var bar=document.getElementById('progressBar');
+  function onScroll(){var h=document.documentElement,s=h.scrollTop,ht=h.scrollHeight-h.clientHeight;bar.style.width=(ht>0?(s/ht*100):0)+'%';var t=document.getElementById('toTop');s>500?t.classList.add('show'):t.classList.remove('show');}
+  document.addEventListener('scroll',onScroll);onScroll();
+  document.getElementById('toTop').addEventListener('click',function(){window.scrollTo({top:0,behavior:'smooth'});});
+  document.querySelectorAll('.code-wrap').forEach(function(wrap){
+    var c=wrap.querySelector('code');if(!c)return;
+    var b=document.createElement('button');b.className='copy-btn';b.textContent='copy';
+    b.addEventListener('click',function(){if(navigator.clipboard){navigator.clipboard.writeText(c.innerText).then(function(){b.textContent='copied ✓';b.classList.add('copied');setTimeout(function(){b.textContent='copy';b.classList.remove('copied');},1500);});}});
+    wrap.appendChild(b);
+  });
+})();
+</script>
+</body>
+</html>

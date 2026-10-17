@@ -1,0 +1,962 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CEHv13 · Module 04: التعداد والاستخلاص</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-0:#0B0B0D;--bg-1:#121214;--surface:#17171A;--surface-2:#1D1D21;
+    --border:#2A2A2F;--border-soft:#232326;
+    --text:#E6E6E9;--text-soft:#C4C4CA;--muted:#8A8A92;
+    --red:#E1362F;--red-soft:rgba(225,54,47,.10);--red-border:rgba(225,54,47,.35);
+    --red-grad:linear-gradient(90deg,#E1362F,#F2794A);
+    --amber:#E8A23A;--amber-soft:rgba(232,162,58,.09);--amber-border:rgba(232,162,58,.30);
+    --green:#3FBF6E;--green-soft:rgba(63,191,110,.09);--green-border:rgba(63,191,110,.30);
+    --blue:#4EA1D3;--blue-soft:rgba(78,161,211,.09);--blue-border:rgba(78,161,211,.30);
+    --purple:#A179E8;--purple-soft:rgba(161,121,232,.10);--purple-border:rgba(161,121,232,.32);
+    --mono:'IBM Plex Mono','Courier New',monospace;
+  }
+  html[data-theme="light"]{--bg-0:#F4F3F1;--bg-1:#ECEBE8;--surface:#FFFFFF;--surface-2:#F3F2EF;--border:#DEDCD6;--border-soft:#E6E4DF;--text:#1C1B19;--text-soft:#3C3A36;--muted:#726F68;}
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;direction:rtl;text-align:right;background:var(--bg-0);}
+  body{font-family:'Cairo','Segoe UI',Tahoma,sans-serif;line-height:1.95;font-size:16.5px;color:var(--text);
+    background:radial-gradient(900px 420px at 12% -8%,rgba(225,54,47,.10),transparent 60%),
+               radial-gradient(800px 420px at 90% 6%,rgba(232,162,58,.06),transparent 60%),
+               linear-gradient(180deg,var(--bg-0) 0%,var(--bg-1) 100%);
+    background-attachment:fixed;transition:background .2s,color .2s;}
+  html[data-theme="light"] body{background:radial-gradient(900px 420px at 12% -8%,rgba(225,54,47,.06),transparent 60%),radial-gradient(800px 420px at 90% 6%,rgba(232,162,58,.05),transparent 60%),linear-gradient(180deg,var(--bg-0) 0%,var(--bg-1) 100%);}
+  .progress-rail{position:fixed;top:0;inset-inline:0;height:3px;background:rgba(255,255,255,.04);z-index:60;}
+  html[data-theme="light"] .progress-rail{background:rgba(0,0,0,.05);}
+  .progress-bar{height:100%;width:0%;background:var(--red-grad);transition:width .08s linear;}
+  .float-controls{position:fixed;bottom:22px;left:22px;z-index:55;display:flex;flex-direction:column;gap:10px;}
+  .fctrl-btn{width:42px;height:42px;border-radius:50%;background:var(--surface);border:1px solid var(--border);color:var(--text-soft);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;box-shadow:0 10px 24px -10px rgba(0,0,0,.5);transition:transform .15s,border-color .15s,opacity .2s;}
+  .fctrl-btn:hover{transform:translateY(-2px);border-color:var(--red-border);color:var(--red);}
+  #toTop{opacity:0;pointer-events:none;}#toTop.show{opacity:1;pointer-events:auto;}
+  .page{max-width:860px;margin:0 auto;padding:46px 22px 100px;}
+  .banner{position:relative;overflow:hidden;background:linear-gradient(155deg,var(--surface) 0%,var(--bg-1) 55%,var(--surface) 100%);border:1px solid var(--border-soft);border-radius:10px;padding:0 0 34px;margin-bottom:26px;box-shadow:0 20px 50px -20px rgba(0,0,0,.6);}
+  .term-bar{display:flex;align-items:center;gap:8px;padding:13px 18px;border-bottom:1px solid var(--border-soft);background:rgba(255,255,255,.015);direction:ltr;}
+  .term-dot{width:11px;height:11px;border-radius:50%;display:inline-block;}
+  .term-dot.r{background:#E1362F;}.term-dot.y{background:#E8A23A;}.term-dot.g{background:#3FBF6E;}
+  .term-path{margin-inline-start:12px;font-family:var(--mono);font-size:12px;color:var(--muted);}
+  .theme-switch{margin-inline-start:auto;font-family:var(--mono);font-size:11px;color:var(--muted);background:transparent;border:1px solid var(--border);border-radius:4px;padding:4px 9px;cursor:pointer;}
+  .theme-switch:hover{color:var(--amber);border-color:var(--amber-border);}
+  .banner-body{padding:30px 34px 4px;}
+  .banner .kicker{display:inline-block;font-family:var(--mono);font-size:12.5px;letter-spacing:.03em;color:var(--red);background:var(--red-soft);border:1px solid var(--red-border);border-radius:3px;padding:5px 12px;margin-bottom:20px;direction:ltr;}
+  .banner h1{margin:0 0 14px;font-size:28px;font-weight:800;line-height:1.5;color:var(--text);}
+  .banner .lede{color:var(--muted);font-size:15.5px;line-height:1.95;max-width:640px;margin:0 0 24px;}
+  .tags{display:flex;flex-wrap:wrap;gap:9px;}
+  .tag{font-size:12.5px;font-family:var(--mono);color:var(--amber);background:var(--amber-soft);border:1px solid var(--amber-border);border-radius:3px;padding:5px 11px;}
+  .toc{background:var(--surface);border:1px solid var(--border-soft);border-radius:8px;padding:6px 0;margin-bottom:50px;overflow:hidden;}
+  .toc-title{font-family:var(--mono);font-weight:600;font-size:13px;color:var(--green);padding:14px 22px;border-bottom:1px solid var(--border-soft);direction:ltr;text-align:left;}
+  .toc-list{display:flex;flex-direction:column;}
+  .toc-item{display:flex;align-items:center;gap:14px;padding:12px 22px;color:var(--text-soft);text-decoration:none;font-size:14.5px;border-bottom:1px solid rgba(255,255,255,.03);transition:background .15s;}
+  .toc-list .toc-item:last-child{border-bottom:none;}
+  .toc-item:hover{background:var(--red-soft);}
+  .toc-num{flex:none;font-family:var(--mono);font-size:12.5px;font-weight:600;color:#0F0F10;background:var(--red-grad);border-radius:3px;padding:3px 8px;direction:ltr;}
+  h1,h2,h3,h4{font-weight:700;}
+  h2{display:flex;align-items:center;gap:14px;font-size:21px;margin:66px 0 22px;padding-bottom:16px;border-bottom:1px solid var(--border-soft);color:var(--text);}
+  h2 .num{flex:none;font-family:var(--mono);font-size:13px;font-weight:700;color:#0F0F10;background:var(--red-grad);border-radius:5px;padding:7px 12px;direction:ltr;}
+  h2 .htext{line-height:1.5;}
+  h3{font-size:17px;margin:34px 0 14px;color:var(--red);display:flex;align-items:center;gap:9px;}
+  h3::before{content:"#";font-family:var(--mono);color:var(--amber);font-weight:700;}
+  h4{font-size:14.8px;margin:22px 0 10px;color:var(--text-soft);font-family:var(--mono);}
+  p{margin:0 0 17px;color:var(--text);}
+  strong{color:var(--text);font-weight:700;}
+  :root:not([data-theme="light"]) strong{color:#FBFBFC;}
+  a{color:var(--amber);text-decoration:none;border-bottom:1px dashed var(--amber-border);}
+  hr{border:none;height:1px;margin:50px 0;background:linear-gradient(90deg,transparent,var(--border),transparent);}
+  ul,ol{margin:0 0 18px;padding-inline-start:24px;}
+  li{margin-bottom:9px;color:var(--text);}
+  li::marker{color:var(--red);font-family:var(--mono);}
+  .goals-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px;margin:0 0 22px;}
+  .goal-card{display:flex;gap:10px;align-items:flex-start;background:var(--surface);border:1px solid var(--border-soft);border-radius:7px;padding:13px 15px;font-size:14px;color:var(--text-soft);}
+  .goal-card .gi{flex:none;font-family:var(--mono);font-size:11px;font-weight:700;color:var(--green);background:var(--green-soft);border:1px solid var(--green-border);border-radius:4px;width:22px;height:22px;display:flex;align-items:center;justify-content:center;}
+  blockquote{margin:24px 0;padding:17px 22px;background:var(--red-soft);border:1px solid var(--red-border);border-inline-start:3px solid var(--red);border-radius:6px;color:var(--text-soft);}
+  blockquote p{margin:0;color:inherit;line-height:1.85;}
+  blockquote p+p{margin-top:10px;}
+  blockquote strong{color:var(--text);}
+  .callout{margin:24px 0;padding:17px 22px 18px;border-radius:6px;border:1px solid var(--border-soft);border-inline-start:3px solid var(--border);background:var(--surface);}
+  .callout p{margin:0;color:var(--text-soft);line-height:1.85;}
+  .callout p+p{margin-top:10px;}
+  .callout-label{display:inline-flex;align-items:center;gap:7px;font-family:var(--mono);font-size:11.5px;font-weight:700;letter-spacing:.02em;text-transform:uppercase;margin-bottom:10px;direction:ltr;}
+  .callout.note{border-inline-start-color:var(--blue);background:var(--blue-soft);}
+  .callout.note .callout-label{color:var(--blue);}
+  .callout.warning{border-inline-start-color:var(--red);background:var(--red-soft);}
+  .callout.warning .callout-label{color:var(--red);}
+  .callout.tip{border-inline-start-color:var(--green);background:var(--green-soft);}
+  .callout.tip .callout-label{color:var(--green);}
+  .callout.examtip{border-inline-start-color:var(--purple);background:var(--purple-soft);}
+  .callout.examtip .callout-label{color:var(--purple);}
+  .callout.case{border-inline-start-color:var(--amber);background:var(--amber-soft);}
+  .callout.case .callout-label{color:var(--amber);}
+  .callout.definition{border-inline-start-color:var(--muted);background:var(--surface-2);}
+  .callout.definition .callout-label{color:var(--text-soft);}
+  .table-wrap{overflow-x:auto;margin:22px 0;border:1px solid var(--border-soft);border-radius:8px;}
+  table{width:100%;border-collapse:collapse;font-size:14.2px;min-width:480px;}
+  thead th{background:var(--surface-2);color:var(--amber);font-weight:700;font-family:var(--mono);font-size:12.5px;text-transform:uppercase;letter-spacing:.02em;text-align:start;padding:13px 15px;border-bottom:1px solid var(--border-soft);white-space:nowrap;}
+  tbody td{padding:12px 15px;border-bottom:1px solid var(--border-soft);color:var(--text-soft);vertical-align:top;}
+  tbody tr:last-child td{border-bottom:none;}
+  tbody tr:nth-child(even){background:rgba(127,127,127,.03);}
+  tbody tr:hover{background:var(--red-soft);}
+  code{font-family:var(--mono);font-size:13.3px;background:var(--surface-2);border:1px solid var(--border-soft);border-radius:4px;padding:2px 6px;direction:ltr;unicode-bidi:embed;color:var(--green);}
+  .code-wrap{position:relative;overflow-x:auto;margin:22px 0;}
+  .code-tag{position:absolute;top:10px;left:14px;font-family:var(--mono);font-size:10.5px;color:var(--muted);letter-spacing:.04em;text-transform:uppercase;z-index:2;}
+  .copy-btn{position:absolute;top:8px;right:10px;z-index:2;font-family:var(--mono);font-size:11px;color:var(--muted);background:var(--surface-2);border:1px solid var(--border-soft);border-radius:4px;padding:4px 9px;cursor:pointer;direction:ltr;}
+  .copy-btn:hover{color:var(--amber);border-color:var(--amber-border);}
+  .copy-btn.copied{color:var(--green);border-color:var(--green-border);}
+  pre{background:var(--bg-0);border:1px solid var(--border-soft);border-inline-start:3px solid var(--red);border-radius:8px;padding:30px 22px 18px;direction:ltr;text-align:left;margin:0;}
+  html[data-theme="light"] pre{background:#16181C;}
+  pre code{background:none;border:none;padding:0;color:#B9E8C9;font-size:13.2px;line-height:1.75;}
+  .diagram-card{background:var(--surface);border:1px solid var(--border-soft);border-radius:10px;padding:22px 18px 16px;margin:24px 0;}
+  .diagram-card svg{width:100%;height:auto;display:block;}
+  .diagram-caption{margin-top:10px;text-align:center;font-family:var(--mono);font-size:11.5px;color:var(--muted);}
+  .takeaways{background:var(--surface);border:1px solid var(--border-soft);border-radius:8px;padding:18px 22px 20px;margin:30px 0 10px;}
+  .takeaways-title{font-family:var(--mono);font-size:12.5px;font-weight:700;color:var(--green);margin-bottom:12px;direction:ltr;text-align:left;display:flex;align-items:center;gap:8px;}
+  .takeaways ul{margin:0;padding-inline-start:20px;}
+  .takeaways li{color:var(--text-soft);font-size:14.5px;}
+  .cheat-section h4{color:var(--amber);font-size:13px;margin:26px 0 8px;}
+  .method-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px;margin:22px 0;}
+  .method-card{background:var(--surface);border:1px solid var(--border-soft);border-radius:8px;padding:14px 16px;}
+  .method-card .mnum{font-family:var(--mono);font-size:11px;font-weight:700;color:#0F0F10;background:var(--red-grad);border-radius:4px;padding:2px 8px;display:inline-block;margin-bottom:8px;direction:ltr;}
+  .method-card .mtitle{font-weight:700;color:var(--text);font-size:14px;margin-bottom:5px;}
+  .method-card .mdesc{color:var(--text-soft);font-size:13.3px;line-height:1.75;}
+  .footer-note{margin-top:70px;padding-top:26px;border-top:1px solid var(--border-soft);color:var(--muted);font-size:13.3px;font-family:var(--mono);text-align:center;direction:ltr;}
+  .dsvg-box{fill:var(--surface-2);stroke:var(--border-soft);stroke-width:1;}
+  .dsvg-box-r{fill:var(--red-soft);stroke:var(--red-border);stroke-width:1;}
+  .dsvg-box-g{fill:var(--green-soft);stroke:var(--green-border);stroke-width:1;}
+  .dsvg-box-b{fill:var(--blue-soft);stroke:var(--blue-border);stroke-width:1;}
+  .dsvg-box-a{fill:var(--amber-soft);stroke:var(--amber-border);stroke-width:1;}
+  .dsvg-box-p{fill:var(--purple-soft);stroke:var(--purple-border);stroke-width:1;}
+  .dsvg-line{stroke:var(--border);stroke-width:1.5;fill:none;}
+  .dsvg-line-r{stroke:var(--red);stroke-width:1.5;fill:none;}
+  .dsvg-line-g{stroke:var(--green);stroke-width:1.5;fill:none;}
+  .dsvg-arr{fill:var(--border);}
+  .dsvg-arr-r{fill:var(--red);}
+  .dsvg-arr-g{fill:var(--green);}
+  .dsvg-txt{fill:var(--text);font-family:IBM Plex Mono,monospace;}
+  .dsvg-muted{fill:var(--muted);font-family:IBM Plex Mono,monospace;}
+  .dsvg-red{fill:var(--red);}
+  .dsvg-green{fill:var(--green);}
+  .dsvg-amber{fill:var(--amber);}
+  .dsvg-blue{fill:var(--blue);}
+  @media print{.float-controls,.progress-rail,.copy-btn,.theme-switch{display:none !important;}body{background:#fff;color:#000;}.page{max-width:100%;}}
+  @media(max-width:640px){.page{padding:28px 14px 70px;}.banner-body{padding:24px 20px 4px;}.banner h1{font-size:21px;}h2{font-size:18px;gap:10px;}.float-controls{left:12px;bottom:14px;}}
+</style>
+</head>
+<body>
+
+<div class="progress-rail"><div class="progress-bar" id="progressBar"></div></div>
+<div class="float-controls"><button class="fctrl-btn" id="toTop" title="ارجع لفوق">↑</button></div>
+
+<div class="page">
+
+<div class="banner">
+  <div class="term-bar">
+    <span class="term-dot r"></span><span class="term-dot y"></span><span class="term-dot g"></span>
+    <span class="term-path">student@ceh:~/module-04$</span>
+    <button class="theme-switch" id="themeSwitch">theme: dark</button>
+  </div>
+  <div class="banner-body">
+    <span class="kicker">CEHv13 · Certified Ethical Hacker · Module 04</span>
+    <h1>التعداد والاستخلاص (Enumeration)</h1>
+    <p class="lede">استخراج Usernames وMachine Names والـ Network Resources والـ Shares والخدمات من الهدف عبر اتصالات نشطة — NetBIOS · SNMP · LDAP · NTP · NFS · SMTP · DNS · IPsec · VoIP · RPC · SMB.</p>
+    <div class="tags">
+      <span class="tag">netbios</span>
+      <span class="tag">snmp</span>
+      <span class="tag">ldap</span>
+      <span class="tag">dns-zone-transfer</span>
+      <span class="tag">smtp</span>
+      <span class="tag">smb</span>
+      <span class="tag">ntp</span>
+      <span class="tag">nfs</span>
+    </div>
+  </div>
+</div>
+
+<nav class="toc"><div class="toc-title">$ ls learning_units/</div><div class="toc-list">
+  <a class="toc-item" href="#intro"><span class="toc-num">00</span><span>مفاهيم الـ Enumeration والـ Services والـ Ports</span></a>
+  <a class="toc-item" href="#lu1"><span class="toc-num">01</span><span>NetBIOS Enumeration</span></a>
+  <a class="toc-item" href="#lu2"><span class="toc-num">02</span><span>SNMP Enumeration — MIB وCommunity Strings</span></a>
+  <a class="toc-item" href="#lu3"><span class="toc-num">03</span><span>LDAP Enumeration — Active Directory</span></a>
+  <a class="toc-item" href="#lu4"><span class="toc-num">04</span><span>NTP وNFS Enumeration</span></a>
+  <a class="toc-item" href="#lu5"><span class="toc-num">05</span><span>SMTP وDNS Enumeration — Zone Transfer وCache Snooping</span></a>
+  <a class="toc-item" href="#lu6"><span class="toc-num">06</span><span>IPsec · VoIP · RPC · Linux/Unix · SMB Enumeration</span></a>
+  <a class="toc-item" href="#cheat"><span class="toc-num">--</span><span>Cheat Sheet مرجعي — كل الأوامر</span></a>
+  <a class="toc-item" href="#summary"><span class="toc-num">--</span><span>الخلاصة العامة للموديول</span></a>
+</div></nav>
+
+<!-- ══════════════════════════════════ INTRO -->
+<h1 id="intro">Module 04: التعداد والاستخلاص (Enumeration)</h1>
+<div class="callout definition">
+<div class="callout-label">⬦ ما هو الـ Enumeration؟</div>
+<p><strong>Enumeration</strong> هو عملية استخراج Usernames وأسماء الأجهزة والـ Network Resources والـ Shares والخدمات من نظام أو شبكة. في مرحلة الـ Enumeration، المهاجم بيُنشئ اتصالات نشطة مع النظام ويُرسَل استعلامات موجَّهة للحصول على مزيد من المعلومات عن الهدف.</p>
+</div>
+
+<h3>ما الذي يستخرجه الـ Enumeration؟</h3>
+<div class="goals-grid">
+  <div class="goal-card"><span class="gi">✓</span><span>Network Resources وShares</span></div>
+  <div class="goal-card"><span class="gi">✓</span><span>Routing Tables</span></div>
+  <div class="goal-card"><span class="gi">✓</span><span>Audit و Service Settings</span></div>
+  <div class="goal-card"><span class="gi">✓</span><span>SNMP و FQDN Details</span></div>
+  <div class="goal-card"><span class="gi">✓</span><span>أسماء الأجهزة (Machine Names)</span></div>
+  <div class="goal-card"><span class="gi">✓</span><span>Users وGroups</span></div>
+  <div class="goal-card"><span class="gi">✓</span><span>Applications وBanners</span></div>
+</div>
+
+<h3>تقنيات الـ Enumeration</h3>
+<div class="method-grid">
+<div class="method-card">
+  <span class="mnum">01</span>
+  <div class="mtitle">Email IDs → Usernames</div>
+  <div class="mdesc">كل Email يحتوي username@domain — يمكن استخراج الـ Usernames من عناوين البريد الإلكتروني المتاحة.</div>
+</div>
+<div class="method-card">
+  <span class="mnum">02</span>
+  <div class="mtitle">Default Passwords</div>
+  <div class="mdesc">كتير من المستخدمين ما بيغيّروش كلمات المرور الافتراضية — المهاجم يجربها مباشرة.</div>
+</div>
+<div class="method-card">
+  <span class="mnum">03</span>
+  <div class="mtitle">Brute Force Active Directory</div>
+  <div class="mdesc">Active Directory ممكن يكشف Usernames عبر رسائل الخطأ المختلفة لما "logon hours" مُفعَّل.</div>
+</div>
+<div class="method-card">
+  <span class="mnum">04</span>
+  <div class="mtitle">DNS Zone Transfer</div>
+  <div class="mdesc">لو DNS Server مُهيَّأ بشكل خاطئ، Zone Transfer بيكشف كل Host Names وSubzones والـ IPs.</div>
+</div>
+<div class="method-card">
+  <span class="mnum">05</span>
+  <div class="mtitle">SNMP Community Strings</div>
+  <div class="mdesc">تخمين Community Strings بالـ SNMP API لاستخراج Usernames وNetwork Resources والـ Topology.</div>
+</div>
+<div class="method-card">
+  <span class="mnum">06</span>
+  <div class="mtitle">Windows User Groups</div>
+  <div class="mdesc">بـ Registered ID في Active Directory، المهاجم يستخرج معلومات المجموعات اللي هو عضو فيها.</div>
+</div>
+</div>
+
+<h3>الـ Services والـ Ports المهمة في الـ Enumeration</h3>
+<div class="diagram-card">
+<svg viewBox="0 0 700 200" xmlns="http://www.w3.org/2000/svg">
+  <!-- Row 1 -->
+  <rect x="4"   y="6"  width="100" height="50" rx="5" class="dsvg-box-b"/>
+  <text x="54"  y="24" text-anchor="middle" class="dsvg-blue" font-size="12" font-weight="700">53</text>
+  <text x="54"  y="38" text-anchor="middle" class="dsvg-muted" font-size="9">TCP/UDP</text>
+  <text x="54"  y="50" text-anchor="middle" class="dsvg-muted" font-size="8">DNS Zone Transfer</text>
+
+  <rect x="112" y="6"  width="100" height="50" rx="5" class="dsvg-box-a"/>
+  <text x="162" y="24" text-anchor="middle" class="dsvg-amber" font-size="12" font-weight="700">123</text>
+  <text x="162" y="38" text-anchor="middle" class="dsvg-muted" font-size="9">UDP</text>
+  <text x="162" y="50" text-anchor="middle" class="dsvg-muted" font-size="8">NTP</text>
+
+  <rect x="220" y="6"  width="100" height="50" rx="5" class="dsvg-box-g"/>
+  <text x="270" y="24" text-anchor="middle" class="dsvg-green" font-size="12" font-weight="700">135</text>
+  <text x="270" y="38" text-anchor="middle" class="dsvg-muted" font-size="9">TCP/UDP</text>
+  <text x="270" y="50" text-anchor="middle" class="dsvg-muted" font-size="8">RPC Endpoint Mapper</text>
+
+  <rect x="328" y="6"  width="100" height="50" rx="5" class="dsvg-box-p"/>
+  <text x="378" y="24" text-anchor="middle" font-size="12" font-weight="700" style="fill:var(--purple)">137</text>
+  <text x="378" y="38" text-anchor="middle" class="dsvg-muted" font-size="9">UDP</text>
+  <text x="378" y="50" text-anchor="middle" class="dsvg-muted" font-size="8">NetBIOS NBNS</text>
+
+  <rect x="436" y="6"  width="100" height="50" rx="5" class="dsvg-box-r"/>
+  <text x="486" y="24" text-anchor="middle" class="dsvg-red" font-size="12" font-weight="700">139</text>
+  <text x="486" y="38" text-anchor="middle" class="dsvg-muted" font-size="9">TCP</text>
+  <text x="486" y="50" text-anchor="middle" class="dsvg-muted" font-size="8">NetBIOS Session/SMB</text>
+
+  <rect x="544" y="6"  width="150" height="50" rx="5" class="dsvg-box-b"/>
+  <text x="619" y="24" text-anchor="middle" class="dsvg-blue" font-size="12" font-weight="700">161 / 162</text>
+  <text x="619" y="38" text-anchor="middle" class="dsvg-muted" font-size="9">UDP</text>
+  <text x="619" y="50" text-anchor="middle" class="dsvg-muted" font-size="8">SNMP Agent / Trap</text>
+
+  <!-- Row 2 -->
+  <rect x="4"   y="66" width="100" height="50" rx="5" class="dsvg-box-a"/>
+  <text x="54"  y="84" text-anchor="middle" class="dsvg-amber" font-size="12" font-weight="700">179</text>
+  <text x="54"  y="98" text-anchor="middle" class="dsvg-muted" font-size="9">TCP</text>
+  <text x="54"  y="110" text-anchor="middle" class="dsvg-muted" font-size="8">BGP</text>
+
+  <rect x="112" y="66" width="100" height="50" rx="5" class="dsvg-box-g"/>
+  <text x="162" y="84" text-anchor="middle" class="dsvg-green" font-size="12" font-weight="700">389</text>
+  <text x="162" y="98" text-anchor="middle" class="dsvg-muted" font-size="9">TCP/UDP</text>
+  <text x="162" y="110" text-anchor="middle" class="dsvg-muted" font-size="8">LDAP</text>
+
+  <rect x="220" y="66" width="100" height="50" rx="5" class="dsvg-box-r"/>
+  <text x="270" y="84" text-anchor="middle" class="dsvg-red" font-size="12" font-weight="700">445</text>
+  <text x="270" y="98" text-anchor="middle" class="dsvg-muted" font-size="9">TCP/UDP</text>
+  <text x="270" y="110" text-anchor="middle" class="dsvg-muted" font-size="8">SMB over TCP</text>
+
+  <rect x="328" y="66" width="100" height="50" rx="5" class="dsvg-box-p"/>
+  <text x="378" y="84" text-anchor="middle" font-size="12" font-weight="700" style="fill:var(--purple)">500</text>
+  <text x="378" y="98" text-anchor="middle" class="dsvg-muted" font-size="9">UDP</text>
+  <text x="378" y="110" text-anchor="middle" class="dsvg-muted" font-size="8">IPsec / ISAKMP</text>
+
+  <rect x="436" y="66" width="100" height="50" rx="5" class="dsvg-box-b"/>
+  <text x="486" y="84" text-anchor="middle" class="dsvg-blue" font-size="12" font-weight="700">2049</text>
+  <text x="486" y="98" text-anchor="middle" class="dsvg-muted" font-size="9">TCP</text>
+  <text x="486" y="110" text-anchor="middle" class="dsvg-muted" font-size="8">NFS</text>
+
+  <rect x="544" y="66" width="150" height="50" rx="5" class="dsvg-box-a"/>
+  <text x="619" y="84" text-anchor="middle" class="dsvg-amber" font-size="12" font-weight="700">3268</text>
+  <text x="619" y="98" text-anchor="middle" class="dsvg-muted" font-size="9">TCP/UDP</text>
+  <text x="619" y="110" text-anchor="middle" class="dsvg-muted" font-size="8">Global Catalog (AD)</text>
+
+  <!-- Row 3: well known -->
+  <rect x="4"   y="130" width="100" height="50" rx="5" class="dsvg-box"/>
+  <text x="54"  y="148" text-anchor="middle" class="dsvg-muted" font-size="12" font-weight="700">22</text>
+  <text x="54"  y="162" text-anchor="middle" class="dsvg-muted" font-size="9">TCP</text>
+  <text x="54"  y="174" text-anchor="middle" class="dsvg-muted" font-size="8">SSH / SFTP</text>
+
+  <rect x="112" y="130" width="100" height="50" rx="5" class="dsvg-box"/>
+  <text x="162" y="148" text-anchor="middle" class="dsvg-muted" font-size="12" font-weight="700">23</text>
+  <text x="162" y="162" text-anchor="middle" class="dsvg-muted" font-size="9">TCP</text>
+  <text x="162" y="174" text-anchor="middle" class="dsvg-muted" font-size="8">Telnet (Cleartext!)</text>
+
+  <rect x="220" y="130" width="100" height="50" rx="5" class="dsvg-box"/>
+  <text x="270" y="148" text-anchor="middle" class="dsvg-muted" font-size="12" font-weight="700">25</text>
+  <text x="270" y="162" text-anchor="middle" class="dsvg-muted" font-size="9">TCP</text>
+  <text x="270" y="174" text-anchor="middle" class="dsvg-muted" font-size="8">SMTP</text>
+
+  <rect x="328" y="130" width="100" height="50" rx="5" class="dsvg-box"/>
+  <text x="378" y="148" text-anchor="middle" class="dsvg-muted" font-size="12" font-weight="700">69</text>
+  <text x="378" y="162" text-anchor="middle" class="dsvg-muted" font-size="9">UDP</text>
+  <text x="378" y="174" text-anchor="middle" class="dsvg-muted" font-size="8">TFTP</text>
+
+  <rect x="436" y="130" width="100" height="50" rx="5" class="dsvg-box"/>
+  <text x="486" y="148" text-anchor="middle" class="dsvg-muted" font-size="12" font-weight="700">636</text>
+  <text x="486" y="162" text-anchor="middle" class="dsvg-muted" font-size="9">TCP</text>
+  <text x="486" y="174" text-anchor="middle" class="dsvg-muted" font-size="8">LDAPS (Secure)</text>
+
+  <rect x="544" y="130" width="150" height="50" rx="5" class="dsvg-box"/>
+  <text x="619" y="148" text-anchor="middle" class="dsvg-muted" font-size="12" font-weight="700">587 / 2525</text>
+  <text x="619" y="162" text-anchor="middle" class="dsvg-muted" font-size="9">TCP</text>
+  <text x="619" y="174" text-anchor="middle" class="dsvg-muted" font-size="8">SMTP (Alt ports)</text>
+</svg>
+<div class="diagram-caption">الـ Ports الأساسية في مرحلة الـ Enumeration — الصف الأول والثاني هم الأكثر استهدافاً</div>
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU1 -->
+<h2 id="lu1"><span class="num">01</span><span class="htext">NetBIOS Enumeration</span></h2>
+<p>NetBIOS Name = سلسلة مكوَّنة من <strong>16 ASCII character</strong> — 15 حرف لاسم الجهاز والـ 16th محجوز لنوع الخدمة. يعمل على <strong>UDP 137</strong> (Name Service)، <strong>TCP 139</strong> (Session Service).</p>
+
+<div class="callout warning">
+<div class="callout-label">⚠ ما يكشفه NetBIOS Enumeration</div>
+<p>قائمة الأجهزة في الـ Domain، قائمة الـ Shares على كل Host، السياسات وكلمات المرور. الجهاز لازم يكون عنده File and Printer Sharing مُفعَّل. TCP 139 من أعلى الأولويات للحجب في Windows Firewalls.</p>
+</div>
+
+<h3>nbtstat Utility</h3>
+<div class="code-wrap"><span class="code-tag">windows cmd — nbtstat</span><pre><code># عرض NetBIOS Name Table لجهاز بعيد (باسمه)
+nbtstat -a <RemoteName>
+
+# عرض NetBIOS Name Table لجهاز بعيد (بالـ IP)
+nbtstat -A <IP Address>
+
+# عرض NetBIOS Name Cache المحلي
+nbtstat -c
+
+# عرض NetBIOS Names المحلية
+nbtstat -n
+
+# مثال عملي
+nbtstat -A 192.168.1.100
+</code></pre></div>
+
+<h3>Net View — عرض الـ Shared Resources</h3>
+<div class="code-wrap"><span class="code-tag">windows cmd — net view</span><pre><code># عرض Resources جهاز محدَّد
+net view \\<computername>
+
+# عرض كل الـ Shares بما فيها المخفية
+net view \\<computername> /ALL
+
+# عرض كل الـ Shares في الـ Domain
+net view /domain
+
+# عرض Shares في Domain محدَّد
+net view /domain:<domain name>
+</code></pre></div>
+
+<h3>Nmap لـ NetBIOS</h3>
+<div class="code-wrap"><span class="code-tag">bash — nmap netbios</span><pre><code"># استخدام NSE script للـ NetBIOS
+nmap --script nbstat <target>
+nmap -sU --script nbstat -p 137 <target>
+
+# نتيجة: اسم الجهاز، المستخدم المسجَّل، MAC Address
+</code></pre></div>
+
+<h3>PsTools Suite — Enumerating User Accounts</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>الأداة</th><th>الوظيفة</th></tr></thead>
+<tbody>
+<tr><td><code>PsExec</code></td><td>تنفيذ عمليات على أنظمة بعيدة — Telnet replacement خفيف الوزن</td></tr>
+<tr><td><code>PsFile</code></td><td>عرض الملفات المفتوحة عن بُعد على النظام وإغلاقها</td></tr>
+<tr><td><code>PsGetSid</code></td><td>ترجمة SIDs لأسماء مقروءة والعكس — يعمل عبر الشبكة</td></tr>
+<tr><td><code>PsKill</code></td><td>إيقاف Processes على الأنظمة البعيدة بدون تثبيت Client</td></tr>
+</tbody>
+</table></div>
+
+<div class="callout examtip">
+<div class="callout-label">★ CEH Exam Tip</div>
+<p>NetBIOS Name Structure: <strong>15 characters = Device Name + 1 character = Service Type</strong>. Port TCP 139 = SMB over NetBIOS. Port TCP/UDP 445 = SMB Direct (بدون NetBIOS). Microsoft لا يدعم NetBIOS Name Resolution مع IPv6.</p>
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU2 -->
+<h2 id="lu2"><span class="num">02</span><span class="htext">SNMP Enumeration — MIB وCommunity Strings</span></h2>
+
+<h3>SNMP Community Strings</h3>
+<div class="goals-grid">
+  <div class="goal-card"><span class="gi">R</span><span><strong>Read Community String (Public):</strong> بتسمح بعرض إعدادات الجهاز — عادةً "public" افتراضياً</span></div>
+  <div class="goal-card"><span class="gi">RW</span><span><strong>Read/Write Community String (Private):</strong> بتسمح بتعديل إعدادات الجهاز — عادةً "private" افتراضياً</span></div>
+</div>
+
+<h3>SNMP Operations — أنواع الرسائل</h3>
+<div class="diagram-card">
+<svg viewBox="0 0 700 155" xmlns="http://www.w3.org/2000/svg">
+  <!-- Manager -->
+  <rect x="8" y="25" width="150" height="110" rx="7" class="dsvg-box-b"/>
+  <text x="83" y="50" text-anchor="middle" class="dsvg-blue" font-size="11" font-weight="700">SNMP Manager</text>
+  <text x="83" y="66" text-anchor="middle" class="dsvg-muted" font-size="9">Network Management</text>
+  <text x="83" y="80" text-anchor="middle" class="dsvg-muted" font-size="8">Station</text>
+  <text x="83" y="100" text-anchor="middle" class="dsvg-blue" font-size="9">Port 162 (receives)</text>
+  <text x="83" y="115" text-anchor="middle" class="dsvg-muted" font-size="8">Traps + Informs</text>
+
+  <!-- Arrows Manager → Agent -->
+  <line x1="158" y1="50" x2="350" y2="50" class="dsvg-line"/>
+  <polygon points="350,45 360,50 350,55" class="dsvg-arr"/>
+  <text x="254" y="42" text-anchor="middle" class="dsvg-amber" font-size="9">Get / GetNext / GetBulk / Set Request</text>
+
+  <!-- Arrows Agent → Manager -->
+  <line x1="350" y1="90" x2="158" y2="90" class="dsvg-line-g"/>
+  <polygon points="158,85 148,90 158,95" class="dsvg-arr-g"/>
+  <text x="254" y="84" text-anchor="middle" class="dsvg-green" font-size="9">Response PDU</text>
+
+  <!-- Trap Arrow -->
+  <line x1="350" y1="115" x2="158" y2="115" class="dsvg-line-r"/>
+  <polygon points="158,110 148,115 158,120" class="dsvg-arr-r"/>
+  <text x="254" y="109" text-anchor="middle" class="dsvg-red" font-size="9">Trap / Inform (Unsolicited)</text>
+
+  <!-- Agent -->
+  <rect x="360" y="15" width="170" height="130" rx="7" class="dsvg-box-a"/>
+  <text x="445" y="40" text-anchor="middle" class="dsvg-amber" font-size="11" font-weight="700">SNMP Agent</text>
+  <text x="445" y="56" text-anchor="middle" class="dsvg-muted" font-size="9">Port 161 (listens)</text>
+  <text x="445" y="72" text-anchor="middle" class="dsvg-muted" font-size="8">Network Device</text>
+  <text x="445" y="86" text-anchor="middle" class="dsvg-muted" font-size="8">Router/Switch/Server</text>
+
+  <!-- MIB -->
+  <rect x="548" y="30" width="144" height="100" rx="7" class="dsvg-box-g"/>
+  <text x="620" y="54" text-anchor="middle" class="dsvg-green" font-size="11" font-weight="700">MIB</text>
+  <text x="620" y="70" text-anchor="middle" class="dsvg-muted" font-size="9">Management Info Base</text>
+  <text x="620" y="86" text-anchor="middle" class="dsvg-muted" font-size="8">OIDs (Object IDs)</text>
+  <text x="620" y="102" text-anchor="middle" class="dsvg-muted" font-size="8">Hierarchical DB</text>
+  <text x="620" y="118" text-anchor="middle" class="dsvg-green" font-size="8">All managed objects</text>
+  <line x1="530" y1="80" x2="548" y2="80" class="dsvg-line" stroke-dasharray="3,2"/>
+</svg>
+<div class="diagram-caption">SNMP Manager ← → Agent: Manager على Port 162، Agent على Port 161</div>
+</div>
+
+<h3>MIB — Management Information Base</h3>
+<p>MIB هو قاعدة بيانات افتراضية تحتوي وصفاً رسمياً لكل Network Objects التي يديرها SNMP. كل عنصر مُعرَّف بـ <strong>OID (Object Identifier)</strong> — رقم فريد يحدَّد العنصر في هرمية MIB.</p>
+<div class="table-wrap"><table>
+<thead><tr><th>MIB File</th><th>ما تراقبه</th></tr></thead>
+<tbody>
+<tr><td><code>DHCP.MIB</code></td><td>Network Traffic بين DHCP Servers والـ Remote Hosts</td></tr>
+<tr><td><code>HOSTMIB.MIB</code></td><td>Host Resources — مراقبة وإدارة</td></tr>
+<tr><td><code>MIB_II.MIB</code></td><td>إدارة TCP/IP-based Internet</td></tr>
+<tr><td><code>WINS.MIB</code></td><td>Windows Internet Name Service</td></tr>
+<tr><td><code>LNMIB2.MIB</code></td><td>Object Types لـ Workstation وServer Services</td></tr>
+</tbody>
+</table></div>
+
+<h3>أدوات SNMP Enumeration</h3>
+<div class="code-wrap"><span class="code-tag">bash — snmp enumeration commands</span><pre><code># SnmpWalk — فحص شامل لكل OIDs
+snmpwalk -v2c -c public <target IP>
+snmpwalk -v2c -c public <target> 1.3.6.1.2.1.25.4.2.1.2  # Running Processes
+
+# Nmap SNMPscripts
+nmap -sU -p 161 --script=snmp-info <target>
+nmap -sU -p 161 --script=snmp-processes <target>
+nmap -sU -p 161 --script=snmp-win32-users <target>
+nmap -sU -p 161 --script=snmp-brute <target>
+
+# snmp-check (شامل ومنظَّم)
+snmp-check <target IP>
+snmp-check -t <target> -c public
+
+# Metasploit
+use auxiliary/scanner/snmp/snmp_enum
+set RHOSTS <target>
+run
+</code></pre></div>
+
+<div class="callout tip">
+<div class="callout-label">✓ AI Prompt للـ Exam</div>
+<p>مثال على Prompt للاستخدام مع ChatGPT: <em>"Perform SNMP enumeration on target IP 10.10.1.22 using SnmpWalk and display the result"</em></p>
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU3 -->
+<h2 id="lu3"><span class="num">03</span><span class="htext">LDAP Enumeration — Active Directory</span></h2>
+<p>LDAP (Lightweight Directory Access Protocol) بروتوكول للوصول وصيانة Directory Information Services الموزَّعة عبر شبكة IP. بيستخدم <strong>TCP/UDP Port 389</strong> (و<strong>636</strong> للـ Secure LDAP). يعمل مع Active Directory ويستخدم DNS لـ Quick Lookups.</p>
+
+<div class="callout warning">
+<div class="callout-label">⚠ LDAP Anonymous Query</div>
+<p>المهاجم ممكن يستعلم الـ LDAP Service بشكل مجهول للحصول على: Usernames، Addresses، Departmental Details، وServer Names — كلها بدون مصادقة لو الـ Anonymous Bind مُفعَّل.</p>
+</div>
+
+<h3>LDAP Enumeration اليدوي بـ Python</h3>
+<div class="code-wrap"><span class="code-tag">python — manual ldap enum</span><pre><code"># تثبيت مكتبة ldap3
+pip3 install ldap3
+
+# الاتصال بالـ LDAP Server
+import ldap3
+server = ldap3.Server('TARGET_IP', get_info=ldap3.ALL, port=389)
+# للـ Secure LDAP: use_ssl=True, port=636
+
+connection = ldap3.Connection(server)
+connection.bind()
+# True = Connection ناجح!
+
+# استخراج معلومات الـ Domain
+print(server.info)
+# → Naming Contexts, Domain Name, Schema...
+
+# البحث عن Users
+connection.search(
+    search_base='dc=example,dc=com',
+    search_filter='(objectClass=person)',
+    attributes=['cn', 'mail', 'sAMAccountName']
+)
+print(connection.entries)
+</code></pre></div>
+
+<h3>LDAP Enumeration بـ Nmap</h3>
+<div class="code-wrap"><span class="code-tag">bash — nmap ldap</span><pre><code"># فحص الـ LDAP Port أولاً
+nmap -p 389,636 <target>
+
+# Brute Force الـ LDAP Authentication
+nmap -p 389 --script ldap-brute \
+     --script-args 'ldap.base="cn=users,dc=CEH,dc=com"' \
+     <target>
+
+# استخراج معلومات LDAP
+nmap -p 389 --script ldap-search <target>
+nmap -p 389 --script ldap-rootdse <target>
+</code></pre></div>
+
+<h3>ldapsearch — Command Line</h3>
+<div class="code-wrap"><span class="code-tag">bash — ldapsearch</span><pre><code"># Anonymous LDAP Search
+ldapsearch -x -H ldap://<target> -b "dc=example,dc=com"
+
+# البحث عن Users
+ldapsearch -x -H ldap://<target> \
+           -b "dc=example,dc=com" \
+           "(objectClass=user)" cn mail
+
+# مع Credentials
+ldapsearch -x -H ldap://<target> \
+           -D "cn=admin,dc=example,dc=com" \
+           -w PASSWORD \
+           -b "dc=example,dc=com"
+</code></pre></div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU4 -->
+<h2 id="lu4"><span class="num">04</span><span class="htext">NTP وNFS Enumeration</span></h2>
+
+<h3>NTP Enumeration</h3>
+<div class="callout definition">
+<div class="callout-label">⬦ NTP — Network Time Protocol</div>
+<p>بروتوكول مصمَّم لمزامنة ساعات الأجهزة المتصلة بالشبكة. يستخدم <strong>UDP Port 123</strong>. بيقدر يحافظ على الوقت بدقة 10ms عبر الإنترنت وحتى 200μs في الـ LANs المثالية. المسؤولون عن الأمان غالبًا بيغفلوا عنه رغم أن استعلامه يكشف معلومات قيّمة.</p>
+</div>
+
+<p>ما يمكن استخراجه من NTP Server:</p>
+<div class="goals-grid">
+  <div class="goal-card"><span class="gi">!</span><span>قائمة الأجهزة المتصلة بالـ NTP Server</span></div>
+  <div class="goal-card"><span class="gi">!</span><span>IP Addresses للـ Clients وأسماء الأنظمة وأنظمة التشغيل</span></div>
+  <div class="goal-card"><span class="gi">!</span><span>Internal IPs لو الـ NTP Server في الـ DMZ</span></div>
+</div>
+
+<div class="code-wrap"><span class="code-tag">bash — ntp enumeration</span><pre><code"># Nmap NTP Enumeration
+nmap -sU -p 123 --script ntp-info <target>
+nmap -sU -p 123 --script ntp-monlist <target>
+
+# ntpdate — معلومات الـ NTP Server
+ntpdate -q <target>
+
+# ntptrace — تتبّع سلسلة الـ NTP Servers
+ntptrace <target>
+</code></pre></div>
+
+<h3>NFS Enumeration</h3>
+<div class="callout definition">
+<div class="callout-label">⬦ NFS — Network File System</div>
+<p>نوع من أنظمة الملفات يتيح للمستخدمين الوصول والتخزين والتحديث للملفات على Remote Server. NFS Servers بتستمع على <strong>TCP Port 2049</strong>. العملاء يتفاعلون مع الـ Remote Files كأنها محلية.</p>
+</div>
+
+<p>ما يكشفه NFS Enumeration: المجلدات المُصدَّرة (Exported Directories)، Clients المتصلين والـ IPs، البيانات المشتركة. المهاجم يمكنه Spoof IP للوصول الكامل للـ Shared Files.</p>
+
+<div class="code-wrap"><span class="code-tag">bash — nfs enumeration</span><pre><code"># فحص NFS Port والـ Services
+rpcinfo -p <target IP>
+
+# عرض الـ Mounted Shares
+showmount -e <target>
+showmount -a <target>  # عرض Clients + Shares
+
+# RPCScan
+python3 rpc-scan.py <target IP> --rpc
+
+# Nmap NFS Scripts
+nmap -p 111 --script=nfs-ls <target>
+nmap -p 111 --script=nfs-showmount <target>
+nmap -p 111 --script=nfs-statfs <target>
+</code></pre></div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU5 -->
+<h2 id="lu5"><span class="num">05</span><span class="htext">SMTP وDNS Enumeration</span></h2>
+
+<h3>SMTP Enumeration</h3>
+<p>SMTP يعمل على <strong>TCP Port 25</strong> (وأيضاً 2525 و587). بيستخدم MX Records لتوجيه البريد عبر DNS. يمكن استخدام Telnet للتفاعل اليدوي معه.</p>
+
+<div class="code-wrap"><span class="code-tag">bash — smtp enumeration</span><pre><code"># Nmap SMTP Scripts
+# عرض كل أوامر SMTP المتاحة
+nmap -p 25,365,587 --script=smtp-commands <target>
+
+# فحص Open Relay
+nmap -p 25 --script=smtp-open-relay <target>
+
+# تعداد Mail Users
+nmap -p 25 --script=smtp-enum-users <target>
+
+# Metasploit SMTP Enumeration
+use auxiliary/scanner/smtp/smtp_enum
+set RHOSTS <target>
+run
+
+# Banner Grabbing بـ Telnet
+telnet <target> 25
+# EHLO test
+# VRFY username  → تحقق من وجود المستخدم
+# EXPN mailinglist → توسيع قائمة بريدية
+</code></pre></div>
+
+<h3>DNS Enumeration — Zone Transfer</h3>
+<p>DNS Zone Transfer هو عملية نسخ Zone File من DNS Server الأساسي للثانوي. لو DNS Server مُهيَّأ بشكل خاطئ — المهاجم يحصل على نسخة كاملة من الـ Zone.</p>
+
+<div class="diagram-card">
+<svg viewBox="0 0 700 145" xmlns="http://www.w3.org/2000/svg">
+  <!-- Primary DNS -->
+  <rect x="8" y="28" width="140" height="90" rx="7" class="dsvg-box-b"/>
+  <text x="78" y="52" text-anchor="middle" class="dsvg-blue" font-size="11" font-weight="700">Primary DNS</text>
+  <text x="78" y="68" text-anchor="middle" class="dsvg-muted" font-size="9">Zone File</text>
+  <text x="78" y="84" text-anchor="middle" class="dsvg-muted" font-size="8">All hosts, IPs</text>
+  <text x="78" y="100" text-anchor="middle" class="dsvg-muted" font-size="8">Subdomains...</text>
+
+  <!-- Arrow to Secondary (Legit) -->
+  <line x1="148" y1="55" x2="248" y2="55" class="dsvg-line-g"/>
+  <polygon points="248,50 258,55 248,60" class="dsvg-arr-g"/>
+  <text x="203" y="44" text-anchor="middle" class="dsvg-green" font-size="8">Legitimate</text>
+  <text x="203" y="58" text-anchor="middle" class="dsvg-green" font-size="8">Zone Transfer</text>
+
+  <!-- Secondary DNS -->
+  <rect x="258" y="28" width="140" height="90" rx="7" class="dsvg-box-g"/>
+  <text x="328" y="52" text-anchor="middle" class="dsvg-green" font-size="11" font-weight="700">Secondary DNS</text>
+  <text x="328" y="68" text-anchor="middle" class="dsvg-muted" font-size="9">Backup Copy</text>
+  <text x="328" y="84" text-anchor="middle" class="dsvg-muted" font-size="8">Redundancy</text>
+  <text x="328" y="100" text-anchor="middle" class="dsvg-green" font-size="8">✓ Authorized</text>
+
+  <!-- Arrow from Attacker -->
+  <line x1="148" y1="95" x2="248" y2="95" class="dsvg-line-r"/>
+  <polygon points="148,90 138,95 148,100" class="dsvg-arr-r"/>
+  <text x="203" y="89" text-anchor="middle" class="dsvg-red" font-size="8">Attacker Request</text>
+  <text x="203" y="110" text-anchor="middle" class="dsvg-red" font-size="8">Misconfigured Server!</text>
+
+  <!-- Attacker -->
+  <rect x="428" y="20" width="260" height="105" rx="7" class="dsvg-box-r" style="stroke-width:2;"/>
+  <text x="558" y="44" text-anchor="middle" class="dsvg-red" font-size="11" font-weight="700">Attacker Gets:</text>
+  <text x="558" y="60" text-anchor="middle" class="dsvg-muted" font-size="9">All Named Hosts</text>
+  <text x="558" y="75" text-anchor="middle" class="dsvg-muted" font-size="9">Sub-zones & IP Addresses</text>
+  <text x="558" y="90" text-anchor="middle" class="dsvg-muted" font-size="9">Internal Server Names</text>
+  <text x="558" y="108" text-anchor="middle" class="dsvg-red" font-size="9" font-weight="700">⚡ Complete Network Map!</text>
+  <line x1="398" y1="73" x2="428" y2="73" class="dsvg-line-r"/>
+  <polygon points="428,68 438,73 428,78" class="dsvg-arr-r"/>
+</svg>
+<div class="diagram-caption">DNS Zone Transfer مع Misconfigured Server = نقشة الشبكة الداخلية كاملة للمهاجم</div>
+</div>
+
+<div class="code-wrap"><span class="code-tag">bash — dns enumeration commands</span><pre><code"># نعرف الـ Name Servers أول
+dig ns <target domain>
+nslookup -type=NS <target domain>
+
+# Zone Transfer بـ dig
+dig axfr @<nameserver> <target domain>
+dig axfr @ns1.target.com target.com
+
+# Zone Transfer بـ nslookup
+nslookup
+> server ns1.target.com
+> ls -d target.com
+
+# DNSRecon — Zone Transfer
+dnsrecon -t axfr -d <target domain>
+dnsrecon -d target.com -t axfr
+
+# DNSRecon — DNSSEC Zone Walking
+dnsrecon -d <target domain> -z
+
+# LDNS Walk
+ldns-walk @<DNS server IP> <target domain>
+ldns-walk @8.8.8.8 iana.org
+</code></pre></div>
+
+<h3>DNS Cache Snooping</h3>
+<p>تقنية لمعرفة المواقع التي زارها مستخدمو الشبكة مؤخّراً عبر الاستعلام عن الـ DNS Cache المُخزَّن.</p>
+<div class="table-wrap"><table>
+<thead><tr><th>الطريقة</th><th>الآلية</th><th>كيف تعمل</th></tr></thead>
+<tbody>
+<tr><td><strong>Non-Recursive</strong></td><td>RD bit = 0</td><td>لو الـ Record موجود في Cache → DNS يُجيب → إثبات أن مستخدماً زار الموقع</td></tr>
+<tr><td><strong>Recursive</strong></td><td>+recurse option</td><td>فحص قيمة TTL — لو TTL أقل من الأصلي = الـ Record مُخزَّن = زيارة سابقة</td></tr>
+</tbody>
+</table></div>
+
+<div class="code-wrap"><span class="code-tag">bash — dns cache snooping</span><pre><code"># Non-Recursive Method
+dig @<DNS server> <domain> A +norecurse
+
+# Recursive Method
+dig @<DNS server> <domain> A +recurse
+# فحص TTL: لو أقل من الأصلي → cached → مستخدم زار الموقع
+
+# مثال عملي
+dig @162.241.216.11 www.google.com A +norecurse
+</code></pre></div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU6 -->
+<h2 id="lu6"><span class="num">06</span><span class="htext">IPsec · VoIP · RPC · Linux/Unix · SMB Enumeration</span></h2>
+
+<h3>IPsec Enumeration</h3>
+<p>IPsec الحل الأكثر شيوعاً لـ VPN Solutions — يوفَّر أمان البيانات عبر ESP, AH, وIKE. المهاجم بيستهدف <strong>ISAKMP على UDP Port 500</strong>.</p>
+<div class="code-wrap"><span class="code-tag">bash — ipsec enumeration</span><pre><code"># فحص ISAKMP على Port 500
+nmap -sU -p 500 <target IP>
+
+# ike-scan — اكتشاف VPN Gateways وبصمة الـ IPsec
+ike-scan -M <target gateway IP>
+ike-scan --showbackoff <target>
+</code></pre></div>
+
+<h3>VoIP Enumeration</h3>
+<p>VoIP بيستخدم Internet Infrastructure لمكالمات الصوت — معرَّض لنفس هجمات TCP/IP. المهاجم يستهدف SIP Devices والـ PBX Systems.</p>
+<div class="code-wrap"><span class="code-tag">bash — voip enumeration</span><pre><code"># Svmap — فحص SIP Devices
+svmap <target network>
+svmap 192.168.1.0/24
+
+# Metasploit — SIP Username Enumeration
+use auxiliary/scanner/sip/options
+use auxiliary/scanner/sip/enumerator
+set RHOSTS <target>
+run
+</code></pre></div>
+<p>ما يمكن جمعه: VoIP Gateways/Servers، IP-PBX Systems، User-Agent IP Addresses، User Extensions للـ Softphones.</p>
+
+<h3>Linux/Unix User Enumeration</h3>
+<div class="code-wrap"><span class="code-tag">bash — linux unix enumeration</span><pre><code"># rusers — عرض المستخدمين على الأجهزة البعيدة
+rusers -l <host>
+# يعطي: Username, Hostname, Session Start Time
+
+# finger — معلومات تفصيلية عن المستخدمين
+finger <user>@<host>
+finger @<host>         # كل المستخدمين
+# يعطي: Login Name, Real Name, Terminal, Idle Time, Login Time
+</code></pre></div>
+
+<h3>SMB Enumeration</h3>
+<p>SMB يوفَّر Shared Access للملفات والطابعات. يعمل على <strong>TCP 445</strong> مباشرةً أو عبر NetBIOS على <strong>UDP 137-138</strong> و<strong>TCP 137-139</strong>.</p>
+<div class="code-wrap"><span class="code-tag">bash — smb enumeration</span><pre><code"># Nmap SMB Scripts
+nmap -p 445 --script=smb-enum-shares <target>
+nmap -p 445 --script=smb-enum-users <target>
+nmap -p 445 --script=smb-os-discovery <target>
+nmap -p 445 --script=smb-vuln-ms17-010 <target>
+nmap -p 445 --script=smb2-security-mode <target>
+
+# enum4linux — أشمل أداة SMB
+enum4linux -a <target>        # Full Enumeration
+enum4linux -U <target>        # Users
+enum4linux -S <target>        # Shares
+enum4linux -G <target>        # Groups
+enum4linux -P <target>        # Password Policy
+
+# SMBMap — فحص الـ Shares والـ Permissions
+smbmap -H <target>
+smbmap -H <target> -u guest
+
+# smbclient — التفاعل المباشر
+smbclient -L //<target> -N    # Null Session
+smbclient //<target>/SHARE -N
+
+# nullinux — Null Session Enumeration
+./nullinux.py <target>
+</code></pre></div>
+
+<div class="callout examtip">
+<div class="callout-label">★ CEH Exam — SMB Ports</div>
+<p>TCP 139 = SMB over NetBIOS (Old). TCP/UDP 445 = SMB Direct (Modern). SMB Enumeration = Banner Grabbing للحصول على OS Details → يُستخدَم لاختيار SMB Relay Attacks وBrute-Force Attacks.</p>
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ CHEAT SHEET -->
+<h2 id="cheat"><span class="htext">Cheat Sheet مرجعي — كل الأوامر</span></h2>
+<div class="cheat-section">
+
+<h4>Ports Reference الكامل</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>Port</th><th>Protocol</th><th>Service</th><th>ما يُستخرَج</th></tr></thead>
+<tbody>
+<tr><td><code>22</code></td><td>TCP</td><td>SSH/SFTP</td><td>Banner, Version → Brute Force Credentials</td></tr>
+<tr><td><code>23</code></td><td>TCP</td><td>Telnet</td><td>Cleartext Credentials, Banner Grabbing</td></tr>
+<tr><td><code>25</code></td><td>TCP</td><td>SMTP</td><td>Mail Users, Open Relays</td></tr>
+<tr><td><code>53</code></td><td>TCP/UDP</td><td>DNS</td><td>Zone Transfer → All Hosts & IPs</td></tr>
+<tr><td><code>69</code></td><td>UDP</td><td>TFTP</td><td>File Upload/Download بدون Auth</td></tr>
+<tr><td><code>123</code></td><td>UDP</td><td>NTP</td><td>Connected Clients, Internal IPs</td></tr>
+<tr><td><code>135</code></td><td>TCP/UDP</td><td>RPC</td><td>Endpoint Mapper → Services Discovery</td></tr>
+<tr><td><code>137</code></td><td>UDP</td><td>NetBIOS-NS</td><td>NetBIOS Names, MAC Addresses</td></tr>
+<tr><td><code>139</code></td><td>TCP</td><td>NetBIOS-SS</td><td>File Shares, Null Session</td></tr>
+<tr><td><code>161</code></td><td>UDP</td><td>SNMP Agent</td><td>Device Config, Users, Topology</td></tr>
+<tr><td><code>162</code></td><td>UDP</td><td>SNMP Trap</td><td>Unsolicited Notifications</td></tr>
+<tr><td><code>179</code></td><td>TCP</td><td>BGP</td><td>Routing Tables</td></tr>
+<tr><td><code>389</code></td><td>TCP/UDP</td><td>LDAP</td><td>Users, Groups, Domain Structure</td></tr>
+<tr><td><code>445</code></td><td>TCP/UDP</td><td>SMB Direct</td><td>Shares, OS Info, Users</td></tr>
+<tr><td><code>500</code></td><td>UDP</td><td>ISAKMP/IPsec</td><td>VPN Gateway Detection</td></tr>
+<tr><td><code>636</code></td><td>TCP</td><td>LDAPS</td><td>Secure LDAP</td></tr>
+<tr><td><code>2049</code></td><td>TCP</td><td>NFS</td><td>Exported Directories, Mounted Shares</td></tr>
+<tr><td><code>3268</code></td><td>TCP/UDP</td><td>Global Catalog</td><td>Cross-domain Object Lookup</td></tr>
+</tbody>
+</table></div>
+
+<h4>Nmap Scripts Reference</h4>
+<div class="code-wrap"><span class="code-tag">bash — nmap enumeration scripts</span><pre><code"># NetBIOS
+nmap --script nbstat -p 137 <target>
+
+# SNMP
+nmap -sU -p 161 --script snmp-info,snmp-processes,snmp-win32-users <target>
+
+# LDAP
+nmap -p 389 --script ldap-search,ldap-rootdse,ldap-brute <target>
+
+# SMTP
+nmap -p 25,587 --script smtp-commands,smtp-open-relay,smtp-enum-users <target>
+
+# DNS
+nmap -p 53 --script dns-zone-transfer <target>
+
+# NFS
+nmap -p 111 --script nfs-ls,nfs-showmount,nfs-statfs <target>
+
+# SMB
+nmap -p 445 --script smb-enum-shares,smb-enum-users,smb-os-discovery,smb2-security-mode <target>
+
+# IPsec
+nmap -sU -p 500 <target>
+</code></pre></div>
+
+<h4>AI Prompts للـ Enumeration (CEHv13)</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>الخدمة</th><th>AI Prompt المقترَح</th></tr></thead>
+<tbody>
+<tr><td>NetBIOS</td><td>"Perform NetBIOS enumeration on target IP 10.10.1.11"</td></tr>
+<tr><td>SNMP</td><td>"Perform SNMP enumeration on target IP 10.10.1.22 using SnmpWalk"</td></tr>
+<tr><td>DNS</td><td>"Use Nmap to perform DNS Enumeration on target domain www.certifiedhacker.com"</td></tr>
+<tr><td>DNS Cache Snooping</td><td>"Use dig command to perform DNS cache snooping on target domain using recursive method. Use DNS server IP as 162.241.216.11"</td></tr>
+<tr><td>IPsec</td><td>"Perform IPsec enumeration on target IP 10.10.1.22 with nmap"</td></tr>
+<tr><td>SMB</td><td>"Scan the target IP 10.10.1.22 for the port using SMB with nmap"</td></tr>
+</tbody>
+</table></div>
+
+<h4>أدوات الـ Enumeration — مرجع سريع</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>الخدمة</th><th>الأدوات الرئيسية</th></tr></thead>
+<tbody>
+<tr><td>NetBIOS</td><td>nbtstat, NetBIOS Enumerator, Nmap (nbstat), Global Network Inventory</td></tr>
+<tr><td>SNMP</td><td>SnmpWalk, snmp-check, SoftPerfect Network Scanner, Nmap (snmp-*)</td></tr>
+<tr><td>LDAP</td><td>ldapsearch, Softerra LDAP Admin, AD Explorer, Nmap (ldap-*)</td></tr>
+<tr><td>NTP</td><td>ntpdate, ntptrace, Nmap (ntp-*), PRTG Network Monitor</td></tr>
+<tr><td>NFS</td><td>rpcinfo, showmount, RPCScan, SuperEnum</td></tr>
+<tr><td>SMTP</td><td>Nmap (smtp-*), Metasploit (smtp_enum), Telnet</td></tr>
+<tr><td>DNS</td><td>dig, nslookup, DNSRecon, LDNS, Knock, Subfinder</td></tr>
+<tr><td>SMB</td><td>enum4linux, Nmap (smb-*), SMBMap, smbclient, nullinux</td></tr>
+<tr><td>VoIP</td><td>Svmap, Metasploit (sip_*)</td></tr>
+<tr><td>IPsec</td><td>Nmap (-sU -p 500), ike-scan</td></tr>
+</tbody>
+</table></div>
+
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ SUMMARY -->
+<h2 id="summary"><span class="htext">الخلاصة العامة للموديول</span></h2>
+<p>الموديول ده غطّى مرحلة الـ Enumeration كاملة — الخطوة التالية بعد الـ Scanning. الـ Enumeration بيخلّي المهاجم يبني صورة تفصيلية عن الشبكة الداخلية عبر اتصالات نشطة.</p>
+
+<div class="takeaways">
+<div class="takeaways-title">$ cat ./module04_summary.txt</div>
+<ul>
+<li>Enumeration = اتصالات نشطة موجَّهة لاستخراج Users وShares والـ Resources والـ Banners</li>
+<li>NetBIOS (137/139): يكشف Machine Names وDomain Lists والـ Shares — nbtstat وNmap</li>
+<li>SNMP (UDP 161/162): Community Strings الافتراضية (public/private) = Read/Write كل الـ Config</li>
+<li>MIB + OIDs: هرمية قاعدة البيانات التي يديرها SNMP — SnmpWalk يسير فيها كاملاً</li>
+<li>LDAP (389/636): Anonymous Query ممكن يكشف Users وGroups وDomain Structure</li>
+<li>DNS Zone Transfer: المشكلة الأكبر — يكشف كل hosts وIPs وSubdomains لو Server مُهيَّأ بشكل خاطئ</li>
+<li>DNS Cache Snooping: Non-Recursive (RD=0) وRecursive (TTL Check) لمعرفة المواقع المزارة</li>
+<li>DNSSEC Zone Walking: LDNS-walk وDNSRecon للـ NSEC Records</li>
+<li>SMB (445): enum4linux وSMBMap وNmap scripts لـ Shares وUsers والـ OS</li>
+<li>IPsec: UDP 500 (ISAKMP) — ike-scan لاكتشاف VPN Gateways</li>
+</ul>
+</div>
+
+<blockquote>
+<p><strong>الـ Enumeration هو الفرق بين المهاجم الأعمى والمهاجم الاستراتيجي.</strong> المعلومات المُجمَّعة هنا — Users وShares والـ Services والـ Banners — بتحدَّد مسار كل الهجمات اللاحقة. كل خدمة مفتوحة هي باب محتمل.</p>
+</blockquote>
+
+<div class="callout examtip">
+<div class="callout-label">★ CEH Exam Key Points</div>
+<p>تذكَّر: NetBIOS = 16 chars (15 name + 1 type). SNMP = public/private Community Strings. DNS Zone Transfer = axfr. SMTP User Enum = VRFY + EXPN commands. SMB = 139 (over NetBIOS) و445 (Direct). NTP = UDP 123. NFS = TCP 2049. LDAP = TCP 389. IPsec/VPN = UDP 500.</p>
+</div>
+
+<hr />
+<p><em>نهاية نوتس الموديول الرابع — CEHv13: Enumeration</em></p>
+<div class="footer-note">-- EOF: module-04/enumeration.md --</div>
+</div>
+
+<script>
+(function(){
+  var root=document.documentElement,btn=document.getElementById('themeSwitch');
+  function applyTheme(t){root.setAttribute('data-theme',t);btn.textContent='theme: '+t;try{localStorage.setItem('oscp-notes-theme',t);}catch(e){}}
+  var saved='dark';try{saved=localStorage.getItem('oscp-notes-theme')||'dark';}catch(e){}
+  applyTheme(saved);
+  btn.addEventListener('click',function(){applyTheme(root.getAttribute('data-theme')==='dark'?'light':'dark');});
+  var bar=document.getElementById('progressBar');
+  function onScroll(){var h=document.documentElement,s=h.scrollTop,ht=h.scrollHeight-h.clientHeight;bar.style.width=(ht>0?(s/ht*100):0)+'%';var t=document.getElementById('toTop');s>500?t.classList.add('show'):t.classList.remove('show');}
+  document.addEventListener('scroll',onScroll);onScroll();
+  document.getElementById('toTop').addEventListener('click',function(){window.scrollTo({top:0,behavior:'smooth'});});
+  document.querySelectorAll('.code-wrap').forEach(function(wrap){
+    var c=wrap.querySelector('code');if(!c)return;
+    var b=document.createElement('button');b.className='copy-btn';b.textContent='copy';
+    b.addEventListener('click',function(){if(navigator.clipboard){navigator.clipboard.writeText(c.innerText).then(function(){b.textContent='copied ✓';b.classList.add('copied');setTimeout(function(){b.textContent='copy';b.classList.remove('copied');},1500);});}});
+    wrap.appendChild(b);
+  });
+})();
+</script>
+</body>
+</html>

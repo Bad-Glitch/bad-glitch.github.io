@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CEHv13 · Module 13: Hacking Web Servers</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-0:#0B0B0D;--bg-1:#121214;--surface:#17171A;--surface-2:#1D1D21;
+    --border:#2A2A2F;--border-soft:#232326;
+    --text:#E6E6E9;--text-soft:#C4C4CA;--muted:#8A8A92;
+    --red:#E1362F;--red-soft:rgba(225,54,47,0.10);--red-border:rgba(225,54,47,0.35);
+    --red-grad:linear-gradient(90deg,#E1362F,#F2794A);
+    --amber:#E8A23A;--amber-soft:rgba(232,162,58,0.09);--amber-border:rgba(232,162,58,0.30);
+    --green:#3FBF6E;--green-soft:rgba(63,191,110,0.09);--green-border:rgba(63,191,110,0.30);
+    --blue:#4EA1D3;--blue-soft:rgba(78,161,211,0.09);--blue-border:rgba(78,161,211,0.30);
+    --purple:#A179E8;--purple-soft:rgba(161,121,232,0.10);--purple-border:rgba(161,121,232,0.32);
+    --mono:'IBM Plex Mono','Courier New',monospace;
+  }
+  html[data-theme="light"]{--bg-0:#F4F3F1;--bg-1:#ECEBE8;--surface:#FFFFFF;--surface-2:#F3F2EF;--border:#DEDCD6;--border-soft:#E6E4DF;--text:#1C1B19;--text-soft:#3C3A36;--muted:#726F68;}
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;direction:rtl;text-align:right;background:var(--bg-0);}
+  body{font-family:'Cairo','Segoe UI',Tahoma,sans-serif;line-height:1.95;font-size:16.5px;color:var(--text);
+    background:radial-gradient(900px 420px at 12% -8%,rgba(225,54,47,0.10),transparent 60%),radial-gradient(800px 420px at 90% 6%,rgba(232,162,58,0.06),transparent 60%),linear-gradient(180deg,var(--bg-0) 0%,var(--bg-1) 100%);
+    background-attachment:fixed;transition:background 0.2s ease,color 0.2s ease;}
+  html[data-theme="light"] body{background:radial-gradient(900px 420px at 12% -8%,rgba(225,54,47,0.06),transparent 60%),radial-gradient(800px 420px at 90% 6%,rgba(232,162,58,0.05),transparent 60%),linear-gradient(180deg,var(--bg-0) 0%,var(--bg-1) 100%);}
+  .progress-rail{position:fixed;top:0;inset-inline:0;height:3px;background:rgba(255,255,255,0.04);z-index:60;}
+  html[data-theme="light"] .progress-rail{background:rgba(0,0,0,0.05);}
+  .progress-bar{height:100%;width:0%;background:var(--red-grad);transition:width 0.08s linear;}
+  .float-controls{position:fixed;bottom:22px;left:22px;z-index:55;display:flex;flex-direction:column;gap:10px;}
+  .fctrl-btn{width:42px;height:42px;border-radius:50%;background:var(--surface);border:1px solid var(--border);color:var(--text-soft);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;box-shadow:0 10px 24px -10px rgba(0,0,0,0.5);transition:transform 0.15s ease,border-color 0.15s ease,opacity 0.2s ease;}
+  .fctrl-btn:hover{transform:translateY(-2px);border-color:var(--red-border);color:var(--red);}
+  #toTop{opacity:0;pointer-events:none;}#toTop.show{opacity:1;pointer-events:auto;}
+  .page{max-width:860px;margin:0 auto;padding:46px 22px 100px;}
+  .banner{position:relative;overflow:hidden;background:linear-gradient(155deg,var(--surface) 0%,var(--bg-1) 55%,var(--surface) 100%);border:1px solid var(--border-soft);border-radius:10px;padding:0 0 34px;margin-bottom:26px;box-shadow:0 20px 50px -20px rgba(0,0,0,0.6);}
+  .term-bar{display:flex;align-items:center;gap:8px;padding:13px 18px;border-bottom:1px solid var(--border-soft);background:rgba(255,255,255,0.015);direction:ltr;}
+  .term-dot{width:11px;height:11px;border-radius:50%;display:inline-block;}.term-dot.r{background:#E1362F;}.term-dot.y{background:#E8A23A;}.term-dot.g{background:#3FBF6E;}
+  .term-path{margin-inline-start:12px;font-family:var(--mono);font-size:12px;color:var(--muted);}
+  .theme-switch{margin-inline-start:auto;font-family:var(--mono);font-size:11px;color:var(--muted);background:transparent;border:1px solid var(--border);border-radius:4px;padding:4px 9px;cursor:pointer;}
+  .theme-switch:hover{color:var(--amber);border-color:var(--amber-border);}
+  .banner-body{padding:30px 34px 4px;}
+  .banner .kicker{display:inline-block;font-family:var(--mono);font-size:12.5px;letter-spacing:0.03em;color:var(--red);background:var(--red-soft);border:1px solid var(--red-border);border-radius:3px;padding:5px 12px;margin-bottom:20px;direction:ltr;}
+  .banner h1{margin:0 0 14px;font-size:28px;font-weight:800;line-height:1.5;color:var(--text);}
+  .banner .lede{color:var(--muted);font-size:15.5px;line-height:1.95;max-width:640px;margin:0 0 24px;}
+  .tags{display:flex;flex-wrap:wrap;gap:9px;}
+  .tag{font-size:12.5px;font-family:var(--mono);color:var(--amber);background:var(--amber-soft);border:1px solid var(--amber-border);border-radius:3px;padding:5px 11px;}
+  .toc{background:var(--surface);border:1px solid var(--border-soft);border-radius:8px;padding:6px 0 6px;margin-bottom:50px;overflow:hidden;}
+  .toc-title{font-family:var(--mono);font-weight:600;font-size:13px;color:var(--green);padding:14px 22px;border-bottom:1px solid var(--border-soft);direction:ltr;text-align:left;}
+  .toc-list{display:flex;flex-direction:column;}
+  .toc-item{display:flex;align-items:center;gap:14px;padding:12px 22px;color:var(--text-soft);text-decoration:none;font-size:14.5px;border-bottom:1px solid rgba(255,255,255,0.03);transition:background 0.15s ease;}
+  .toc-list .toc-item:last-child{border-bottom:none;}
+  .toc-item:hover{background:var(--red-soft);}
+  .toc-num{flex:none;font-family:var(--mono);font-size:12.5px;font-weight:600;color:#0F0F10;background:var(--red-grad);border-radius:3px;padding:3px 8px;direction:ltr;}
+  h1,h2,h3,h4{font-weight:700;}
+  h2{display:flex;align-items:center;gap:14px;font-size:21px;margin:66px 0 22px;padding-bottom:16px;border-bottom:1px solid var(--border-soft);color:var(--text);}
+  h2 .num{flex:none;font-family:var(--mono);font-size:13px;font-weight:700;color:#0F0F10;background:var(--red-grad);border-radius:5px;padding:7px 12px;direction:ltr;}
+  h2 .htext{line-height:1.5;}
+  h3{font-size:17px;margin:34px 0 14px;color:var(--red);display:flex;align-items:center;gap:9px;}
+  h3::before{content:"#";font-family:var(--mono);color:var(--amber);font-weight:700;}
+  h4{font-size:14.8px;margin:22px 0 10px;color:var(--text-soft);font-family:var(--mono);}
+  p{margin:0 0 17px;color:var(--text);}
+  strong{color:var(--text);font-weight:700;}:root:not([data-theme="light"]) strong{color:#FBFBFC;}
+  a{color:var(--amber);text-decoration:none;border-bottom:1px dashed var(--amber-border);}
+  hr{border:none;height:1px;margin:50px 0;background:linear-gradient(90deg,transparent,var(--border),transparent);}
+  ul,ol{margin:0 0 18px;padding-inline-start:24px;}
+  li{margin-bottom:9px;color:var(--text);}li::marker{color:var(--red);font-family:var(--mono);}li>ul,li>ol{margin-top:9px;}
+  blockquote{margin:24px 0;padding:17px 22px;background:var(--red-soft);border:1px solid var(--red-border);border-inline-start:3px solid var(--red);border-radius:6px;color:var(--text-soft);}
+  blockquote p{margin:0;color:inherit;line-height:1.85;}blockquote p+p{margin-top:10px;}blockquote strong{color:var(--text);}
+  .callout{margin:24px 0;padding:17px 22px 18px;border-radius:6px;border:1px solid var(--border-soft);border-inline-start:3px solid var(--border);background:var(--surface);}
+  .callout p{margin:0;color:var(--text-soft);line-height:1.85;}.callout p+p{margin-top:10px;}.callout ul,.callout ol{margin:6px 0 0;}
+  .callout-label{display:inline-flex;align-items:center;gap:7px;font-family:var(--mono);font-size:11.5px;font-weight:700;letter-spacing:0.02em;text-transform:uppercase;margin-bottom:10px;direction:ltr;}
+  .callout.note{border-inline-start-color:var(--blue);background:var(--blue-soft);}.callout.note .callout-label{color:var(--blue);}
+  .callout.warning{border-inline-start-color:var(--red);background:var(--red-soft);}.callout.warning .callout-label{color:var(--red);}
+  .callout.tip{border-inline-start-color:var(--green);background:var(--green-soft);}.callout.tip .callout-label{color:var(--green);}
+  .callout.examtip{border-inline-start-color:var(--purple);background:var(--purple-soft);}.callout.examtip .callout-label{color:var(--purple);}
+  .callout.case{border-inline-start-color:var(--amber);background:var(--amber-soft);}.callout.case .callout-label{color:var(--amber);}
+  .callout.definition{border-inline-start-color:var(--muted);background:var(--surface-2);}.callout.definition .callout-label{color:var(--text-soft);}
+  .callout.danger{border-inline-start-color:#FF5A52;background:rgba(255,90,82,0.08);}.callout.danger .callout-label{color:#FF5A52;}
+  .table-wrap{overflow-x:auto;margin:22px 0;border:1px solid var(--border-soft);border-radius:8px;}
+  table{width:100%;border-collapse:collapse;font-size:14.2px;min-width:480px;}
+  thead th{background:var(--surface-2);color:var(--amber);font-weight:700;font-family:var(--mono);font-size:12.5px;text-transform:uppercase;letter-spacing:0.02em;text-align:start;padding:13px 15px;border-bottom:1px solid var(--border-soft);white-space:nowrap;}
+  tbody td{padding:12px 15px;border-bottom:1px solid var(--border-soft);color:var(--text-soft);vertical-align:top;}
+  tbody tr:last-child td{border-bottom:none;}tbody tr:nth-child(even){background:rgba(127,127,127,0.03);}tbody tr:hover{background:var(--red-soft);}
+  code{font-family:var(--mono);font-size:13.3px;background:var(--surface-2);border:1px solid var(--border-soft);border-radius:4px;padding:2px 6px;direction:ltr;unicode-bidi:embed;color:var(--green);}
+  .code-wrap{position:relative;overflow-x:auto;margin:22px 0;}
+  .code-tag{position:absolute;top:10px;left:14px;font-family:var(--mono);font-size:10.5px;color:var(--muted);letter-spacing:0.04em;text-transform:uppercase;z-index:2;}
+  .copy-btn{position:absolute;top:8px;right:10px;z-index:2;font-family:var(--mono);font-size:11px;color:var(--muted);background:var(--surface-2);border:1px solid var(--border-soft);border-radius:4px;padding:4px 9px;cursor:pointer;direction:ltr;}
+  .copy-btn:hover{color:var(--amber);border-color:var(--amber-border);}.copy-btn.copied{color:var(--green);border-color:var(--green-border);}
+  pre{background:var(--bg-0);border:1px solid var(--border-soft);border-inline-start:3px solid var(--red);border-radius:8px;padding:30px 22px 18px;direction:ltr;text-align:left;margin:0;}
+  html[data-theme="light"] pre{background:#16181C;}
+  pre code{background:none;border:none;padding:0;color:#B9E8C9;font-size:13.2px;line-height:1.75;}
+  .diagram-card{background:var(--surface);border:1px solid var(--border-soft);border-radius:10px;padding:22px 18px 16px;margin:24px 0;}
+  .diagram-card svg{width:100%;height:auto;display:block;}
+  .diagram-caption{margin-top:10px;text-align:center;font-family:var(--mono);font-size:11.5px;color:var(--muted);}
+  .takeaways{background:var(--surface);border:1px solid var(--border-soft);border-radius:8px;padding:18px 22px 20px;margin:30px 0 10px;}
+  .takeaways-title{font-family:var(--mono);font-size:12.5px;font-weight:700;color:var(--green);margin-bottom:12px;direction:ltr;text-align:left;display:flex;align-items:center;gap:8px;}
+  .takeaways ul{margin:0;padding-inline-start:20px;}.takeaways li{color:var(--text-soft);font-size:14.5px;}
+  .step-track{display:flex;flex-direction:column;gap:0;margin:24px 0;}
+  .step-item{position:relative;padding:0 0 26px 0;padding-inline-start:46px;border-inline-start:2px solid var(--border-soft);}
+  .step-item:last-child{border-inline-start:2px solid transparent;padding-bottom:4px;}
+  .step-num{position:absolute;inset-inline-start:-17px;top:0;width:32px;height:32px;border-radius:50%;background:var(--red-grad);color:#0F0F10;font-family:var(--mono);font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;}
+  .step-title{font-weight:700;color:var(--text);margin-bottom:6px;font-size:15px;}
+  .step-body{color:var(--text-soft);font-size:14.5px;}.step-body p{margin:0 0 10px;}.step-body p:last-child{margin-bottom:0;}.step-body ul{margin:8px 0 0;}
+  .method-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px;margin:22px 0;}
+  .method-card{background:var(--surface);border:1px solid var(--border-soft);border-radius:8px;padding:14px 16px;}
+  .method-card .mtitle{font-weight:700;color:var(--text);font-size:14px;margin-bottom:5px;}.method-card .mdesc{color:var(--text-soft);font-size:13.3px;line-height:1.75;}
+  .cheat-section h4{color:var(--amber);font-size:13px;margin:26px 0 8px;}
+  .footer-note{margin-top:70px;padding-top:26px;border-top:1px solid var(--border-soft);color:var(--muted);font-size:13.3px;font-family:var(--mono);text-align:center;direction:ltr;}
+  @media print{.float-controls,.progress-rail,.copy-btn,.theme-switch{display:none !important;}body{background:#fff;color:#000;}.page{max-width:100%;}}
+  @media(max-width:640px){.page{padding:28px 14px 70px;}.banner-body{padding:24px 20px 4px;}.banner h1{font-size:21px;}h2{font-size:18px;gap:10px;}.float-controls{left:12px;bottom:14px;}}
+</style>
+</head>
+<body>
+<div class="progress-rail"><div class="progress-bar" id="progressBar"></div></div>
+<div class="float-controls"><button class="fctrl-btn" id="toTop" title="ارجع لفوق">↑</button></div>
+
+<div class="page">
+<div class="banner">
+  <div class="term-bar">
+    <span class="term-dot r"></span><span class="term-dot y"></span><span class="term-dot g"></span>
+    <span class="term-path">root@ceh:~/module-13$</span>
+    <button class="theme-switch" id="themeSwitch">theme: dark</button>
+  </div>
+  <div class="banner-body">
+    <span class="kicker">EC-Council · CEHv13 · Module 13</span>
+    <h1>اختراق الـ Web Servers</h1>
+    <p class="lede">من مفاهيم بنية الـ Web Server ومكوّناته، مرورًا بثغرات Apache وIIS وNginx الحديثة، وأنواع هجمات السيرفرات (DNS Hijacking، Directory Traversal، Defacement، Cache Poisoning، Response Splitting)، ووصولاً لمنهجية الهجوم الكاملة والإجراءات المضادة وأدوات الحماية.</p>
+    <div class="tags">
+      <span class="tag">web-server</span><span class="tag">apache</span>
+      <span class="tag">iis</span><span class="tag">nginx</span>
+      <span class="tag">directory-traversal</span><span class="tag">dns-hijacking</span>
+      <span class="tag">cache-poisoning</span><span class="tag">banner-grabbing</span>
+    </div>
+  </div>
+</div>
+
+<nav class="toc"><div class="toc-title">$ ls learning_units/</div><div class="toc-list">
+  <a class="toc-item" href="#lu1"><span class="toc-num">01</span><span>مفاهيم الـ Web Server — المكوّنات وأسباب الاختراق</span></a>
+  <a class="toc-item" href="#lu2"><span class="toc-num">02</span><span>ثغرات السيرفرات الشهيرة — Apache وIIS وNginx</span></a>
+  <a class="toc-item" href="#lu3"><span class="toc-num">03</span><span>أنواع هجمات الـ Web Server</span></a>
+  <a class="toc-item" href="#lu4"><span class="toc-num">04</span><span>منهجية هجوم الـ Web Server</span></a>
+  <a class="toc-item" href="#lu5"><span class="toc-num">05</span><span>الإجراءات المضادة وأدوات الحماية</span></a>
+  <a class="toc-item" href="#cheat"><span class="toc-num">--</span><span>Cheat Sheet مرجعي</span></a>
+  <a class="toc-item" href="#summary"><span class="toc-num">--</span><span>الخلاصة العامة للموديول</span></a>
+</div></nav>
+
+<!-- LU1 -->
+<h2 id="lu1"><span class="num">01</span><span class="htext">مفاهيم الـ Web Server — المكوّنات وأسباب الاختراق</span></h2>
+
+<h3>عمليات الـ Web Server</h3>
+<p>الـ <strong>Web Server</strong> هو نظام حاسوبي يُخزِّن ويُعالج ويُسلِّم صفحات الويب للعملاء حول العالم عبر بروتوكول <strong>HTTP</strong>. العميل يبدأ عملية الاتصال بطلبات HTTP: لما يحتاج مصدرًا زي صفحة ويب أو صورة أو فيديو، متصفحه يولِّد طلب HTTP يُرسَل للسيرفر. السيرفر بناءً على الطلب يجمع المحتوى المطلوب من مساحة التخزين أو من Application Servers ويرد على العميل باستجابة HTTP مناسبة.</p>
+
+<h3>مكوّنات الـ Web Server</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>المكوّن</th><th>الوصف</th></tr></thead>
+<tbody>
+<tr><td>Document Root</td><td>أحد المجلدات الجذرية اللي بتخزّن ملفات HTML الحرجة الخاصة بصفحات الدومين، واللي هتُرسَل ردًا على الطلبات. مثال: لو الطلب <code>www.certifiedhacker.com</code> والـ Document Root اسمه <code>certroot</code> ومخزّن في <code>/admin/web</code>، فعنوان المجلد هو <code>/admin/web/certroot</code>. ولو الطلب الكامل <code>www.certifiedhacker.com/P-folio/index.html</code> هيدوّر السيرفر على <code>/admin/web/certroot/P-folio/index.html</code></td></tr>
+<tr><td>Server Root</td><td>المجلد الأعلى في شجرة الدليل، وفيه ملفات إعدادات السيرفر وملفات الـ Log والملفات التنفيذية. وبيحتوي عادةً على: <code>conf</code> (ملفات الإعدادات)، <code>logs</code> (ملفات Access وError Logs)، <code>cgi-bin</code> (سكربتات CGI أو ملفات تنفيذية من جهة السيرفر)</td></tr>
+<tr><td>Virtual Document Tree</td><td>يوفّر تخزينًا على جهاز أو قرص مختلف بعد امتلاء القرص الأصلي. حسّاس لحالة الأحرف (Case-Sensitive) ويُستخدم لتوفير حماية على مستوى الـ Object. في نفس مثال Document Root، لو المجلد <code>admin/web/certroot</code> مخزّن على قرص تاني، هيدوّر السيرفر على نفس المسار في القرص الجديد</td></tr>
+<tr><td>Virtual Hosting</td><td>تقنية استضافة عدة دومينات أو مواقع على نفس السيرفر، بتسمح بمشاركة الموارد بين سيرفرات متعدّدة، وبتُستخدم في الشركات الكبيرة. أنواعها: Name-based، IP-based، Port-based</td></tr>
+<tr><td>Web Proxy</td><td>سيرفر بروكسي يقف بين العميل والسيرفر؛ كل الطلبات بتمرّ من خلاله. يُستخدم لمنع حظر IP والحفاظ على عدم الكشف عن الهوية (Anonymity)</td></tr>
+</tbody>
+</table></div>
+
+
+<h3>مشاكل أمان الـ Web Server</h3>
+<p>هجمات مستوى الشبكة ونظام التشغيل ممكن تُصدّ بإجراءات أمان مناسبة زي الـ Firewalls وIDS. لكن الـ Web Servers ممكن يوصلها أي حد عبر الإنترنت من أي مكان، وده بيخلّيها معرَّضة جدًا للهجمات.</p>
+
+<h3>ليه الـ Web Servers بتتعرّض للاختراق؟</h3>
+<ul>
+<li>صلاحيات ملفات ومجلدات غير صحيحة</li>
+<li>ملفات Default أو Backup أو Sample غير ضرورية</li>
+<li>أخطاء إعدادات (Misconfigurations) في السيرفر ونظام التشغيل والشبكة</li>
+<li>ثغرات (Bugs) في برمجيات السيرفر ونظام التشغيل وتطبيقات الويب</li>
+<li>وظائف إدارية أو تصحيح أخطاء (Debugging) مفعَّلة أو متاحة على السيرفر</li>
+<li>استخدام شهادات Self-Signed أو شهادات SSL بإعدادات خاطئة أو شهادات افتراضية وإعدادات تشفير ضعيفة</li>
+<li>عدم استخدام سيرفر مخصَّص لخدمات الويب</li>
+</ul>
+
+
+<h3>أثر هجمات الـ Web Server</h3>
+<ul>
+<li>اختراق حسابات المستخدمين</li>
+<li>تشويه الموقع (Website Defacement)</li>
+<li>هجمات ثانوية تنطلق من الموقع</li>
+<li>وصول Root لتطبيقات أو سيرفرات أخرى</li>
+<li>التلاعب بالبيانات وسرقتها</li>
+<li>ضرر بسمعة الشركة</li>
+</ul>
+
+
+<!-- LU2 -->
+
+<hr />
+
+<h2 id="lu2"><span class="num">02</span><span class="htext">ثغرات السيرفرات الشهيرة — Apache وIIS وNginx</span></h2>
+
+
+
+<h3>بنية Apache Web Server</h3>
+<p><strong>Apache</strong> سيرفر HTTP مفتوح المصدر يُستخدم لتوصيل محتوى الويب عبر الإنترنت. يقدر يستضيف مواقع ويتعامل مع طلبات HTTP ويقدّم محتوى ثابت وديناميكي. يتميّز بأداء عالٍ وميزات أمان وتخصيص واسع عبر الـ Modules ومجتمع دعم كبير.</p>
+
+<h4>أبرز ثغرات Apache</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>الثغرة</th><th>الشرح</th></tr></thead>
+<tbody>
+<tr><td>HTTP Response Splitting</td><td>تحدث لما إدخال غير مُتحقَّق منه يسمح للمهاجم بحقن Headers خبيثة في استجابات HTTP. ممكن تؤدّي لـ XSS أو Cache Poisoning أو كشف معلومات حسّاسة</td></tr>
+<tr><td>HTTP/2 DoS — Endless Continuation Frames</td><td>المهاجم يرسل Headers متتالية عبر HTTP/2 تستهلك الذاكرة وتؤدّي لـ DoS، فالسيرفر يصبح غير مستجيب أو يتوقف</td></tr>
+<tr><td>mod_macro Buffer Over-Read</td><td>سوء تعامل الموديول مع توسيع الـ Macro يخلّيه يقرأ بعد نهاية الـ Buffer. يُستغَل بطلبات مصمَّمة خصيصًا تكشف معلومات من مناطق ذاكرة مجاورة</td></tr>
+<tr><td>Improper Authorization</td><td>فحوصات تصريح خاطئة تسمح بوصول غير مصرّح أو تصعيد صلاحيات لتنفيذ أفعال مقيَّدة</td></tr>
+<tr><td>DNS Rebinding (Apache Allura — Import)</td><td>تحقّق إدخال غير كافٍ في وظيفة الاستيراد يسمح بالتلاعب باستجابات DNS والوصول لخدمات داخلية</td></tr>
+<tr><td>Code Injection (Apache Zeppelin — JDBC/MySQL)</td><td>عند الاتصال بقاعدة بيانات MySQL عبر JDBC، يقدر المهاجم يحقن كودًا خبيثًا أثناء إعداد الاتصال يؤدّي لتنفيذ كود عن بُعد</td></tr>
+<tr><td>Improper Certificate Validation (Apache Airflow — FTP_TLS)</td><td>تحقّق شهادات غير صحيح في اتصالات FTP_TLS يسمح باعتراض أو التلاعب بحركة FTP (MITM)</td></tr>
+<tr><td>XSS (Apache Airflow — Logs)</td><td>تعامل خاطئ مع الإدخال يسمح بحقن سكربتات خبيثة في سجلات الـ Task Instance</td></tr>
+<tr><td>Path Traversal (Apache OFBiz)</td><td>تقييد غير كافٍ لمسار الملف يسمح بالوصول لملفات ومجلدات خارج المجلد المقصود، وقد يؤدّي لتنفيذ كود عشوائي</td></tr>
+<tr><td>SQL Injection (Apache Submarine Server Core)</td><td>تحييد غير صحيح لعناصر SQL يسمح بتنفيذ استعلامات عشوائية — وصول غير مصرّح، استخراج بيانات، أو تعديل قاعدة البيانات</td></tr>
+</tbody>
+</table></div>
+
+
+<h3>بنية IIS Web Server</h3>
+<p><strong>IIS</strong> (Internet Information Services) تطبيق Web Server من Microsoft بيشتغل على سيرفر ويرد على طلبات المتصفح. نسخة Windows Server منه مرنة وسهلة الإدارة لاستضافة الويب.</p>
+
+<h4>أبرز ثغرات IIS</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>الثغرة</th><th>الشرح</th></tr></thead>
+<tbody>
+<tr><td>Trust Boundary Violation (Telerik Report Server)</td><td>فصل غير كافٍ لحدود الصلاحيات يسمح لكيان غير موثَّق بالوصول لوظائف مقيَّدة — وقد يؤدّي للتلاعب بعمليات السيرفر</td></tr>
+<tr><td>Authentication Bypass</td><td>مشاكل في تنفيذ عملية الـ Authentication تخلّي نقطة نهاية غير آمنة تسمح بوصول غير مُصادَق لوظائف مقيَّدة</td></tr>
+<tr><td>CRLF Cross-Site Scripting (SiteMinder Web Agent for IIS)</td><td>إعدادات خاطئة تسمح للمهاجم بتجاوز الـ Authentication وتنفيذ كود JavaScript عشوائي في متصفح العميل</td></tr>
+<tr><td>Arbitrary File Path Access (Aquaforest TIFF Server)</td><td>الإعدادات الافتراضية تقيّد الوصول لمسارات الملفات بشكل غير صحيح — يسمح بالوصول أو التعداد أو التجوّل بين الملفات وتجاوز الـ Authentication</td></tr>
+<tr><td>Elevation of Privilege (Windows IIS)</td><td>تعامل خاطئ مع طلبات مستخدم معيّنة يؤدّي لتصعيد صلاحيات</td></tr>
+<tr><td>File and Directory Permissions (Hitachi JP1/PM for Windows)</td><td>صلاحيات افتراضية غير صحيحة تسمح بالتحكّم في النظام والتلاعب بالملفات والمجلدات بدون تصريح</td></tr>
+</tbody>
+</table></div>
+
+
+<h3>بنية Nginx Web Server</h3>
+<p><strong>Nginx</strong> سيرفر عالي الأداء وقابل للتوسّع، يعمل كـ Reverse Proxy وLoad Balancer على بنية <strong>Master-Worker</strong>: عملية Master تشرف على عدة عمليات Worker مسؤولة عن معالجة طلبات العملاء، وكل Worker بيستخدم I/O غير حاجز (Non-Blocking) لإدارة اتصالات متعددة في Loop واحد. يدعم كمان Load Balancing متقدّم وCaching قوي وإنهاء SSL/TLS وLogging تفصيلي.</p>
+
+<h4>أبرز ثغرات Nginx</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>الثغرة</th><th>الشرح</th></tr></thead>
+<tbody>
+<tr><td>NULL Pointer Dereference (HTTP/3)</td><td>يحدث بسبب NULL Pointer Dereference في موديول QUIC عند معالجة طلبات HTTP/3، ما يؤدّي لإنهاء عمليات الـ Worker. طلبات مصمَّمة خصيصًا تسبّب DoS أو حتى تنفيذ كود عن بُعد</td></tr>
+<tr><td>SSRF (mintplex-labs/anything-llm — Upload Link)</td><td>المهاجم يستضيف موقعًا خبيثًا وينفّذ Port Scanning داخلي، يصل لتطبيقات ويب غير عامة، وينفّذ حذف ملفات عشوائي وLocal File Inclusion</td></tr>
+<tr><td>Improper Certificate Validation (Nginx-UI — Import Certificate)</td><td>تحقّق إدخال غير صحيح يسمح بالكتابة العشوائية على ملفات</td></tr>
+<tr><td>SQL Injection</td><td>تحييد غير صحيح لعناصر SQL يسمح بتمرير معاملات غير معقَّمة للاستعلامات — وصول غير مصرّح أو تسريب بيانات</td></tr>
+<tr><td>Unauthenticated Private Keys Access</td><td>الاعتماد على <code>.htaccess</code> للحماية يفشل على سيرفرات Nginx اللي ما بتدعمهوش — يسمح بقراءة المفاتيح الخاصة</td></tr>
+<tr><td>Excessive Memory/CPU — HTTP/2</td><td>تعامل خاطئ مع الذاكرة واستهلاك CPU مفرط عند إغراق السيرفر بطلبات HTTP/2</td></tr>
+<tr><td>OS Command Injection (nginxWebUI — Upload)</td><td>تعامل خاطئ مع معاملات الملف في ميزة الرفع يسمح بحقن وتنفيذ أوامر نظام تشغيل عن بُعد</td></tr>
+<tr><td>Default File Permissions (Nginx Management Suite)</td><td>صلاحيات افتراضية تسمح بتعديل ملفات حساسة في Nginx Instance Manager وNginx API Connectivity Manager</td></tr>
+</tbody>
+</table></div>
+
+
+<!-- LU3 -->
+
+<hr />
+
+<h2 id="lu3"><span class="num">03</span><span class="htext">أنواع هجمات الـ Web Server</span></h2>
+
+
+
+<h3>DNS Server Hijacking</h3>
+<p>المهاجم يخترق سيرفر DNS ويغيّر إعداداته بحيث كل الطلبات المتوجّهة للـ Web Server الهدف تُعاد توجيهها لسيرفره الخبيث.</p>
+
+<h3>DNS Amplification Attack</h3>
+<p>الـ Recursive DNS Query طريقة لطلب تحويل DNS: الاستعلام يمرّ عبر سيرفرات DNS بشكل تكراري (Recursive) لحد ما يفشل في إيجاد تحويل اسم الدومين لعنوان IP.</p>
+
+<h3>Directory Traversal Attacks</h3>
+<p>المهاجم يستخدم تسلسل <code>../</code> (Dot-Dot-Slash) للوصول لمجلدات مقيَّدة خارج Root الخاص بالسيرفر، باستخدام أسلوب المحاولة والخطأ للوصول لمعلومات حسّاسة في النظام.</p>
+
+<h3>Website Defacement</h3>
+<p>تغييرات غير مصرَّح بها على محتوى صفحة واحدة أو الموقع كله، تؤدّي لتغيير المظهر البصري. المهاجمون بيحقنون كودًا لإضافة صور أو Popups أو نصوص، وفي بعض الحالات بيستبدلوا الموقع كله بدل صفحة واحدة.</p>
+
+<h3>Web Server Misconfiguration</h3>
+<p>نقاط ضعف في إعدادات بنية الويب تُستغَل لتنفيذ هجمات زي Directory Traversal واختراق السيرفر وسرقة البيانات. من أمثلتها: رسائل Debug/Error مُفصَّلة، مستخدمون Anonymous أو Default بكلمات مرور افتراضية، خدمات غير ضرورية مفعَّلة.</p>
+
+<h3>HTTP Response-Splitting Attack</h3>
+<p>المهاجم يضيف بيانات استجابة Header في حقل الإدخال بحيث يقسّم السيرفر الاستجابة لاستجابتين، مستغلًا سيرفر Apache ضعيف التحقّق من الإدخال بحقن Request Header مصمَّم خصيصًا يستخرج ردّين. المهاجم يتحكّم في الردّ الأول لتحويل المستخدم لموقع خبيث، أما الردود الأخرى فيتجاهلها المتصفح.</p>
+
+<h3>Web Cache Poisoning Attack</h3>
+<p>يستهدف موثوقية مصدر الـ Web Cache الوسيط: المهاجم يستبدل المحتوى المخزَّن لرابط معيّن بمحتوى مصاب. مستخدمو الـ Cache بيستخدموا المحتوى المسمَّم بدون علمهم بدل المحتوى الحقيقي والآمن.</p>
+
+<h3>SSH Brute Force Attack</h3>
+<p>بروتوكولات SSH تُنشئ نفقًا مشفَّرًا بين مضيفَين لنقل بيانات غير مشفَّرة عبر شبكة غير آمنة. المهاجم يقدر يعمل Brute Force لبيانات دخول SSH للوصول غير المصرّح للنفق، واللي بيُستخدم بعدين لنقل Malware واستغلالات تانية للضحايا من غير ما يتكشف.</p>
+
+<h3>FTP Brute Force with AI</h3>
+<p>المهاجم ممكن يستغل أدوات AI التوليدية زي ChatGPT لتنفيذ هذه المهمة باستخدام Prompt مناسب.</p>
+
+<h3>HTTP/2 Continuation Flood Attack</h3>
+<p>استغلال آلية تعامل HTTP/2 مع إطارات <strong>CONTINUATION</strong>: المهاجم يرسل عددًا كبيرًا منها عبر اتصال TCP واحد، ما يُثقل موارد سيرفر Apache ويسبّب حالة Denial-of-Service.</p>
+
+<h3>FrontJacking Attack</h3>
+<p>المهاجم يحقن أو يتلاعب بمكوّنات الواجهة الأمامية لتطبيق ويب عشان يخطف واجهة المستخدم أو تفاعلاته. يستهدف سيرفرات Nginx Reverse Proxy سيئة الإعداد في بيئات الاستضافة المشتركة، جامعًا بين CRLF Injection وHTTP Request Header Injection وXSS. المهاجم يحقن Host Header جديد لخطف تدفّق تنفيذ الـ Reverse Proxy واستبدال السيرفر الخلفي بسيرفر يتحكّم فيه هو.</p>
+
+<!-- LU4 -->
+
+<hr />
+
+<h2 id="lu4"><span class="num">04</span><span class="htext">منهجية هجوم الـ Web Server</span></h2>
+
+
+<p>منهجية الهجوم على الـ Web Server بتتكوّن من 6 خطوات أساسية:</p>
+<div class="step-track">
+<div class="step-item"><div class="step-num">1</div><div class="step-title">Information Gathering</div><div class="step-body"><p>كل مهاجم بيحاول يجمع أكبر قدر من المعلومات عن السيرفر الهدف، ثم يحلّلها للبحث عن ثغرات في آليات الأمان الحالية.</p></div></div>
+<div class="step-item"><div class="step-num">2</div><div class="step-title">Web Server Footprinting</div><div class="step-body"><p>جمع معلومات عن الجوانب الأمنية للسيرفر بأدوات أو تقنيات Footprinting، لتحديد قدرات الوصول عن بُعد والبورتات والخدمات وجوانب أمان أخرى.</p></div></div>
+<div class="step-item"><div class="step-num">3</div><div class="step-title">Website Mirroring</div><div class="step-body"><p>نسخ الموقع ومحتواه على سيرفر آخر للتصفح دون اتصال (Offline)، بحيث يقدر المهاجم يشوف البنية التفصيلية للموقع.</p></div></div>
+<div class="step-item"><div class="step-num">4</div><div class="step-title">Vulnerability Scanning</div><div class="step-body"><p>إيجاد الثغرات والإعدادات الخاطئة بمساعدة أدوات آلية تُسمّى Vulnerability Scanners.</p></div></div>
+<div class="step-item"><div class="step-num">5</div><div class="step-title">Session Hijacking</div><div class="step-body"><p>بعد تحديد جلسة العميل الحالية، المهاجم يستولي عليها بالكامل بتقنيات خطف الجلسات.</p></div></div>
+<div class="step-item"><div class="step-num">6</div><div class="step-title">Web Server Passwords Hacking</div><div class="step-body"><p>استخدام أساليب كسر كلمات المرور زي Brute-Force وHybrid وDictionary Attacks لكسر كلمة مرور السيرفر.</p></div></div>
+</div>
+
+
+<h3>جمع المعلومات من ملف Robots.txt</h3>
+<p>ملف <code>robots.txt</code> يحتوي قائمة مجلدات وملفات السيرفر اللي صاحب الموقع عايز يخفيها عن Web Crawlers. المهاجم يقدر ببساطة يطلب الملف من الـ URL ويستخرج معلومات حسّاسة زي بنية المجلد الجذري ومعلومات نظام إدارة المحتوى، وممكن كمان يحمّله بأداة <strong>Wget</strong>.</p>
+
+<h3>Footprinting / Banner Grabbing</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>الأداة</th><th>الوصف</th></tr></thead>
+<tbody>
+<tr><td>netcat</td><td>جمع بيانات على مستوى النظام زي تفاصيل الحسابات، نظام التشغيل، إصدارات البرمجيات، أسماء السيرفرات، وتفاصيل مخطّط قاعدة البيانات (netcat.sourceforge.net)</td></tr>
+<tr><td>httprecon</td><td>أداة لبصمة Web Server متقدّمة — تنفّذ Banner Grabbing وتعداد أكواد الحالة وتحليل ترتيب الـ Headers، وتوفّر معلومات بصمة دقيقة (computec.ch)</td></tr>
+<tr><td>Shodan</td><td>يُستخدم لجمع معلومات عن سيرفرات IIS وتحسين القدرة على تنفيذ هجمات مستهدَفة وفعّالة</td></tr>
+</tbody>
+</table></div>
+
+
+<h3>استغلال Apache mod_userdir لتعداد حسابات المستخدمين</h3>
+<p>المهاجمون يستغلّون موديول <code>mod_userdir</code> في Apache لتعداد حسابات المستخدمين بروابط زي <code>/~username/</code>. باستخدام Nmap، يقدر المهاجم يحدّد أسماء مستخدمين صالحة تساعد في الـ Brute Forcing أو هجمات التصيّد المستهدَفة.</p>
+<div class="code-wrap"><span class="code-tag">nmap — enumerate apache userdir</span><pre><code># فحص أولي لتعداد المستخدمين الصالحين بقائمة كلمات افتراضية
+nmap -p80 --script http-userdir-enum &lt;target&gt;
+
+# فحص مخصَّص — ياخد ملف .txt كمصدر لأسماء المستخدمين ويختبره ضد الهدف
+nmap -p80 --script http-userdir-enum --script-args userdir.users=&lt;Wordlist.txt&gt; &lt;target&gt;
+
+# تجاوز الكشف بتغيير الـ User Agent
+nmap -p80 --script http-brute --script-args http.useragent="&lt;User_Agent&gt;" &lt;target&gt;
+</code></pre></div>
+
+<h3>Directory Brute Forcing</h3>
+<p>لما السيرفر يستقبل طلبًا لمجلد، بيرد بإحدى الطرق التالية:</p>
+<ul>
+<li>إرجاع المصدر الافتراضي داخل المجلد</li>
+<li>إرجاع خطأ (Error)</li>
+<li>إرجاع قائمة بمحتوى المجلد (Directory Listing)</li>
+</ul>
+
+<p>قوائم المجلدات أحيانًا بتحمل ثغرات زي صلاحيات وصول غير صحيحة ووصول غير مقصود لـ Web Root السيرفر. المهاجمون يستخدمون أدوات زي <strong>Dirhunt</strong> للبحث وتحليل المجلدات، وبعد اكتشاف مجلد يطلبوه ويحاولوا يوصلوا لقوائمه، أو يستغلّوا برمجيات سيرفر ضعيفة بتسمح بالوصول لقوائم المجلدات.</p>
+<div class="callout tip"><div class="callout-label">Directory Brute Forcing بالـ AI</div><p>المهاجمون يقدروا يستخدموا تقنيات AI لتحسين وأتمتة الهجوم، وينفّذوا هجمات Directory Traversal على الدومين الهدف بسهولة أكبر.</p></div>
+
+
+<h3>Vulnerability Scanning</h3>
+<ul>
+<li>تنفيذ فحص ثغرات لتحديد نقاط الضعف في الشبكة ومعرفة إمكانية استغلال النظام</li>
+<li>استخدام أدوات زي <strong>Acunetix Web Vulnerability Scanner</strong> و<strong>Fortify WebInspect</strong> لإيجاد الأجهزة والخدمات والثغرات</li>
+<li>عمل Sniffing لحركة الشبكة لإيجاد أي أنظمة وخدمات وتطبيقات وثغرات نشطة</li>
+<li>اختبار بنية السيرفر بحثًا عن إعدادات خاطئة ومحتوى قديم وثغرات بأدوات مثل Acunetix</li>
+</ul>
+
+
+<h4>فحص ثغرات Nginx باستخدام Nginxpwner</h4>
+<p><strong>Nginxpwner</strong> أداة بلغة Python مصمَّمة لاكتشاف الإعدادات الخاطئة والثغرات الشائعة في سيرفرات Nginx القابلة للاستغلال.</p>
+<div class="code-wrap"><span class="code-tag">bash — nginxpwner scan</span><pre><code># إنشاء ملف مؤقّت لتخزين قائمة مسارات URL محتملة
+nano /tmp/pathlist
+
+# تشغيل سكربت nginxpwner
+python3 nginxpwner.py &lt;target_URL&gt; /tmp/pathlist
+</code></pre></div>
+<p>بعد التشغيل، المهاجم يحلّل المخرجات لتحديد الثغرات والإعدادات الخاطئة المحتملة في سيرفر Nginx الهدف.</p>
+
+<h3>إيجاد ثغرات قابلة للاستغلال</h3>
+<div class="step-track">
+<div class="step-item"><div class="step-num">1</div><div class="step-title">الدخول على Exploit Database</div><div class="step-body"><p>التوجّه لموقع exploit-db.com.</p></div></div>
+<div class="step-item"><div class="step-num">2</div><div class="step-title">البحث بالكلمات المفتاحية</div><div class="step-body"><p>استخدام شريط البحث بكلمات تخص السيرفر الهدف مثل "Apache" أو "IIS" أو "nginx".</p></div></div>
+<div class="step-item"><div class="step-num">3</div><div class="step-title">تطبيق الفلاتر</div><div class="step-body"><p>تضييق نتائج البحث بالفلاتر المتاحة.</p></div></div>
+<div class="step-item"><div class="step-num">4</div><div class="step-title">مراجعة النتائج</div><div class="step-body"><p>تحديد الثغرات ذات الصلة من النتائج.</p></div></div>
+<div class="step-item"><div class="step-num">5</div><div class="step-title">فتح تفاصيل الاستغلال</div><div class="step-body"><p>الاطّلاع على كود الاستغلال والوصف والمراجع.</p></div></div>
+<div class="step-item"><div class="step-num">6</div><div class="step-title">التحقّق من التوافق</div><div class="step-body"><p>مطابقة الثغرات المكتشفة مع إصدارات وإعدادات السيرفر الهدف للتأكد من الانطباق.</p></div></div>
+<div class="step-item"><div class="step-num">7</div><div class="step-title">تحميل واختبار الكود</div><div class="step-body"><p>تحميل كود الاستغلال إن كان مناسبًا واختباره على السيرفر الهدف.</p></div></div>
+</div>
+
+
+<h3>كسر كلمة مرور الـ Web Server</h3>
+<p>استخدام تقنيات كسر كلمات المرور زي Brute Force وDictionary Attack وPassword Guessing، بأدوات مثل <strong>Hashcat</strong> و<strong>THC Hydra</strong> و<strong>Ncrack</strong>.</p>
+
+<h3>استخدام Application Server كـ Proxy</h3>
+<p>بعض السيرفرات مُعدَّة لتنفيذ وظائف Forwarding أو Reverse HTTP Proxy. المهاجمون يستغلّون هذه الوظائف لتنفيذ:</p>
+<ul>
+<li>مهاجمة أنظمة طرف ثالث على الإنترنت</li>
+<li>الاتصال بمضيفين عشوائيين داخل شبكة المؤسسة الداخلية</li>
+<li>الاتصال مرة أخرى بخدمات تانية شغّالة على جهاز البروكسي نفسه</li>
+</ul>
+
+<p>المهاجمون يستخدمون طلبات <code>GET</code> و<code>CONNECT</code> لاستخدام السيرفرات الضعيفة كـ Proxy للاتصال بالأنظمة الهدف والحصول على معلومات منها.</p>
+
+<h3>Path Traversal عبر NGINX Alias سيئ الإعداد</h3>
+<p>المهاجم يستغل إعدادًا خاطئًا في ملف <code>nginx.conf</code> يخص استخدام التوجيه <code>alias</code>:</p>
+<div class="code-wrap"><span class="code-tag">nginx.conf — webroot misconfiguration</span><pre><code>location /i {
+    alias /data/w3/images/;
+}
+</code></pre></div>
+<p>غياب الـ Trailing Slash بيسمح للمهاجم بالتلاعب في الـ URL للوصول لمجلدات وملفات خارج الـ Webroot المحدَّد.</p>
+
+<!-- LU5 -->
+
+<hr />
+
+<h2 id="lu5"><span class="num">05</span><span class="htext">الإجراءات المضادة وأدوات الحماية</span></h2>
+
+
+
+<h3>الإجراءات المضادة: التحديثات والـ Patches</h3>
+<ol>
+<li>فحص الثغرات الحالية وتطبيق Patches وتحديث برمجيات السيرفر بانتظام</li>
+<li>قبل تطبيق أي Service Pack أو Hotfix أو Patch أمني، قراءة ومراجعة كل التوثيق ذي الصلة</li>
+<li>التأكد إن مستويات Service Packs وHotfixes وPatches متسقة على كل الـ Domain Controllers (DCs)</li>
+<li>التأكد من جدولة فترات توقّف السيرفر، وتوفّر نسخ احتياطية وأقراص إصلاح طوارئ كاملة</li>
+<li>تطبيق كل التحديثات، بصرف النظر عن نوعها، على أساس "عند الحاجة"</li>
+<li>اختبار Service Packs وHotfixes في بيئة تمثيلية غير إنتاجية قبل النشر الفعلي</li>
+<li>الاحتفاظ بخطة تراجع (Back-Out Plan) تسمح للنظام والمؤسسة بالرجوع لحالتها الأصلية بعد أي تطبيق فاشل</li>
+<li>جدولة ترقيات Service Pack دوريًا كجزء من صيانة العمليات، وعدم التأخر بأكثر من Service Packين</li>
+</ol>
+
+<h3>الإجراءات المضادة: البروتوكولات</h3>
+<ul>
+<li>حظر كل البورتات غير الضرورية وحركة ICMP والبروتوكولات غير اللازمة</li>
+<li>تقوية Stack الخاص بـ TCP/IP وتطبيق أحدث Patches والتحديثات بانتظام</li>
+<li>لو بروتوكولات غير آمنة زي Telnet وSMTP وFTP مستخدمة، اتخاذ إجراءات لتأمين الـ Authentication والاتصال، مثل استخدام سياسات IPsec</li>
+<li>لو الوصول عن بُعد مطلوب، التأكد من تأمين الاتصالات باستخدام بروتوكولات Tunneling والتشفير</li>
+<li>استخدام بروتوكولات آمنة زي TLS/SSL للتواصل مع السيرفر</li>
+</ul>
+
+
+<h3>الإجراءات المضادة: الحسابات</h3>
+<ul>
+<li>إزالة كل الموديولات والإضافات غير المستخدَمة</li>
+<li>تعطيل حسابات المستخدمين الافتراضية غير المستخدَمة اللي اتعملت أثناء تثبيت نظام التشغيل</li>
+<li>عند إنشاء Web Root Directory جديد، منح صلاحيات NTFS المناسبة (الأقل الممكن) للمستخدمين المجهولين على سيرفر IIS للوصول للمحتوى</li>
+<li>التخلّص من مستخدمي قاعدة البيانات والإجراءات المخزَّنة غير الضرورية واتّباع مبدأ أقل الصلاحيات للتطبيق للدفاع ضد SQL Query Poisoning</li>
+<li>استخدام صلاحيات ويب آمنة، وصلاحيات NTFS، وآليات تحكّم وصول .NET Framework بما فيها URL Authorization</li>
+<li>إبطاء هجمات Brute-Force وDictionary بسياسات كلمات مرور قوية، وتطبيق تدقيق وتنبيهات لمحاولات الدخول الفاشلة</li>
+</ul>
+
+
+<h3>الإجراءات المضادة: الملفات والمجلدات</h3>
+<ul>
+<li>التخلّص من الملفات غير الضرورية داخل ملفات .jar</li>
+<li>التخلّص من معلومات الإعدادات الحسّاسة داخل الـ Byte Code</li>
+<li>تجنّب ربط مجلدات افتراضية (Virtual Directories) بين سيرفرين مختلفين أو عبر الشبكة</li>
+<li>مراقبة وفحص كل سجلات خدمات الشبكة وسجلات الوصول للموقع وسجلات سيرفرات قواعد البيانات (مثل MS SQL Server وMySQL وOracle) وسجلات نظام التشغيل بانتظام</li>
+<li>تعطيل عرض قوائم المجلدات (Directory Listings)</li>
+<li>تعطيل تقديم أنواع ملفات معيّنة بإنشاء Resource Map</li>
+<li>التخلّص من الملفات غير المتعلّقة بالويب مثل ملفات الأرشيف والنسخ الاحتياطية والملفات النصية وملفات Header/Include</li>
+</ul>
+
+
+<h3>كشف محاولات اختراق الـ Web Server</h3>
+<p>نظام كشف تغييرات الموقع (<strong>Website Change Detection System</strong>) بيعتمد على:</p>
+<div class="step-track">
+<div class="step-item"><div class="step-num">1</div><div class="step-title">تشغيل سكربت على السيرفر</div><div class="step-body"><p>يكتشف أي تغييرات في ملف تنفيذي موجود أو ملف جديد على السيرفر.</p></div></div>
+<div class="step-item"><div class="step-num">2</div><div class="step-title">مقارنة قيم Hash دوريًا</div><div class="step-body"><p>مقارنة Hash Values لملفات السيرفر بالقيمة الأساسية (Master Hash) المرجعية لكشف أي تغيير في الكود.</p></div></div>
+<div class="step-item"><div class="step-num">3</div><div class="step-title">تنبيه المستخدم</div><div class="step-body"><p>إرسال تنبيه فوري للمستخدم عند اكتشاف أي تغيير على السيرفر.</p></div></div>
+</div>
+
+<div class="callout tip"><div class="callout-label">مثال</div><p>أداة <strong>DirectoryMonitor</strong> تفحص كل مجلدات الويب تلقائيًا وتكتشف أي تغييرات في الكود وتنبّه المستخدم بإيميل عند اكتشافها.</p></div>
+
+
+<h3>كيفية الدفاع ضد DNS Hijacking</h3>
+<ol>
+<li>اختيار Registrar معتمد من ICANN وتفعيل Registrar-Lock على اسم الدومين</li>
+<li>تأمين معلومات حساب المالك (Registrant)</li>
+<li>تضمين DNS Hijacking في خطط الاستجابة للحوادث واستمرارية الأعمال</li>
+<li>استخدام أدوات/خدمات مراقبة DNS لمتابعة عنوان IP الخاص بسيرفر DNS وضبط تنبيهات</li>
+<li>تجنّب تحميل Codecs صوتية وفيديو وأدوات تحميل أخرى من مواقع غير موثوقة</li>
+<li>تثبيت برنامج مكافحة فيروسات وتحديثه بانتظام</li>
+<li>تغيير كلمة مرور الراوتر الافتراضية اللي بتيجي من المصنِّع</li>
+</ol>
+
+<!-- CHEAT -->
+
+<hr />
+
+<h2 id="cheat"><span class="htext">Cheat Sheet مرجعي</span></h2>
+
+
+<div class="cheat-section">
+
+<h4>مقارنة هجمات الـ Web Server</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>الهجوم</th><th>الهدف</th><th>الأثر الرئيسي</th></tr></thead>
+<tbody>
+<tr><td>DNS Server Hijacking</td><td>سيرفر DNS</td><td>إعادة توجيه الطلبات لسيرفر المهاجم</td></tr>
+<tr><td>DNS Amplification</td><td>سيرفرات DNS</td><td>تضخيم الحركة عبر استعلامات Recursive</td></tr>
+<tr><td>Directory Traversal</td><td>بنية الملفات</td><td>الوصول لملفات خارج Web Root عبر ../</td></tr>
+<tr><td>Website Defacement</td><td>محتوى الموقع</td><td>تغيير المظهر البصري أو استبدال الموقع</td></tr>
+<tr><td>Web Server Misconfiguration</td><td>إعدادات السيرفر</td><td>ثغرة مدخل لهجمات أخرى (Traversal، Intrusion)</td></tr>
+<tr><td>HTTP Response Splitting</td><td>Request Headers</td><td>تقسيم الاستجابة لاستجابتين وإعادة توجيه خبيثة</td></tr>
+<tr><td>Web Cache Poisoning</td><td>الـ Cache الوسيط</td><td>تقديم محتوى مسمَّم للمستخدمين</td></tr>
+<tr><td>SSH Brute Force</td><td>بيانات دخول SSH</td><td>وصول غير مصرّح لنفق SSH</td></tr>
+<tr><td>HTTP/2 Continuation Flood</td><td>إطارات CONTINUATION</td><td>استنزاف موارد السيرفر — DoS</td></tr>
+<tr><td>FrontJacking</td><td>Reverse Proxy (Nginx)</td><td>خطف واجهة المستخدم عبر CRLF/Header Injection/XSS</td></tr>
+</tbody>
+</table></div>
+
+
+<h4>أدوات حسب الوظيفة</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>الفئة</th><th>أدوات بارزة</th></tr></thead>
+<tbody>
+<tr><td>Banner Grabbing / Footprinting</td><td>netcat، httprecon، Shodan</td></tr>
+<tr><td>Directory Brute Forcing</td><td>Dirhunt</td></tr>
+<tr><td>Vulnerability Scanning</td><td>Acunetix Web Vulnerability Scanner، Fortify WebInspect، Nginxpwner</td></tr>
+<tr><td>Password Cracking</td><td>Hashcat، THC Hydra، Ncrack</td></tr>
+<tr><td>Web App Security Scanners</td><td>Burp Suite، Wapiti، Skipfish، Detectify، OWASP ZAP، SonarQube، Arachni</td></tr>
+<tr><td>Patch Management</td><td>SolarWinds Patch Manager، Kaseya Patch Management، Ivanti Patch for Endpoint Manager</td></tr>
+<tr><td>Pen Testing</td><td>Cobalt Strike، Fuxploider، Mitmproxy</td></tr>
+<tr><td>Malware Infection Monitoring</td><td>Sucuri SiteCheck، SiteLock، Quttera، SiteGuarding</td></tr>
+</tbody>
+</table></div>
+
+
+</div>
+
+<!-- SUMMARY -->
+
+<hr />
+
+<h2 id="summary"><span class="htext">الخلاصة العامة للموديول</span></h2>
+
+
+<p>الموديول ده ناقش بالتفصيل المفاهيم العامة لسيرفرات الويب، وأنواع التهديدات والهجمات المختلفة عليها، ومنهجية هجوم الـ Web Server (جمع المعلومات، الـ Footprinting، فحص الثغرات، كسر كلمات المرور)، وأدوات اختراق السيرفرات المتنوّعة. كذلك تطرّق للإجراءات المضادة اللي يقدر المدافعون يستخدموها لمنع محاولات الاختراق، واختتم بمناقشة تفصيلية لكيفية تأمين السيرفرات باستخدام أدوات حماية مختلفة.</p>
+
+<div class="takeaways">
+<div class="takeaways-title">$ cat ./module13_summary.txt</div>
+<ul>
+<li>السيرفرات معرَّضة أكتر من غيرها لأنها لازم تكون متاحة من أي مكان على الإنترنت — عكس أنظمة داخلية ممكن تتحمي بسهولة بالـ Firewall وحده</li>
+<li>أغلب الثغرات في Apache وIIS وNginx بترجع لتحقّق إدخال ناقص (Input Validation) — سواء في Headers أو Certificates أو استعلامات SQL</li>
+<li>Directory Traversal وWeb Cache Poisoning وResponse Splitting كلها بتستغل ثقة السيرفر الزايدة في المدخلات أو المحتوى المخزَّن مؤقّتًا</li>
+<li>منهجية الهجوم بتتدرّج من جمع معلومات سلبي (robots.txt، Banner Grabbing) لنشاط فعّال (Vulnerability Scanning، Password Cracking)</li>
+<li>الدفاع الأساسي: Patching منتظم، تقليل البروتوكولات والخدمات المفتوحة، أقل صلاحيات ممكنة للحسابات، ومراقبة دورية لتغييرات الكود عبر Hash Comparison</li>
+</ul>
+</div>
+
+<blockquote>
+<p><strong>السيرفر اللي مكشوف للعالم كله هو أول نقطة هجوم غالبًا، مش آخرها.</strong> من robots.txt لحد Directory Listing، كل تفصيلة صغيرة في الإعداد بتبني صورة للمهاجم عن بنية النظام قبل ما يوصل لأي ثغرة فعلية.</p>
+</blockquote>
+
+<div class="callout examtip"><div class="callout-label">Exam Tip</div><p>أسئلة هذا الموديول غالبًا تُركِّز على: الفرق بين Document Root وServer Root وVirtual Document Tree، أنواع الـ Virtual Hosting، ترتيب خطوات منهجية هجوم الـ Web Server الستة، الفرق بين Directory Traversal وDirectory Brute Forcing، وآلية HTTP Response Splitting وWeb Cache Poisoning.</p></div>
+
+
+<hr />
+<p><em>نهاية نوتس الموديول الثالث عشر — Hacking Web Servers</em></p>
+<div class="footer-note">-- EOF: module-13/web-servers.md --</div>
+</div>
+
+<script>
+(function(){
+  var root=document.documentElement,btn=document.getElementById('themeSwitch');
+  function applyTheme(t){root.setAttribute('data-theme',t);btn.textContent='theme: '+t;try{localStorage.setItem('oscp-notes-theme',t);}catch(e){}}
+  var saved='dark';try{saved=localStorage.getItem('oscp-notes-theme')||'dark';}catch(e){}
+  applyTheme(saved);
+  btn.addEventListener('click',function(){applyTheme(root.getAttribute('data-theme')==='dark'?'light':'dark');});
+  var bar=document.getElementById('progressBar');
+  function onScroll(){var h=document.documentElement,s=h.scrollTop,ht=h.scrollHeight-h.clientHeight;bar.style.width=(ht>0?(s/ht*100):0)+'%';var t=document.getElementById('toTop');s>500?t.classList.add('show'):t.classList.remove('show');}
+  document.addEventListener('scroll',onScroll);onScroll();
+  document.getElementById('toTop').addEventListener('click',function(){window.scrollTo({top:0,behavior:'smooth'});});
+  document.querySelectorAll('.code-wrap').forEach(function(wrap){
+    var c=wrap.querySelector('code');if(!c)return;
+    var b=document.createElement('button');b.className='copy-btn';b.textContent='copy';
+    b.addEventListener('click',function(){if(navigator.clipboard){navigator.clipboard.writeText(c.innerText).then(function(){b.textContent='copied ✓';b.classList.add('copied');setTimeout(function(){b.textContent='copy';b.classList.remove('copied');},1500);});}});
+    wrap.appendChild(b);
+  });
+})();
+</script>
+</body>
+</html>

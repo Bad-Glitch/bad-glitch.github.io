@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CEHv13 · Module 17: Hacking Mobile Platforms</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-0:#0B0B0D;--bg-1:#121214;--surface:#17171A;--surface-2:#1D1D21;
+    --border:#2A2A2F;--border-soft:#232326;
+    --text:#E6E6E9;--text-soft:#C4C4CA;--muted:#8A8A92;
+    --red:#E1362F;--red-soft:rgba(225,54,47,0.10);--red-border:rgba(225,54,47,0.35);
+    --red-grad:linear-gradient(90deg,#E1362F,#F2794A);
+    --amber:#E8A23A;--amber-soft:rgba(232,162,58,0.09);--amber-border:rgba(232,162,58,0.30);
+    --green:#3FBF6E;--green-soft:rgba(63,191,110,0.09);--green-border:rgba(63,191,110,0.30);
+    --blue:#4EA1D3;--blue-soft:rgba(78,161,211,0.09);--blue-border:rgba(78,161,211,0.30);
+    --purple:#A179E8;--purple-soft:rgba(161,121,232,0.10);--purple-border:rgba(161,121,232,0.32);
+    --mono:'IBM Plex Mono','Courier New',monospace;
+  }
+  html[data-theme="light"]{--bg-0:#F4F3F1;--bg-1:#ECEBE8;--surface:#FFFFFF;--surface-2:#F3F2EF;--border:#DEDCD6;--border-soft:#E6E4DF;--text:#1C1B19;--text-soft:#3C3A36;--muted:#726F68;}
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;direction:rtl;text-align:right;background:var(--bg-0);}
+  body{font-family:'Cairo','Segoe UI',Tahoma,sans-serif;line-height:1.95;font-size:16.5px;color:var(--text);
+    background:radial-gradient(900px 420px at 12% -8%,rgba(225,54,47,0.10),transparent 60%),radial-gradient(800px 420px at 90% 6%,rgba(232,162,58,0.06),transparent 60%),linear-gradient(180deg,var(--bg-0) 0%,var(--bg-1) 100%);
+    background-attachment:fixed;transition:background 0.2s ease,color 0.2s ease;}
+  html[data-theme="light"] body{background:radial-gradient(900px 420px at 12% -8%,rgba(225,54,47,0.06),transparent 60%),radial-gradient(800px 420px at 90% 6%,rgba(232,162,58,0.05),transparent 60%),linear-gradient(180deg,var(--bg-0) 0%,var(--bg-1) 100%);}
+  .progress-rail{position:fixed;top:0;inset-inline:0;height:3px;background:rgba(255,255,255,0.04);z-index:60;}
+  html[data-theme="light"] .progress-rail{background:rgba(0,0,0,0.05);}
+  .progress-bar{height:100%;width:0%;background:var(--red-grad);transition:width 0.08s linear;}
+  .float-controls{position:fixed;bottom:22px;left:22px;z-index:55;display:flex;flex-direction:column;gap:10px;}
+  .fctrl-btn{width:42px;height:42px;border-radius:50%;background:var(--surface);border:1px solid var(--border);color:var(--text-soft);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;box-shadow:0 10px 24px -10px rgba(0,0,0,0.5);transition:transform 0.15s ease,border-color 0.15s ease,opacity 0.2s ease;}
+  .fctrl-btn:hover{transform:translateY(-2px);border-color:var(--red-border);color:var(--red);}
+  #toTop{opacity:0;pointer-events:none;}#toTop.show{opacity:1;pointer-events:auto;}
+  .page{max-width:860px;margin:0 auto;padding:46px 22px 100px;}
+  .banner{position:relative;overflow:hidden;background:linear-gradient(155deg,var(--surface) 0%,var(--bg-1) 55%,var(--surface) 100%);border:1px solid var(--border-soft);border-radius:10px;padding:0 0 34px;margin-bottom:26px;box-shadow:0 20px 50px -20px rgba(0,0,0,0.6);}
+  .term-bar{display:flex;align-items:center;gap:8px;padding:13px 18px;border-bottom:1px solid var(--border-soft);background:rgba(255,255,255,0.015);direction:ltr;}
+  .term-dot{width:11px;height:11px;border-radius:50%;display:inline-block;}.term-dot.r{background:#E1362F;}.term-dot.y{background:#E8A23A;}.term-dot.g{background:#3FBF6E;}
+  .term-path{margin-inline-start:12px;font-family:var(--mono);font-size:12px;color:var(--muted);}
+  .theme-switch{margin-inline-start:auto;font-family:var(--mono);font-size:11px;color:var(--muted);background:transparent;border:1px solid var(--border);border-radius:4px;padding:4px 9px;cursor:pointer;}
+  .theme-switch:hover{color:var(--amber);border-color:var(--amber-border);}
+  .banner-body{padding:30px 34px 4px;}
+  .banner .kicker{display:inline-block;font-family:var(--mono);font-size:12.5px;letter-spacing:0.03em;color:var(--red);background:var(--red-soft);border:1px solid var(--red-border);border-radius:3px;padding:5px 12px;margin-bottom:20px;direction:ltr;}
+  .banner h1{margin:0 0 14px;font-size:28px;font-weight:800;line-height:1.5;color:var(--text);}
+  .banner .lede{color:var(--muted);font-size:15.5px;line-height:1.95;max-width:640px;margin:0 0 24px;}
+  .tags{display:flex;flex-wrap:wrap;gap:9px;}
+  .tag{font-size:12.5px;font-family:var(--mono);color:var(--amber);background:var(--amber-soft);border:1px solid var(--amber-border);border-radius:3px;padding:5px 11px;}
+  .toc{background:var(--surface);border:1px solid var(--border-soft);border-radius:8px;padding:6px 0 6px;margin-bottom:50px;overflow:hidden;}
+  .toc-title{font-family:var(--mono);font-weight:600;font-size:13px;color:var(--green);padding:14px 22px;border-bottom:1px solid var(--border-soft);direction:ltr;text-align:left;}
+  .toc-list{display:flex;flex-direction:column;}
+  .toc-item{display:flex;align-items:center;gap:14px;padding:12px 22px;color:var(--text-soft);text-decoration:none;font-size:14.5px;border-bottom:1px solid rgba(255,255,255,0.03);transition:background 0.15s ease;}
+  .toc-list .toc-item:last-child{border-bottom:none;}
+  .toc-item:hover{background:var(--red-soft);}
+  .toc-num{flex:none;font-family:var(--mono);font-size:12.5px;font-weight:600;color:#0F0F10;background:var(--red-grad);border-radius:3px;padding:3px 8px;direction:ltr;}
+  h1,h2,h3,h4{font-weight:700;}
+  h2{display:flex;align-items:center;gap:14px;font-size:21px;margin:66px 0 22px;padding-bottom:16px;border-bottom:1px solid var(--border-soft);color:var(--text);}
+  h2 .num{flex:none;font-family:var(--mono);font-size:13px;font-weight:700;color:#0F0F10;background:var(--red-grad);border-radius:5px;padding:7px 12px;direction:ltr;}
+  h2 .htext{line-height:1.5;}
+  h3{font-size:17px;margin:34px 0 14px;color:var(--red);display:flex;align-items:center;gap:9px;}
+  h3::before{content:"#";font-family:var(--mono);color:var(--amber);font-weight:700;}
+  h4{font-size:14.8px;margin:22px 0 10px;color:var(--text-soft);font-family:var(--mono);}
+  p{margin:0 0 17px;color:var(--text);}
+  strong{color:var(--text);font-weight:700;}:root:not([data-theme="light"]) strong{color:#FBFBFC;}
+  a{color:var(--amber);text-decoration:none;border-bottom:1px dashed var(--amber-border);}
+  hr{border:none;height:1px;margin:50px 0;background:linear-gradient(90deg,transparent,var(--border),transparent);}
+  ul,ol{margin:0 0 18px;padding-inline-start:24px;}
+  li{margin-bottom:9px;color:var(--text);}li::marker{color:var(--red);font-family:var(--mono);}li>ul,li>ol{margin-top:9px;}
+  blockquote{margin:24px 0;padding:17px 22px;background:var(--red-soft);border:1px solid var(--red-border);border-inline-start:3px solid var(--red);border-radius:6px;color:var(--text-soft);}
+  blockquote p{margin:0;color:inherit;line-height:1.85;}blockquote p+p{margin-top:10px;}blockquote strong{color:var(--text);}
+  .callout{margin:24px 0;padding:17px 22px 18px;border-radius:6px;border:1px solid var(--border-soft);border-inline-start:3px solid var(--border);background:var(--surface);}
+  .callout p{margin:0;color:var(--text-soft);line-height:1.85;}.callout p+p{margin-top:10px;}.callout ul,.callout ol{margin:6px 0 0;}
+  .callout-label{display:inline-flex;align-items:center;gap:7px;font-family:var(--mono);font-size:11.5px;font-weight:700;letter-spacing:0.02em;text-transform:uppercase;margin-bottom:10px;direction:ltr;}
+  .callout.note{border-inline-start-color:var(--blue);background:var(--blue-soft);}.callout.note .callout-label{color:var(--blue);}
+  .callout.warning{border-inline-start-color:var(--red);background:var(--red-soft);}.callout.warning .callout-label{color:var(--red);}
+  .callout.tip{border-inline-start-color:var(--green);background:var(--green-soft);}.callout.tip .callout-label{color:var(--green);}
+  .callout.examtip{border-inline-start-color:var(--purple);background:var(--purple-soft);}.callout.examtip .callout-label{color:var(--purple);}
+  .callout.case{border-inline-start-color:var(--amber);background:var(--amber-soft);}.callout.case .callout-label{color:var(--amber);}
+  .callout.definition{border-inline-start-color:var(--muted);background:var(--surface-2);}.callout.definition .callout-label{color:var(--text-soft);}
+  .callout.danger{border-inline-start-color:#FF5A52;background:rgba(255,90,82,0.08);}.callout.danger .callout-label{color:#FF5A52;}
+  .table-wrap{overflow-x:auto;margin:22px 0;border:1px solid var(--border-soft);border-radius:8px;}
+  table{width:100%;border-collapse:collapse;font-size:14.2px;min-width:480px;}
+  thead th{background:var(--surface-2);color:var(--amber);font-weight:700;font-family:var(--mono);font-size:12.5px;text-transform:uppercase;letter-spacing:0.02em;text-align:start;padding:13px 15px;border-bottom:1px solid var(--border-soft);white-space:nowrap;}
+  tbody td{padding:12px 15px;border-bottom:1px solid var(--border-soft);color:var(--text-soft);vertical-align:top;}
+  tbody tr:last-child td{border-bottom:none;}tbody tr:nth-child(even){background:rgba(127,127,127,0.03);}tbody tr:hover{background:var(--red-soft);}
+  code{font-family:var(--mono);font-size:13.3px;background:var(--surface-2);border:1px solid var(--border-soft);border-radius:4px;padding:2px 6px;direction:ltr;unicode-bidi:embed;color:var(--green);}
+  .code-wrap{position:relative;overflow-x:auto;margin:22px 0;}
+  .code-tag{position:absolute;top:10px;left:14px;font-family:var(--mono);font-size:10.5px;color:var(--muted);letter-spacing:0.04em;text-transform:uppercase;z-index:2;}
+  .copy-btn{position:absolute;top:8px;right:10px;z-index:2;font-family:var(--mono);font-size:11px;color:var(--muted);background:var(--surface-2);border:1px solid var(--border-soft);border-radius:4px;padding:4px 9px;cursor:pointer;direction:ltr;}
+  .copy-btn:hover{color:var(--amber);border-color:var(--amber-border);}.copy-btn.copied{color:var(--green);border-color:var(--green-border);}
+  pre{background:var(--bg-0);border:1px solid var(--border-soft);border-inline-start:3px solid var(--red);border-radius:8px;padding:30px 22px 18px;direction:ltr;text-align:left;margin:0;}
+  html[data-theme="light"] pre{background:#16181C;}
+  pre code{background:none;border:none;padding:0;color:#B9E8C9;font-size:13.2px;line-height:1.75;}
+  .diagram-card{background:var(--surface);border:1px solid var(--border-soft);border-radius:10px;padding:22px 18px 16px;margin:24px 0;}
+  .diagram-card svg{width:100%;height:auto;display:block;}
+  .diagram-caption{margin-top:10px;text-align:center;font-family:var(--mono);font-size:11.5px;color:var(--muted);}
+  .takeaways{background:var(--surface);border:1px solid var(--border-soft);border-radius:8px;padding:18px 22px 20px;margin:30px 0 10px;}
+  .takeaways-title{font-family:var(--mono);font-size:12.5px;font-weight:700;color:var(--green);margin-bottom:12px;direction:ltr;text-align:left;display:flex;align-items:center;gap:8px;}
+  .takeaways ul{margin:0;padding-inline-start:20px;}.takeaways li{color:var(--text-soft);font-size:14.5px;}
+  .step-track{display:flex;flex-direction:column;gap:0;margin:24px 0;}
+  .step-item{position:relative;padding:0 0 26px 0;padding-inline-start:46px;border-inline-start:2px solid var(--border-soft);}
+  .step-item:last-child{border-inline-start:2px solid transparent;padding-bottom:4px;}
+  .step-num{position:absolute;inset-inline-start:-17px;top:0;width:32px;height:32px;border-radius:50%;background:var(--red-grad);color:#0F0F10;font-family:var(--mono);font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;}
+  .step-title{font-weight:700;color:var(--text);margin-bottom:6px;font-size:15px;}
+  .step-body{color:var(--text-soft);font-size:14.5px;}.step-body p{margin:0 0 10px;}.step-body p:last-child{margin-bottom:0;}.step-body ul{margin:8px 0 0;}
+  .method-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px;margin:22px 0;}
+  .method-card{background:var(--surface);border:1px solid var(--border-soft);border-radius:8px;padding:14px 16px;}
+  .method-card .mtitle{font-weight:700;color:var(--text);font-size:14px;margin-bottom:5px;}.method-card .mdesc{color:var(--text-soft);font-size:13.3px;line-height:1.75;}
+  .cheat-section h4{color:var(--amber);font-size:13px;margin:26px 0 8px;}
+  .footer-note{margin-top:70px;padding-top:26px;border-top:1px solid var(--border-soft);color:var(--muted);font-size:13.3px;font-family:var(--mono);text-align:center;direction:ltr;}
+  @media print{.float-controls,.progress-rail,.copy-btn,.theme-switch{display:none !important;}body{background:#fff;color:#000;}.page{max-width:100%;}}
+  @media(max-width:640px){.page{padding:28px 14px 70px;}.banner-body{padding:24px 20px 4px;}.banner h1{font-size:21px;}h2{font-size:18px;gap:10px;}.float-controls{left:12px;bottom:14px;}}
+</style>
+</head>
+<body>
+<div class="progress-rail"><div class="progress-bar" id="progressBar"></div></div>
+<div class="float-controls"><button class="fctrl-btn" id="toTop" title="ارجع لفوق">↑</button></div>
+
+<div class="page">
+<div class="banner">
+  <div class="term-bar">
+    <span class="term-dot r"></span><span class="term-dot y"></span><span class="term-dot g"></span>
+    <span class="term-path">root@ceh:~/module-17$</span>
+    <button class="theme-switch" id="themeSwitch">theme: dark</button>
+  </div>
+  <div class="banner-body">
+    <span class="kicker">EC-Council · CEHv13 · Module 17</span>
+    <h1>Hacking Mobile Platforms</h1>
+    <p class="lede">من OWASP Top 10 Mobile Risks ومتجهات الهجوم (Browser وSMS وApp وNetwork وCloud)، مرورًا بهجمات Android (Rooting وADB وMetasploit وMITD وSpearphone وAgent Smith وSimjacker) وهجمات iOS (Jailbreaking وTrustjacking وSeaShell وMethod Swizzling وKeychain Dumper)، ووصولاً لـ MDM وBYOD والإجراءات المضادة وأدوات الأمان.</p>
+    <div class="tags">
+      <span class="tag">android-hacking</span><span class="tag">ios-hacking</span>
+      <span class="tag">rooting-jailbreak</span><span class="tag">mdm-byod</span>
+      <span class="tag">smishing-simjacker</span><span class="tag">krack-mitd</span>
+      <span class="tag">mobsf</span><span class="tag">objection-frida</span>
+    </div>
+  </div>
+</div>
+
+<nav class="toc"><div class="toc-title">$ ls learning_units/</div><div class="toc-list">
+  <a class="toc-item" href="#lu1"><span class="toc-num">01</span><span>متجهات الهجوم على المنصات المحمولة (OWASP Top 10 Mobile)</span></a>
+  <a class="toc-item" href="#lu2"><span class="toc-num">02</span><span>التهديدات والهجمات على نظام Android</span></a>
+  <a class="toc-item" href="#lu3"><span class="toc-num">03</span><span>التهديدات والهجمات على نظام iOS</span></a>
+  <a class="toc-item" href="#lu4"><span class="toc-num">04</span><span>Mobile Device Management (MDM) وBYOD</span></a>
+  <a class="toc-item" href="#lu5"><span class="toc-num">05</span><span>إرشادات الأمان والإجراءات المضادة</span></a>
+  <a class="toc-item" href="#cheat"><span class="toc-num">--</span><span>Cheat Sheet مرجعي</span></a>
+  <a class="toc-item" href="#summary"><span class="toc-num">--</span><span>الخلاصة العامة للموديول</span></a>
+</div></nav>
+
+<!-- LU1 -->
+<h2 id="lu1"><span class="num">01</span><span class="htext">متجهات الهجوم على المنصات المحمولة</span></h2>
+
+<h3>OWASP Top 10 Mobile Risks 2024</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>الترتيب</th><th>الفئة</th><th>الشرح</th></tr></thead>
+<tbody>
+<tr><td>M1</td><td>Improper Credential Usage</td><td>مخاطر التعامل غير الآمن مع بيانات الاعتماد — Hardcoded Credentials، تخزين في مواقع غير محميّة، إرسال بدون تشفير، أساليب مصادقة ضعيفة</td></tr>
+<tr><td>M2</td><td>Inadequate Supply Chain Security</td><td>مخاطر المكوّنات والمكتبات الخارجية القديمة أو المعيبة — ممارسات برمجة غير آمنة، مراجعة كود غير كافية، اختبار ناقص</td></tr>
+<tr><td>M3</td><td>Insecure Authentication/Authorization</td><td>إساءة استخدام آليات المصادقة والتفويض — سياسات كلمات مرور ضعيفة، تعامل غير آمن مع Token، فحوص تفويض خاطئة. يُكتشَف عبر Binary Attacks أو تنفيذ وظائف مميَّزة بـ Token منخفض الصلاحيات</td></tr>
+<tr><td>M4</td><td>Insufficient Input/Output Validation</td><td>تحقّق غير كافٍ من المدخلات — يؤدّي لـ SQL Injection وCommand Injection وXSS</td></tr>
+<tr><td>M5</td><td>Insecure Communication</td><td>بروتوكولات اتصال غير آمنة أو منتهية الصلاحية، شهادات SSL غير صالحة — يُتيح الاعتراض والتلاعب في البيانات</td></tr>
+<tr><td>M7</td><td>Insufficient Binary Protections</td><td>غياب حماية ضد التلاعب بالكود وHacking Reverse Engineering — Binary Attacks وإنشاء تطبيقات مزيّفة وتوزيعها</td></tr>
+<tr><td>M8</td><td>Security Misconfiguration</td><td>إعدادات أمان خاطئة أو غير مكتملة — تشفير ضعيف، تخزين غير محمي، Access Controls مُهيَّأة بشكل خاطئ</td></tr>
+<tr><td>M9</td><td>Insecure Data Storage</td><td>تخزين غير آمن للبيانات الحسّاسة — تخزين نص واضح، قواعد بيانات غير محمية، تشفير ضعيف</td></tr>
+<tr><td>M10</td><td>Insufficient Cryptography</td><td>خوارزميات تشفير ضعيفة أو قديمة، إدارة مفاتيح سيئة، ثغرات تنفيذ — يُتيح فكّ التشفير والوصول لمعلومات حسّاسة</td></tr>
+</tbody>
+</table></div>
+
+
+<h3>تشريح هجوم الموبايل — نقاط الدخول</h3>
+
+<h4>الجهاز (Device)</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>الفئة</th><th>أسلوب الهجوم</th><th>الشرح</th></tr></thead>
+<tbody>
+<tr><td>Browser-based</td><td>Phishing</td><td>بريد إلكتروني أو نوافذ Popup تُعيد توجيه المستخدمين لصفحات وهمية — أجهزة الموبايل أكثر عرضةً (شاشة صغيرة وURLs مختصرة)</td></tr>
+<tr><td>Browser-based</td><td>Framing</td><td>تضمين صفحة ويب خبيثة داخل صفحة موثوقة بـ iFrame + Clickjacking لسرقة بيانات حسّاسة</td></tr>
+<tr><td>Browser-based</td><td>Clickjacking (UI Redress)</td><td>خداع المستخدم للنقر على شيء مختلف عمّا يظنّه — يُتيح سرقة المعلومات أو التحكّم في الجهاز</td></tr>
+<tr><td>Browser-based</td><td>Man-in-the-Mobile</td><td>حقن كود خبيث في الجهاز لاعتراض OTPs المُرسَلة بـ SMS أو مكالمات صوتية وإعادة إرسالها للمهاجم</td></tr>
+<tr><td>Browser-based</td><td>Data Caching</td><td>استغلال ذاكرة Cache في الجهاز لاستخراج بيانات حسّاسة مخزَّنة</td></tr>
+<tr><td>Phone/SMS</td><td>Baseband Attacks</td><td>استغلال ثغرات في معالج GSM/3GPP Baseband الذي يُرسِل/يستقبل الإشارات الراديوية</td></tr>
+<tr><td>Phone/SMS</td><td>SMiShing</td><td>إرسال SMS يحتوي روابط خبيثة أو أرقام هواتف لاستخراج SSN وبطاقات الائتمان وبيانات البنك</td></tr>
+<tr><td>Application</td><td>Sensitive Data Storage</td><td>تطبيقات ذات بنية قاعدة بيانات ضعيفة تُعرِّض بيانات المستخدمين</td></tr>
+<tr><td>Application</td><td>No/Weak Encryption</td><td>تطبيقات تُرسِل بيانات غير مشفَّرة أو بتشفير ضعيف — Session Hijacking</td></tr>
+<tr><td>Application</td><td>Dynamic Runtime Injection</td><td>التلاعب في Runtime التطبيق لتجاوز قفل الأمان ومنطق الفحص والوصول لأجزاء مميَّزة</td></tr>
+<tr><td>System</td><td>iOS Jailbreaking</td><td>إزالة آليات أمان Apple للسماح بتشغيل كود خبيث على الجهاز</td></tr>
+<tr><td>System</td><td>Android Rooting</td><td>الحصول على Root Access داخل نظام Android</td></tr>
+<tr><td>System</td><td>OS Data Caching</td><td>إعادة تشغيل الجهاز بنظام تشغيل خبيث لإغراق الذاكرة واستخراج البيانات الحسّاسة</td></tr>
+</tbody>
+</table></div>
+
+
+<h4>الشبكة (Network)</h4>
+<ul>
+<li><strong>Wi-Fi (تشفير ضعيف/بدون تشفير):</strong> اعتراض البيانات بالتنصّت على الاتصال اللاسلكي</li>
+<li><strong>Rogue Access Points:</strong> تثبيت AP غير مصرَّح به لاختطاف اتصالات المستخدمين الشرعيين</li>
+<li><strong>Packet Sniffing:</strong> Wireshark وCapsa لالتقاط الحزم والحصول على بيانات الدخول</li>
+<li><strong>MITM:</strong> التنصّت على الاتصالات القائمة وتعديل البيانات أو حقن بيانات احتيالية</li>
+<li><strong>Session Hijacking:</strong> سرقة Session IDs صالحة للوصول غير المصرَّح</li>
+<li><strong>DNS Poisoning:</strong> استبدال عناوين IP في DNS لتوجيه المستخدمين لمواقع المهاجم</li>
+<li><strong>SSLStrip (MITM):</strong> تخفيض الاتصالات من HTTPS لـ HTTP بدون تشفير — صعب الكشف على موبايل</li>
+<li><strong>Fake SSL Certificates:</strong> اعتراض حركة HTTPS بشهادة SSL مزوَّرة</li>
+</ul>
+
+
+<h4>الهجمات المتخصَّصة</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>الهجوم</th><th>الشرح</th></tr></thead>
+<tbody>
+<tr><td>Agent Smith Attack</td><td>إقناع الضحية بتثبيت تطبيق خبيث يستبدل التطبيقات الشرعية (WhatsApp، SHAREit) ويعرض إعلانات مكثَّفة لتحقيق مكاسب مادية</td></tr>
+<tr><td>SS7 Vulnerability Exploit</td><td>SS7 بروتوكول اتصال يعتمد على ثقة متبادل بين المشغّلين بدون مصادقة — المهاجم يُنفِّذ MITM لاعتراض المكالمات والرسائل، ويكشف هوية المشترك وموقعه ويجري هجمات DoS</td></tr>
+<tr><td>Simjacker</td><td>ثغرة في S@T Browser على SIM Card — المهاجم يُرسِل SMS يحتوي كود STK مخفي ← يُعالَج تلقائيًا ← يُجري أنشطة خبيثة (تتبّع الموقع، مراقبة المكالمات، توجيه المتصفح لمواقع خبيثة، DoS)</td></tr>
+<tr><td>Call Spoofing (SpoofCard)</td><td>التلاعب في معلومات Caller ID لانتحال هوية مصدر موثوق وخداع المستخدمين</td></tr>
+<tr><td>OTP Hijacking</td><td>سرقة OTPs وإعادة توجيهها عبر الهندسة الاجتماعية أو SMS Jacking أو SIM Jacking أو مراقبة Lock Screen Notifications</td></tr>
+<tr><td>Camfecting</td><td>إصابة الجهاز بـ RAT للوصول للكاميرا والميكروفون واستخراج الصور والفيديو والموقع</td></tr>
+<tr><td>Android Camera Hijack</td><td>استغلال ثغرات Android لتجاوز صلاحيات android.permission.CAMERA وRECORD_AUDIO</td></tr>
+</tbody>
+</table></div>
+
+
+<!-- LU2 -->
+
+<hr />
+
+<h2 id="lu2"><span class="num">02</span><span class="htext">التهديدات والهجمات على نظام Android</span></h2>
+
+
+
+<h3>بنية Android OS</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>الطبقة</th><th>الوصف</th></tr></thead>
+<tbody>
+<tr><td>System Apps (Layer 6)</td><td>تطبيقات النظام في القمة: الهاتف، البريد، الكاميرا، SMS، المتصفح — معظمها مكتوبة بـ Java</td></tr>
+<tr><td>Java API Framework (Layer 5)</td><td>APIs تُتاح للمطوّرين: Content Providers، View System، Activity Manager، Location Manager، Package Manager، Notification Manager</td></tr>
+<tr><td>Native C/C++ Libraries (Layer 4)</td><td>مكتبات خاصة بالعتاد: WebKit، OpenGL|ES، SQLite، SSL، Media Framework، Surface Manager، FreeType، Libc</td></tr>
+<tr><td>Android Runtime (Layer 3)</td><td>ART Virtual Machine (AOT + JIT + Optimized GC + DEX) والمكتبات الأساسية</td></tr>
+<tr><td>HAL (Layer 2)</td><td>Hardware Abstraction Layer: وسيط بين العتاد والبرمجيات — يشمل Audio وCamera وBluetooth وSensors</td></tr>
+<tr><td>Linux Kernel (Layer 1)</td><td>قاعدة النظام: Audio/Display/Keypad/Wi-Fi/USB Drivers، Power Management، Memory Management، Security</td></tr>
+</tbody>
+</table></div>
+
+
+<h3>Android Rooting</h3>
+<p>الروت يُتيح: تعديل أو حذف تطبيقات النظام، إزالة Bloatware، وصول منخفض المستوى للعتاد، أداء محسَّن، Tethering. مخاطره: إلغاء الضمان، ضعف الأداء، إصابة بـ Malware، "Bricking" الجهاز.</p>
+<div class="callout definition"><div class="callout-label">آلية الروت</div><p>تستلزم: استغلال ثغرات أمنية في Firmware الجهاز ← نسخ الثنائي <code>su</code> لـ <code>/system/xbin/su</code> ← منحه صلاحيات تنفيذ بأمر <code>chmod</code>.</p></div>
+
+<div class="table-wrap"><table>
+<thead><tr><th>الأداة</th><th>الشرح</th></tr></thead>
+<tbody>
+<tr><td>KingoRoot</td><td>أداة روت Android بالحاسوب أو بدونه — تحفظ البطارية وتتيح تطبيقات Root-only وتمنح Admin Permissions</td></tr>
+<tr><td>One Click Root</td><td>تدعم معظم الأجهزة — مع Fail-safes فورية (instant unrooting)</td></tr>
+<tr><td>إضافية</td><td>TunesGo، RootMaster، MagiskManager، KingRoot، iRoot</td></tr>
+</tbody>
+</table></div>
+
+
+<h3>هجمات Android الرئيسية</h3>
+
+<h4>Identifying Attack Surfaces بـ drozer</h4>
+<p>drozer يكتشف ثغرات وسطوح الهجوم في أجهزة وتطبيقات Android — لا يحتاج USB Debugging، يعمل في حالة الإنتاج. يوفّر drozer Agent (محاكي للاختبار) وdrozer Console (CLI).</p>
+
+<h4>Bypassing FRP بـ 4ukey</h4>
+<p>Factory Reset Protection (FRP) يمنع الوصول غير المصرّح للأجهزة المفقودة أو المسروقة. المهاجم يستغل ثغرات البرمجيات أو أدوات مثل 4ukey وOctoplus FRP لتجاوزه ← وصول للبيانات الشخصية وتثبيت Malware.</p>
+
+<h4>zANTI وKali NetHunter</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>الأداة</th><th>القدرات</th></tr></thead>
+<tbody>
+<tr><td>zANTI (Android App)</td><td>MAC Spoofing، Hotspot خبيث، فحص البورتات، استغلال ثغرات الراوتر، MITM وDoS، عرض/تعديل/إعادة توجيه HTTP/S، حقن HTML، Session Hijacking، استبدال الصور المُرسَلة</td></tr>
+<tr><td>Kali NetHunter</td><td>HID Keyboard Attacks، BadUSB، Evil AP MANA Attacks — توليد Payloads مخصَّصة بـ Metasploit</td></tr>
+</tbody>
+</table></div>
+
+
+<h4>DoS بـ LOIC (Low Orbit Ion Cannon)</h4>
+<p>تطبيق موبايل يُنفِّذ DoS/DDoS على IP الهدف — UDP وHTTP وTCP Flood Attacks. يُتيح التحكّم الكامل في تدفّق الحركة وإرسال حزم لأي IP/Port.</p>
+
+<h4>Orbot Proxy</h4>
+<p>Proxy App يستخدم Tor لتشفير حركة الإنترنت ويُخفيها بتمريرها عبر أجهزة حول العالم — يُخفي هوية المهاجم.</p>
+
+<h4>Exploiting Android عبر ADB وPhoneSploit Pro</h4>
+<p>ADB (Android Debug Bridge) أداة CLI تُتيح الاتصال بالجهاز عبر USB أو TCP Port 5555. إذا كان TCP Debugging مفعَّلًا على Port 5555، يستخدم المهاجم PhoneSploit Pro لـ: Screen Capture، تفريغ معلومات النظام، فحص التطبيقات الشغّالة، Port Forwarding، تثبيت/إلغاء تثبيت التطبيقات.</p>
+
+<h4>Man-in-the-Disk (MITD) Attack</h4>
+<div class="step-track">
+<div class="step-item"><div class="step-num">1</div><div class="step-title">تحميل تطبيق شرعي</div><div class="step-body"><p>الضحية تُحمِّل تطبيقًا شرعيًا من المتجر الرسمي.</p></div></div>
+<div class="step-item"><div class="step-num">2</div><div class="step-title">طلب تحديث</div><div class="step-body"><p>الجهاز يطلب تحديث كود من السيرفر السحابي.</p></div></div>
+<div class="step-item"><div class="step-num">3</div><div class="step-title">منح صلاحية External Storage</div><div class="step-body"><p>الضحية تمنح إذن الوصول للتخزين الخارجي — الكود المُحمَّل يُخزَّن فيه.</p></div></div>
+<div class="step-item"><div class="step-num">4</div><div class="step-title">تلاعب المهاجم</div><div class="step-body"><p>المهاجم يراقب External Storage عن بُعد ويُعدِّل محتواه بحقن كود خبيث.</p></div></div>
+<div class="step-item"><div class="step-num">5</div><div class="step-title">تنفيذ الكود الملوَّث</div><div class="step-body"><p>التطبيق الشرعي يجلب ويُشغِّل الكود المُعدَّل من External Storage.</p></div></div>
+<div class="step-item"><div class="step-num">6</div><div class="step-title">تثبيت تطبيق احتيالي</div><div class="step-body"><p>الكود الخبيث يطلب ويُثبِّت تطبيقًا احتياليًا من المهاجم → سرقة البيانات والتحكّم الكامل.</p></div></div>
+</div>
+
+<div class="callout note"><div class="callout-label">لماذا MITD ممكن؟</div><p>التخزين الداخلي لتطبيقات Android مُعزَّل (Sandboxed) لكن التخزين الخارجي مُصمَّم لمشاركة الملفات بين التطبيقات — وهذا ما يجعله عرضةً للـ MITD.</p></div>
+
+
+<h4>Spearphone Attack</h4>
+<p>يُتيح للتطبيقات تسجيل بيانات Loudspeaker بدون أي صلاحيات. المهاجم يستغل <strong>Accelerometer</strong> (رقاقة Firmware مدمجة في معظم الهواتف) الذي يمكن الوصول إليه من أي تطبيق بلا صلاحيات خاصة. ارتدادات الصوت يمكن تسجيلها عبر الـ Sensor لأن Loudspeaker على نفس سطح الجهاز.</p>
+
+<h4>Android Malware بارز</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>Malware</th><th>الشرح</th></tr></thead>
+<tbody>
+<tr><td>Mamont</td><td>Banking Trojan ينتحل هوية Chrome Browser — يُوزَّع بـ Phishing وSpam. بعد التثبيت يطلب صلاحيات المكالمات والـ SMS</td></tr>
+<tr><td>SecuriDropper، Dwphon، DogeRAT</td><td>Trojans وRATsمتنوّعة لـ Android</td></tr>
+<tr><td>Tambir، SoumniBot</td><td>Spyware وMalware للأجهزة Android</td></tr>
+</tbody>
+</table></div>
+
+
+<h4>أدوات Android Hacking</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>الأداة</th><th>الشرح</th></tr></thead>
+<tbody>
+<tr><td>AndroRAT</td><td>Backdoor كامل ومستمر لجهاز Android — يبدأ تلقائيًا عند تشغيل الجهاز. Client/Server: Java Android للعميل وPython للسيرفر. يستخرج الموقع وبيانات SIM وIP وMAC</td></tr>
+<tr><td>Ghost Framework</td><td>أداة Post-exploitation تستخدم ADB للوصول عن بُعد بدون OpenSSH — تدعم Port Forwarding وتُفرِّغ معلومات الجهاز</td></tr>
+<tr><td>PCAPdroid</td><td>Sniffer مفتوح المصدر يُحاكي VPN لالتقاط حركة الشبكة بدون Root Access</td></tr>
+<tr><td>drozer</td><td>فحص سطوح الهجوم في Android Apps</td></tr>
+<tr><td>MobSF</td><td>Mobile Security Framework — تحليل ثابت وديناميكي لملفات APK وXAPK وAPPX وIPA</td></tr>
+</tbody>
+</table></div>
+
+
+<h4>أوامر ADB وobjection الأساسية</h4>
+<div class="code-wrap"><span class="code-tag">bash — ADB & objection key commands</span><pre><code># ADB: الاتصال اللاسلكي
+adb connect <device_ip>:5555
+adb shell pm list packages       # تعداد التطبيقات المثبَّتة
+adb shell netstat                # الاتصالات المفتوحة
+adb logcat                       # مراقبة الـ Logs
+
+# apktool: فكّ تشفير APK
+apktool d target.apk
+
+# objection: Method Hooking على iOS
+objection --gadget <AppName> explore
+ios hooking watch class <ClassName>
+ios hooking watch method "-[ClassName MethodName]"
+ios hooking set return_value "-[ClassName iFunc:]" true
+ios sslpinning disable
+ios jailbreak disable</code></pre></div>
+
+
+<!-- LU3 -->
+
+<hr />
+
+<h2 id="lu3"><span class="num">03</span><span class="htext">التهديدات والهجمات على نظام iOS</span></h2>
+
+
+
+<h3>بنية iOS</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>الطبقة</th><th>الشرح</th></tr></thead>
+<tbody>
+<tr><td>Cocoa Application</td><td>الأعلى: Frameworks لبناء iOS Apps — AppKit Framework — يدعم Multitasking وTouch Input وPush Notifications</td></tr>
+<tr><td>Media</td><td>تقنيات الرسوم والصوت والفيديو</td></tr>
+<tr><td>Core Services</td><td>خدمات نظام أساسية: Core Foundation وFoundation Frameworks — Social Media وiCloud وLocation وNetworking</td></tr>
+<tr><td>Core OS</td><td>ميزات منخفضة المستوى: Security وExternal Hardware وNetworks</td></tr>
+<tr><td>Kernel and Device Drivers</td><td>الأدنى: Kernel وDrivers وBSD وFile Systems وNetworking Infrastructure</td></tr>
+</tbody>
+</table></div>
+
+
+<h3>iOS Jailbreaking</h3>
+<p>تثبيت مجموعة معدَّلة من Kernel Patches تُتيح تشغيل تطبيقات طرف ثالث غير موقَّعة من Apple — تجاوز قيود Apple والوصول لـ Root والتطبيقات غير الرسمية. يُزيل أيضًا قيود Sandbox مما يُتيح للتطبيقات الخبيثة الوصول للموارد المقيَّدة.</p>
+
+<h4>أنواع الثغرات المستخدَمة في Jailbreaking</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>النوع</th><th>الوصف</th><th>قابلية الإصلاح</th></tr></thead>
+<tbody>
+<tr><td>Userland Exploit</td><td>ثغرة في تطبيق نظام — وصول User-level فقط (لا iBoot)</td><td>تُصلَح بتحديث Firmware</td></tr>
+<tr><td>iBoot Exploit</td><td>ثغرة في iBoot (Bootloader الثالث) — وصول User + iBoot. يمكن أن يكون Semi-tethered لو Bootrom جديد</td><td>تُصلَح بتحديث Firmware</td></tr>
+<tr><td>Bootrom Exploit</td><td>ثغرة في SecureROM (Bootloader الأول) — تُعطِّل فحوص التوقيع وتُحمِّل NOR Firmware معدَّل. وصول User + iBoot</td><td>لا تُصلَح بـ Firmware فقط — تحتاج تحديث عتاد من Apple</td></tr>
+</tbody>
+</table></div>
+
+
+<h4>تقنيات Jailbreaking</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>التقنية</th><th>الشرح</th></tr></thead>
+<tbody>
+<tr><td>Untethered</td><td>يبقى الجهاز Jailbroken بعد كل إعادة تشغيل — الـ Kernel يُصحَّح تلقائيًا بدون حاسوب</td></tr>
+<tr><td>Semi-tethered</td><td>بعد إعادة التشغيل يعمل الجهاز طبيعيًا لكن بلا Patched Kernel — وظائف عادية متاحة</td></tr>
+<tr><td>Tethered</td><td>بعد إعادة التشغيل قد يتوقّف الجهاز في حالة بدء جزئي — يتطلّب حاسوب عند كل تشغيل ("boot tethered")</td></tr>
+<tr><td>Semi-untethered</td><td>مشابه لـ Semi-tethered لكن يمكن تصحيح الـ Kernel بدون حاسوب</td></tr>
+</tbody>
+</table></div>
+
+<div class="table-wrap"><table>
+<thead><tr><th>أداة Jailbreak</th><th>الوصف</th></tr></thead>
+<tbody>
+<tr><td>Hexxa Plus</td><td>مُستخرِج Repos لأحدث iOS — يُثبِّت Tweaks والـ Apps بدون Untethered أو Semi-untethered Jailbreaking</td></tr>
+<tr><td>Redensa</td><td>أداة Jailbreak مع iTerminal لـ iOS 17 وأعلى — تُثبِّت IPAs بأمر Install</td></tr>
+<tr><td>checkra1n، palera1n</td><td>Jailbreak Tools شائعة</td></tr>
+<tr><td>Zeon، Sileo، Cydia</td><td>أدوات إضافية للـ Jailbreak</td></tr>
+</tbody>
+</table></div>
+
+
+<h3>هجمات iOS الرئيسية</h3>
+
+<h4>iOS Trustjacking</h4>
+<p>ثغرة تُتيح قراءة الرسائل والإيميلات واستخراج كلمات المرور وبيانات البنك من بُعد دون علم الضحية.</p>
+<div class="step-track">
+<div class="step-item"><div class="step-num">1</div><div class="step-title">اتصال بجهاز حاسوب مُخترَق</div><div class="step-body"><p>الضحية توصِّل هاتفها بحاسوب مُصاب بالمهاجم (حاسوب صديق أو جهة موثوقة). الجهاز يعرض "Trust / Don't Trust" — الضحية تضغط Trust.</p></div></div>
+<div class="step-item"><div class="step-num">2</div><div class="step-title">تفعيل iTunes Wi-Fi Sync</div><div class="step-body"><p>بعد إنشاء الاتصال وتفعيل iTunes Wi-Fi Sync، الجهاز يستمرّ في التواصل مع الحاسوب حتى بعد الفصل الفيزيائي.</p></div></div>
+<div class="step-item"><div class="step-num">3</div><div class="step-title">استمرار الاختراق</div><div class="step-body"><p>المهاجم يقرأ نشاط الشاشة والبيانات من الحاسوب المصاب — حتى بعد خروج الجهاز من نطاق الاتصال.</p></div></div>
+<div class="step-item"><div class="step-num">4</div><div class="step-title">تعديل التطبيقات</div><div class="step-body"><p>يستطيع المهاجم استعادة/نسخ البيانات وقراءة SMS والصور المحذوفة واستبدال التطبيقات الأصلية بتطبيقات خبيثة.</p></div></div>
+</div>
+
+
+<h4>SeaShell Framework (Post-exploitation)</h4>
+<p>Framework لـ iOS Post-exploitation للوصول عن بُعد والتحكّم واستخراج معلومات حسّاسة من الأجهزة المُخترَقة. يستغل ثغرة <strong>CoreTrust</strong> لتجاوز فحوص التوقيع وتنفيذ برمجيات غير مصرَّح بها. يُولِّد ملفات IPA ويُطلِق TCP Listener ويستغل TrollStore.</p>
+
+<h4>Method Swizzling وCycript</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>التقنية</th><th>الشرح</th></tr></thead>
+<tbody>
+<tr><td>Method Swizzling (Monkey Patching)</td><td>تعديل الأساليب القائمة أو إضافة وظائف جديدة في Runtime بـ Objective-C Runtime — يُستخدَم لـ Logging وJS Injections وDetection Bypass وAuthentication Bypass</td></tr>
+<tr><td>Cycript</td><td>محرِّك JS يفهم Objective-C وObjective-C++ وJS — يُعدِّل وظيفة التطبيق في Runtime. يُستخدَم لـ Method Swizzling وAuthentication Bypass وJailbreak Detection Bypass</td></tr>
+<tr><td>objection (Frida-based)</td><td>Method Hooking وiOS Application Patching وSSL Pinning Bypass وKeychain Dumping وPasteboard Monitoring</td></tr>
+</tbody>
+</table></div>
+
+
+<h4>Keychain Dumper</h4>
+<p>Keychain في iOS نظام تخزين مُشفَّر للأسرار (كلمات مرور وشهادات ومفاتيح تشفير). أداة Keychain Dumper تستخدم شهادة Self-Signed بـ Wildcard Entitlement لاستخراج كل عناصر الـ Keychain — في الإصدارات الحديثة يجب إضافة Entitlement صريح موجود في الجهاز.</p>
+
+<h4>iOS Malware</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>Malware</th><th>الشرح</th></tr></thead>
+<tbody>
+<tr><td>GoldPickaxe</td><td>Trojan يخدع الضحايا بالمسح بالوجه وتحديد الوثائق — يُوزَّع بـ Smishing/Phishing باسم مصدر حكومي. يُثبِّت MDM Profile خبيث للتحكّم عن بُعد</td></tr>
+<tr><td>Pegasus</td><td>Spyware متطوّر جدًا</td></tr>
+<tr><td>SpectralBlur، LightSpy، KingsPawn</td><td>Spyware وMalware متخصّص</td></tr>
+<tr><td>Mercenary Spyware</td><td>هجمات Mercenary Spyware المتطوّرة</td></tr>
+</tbody>
+</table></div>
+
+
+<h4>تحليل iOS — الأوامر الأساسية</h4>
+<div class="code-wrap"><span class="code-tag">bash — iOS shell & analysis commands</span><pre><code># الاتصال بـ Shell عبر Wi-Fi
+ssh root@<device_ip_address>     # كلمة المرور الافتراضية: alpine
+
+# الاتصال عبر USB
+ssh -p 2222 root@localhost
+
+# تعداد التطبيقات المثبَّتة (Frida)
+frida-ps -Uai
+
+# Network Sniffing عبر rvi0
+rvictl -s <UDID>                 # إنشاء الواجهة الافتراضية
+# ثم افتح Wireshark → اختر rvi0
+
+# الاتصالات المفتوحة
+lsof -i
+lsof -i -a -p <pid>
+
+# Process Exploration بـ r2frida
+r2 frida://usb//iGoat-Swift
+:dm    # خريطة الذاكرة
+:il    # المكتبات المحمَّلة</code></pre></div>
+
+
+<!-- LU4 -->
+
+<hr />
+
+<h2 id="lu4"><span class="num">04</span><span class="htext">Mobile Device Management (MDM) وBYOD</span></h2>
+
+
+
+<h3>ما هو MDM؟</h3>
+<p>سياسة وبرنامج أمان للإدارة الشاملة لكل أجهزة الموبايل المتصلة بشبكة المؤسسة. يُوزِّع التطبيقات والبيانات وإعدادات الضبط Over-the-Air أو بالسلك. يُساعد في تقليل تكاليف الدعم ومخاطر استمرارية العمل والأمان.</p>
+<div class="table-wrap"><table>
+<thead><tr><th>الميزة الأساسية</th><th>الشرح</th></tr></thead>
+<tbody>
+<tr><td>Passcode Enforcement</td><td>فرض استخدام كلمة مرور على الجهاز</td></tr>
+<tr><td>Remote Lock</td><td>قفل الجهاز عن بُعد عند فقدانه</td></tr>
+<tr><td>Remote Wipe</td><td>مسح البيانات عن بُعد في حالة السرقة أو الفقدان</td></tr>
+<tr><td>Rooting/Jailbreak Detection</td><td>كشف الأجهزة المُخترَقة</td></tr>
+<tr><td>Policy Enforcement & Inventory</td><td>تطبيق السياسات وتتبّع المخزون</td></tr>
+<tr><td>Real-time Monitoring</td><td>مراقبة وتقارير آنية</td></tr>
+</tbody>
+</table></div>
+
+<div class="callout note"><div class="callout-label">MDM Solutions</div><p>Scalefusion MDM، ManageEngine Mobile Device Manager Plus، Microsoft Intune، SOTI MobiControl، AppTec360، Jamf Pro.</p></div>
+
+
+<h3>BYOD — Bring Your Own Device</h3>
+<p>سياسة تُتيح للموظّفين إحضار أجهزتهم الشخصية (Laptops وSmartphones وTablets) لمكان العمل واستخدامها للوصول لموارد المؤسسة.</p>
+<div class="table-wrap"><table>
+<thead><tr><th>الفوائد</th><th>المخاطر</th></tr></thead>
+<tbody>
+<tr><td>زيادة الإنتاجية — الموظّفون أكثر كفاءةً بأجهزتهم</td><td>مشاركة بيانات سرية على شبكات غير آمنة</td></tr>
+<tr><td>رضا الموظّفين — جهاز واحد للاستخدام الشخصي والمهني</td><td>تسرّب البيانات ومشاكل Endpoint Security</td></tr>
+<tr><td>مرونة العمل من أي مكان</td><td>التخلّص غير الصحيح من الأجهزة → بيانات حسّاسة مكشوفة</td></tr>
+<tr><td></td><td>دعم أجهزة مختلفة → تكلفة عالية</td></tr>
+<tr><td></td><td>موظّفون غاضبون → إساءة استخدام البيانات</td></tr>
+<tr><td></td><td>Jailbreaking/Rooting → تجاوز الأمان</td></tr>
+<tr><td></td><td>ضعف إدارة التحديثات والـ Patches</td></tr>
+<tr><td></td><td>Shadow IT والخدمات السحابية غير المصرَّح بها</td></tr>
+</tbody>
+</table></div>
+
+
+<h4>إرشادات BYOD للمسؤول والموظّف</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>للمسؤول</th><th>للموظّف</th></tr></thead>
+<tbody>
+<tr><td>تأمين مراكز البيانات بحماية متعدّدة الطبقات</td><td>استخدام التشفير لتخزين البيانات</td></tr>
+<tr><td>تثقيف الموظّفين عن سياسة BYOD</td><td>الحفاظ على فصل واضح بين البيانات الشخصية والمهنية</td></tr>
+<tr><td>تحديد ملكية التطبيقات والبيانات</td><td>تسجيل الأجهزة مع خاصية Remote Wipe</td></tr>
+<tr><td>استخدام قناة مُشفَّرة لنقل البيانات</td><td>تحديث الجهاز بأحدث OS والـ Patches</td></tr>
+<tr><td>تحديد التطبيقات المسموحة والمحظورة</td><td>ضبط كلمة مرور قوية وتغييرها دوريًا</td></tr>
+<tr><td>التحكّم في الوصول على أساس Need-to-Know</td><td>تفعيل Anti-virus وحلول DLP</td></tr>
+<tr><td>عدم السماح بأجهزة Jailbroken/Rooted</td><td>ضبط كلمات مرور للتطبيقات</td></tr>
+</tbody>
+</table></div>
+
+
+<!-- LU5 -->
+
+<hr />
+
+<h2 id="lu5"><span class="num">05</span><span class="htext">إرشادات الأمان والإجراءات المضادة</span></h2>
+
+
+
+<h3>إجراءات مضادة ضد SMiShing</h3>
+<ul>
+<li>عدم الردّ على SMS مشبوه بدون التحقّق من المصدر</li>
+<li>عدم النقر على أي رابط في SMS</li>
+<li>عدم تقديم معلومات مالية أو شخصية بناءً على SMS</li>
+<li>تفعيل ميزة "block texts from the internet" لدى مزوّد الخدمة</li>
+<li>عدم الردّ على SMS يطلب تصرّفًا عاجلًا</li>
+<li>عدم الاتصال بأي رقم مُدرَج في SMS</li>
+</ul>
+
+
+<h3>إجراءات مضادة ضد OTP Hijacking</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>للمستخدم</th><th>للمطوّر</th></tr></thead>
+<tbody>
+<tr><td>كلمات مرور فريدة وقوية لكل خدمة</td><td>إرسال OTPs عبر قنوات مُشفَّرة (Encrypted SMS أو Push Notifications)</td></tr>
+<tr><td>تحديث البرمجيات ونظام التشغيل دوريًا</td><td>ضمان End-to-End Encryption لنقل OTPs</td></tr>
+<tr><td>الحذر من الروابط والإيميلات المشبوهة</td><td>دمج OTP مع عوامل مصادقة إضافية (Biometric أو Hardware)</td></tr>
+<tr><td></td><td>تقييد عدد طلبات OTP من مستخدم واحد لمنع Brute-force</td></tr>
+<tr><td></td><td>تعيين وقت انتهاء قصير للـ OTP</td></tr>
+<tr><td></td><td>استخدام Behavioral Analytics لكشف النشاط غير المعتاد</td></tr>
+</tbody>
+</table></div>
+
+
+<h3>توصيات تخزين البيانات الحسّاسة</h3>
+<div class="table-wrap"><table>
+<thead><tr><th></th><th>Android KeyStore</th><th>iOS Keychain</th></tr></thead>
+<tbody>
+<tr><td>المصادقة</td><td>Patterns وPINs وPasswords وFingerprints</td><td>Touch ID وFace ID وPasscodes</td></tr>
+<tr><td>التشفير</td><td>Hardware-backed Android KeyStore</td><td>Hardware-backed 256-bit AES</td></tr>
+<tr><td>التحكّم</td><td>Authorization Techniques لإنشاء/استيراد المفاتيح</td><td>ACLs لتحديد وصول التطبيقات + AccessControlFlags</td></tr>
+<tr><td>التخزين</td><td>مفتاح Master وباقي المفاتيح في مواقع منفصلة — Master Key في Software Implementation</td><td>أجزاء صغيرة فقط مباشرةً في Keychain</td></tr>
+<tr><td>الشبكة</td><td>مفاتيح السيرفر تُتاح بعد مصادقة صحيحة فقط</td><td>IPC مُؤمَّن بين التطبيقات والامتدادات</td></tr>
+</tbody>
+</table></div>
+
+
+<h3>إرشادات عامة لأمان المنصات المحمولة</h3>
+<ul>
+<li>عدم تثبيت تطبيقات كثيرة جدًا وتجنّب Auto-upload للصور</li>
+<li>تقييم أمان بنية التطبيق</li>
+<li>تثبيت التطبيقات من المتاجر الموثوقة فقط</li>
+<li>مسح البيانات بأمان عند التخلّص من الجهاز</li>
+<li>عدم مشاركة معلومات GPS إلا عند الضرورة</li>
+<li>عدم الجمع بين شبكتَين منفصلتَين (Wi-Fi + Bluetooth) في وقت واحد</li>
+<li>تعطيل Jailbreaking/Rooting في بيئة BYOD المؤسسية</li>
+</ul>
+
+
+<h3>أدوات Reverse Engineering والتحليل</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>الأداة</th><th>الاستخدام</th></tr></thead>
+<tbody>
+<tr><td>Apktool</td><td>فكّ تشفير APKs وإعادة بنائها — Smali Debugging وتعديل Resources</td></tr>
+<tr><td>MobSF</td><td>تحليل ثابت وديناميكي لـ APK/XAPK/APPX/IPA — كشف الأذونات والأنشطة والشهادات</td></tr>
+<tr><td>Syhunt Mobile</td><td>تحليل Source Code: +350 فحص في Java/Android، +240 في Swift/ObjC/C لـ iOS</td></tr>
+<tr><td>Frida</td><td>Runtime Instrumentation — تعداد التطبيقات وMethod Hooking</td></tr>
+<tr><td>objection (Frida-based)</td><td>Method Hooking وSSL Pinning Bypass وJailbreak Detection Bypass وKeychain Dumping</td></tr>
+<tr><td>Androguard، JEB، APK Editor Studio</td><td>أدوات Reverse Engineering إضافية للأجهزة Android</td></tr>
+</tbody>
+</table></div>
+
+
+<!-- CHEAT -->
+
+<hr />
+
+<h2 id="cheat"><span class="htext">Cheat Sheet مرجعي</span></h2>
+
+
+<div class="cheat-section">
+
+<h4>OWASP Top 10 Mobile — ملخّص سريع</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>الكود</th><th>الخطر</th><th>الثغرة الجوهرية</th></tr></thead>
+<tbody>
+<tr><td>M1</td><td>Credential Usage</td><td>Hardcoded Credentials وتخزين غير محمي</td></tr>
+<tr><td>M2</td><td>Supply Chain</td><td>مكوّنات خارجية معيبة أو قديمة</td></tr>
+<tr><td>M3</td><td>Auth/Authorization</td><td>Token ضعيف أو سياسات كلمة مرور هشّة</td></tr>
+<tr><td>M4</td><td>Input/Output Validation</td><td>SQL Injection وXSS وCommand Injection</td></tr>
+<tr><td>M5</td><td>Communication</td><td>SSL/TLS معطوب أو منتهي الصلاحية</td></tr>
+<tr><td>M7</td><td>Binary Protections</td><td>عدم حماية الكود من Reverse Engineering</td></tr>
+<tr><td>M8</td><td>Misconfiguration</td><td>إعدادات تشفير وصلاحيات غير صحيحة</td></tr>
+<tr><td>M9</td><td>Data Storage</td><td>تخزين Plaintext في قواعد البيانات</td></tr>
+<tr><td>M10</td><td>Cryptography</td><td>خوارزميات تشفير ضعيفة وإدارة مفاتيح سيئة</td></tr>
+</tbody>
+</table></div>
+
+
+<h4>Jailbreaking مقابل Rooting</h4>
+<div class="table-wrap"><table>
+<thead><tr><th></th><th>Jailbreaking (iOS)</th><th>Rooting (Android)</th></tr></thead>
+<tbody>
+<tr><td>الهدف</td><td>تجاوز قيود Apple — تثبيت تطبيقات غير موقَّعة</td><td>الحصول على Root Access في نظام Android</td></tr>
+<tr><td>الأسلوب</td><td>تعديل iOS System Kernels — Userland/iBoot/Bootrom Exploit</td><td>استغلال ثغرات Firmware + نسخ su Binary</td></tr>
+<tr><td>تقنيات iOS</td><td>Untethered / Semi-tethered / Tethered / Semi-untethered</td><td>—</td></tr>
+<tr><td>المخاطر</td><td>إلغاء الضمان، Malware، Bricking، ضعف الأداء</td><td>إلغاء الضمان، Malware، Bricking، ضعف الأداء</td></tr>
+<tr><td>الأدوات</td><td>Hexxa Plus، Redensa، checkra1n، palera1n</td><td>KingoRoot، One Click Root، MagiskManager</td></tr>
+</tbody>
+</table></div>
+
+
+<h4>الهجمات الخاصة بالموبايل — مرجع سريع</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>الهجوم</th><th>المنصّة</th><th>الآلية</th></tr></thead>
+<tbody>
+<tr><td>MITD (Man-in-the-Disk)</td><td>Android</td><td>التلاعب في External Storage لحقن كود خبيث في تحديثات التطبيقات</td></tr>
+<tr><td>Spearphone</td><td>Android</td><td>تسجيل صوت Loudspeaker عبر Accelerometer بدون صلاحيات</td></tr>
+<tr><td>Agent Smith</td><td>Android</td><td>استبدال تطبيقات شرعية بنسخ ملوَّثة بـ Malware</td></tr>
+<tr><td>Simjacker</td><td>iOS + Android</td><td>حقن STK code في SIM عبر SMS خفي لتنفيذ أوامر بدون علم المستخدم</td></tr>
+<tr><td>SS7 Exploit</td><td>شبكة GSM</td><td>MITM على مستوى الشبكة الخلوية لاعتراض المكالمات والرسائل</td></tr>
+<tr><td>Trustjacking</td><td>iOS</td><td>استمرار iTunes Wi-Fi Sync بعد قطع الاتصال الفيزيائي</td></tr>
+<tr><td>Man-in-the-Mobile</td><td>iOS + Android</td><td>اعتراض OTPs من SMS/مكالمات صوتية</td></tr>
+<tr><td>Camfecting</td><td>iOS + Android</td><td>RAT للوصول للكاميرا والميكروفون</td></tr>
+</tbody>
+</table></div>
+
+
+</div>
+
+<!-- SUMMARY -->
+
+<hr />
+
+<h2 id="summary"><span class="htext">الخلاصة العامة للموديول</span></h2>
+
+
+<p>الموديول ناقش OWASP Top 10 Mobile Risks 2024 ومتجهات الهجوم على الموبايل (Device وNetwork وData Center)، وهجمات Android بالتفصيل (Rooting وADB وMITD وSpearphone وAgent Smith وSimjacker والأدوات)، وهجمات iOS (Jailbreaking وTrustjacking وSeaShell وMethod Swizzling وKeychain Dumper والأدوات)، ومفاهيم MDM وBYOD ومخاطرهما وإرشاداتهما، وختم بالإجراءات المضادة وأدوات الأمان.</p>
+
+<div class="takeaways">
+<div class="takeaways-title">$ cat ./module17_summary.txt</div>
+<ul>
+<li>OWASP M1 و M9 يُركِّزان على نفس الجوهر — بيانات اعتماد وبيانات حسّاسة غير محميّة — من نقطتَي الدخول والتخزين</li>
+<li>Simjacker لا يحتاج أي تفاعل من الضحية — الـ SMS يُعالَج تلقائيًا من SIM Card بدون علم المستخدم</li>
+<li>MITD استغلال عبقري لتصميم Android المقصود: External Storage للمشاركة بين التطبيقات يُصبح ثغرة</li>
+<li>Trustjacking خطرة لأن الاتصال يستمرّ بعد الفصل الفيزيائي — ضغطة "Trust" واحدة تكفي</li>
+<li>Bootrom Exploit هو أخطر نوع من Jailbreaking لأنه لا يُصلَح بـ Firmware — يحتاج تحديث عتاد من Apple</li>
+<li>MDM + BYOD Policy + Remote Wipe = الثلاثية الدفاعية الأساسية في بيئة المؤسسة</li>
+</ul>
+</div>
+
+<blockquote>
+<p><strong>الموبايل ليس مجرّد هاتف — هو نقطة دخول كاملة.</strong> الكاميرا والميكروفون والموقع والـ OTPs والبنك والعمل — كل هذا في جيبك. من SMiShing يستغل ثقتك في SMS، لـ Simjacker يتجاوزك ويُكلِّم شريحتك مباشرةً، لـ Trustjacking يستغل لحظة ثقة واحدة — سطح الهجوم على الموبايل لا يتوقّف عند حدود الجهاز.</p>
+</blockquote>
+
+<div class="callout examtip"><div class="callout-label">Exam Tip</div><p>أسئلة هذا الموديول تُركِّز على: OWASP Top 10 Mobile (M1-M10)، الفرق بين Jailbreaking وRooting، أنواع Jailbreaking (Untethered وTethered وSemi-tethered وSemi-untethered)، أنواع ثغرات Jailbreaking (Userland وiBoot وBootrom)، آلية MITD وSpearphone وSimjacker وTrustjacking، والفرق بين MDM وBYOD.</p></div>
+
+
+<hr />
+<p><em>نهاية نوتس الموديول السابع عشر — Hacking Mobile Platforms</em></p>
+<div class="footer-note">-- EOF: module-17/mobile-platforms.md --</div>
+</div>
+
+<script>
+(function(){
+  var root=document.documentElement,btn=document.getElementById('themeSwitch');
+  function applyTheme(t){root.setAttribute('data-theme',t);btn.textContent='theme: '+t;try{localStorage.setItem('oscp-notes-theme',t);}catch(e){}}
+  var saved='dark';try{saved=localStorage.getItem('oscp-notes-theme')||'dark';}catch(e){}
+  applyTheme(saved);
+  btn.addEventListener('click',function(){applyTheme(root.getAttribute('data-theme')==='dark'?'light':'dark');});
+  var bar=document.getElementById('progressBar');
+  function onScroll(){var h=document.documentElement,s=h.scrollTop,ht=h.scrollHeight-h.clientHeight;bar.style.width=(ht>0?(s/ht*100):0)+'%';var t=document.getElementById('toTop');s>500?t.classList.add('show'):t.classList.remove('show');}
+  document.addEventListener('scroll',onScroll);onScroll();
+  document.getElementById('toTop').addEventListener('click',function(){window.scrollTo({top:0,behavior:'smooth'});});
+  document.querySelectorAll('.code-wrap').forEach(function(wrap){
+    var c=wrap.querySelector('code');if(!c)return;
+    var b=document.createElement('button');b.className='copy-btn';b.textContent='copy';
+    b.addEventListener('click',function(){if(navigator.clipboard){navigator.clipboard.writeText(c.innerText).then(function(){b.textContent='copied ✓';b.classList.add('copied');setTimeout(function(){b.textContent='copy';b.classList.remove('copied');},1500);});}});
+    wrap.appendChild(b);
+  });
+})();
+</script>
+</body>
+</html>

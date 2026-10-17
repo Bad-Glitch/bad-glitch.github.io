@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CEHv13 · Module 09: الهندسة الاجتماعية</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-0:#0B0B0D;--bg-1:#121214;--surface:#17171A;--surface-2:#1D1D21;
+    --border:#2A2A2F;--border-soft:#232326;
+    --text:#E6E6E9;--text-soft:#C4C4CA;--muted:#8A8A92;
+    --red:#E1362F;--red-soft:rgba(225,54,47,0.10);--red-border:rgba(225,54,47,0.35);
+    --red-grad:linear-gradient(90deg,#E1362F,#F2794A);
+    --amber:#E8A23A;--amber-soft:rgba(232,162,58,0.09);--amber-border:rgba(232,162,58,0.30);
+    --green:#3FBF6E;--green-soft:rgba(63,191,110,0.09);--green-border:rgba(63,191,110,0.30);
+    --blue:#4EA1D3;--blue-soft:rgba(78,161,211,0.09);--blue-border:rgba(78,161,211,0.30);
+    --purple:#A179E8;--purple-soft:rgba(161,121,232,0.10);--purple-border:rgba(161,121,232,0.32);
+    --mono:'IBM Plex Mono','Courier New',monospace;
+  }
+  html[data-theme="light"]{
+    --bg-0:#F4F3F1;--bg-1:#ECEBE8;--surface:#FFFFFF;--surface-2:#F3F2EF;
+    --border:#DEDCD6;--border-soft:#E6E4DF;--text:#1C1B19;--text-soft:#3C3A36;--muted:#726F68;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;direction:rtl;text-align:right;background:var(--bg-0);}
+  body{font-family:'Cairo','Segoe UI',Tahoma,sans-serif;line-height:1.95;font-size:16.5px;color:var(--text);
+    background:radial-gradient(900px 420px at 12% -8%,rgba(225,54,47,0.10),transparent 60%),
+               radial-gradient(800px 420px at 90% 6%,rgba(232,162,58,0.06),transparent 60%),
+               linear-gradient(180deg,var(--bg-0) 0%,var(--bg-1) 100%);
+    background-attachment:fixed;transition:background 0.2s ease,color 0.2s ease;}
+  html[data-theme="light"] body{background:radial-gradient(900px 420px at 12% -8%,rgba(225,54,47,0.06),transparent 60%),radial-gradient(800px 420px at 90% 6%,rgba(232,162,58,0.05),transparent 60%),linear-gradient(180deg,var(--bg-0) 0%,var(--bg-1) 100%);}
+  .progress-rail{position:fixed;top:0;inset-inline:0;height:3px;background:rgba(255,255,255,0.04);z-index:60;}
+  html[data-theme="light"] .progress-rail{background:rgba(0,0,0,0.05);}
+  .progress-bar{height:100%;width:0%;background:var(--red-grad);transition:width 0.08s linear;}
+  .float-controls{position:fixed;bottom:22px;left:22px;z-index:55;display:flex;flex-direction:column;gap:10px;}
+  .fctrl-btn{width:42px;height:42px;border-radius:50%;background:var(--surface);border:1px solid var(--border);color:var(--text-soft);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;box-shadow:0 10px 24px -10px rgba(0,0,0,0.5);transition:transform 0.15s ease,border-color 0.15s ease,opacity 0.2s ease;}
+  .fctrl-btn:hover{transform:translateY(-2px);border-color:var(--red-border);color:var(--red);}
+  #toTop{opacity:0;pointer-events:none;}
+  #toTop.show{opacity:1;pointer-events:auto;}
+  .page{max-width:860px;margin:0 auto;padding:46px 22px 100px;}
+  .banner{position:relative;overflow:hidden;background:linear-gradient(155deg,var(--surface) 0%,var(--bg-1) 55%,var(--surface) 100%);border:1px solid var(--border-soft);border-radius:10px;padding:0 0 34px;margin-bottom:26px;box-shadow:0 20px 50px -20px rgba(0,0,0,0.6);}
+  .term-bar{display:flex;align-items:center;gap:8px;padding:13px 18px;border-bottom:1px solid var(--border-soft);background:rgba(255,255,255,0.015);direction:ltr;}
+  .term-dot{width:11px;height:11px;border-radius:50%;display:inline-block;}
+  .term-dot.r{background:#E1362F;}.term-dot.y{background:#E8A23A;}.term-dot.g{background:#3FBF6E;}
+  .term-path{margin-inline-start:12px;font-family:var(--mono);font-size:12px;color:var(--muted);}
+  .theme-switch{margin-inline-start:auto;font-family:var(--mono);font-size:11px;color:var(--muted);background:transparent;border:1px solid var(--border);border-radius:4px;padding:4px 9px;cursor:pointer;}
+  .theme-switch:hover{color:var(--amber);border-color:var(--amber-border);}
+  .banner-body{padding:30px 34px 4px;}
+  .banner .kicker{display:inline-block;font-family:var(--mono);font-size:12.5px;letter-spacing:0.03em;color:var(--red);background:var(--red-soft);border:1px solid var(--red-border);border-radius:3px;padding:5px 12px;margin-bottom:20px;direction:ltr;}
+  .banner h1{margin:0 0 14px;font-size:28px;font-weight:800;line-height:1.5;color:var(--text);}
+  .banner .lede{color:var(--muted);font-size:15.5px;line-height:1.95;max-width:640px;margin:0 0 24px;}
+  .tags{display:flex;flex-wrap:wrap;gap:9px;}
+  .tag{font-size:12.5px;font-family:var(--mono);color:var(--amber);background:var(--amber-soft);border:1px solid var(--amber-border);border-radius:3px;padding:5px 11px;}
+  .toc{background:var(--surface);border:1px solid var(--border-soft);border-radius:8px;padding:6px 0 6px;margin-bottom:50px;overflow:hidden;}
+  .toc-title{font-family:var(--mono);font-weight:600;font-size:13px;color:var(--green);padding:14px 22px;border-bottom:1px solid var(--border-soft);direction:ltr;text-align:left;}
+  .toc-list{display:flex;flex-direction:column;}
+  .toc-item{display:flex;align-items:center;gap:14px;padding:12px 22px;color:var(--text-soft);text-decoration:none;font-size:14.5px;border-bottom:1px solid rgba(255,255,255,0.03);transition:background 0.15s ease;}
+  .toc-list .toc-item:last-child{border-bottom:none;}
+  .toc-item:hover{background:var(--red-soft);}
+  .toc-num{flex:none;font-family:var(--mono);font-size:12.5px;font-weight:600;color:#0F0F10;background:var(--red-grad);border-radius:3px;padding:3px 8px;direction:ltr;}
+  h1,h2,h3,h4{font-weight:700;}
+  h2{display:flex;align-items:center;gap:14px;font-size:21px;margin:66px 0 22px;padding-bottom:16px;border-bottom:1px solid var(--border-soft);color:var(--text);}
+  h2 .num{flex:none;font-family:var(--mono);font-size:13px;font-weight:700;color:#0F0F10;background:var(--red-grad);border-radius:5px;padding:7px 12px;direction:ltr;}
+  h2 .htext{line-height:1.5;}
+  h3{font-size:17px;margin:34px 0 14px;color:var(--red);display:flex;align-items:center;gap:9px;}
+  h3::before{content:"#";font-family:var(--mono);color:var(--amber);font-weight:700;}
+  h4{font-size:14.8px;margin:22px 0 10px;color:var(--text-soft);font-family:var(--mono);}
+  p{margin:0 0 17px;color:var(--text);}
+  strong{color:var(--text);font-weight:700;}
+  :root:not([data-theme="light"]) strong{color:#FBFBFC;}
+  a{color:var(--amber);text-decoration:none;border-bottom:1px dashed var(--amber-border);}
+  hr{border:none;height:1px;margin:50px 0;background:linear-gradient(90deg,transparent,var(--border),transparent);}
+  ul,ol{margin:0 0 18px;padding-inline-start:24px;}
+  li{margin-bottom:9px;color:var(--text);}
+  li::marker{color:var(--red);font-family:var(--mono);}
+  li>ul,li>ol{margin-top:9px;}
+  .goals-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px;margin:0 0 22px;}
+  .goal-card{display:flex;gap:10px;align-items:flex-start;background:var(--surface);border:1px solid var(--border-soft);border-radius:7px;padding:13px 15px;font-size:14px;color:var(--text-soft);}
+  .goal-card .gi{flex:none;font-family:var(--mono);font-size:11px;font-weight:700;color:var(--green);background:var(--green-soft);border:1px solid var(--green-border);border-radius:4px;width:22px;height:22px;display:flex;align-items:center;justify-content:center;}
+  blockquote{margin:24px 0;padding:17px 22px;background:var(--red-soft);border:1px solid var(--red-border);border-inline-start:3px solid var(--red);border-radius:6px;color:var(--text-soft);}
+  blockquote p{margin:0;color:inherit;line-height:1.85;}
+  blockquote p+p{margin-top:10px;}
+  blockquote strong{color:var(--text);}
+  .callout{margin:24px 0;padding:17px 22px 18px;border-radius:6px;border:1px solid var(--border-soft);border-inline-start:3px solid var(--border);background:var(--surface);}
+  .callout p{margin:0;color:var(--text-soft);line-height:1.85;}
+  .callout p+p{margin-top:10px;}
+  .callout ul{margin:6px 0 0;}
+  .callout-label{display:inline-flex;align-items:center;gap:7px;font-family:var(--mono);font-size:11.5px;font-weight:700;letter-spacing:0.02em;text-transform:uppercase;margin-bottom:10px;direction:ltr;}
+  .callout.note{border-inline-start-color:var(--blue);background:var(--blue-soft);}
+  .callout.note .callout-label{color:var(--blue);}
+  .callout.warning{border-inline-start-color:var(--red);background:var(--red-soft);}
+  .callout.warning .callout-label{color:var(--red);}
+  .callout.tip{border-inline-start-color:var(--green);background:var(--green-soft);}
+  .callout.tip .callout-label{color:var(--green);}
+  .callout.examtip{border-inline-start-color:var(--purple);background:var(--purple-soft);}
+  .callout.examtip .callout-label{color:var(--purple);}
+  .callout.case{border-inline-start-color:var(--amber);background:var(--amber-soft);}
+  .callout.case .callout-label{color:var(--amber);}
+  .callout.definition{border-inline-start-color:var(--muted);background:var(--surface-2);}
+  .callout.definition .callout-label{color:var(--text-soft);}
+  .callout.danger{border-inline-start-color:#FF5A52;background:rgba(255,90,82,0.08);}
+  .callout.danger .callout-label{color:#FF5A52;}
+  .table-wrap{overflow-x:auto;margin:22px 0;border:1px solid var(--border-soft);border-radius:8px;}
+  table{width:100%;border-collapse:collapse;font-size:14.2px;min-width:480px;}
+  thead th{background:var(--surface-2);color:var(--amber);font-weight:700;font-family:var(--mono);font-size:12.5px;text-transform:uppercase;letter-spacing:0.02em;text-align:start;padding:13px 15px;border-bottom:1px solid var(--border-soft);white-space:nowrap;}
+  tbody td{padding:12px 15px;border-bottom:1px solid var(--border-soft);color:var(--text-soft);vertical-align:top;}
+  tbody tr:last-child td{border-bottom:none;}
+  tbody tr:nth-child(even){background:rgba(127,127,127,0.03);}
+  tbody tr:hover{background:var(--red-soft);}
+  code{font-family:var(--mono);font-size:13.3px;background:var(--surface-2);border:1px solid var(--border-soft);border-radius:4px;padding:2px 6px;direction:ltr;unicode-bidi:embed;color:var(--green);}
+  .code-wrap{position:relative;overflow-x:auto;margin:22px 0;}
+  .code-tag{position:absolute;top:10px;left:14px;font-family:var(--mono);font-size:10.5px;color:var(--muted);letter-spacing:0.04em;text-transform:uppercase;z-index:2;}
+  .copy-btn{position:absolute;top:8px;right:10px;z-index:2;font-family:var(--mono);font-size:11px;color:var(--muted);background:var(--surface-2);border:1px solid var(--border-soft);border-radius:4px;padding:4px 9px;cursor:pointer;direction:ltr;}
+  .copy-btn:hover{color:var(--amber);border-color:var(--amber-border);}
+  .copy-btn.copied{color:var(--green);border-color:var(--green-border);}
+  pre{background:var(--bg-0);border:1px solid var(--border-soft);border-inline-start:3px solid var(--red);border-radius:8px;padding:30px 22px 18px;direction:ltr;text-align:left;margin:0;}
+  html[data-theme="light"] pre{background:#16181C;}
+  pre code{background:none;border:none;padding:0;color:#B9E8C9;font-size:13.2px;line-height:1.75;}
+  .diagram-card{background:var(--surface);border:1px solid var(--border-soft);border-radius:10px;padding:22px 18px 16px;margin:24px 0;}
+  .diagram-card svg{width:100%;height:auto;display:block;}
+  .diagram-caption{margin-top:10px;text-align:center;font-family:var(--mono);font-size:11.5px;color:var(--muted);}
+  .takeaways{background:var(--surface);border:1px solid var(--border-soft);border-radius:8px;padding:18px 22px 20px;margin:30px 0 10px;}
+  .takeaways-title{font-family:var(--mono);font-size:12.5px;font-weight:700;color:var(--green);margin-bottom:12px;direction:ltr;text-align:left;display:flex;align-items:center;gap:8px;}
+  .takeaways ul{margin:0;padding-inline-start:20px;}
+  .takeaways li{color:var(--text-soft);font-size:14.5px;}
+  .cheat-section h4{color:var(--amber);font-size:13px;margin:26px 0 8px;}
+  .step-track{display:flex;flex-direction:column;gap:0;margin:24px 0;}
+  .step-item{position:relative;padding:0 0 26px 0;padding-inline-start:46px;border-inline-start:2px solid var(--border-soft);}
+  .step-item:last-child{border-inline-start:2px solid transparent;padding-bottom:4px;}
+  .step-num{position:absolute;inset-inline-start:-17px;top:0;width:32px;height:32px;border-radius:50%;background:var(--red-grad);color:#0F0F10;font-family:var(--mono);font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;}
+  .step-title{font-weight:700;color:var(--text);margin-bottom:6px;font-size:15px;}
+  .step-body{color:var(--text-soft);font-size:14.5px;}
+  .step-body p{margin:0 0 10px;}
+  .step-body p:last-child{margin-bottom:0;}
+  .method-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px;margin:22px 0;}
+  .method-card{background:var(--surface);border:1px solid var(--border-soft);border-radius:8px;padding:14px 16px;}
+  .method-card .mnum{font-family:var(--mono);font-size:11px;font-weight:700;color:#0F0F10;background:var(--red-grad);border-radius:4px;padding:2px 8px;display:inline-block;margin-bottom:8px;direction:ltr;}
+  .method-card .mtitle{font-weight:700;color:var(--text);font-size:14px;margin-bottom:5px;}
+  .method-card .mdesc{color:var(--text-soft);font-size:13.3px;line-height:1.75;}
+  .footer-note{margin-top:70px;padding-top:26px;border-top:1px solid var(--border-soft);color:var(--muted);font-size:13.3px;font-family:var(--mono);text-align:center;direction:ltr;}
+  .dsvg-box{fill:var(--surface-2);stroke:var(--border-soft);stroke-width:1;}
+  .dsvg-box-r{fill:var(--red-soft);stroke:var(--red-border);stroke-width:1;}
+  .dsvg-box-g{fill:var(--green-soft);stroke:var(--green-border);stroke-width:1;}
+  .dsvg-box-b{fill:var(--blue-soft);stroke:var(--blue-border);stroke-width:1;}
+  .dsvg-box-a{fill:var(--amber-soft);stroke:var(--amber-border);stroke-width:1;}
+  .dsvg-box-p{fill:var(--purple-soft);stroke:var(--purple-border);stroke-width:1;}
+  .dsvg-line{stroke:var(--border);stroke-width:1.5;fill:none;}
+  .dsvg-arr{fill:var(--border);}
+  .dsvg-arr-r{fill:var(--red);}
+  .dsvg-txt{fill:var(--text);font-family:IBM Plex Mono,monospace;}
+  .dsvg-muted{fill:var(--muted);font-family:IBM Plex Mono,monospace;}
+  .dsvg-red{fill:var(--red);}
+  .dsvg-green{fill:var(--green);}
+  .dsvg-amber{fill:var(--amber);}
+  .dsvg-blue{fill:var(--blue);}
+  @media print{.float-controls,.progress-rail,.copy-btn,.theme-switch{display:none !important;}body{background:#fff;color:#000;}.page{max-width:100%;}}
+  @media(max-width:640px){.page{padding:28px 14px 70px;}.banner-body{padding:24px 20px 4px;}.banner h1{font-size:21px;}h2{font-size:18px;gap:10px;}.float-controls{left:12px;bottom:14px;}}
+</style>
+</head>
+<body>
+
+<div class="progress-rail"><div class="progress-bar" id="progressBar"></div></div>
+<div class="float-controls">
+  <button class="fctrl-btn" id="toTop" title="ارجع لفوق">↑</button>
+</div>
+
+<div class="page">
+
+<div class="banner">
+  <div class="term-bar">
+    <span class="term-dot r"></span><span class="term-dot y"></span><span class="term-dot g"></span>
+    <span class="term-path">root@cehv13:~/module-09$</span>
+    <button class="theme-switch" id="themeSwitch">theme: dark</button>
+  </div>
+  <div class="banner-body">
+    <span class="kicker">CEHv13 · EC-Council · Module 09</span>
+    <h1>الهندسة الاجتماعية (Social Engineering)</h1>
+    <p class="lede">فن التلاعب بالبشر بدل الأنظمة — من سلوكيات الثقة والسلطة والإلحاح المُستغَلّة نفسيًا، مرورًا بتقنيات هندسة اجتماعية بشرية وحاسوبية ومحمولة كاملة، ووصولًا للتصيّد المتقدّم وانتحال الهوية بالذكاء الاصطناعي (Deepfake وVoice Cloning) وإجراءات المواجهة.</p>
+    <div class="tags">
+      <span class="tag">social-engineering</span>
+      <span class="tag">impersonation</span>
+      <span class="tag">phishing</span>
+      <span class="tag">identity-theft</span>
+      <span class="tag">deepfake</span>
+      <span class="tag">voice-cloning</span>
+      <span class="tag">smishing</span>
+      <span class="tag">qrljacking</span>
+    </div>
+  </div>
+</div>
+
+<nav class="toc"><div class="toc-title">$ ls learning_units/</div><div class="toc-list">
+  <a class="toc-item" href="#lu1"><span class="toc-num">01</span><span>مفاهيم الهندسة الاجتماعية وأهدافها الشائعة</span></a>
+  <a class="toc-item" href="#lu2"><span class="toc-num">02</span><span>تأثير هجمات الهندسة الاجتماعية على المؤسسات</span></a>
+  <a class="toc-item" href="#lu3"><span class="toc-num">03</span><span>السلوكيات النفسية المُستغَلّة في الهجمات</span></a>
+  <a class="toc-item" href="#lu4"><span class="toc-num">04</span><span>عوامل الضعف ومراحل هجوم الهندسة الاجتماعية</span></a>
+  <a class="toc-item" href="#lu5"><span class="toc-num">05</span><span>أنواع الهندسة الاجتماعية — نظرة عامة</span></a>
+  <a class="toc-item" href="#lu6"><span class="toc-num">06</span><span>تقنيات الهندسة الاجتماعية البشرية</span></a>
+  <a class="toc-item" href="#lu7"><span class="toc-num">07</span><span>التصيّد الاحتيالي (Phishing) بالتفصيل</span></a>
+  <a class="toc-item" href="#lu8"><span class="toc-num">08</span><span>تقنيات هندسة اجتماعية حاسوبية أخرى</span></a>
+  <a class="toc-item" href="#lu9"><span class="toc-num">09</span><span>انتحال الهوية بالذكاء الاصطناعي (Deepfake وVoice Cloning)</span></a>
+  <a class="toc-item" href="#lu10"><span class="toc-num">10</span><span>الانتحال على مواقع التواصل وتهديدات الشبكات المؤسسية</span></a>
+  <a class="toc-item" href="#lu11"><span class="toc-num">11</span><span>سرقة الهوية (Identity Theft)</span></a>
+  <a class="toc-item" href="#lu12"><span class="toc-num">12</span><span>تقنيات الهندسة الاجتماعية عبر الموبايل</span></a>
+  <a class="toc-item" href="#lu13"><span class="toc-num">13</span><span>إجراءات مواجهة الهندسة الاجتماعية</span></a>
+  <a class="toc-item" href="#methodology"><span class="toc-num">--</span><span>مراحل هجوم الهندسة الاجتماعية الكاملة</span></a>
+  <a class="toc-item" href="#cheat"><span class="toc-num">--</span><span>Cheat Sheet مرجعي</span></a>
+  <a class="toc-item" href="#summary"><span class="toc-num">--</span><span>الخلاصة العامة للموديول</span></a>
+</div></nav>
+
+<!-- ══════════════════════════════════ LU1 -->
+<h2 id="lu1"><span class="num">01</span><span class="htext">مفاهيم الهندسة الاجتماعية وأهدافها الشائعة</span></h2>
+<p>الهندسة الاجتماعية فن التلاعب بالناس عشان يكشفوا معلومات حساسة تُستخدَم في إجراء خبيث. رغم السياسات الأمنية، المهاجم يقدر يخترق معلومات حساسة باستغلال ضعف البشر — غالبًا الموظف مش حتى واعي بالخلل الأمني اللي بيرتكبه، زي الرد التلقائي على أسئلة غرباء أو الرد على بريد Spam.</p>
+
+<h3>مصادر جمع المعلومات قبل الهجوم</h3>
+<ul>
+<li>المواقع الرسمية للمؤسسة — بتكشف IDs وأسماء وعناوين بريد الموظفين</li>
+<li>الإعلانات عبر الإعلام — بتكشف معلومات عن المنتجات والعروض</li>
+<li>المدوّنات والمنتديات — الموظفين بيشاركوا معلومات شخصية وتنظيمية أساسية</li>
+</ul>
+
+<h3>الأهداف الشائعة للهندسة الاجتماعية</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>الفئة</th><th>لماذا مستهدَفة</th></tr></thead>
+<tbody>
+<tr><td>موظفو الاستقبال وخدمة العملاء</td><td>سهل إقناعهم بالكشف عن معلومات سرّية — خصوصًا لو حسّوا إنهم بيساعدوا "عميل"</td></tr>
+<tr><td>موظفو الدعم الفني</td><td>المهاجم بيتظاهر بإدارة عليا أو عملاء أو موردين للحصول على معلومات حساسة</td></tr>
+<tr><td>مدراء الأنظمة (System Administrators)</td><td>عندهم معلومات حرجة زي نوع وإصدار نظام التشغيل وكلمات مرور الأدمن</td></tr>
+<tr><td>المستخدمون والعملاء</td><td>المهاجم بيتظاهر بموظف دعم فني لاستخراج معلومات حساسة منهم</td></tr>
+<tr><td>موردو المؤسسة</td><td>مصدر معلومات حرجة ممكن تساعد في تنفيذ الهجوم</td></tr>
+<tr><td>كبار التنفيذيين</td><td>أقسام زي المالية والموارد البشرية والإدارة التنفيذية مستهدَفة للمعلومات الحرجة</td></tr>
+</tbody>
+</table></div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU2 -->
+<h2 id="lu2"><span class="num">02</span><span class="htext">تأثير هجمات الهندسة الاجتماعية على المؤسسات</span></h2>
+<div class="goals-grid">
+  <div class="goal-card"><span class="gi">1</span><span><strong>خسائر اقتصادية</strong> — سرقة خطط تطوير واستراتيجيات تسويق من منافسين</span></div>
+  <div class="goal-card"><span class="gi">2</span><span><strong>الإضرار بالسمعة</strong> — تسريب بيانات حساسة بيدمّر ثقة العملاء</span></div>
+  <div class="goal-card"><span class="gi">3</span><span><strong>فقدان الخصوصية</strong> — فشل حماية خصوصية أصحاب المصلحة بيؤدي لفقدان ثقة وتوقّف تعامل العملاء</span></div>
+  <div class="goal-card"><span class="gi">4</span><span><strong>مخاطر الإرهاب</strong> — الإرهابيون ممكن يستخدموا الهندسة الاجتماعية لرسم مخططات لأهدافهم</span></div>
+  <div class="goal-card"><span class="gi">5</span><span><strong>دعاوى قضائية وتحكيم</strong> — دعاية سلبية تؤثّر على أداء العمل</span></div>
+  <div class="goal-card"><span class="gi">6</span><span><strong>إغلاق مؤقت أو دائم</strong> — فقدان السمعة والدعاوى القضائية ممكن تجبر المؤسسة على التوقف</span></div>
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU3 -->
+<h2 id="lu3"><span class="num">03</span><span class="htext">السلوكيات النفسية المُستغَلّة في الهجمات</span></h2>
+<div class="method-grid">
+<div class="method-card"><span class="mnum">01</span><div class="mtitle">Authority (السلطة)</div><div class="mdesc">المهاجم بيقدّم نفسه كشخصية سلطة (فنّي أو تنفيذي) — مثلًا يدّعي إنه مدير شبكة ويطلب بيانات اعتماد الضحية "لحمايتها من السرقة".</div></div>
+<div class="method-card"><span class="mnum">02</span><div class="mtitle">Intimidation (التخويف)</div><div class="mdesc">تخويف الضحية بأساليب ترهيب لانتحال شخصية — مثلًا طلب عاجل لملفات "عرض مهم" بإلحاح وضغط.</div></div>
+<div class="method-card"><span class="mnum">03</span><div class="mtitle">Consensus / Social Proof</div><div class="mdesc">استغلال ميل الناس لفعل ما يفعله الآخرون — شهادات مزوَّرة على مواقع لبرامج خبيثة (Rogueware) تبدو موثوقة.</div></div>
+<div class="method-card"><span class="mnum">04</span><div class="mtitle">Scarcity (الندرة)</div><div class="mdesc">خلق شعور بالإلحاح بسبب ندرة منتج — مثل بريد تصيّد عن منتج نفد من المخزون بيوجّه لموقع خبيث.</div></div>
+<div class="method-card"><span class="mnum">05</span><div class="mtitle">Urgency (الاستعجال)</div><div class="mdesc">تشجيع اتخاذ إجراء فوري — برامج الفدية بتستخدم عدّاد تنازلي لإجبار الضحية على قرار سريع بدون تفكير.</div></div>
+<div class="method-card"><span class="mnum">06</span><div class="mtitle">Familiarity / Liking</div><div class="mdesc">الناس أكثر استعدادًا للامتثال لشخص بيحبّوه أو مألوف بالنسبة لهم — يسمحوا له بـ Shoulder Surfing أو Tailgating بسهولة أكبر.</div></div>
+<div class="method-card"><span class="mnum">07</span><div class="mtitle">Trust (الثقة)</div><div class="mdesc">بناء علاقة ثقة تدريجية — انتحال خبير أمني من شركة معروفة، وبعد بناء الثقة توجيه الضحية لتنزيل ملف خبيث.</div></div>
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU4 -->
+<h2 id="lu4"><span class="num">04</span><span class="htext">عوامل الضعف ومراحل هجوم الهندسة الاجتماعية</span></h2>
+
+<h3>عوامل تجعل الشركات عرضة للهجوم</h3>
+<ul>
+<li><strong>تدريب أمني غير كافٍ:</strong> موظفون غافلون عن خدع الهندسة الاجتماعية</li>
+<li><strong>وصول غير منظَّم للمعلومات:</strong> قاعدة البيانات أصل رئيسي — الوصول غير المحدود يخلق مشاكل</li>
+<li><strong>وحدات تنظيمية متعدّدة:</strong> مواقع جغرافية مختلفة بتصعّب الإدارة وتسهّل وصول المهاجم</li>
+<li><strong>غياب سياسات أمنية:</strong> سياسة الأمان أساس البنية التحتية الأمنية — غيابها يترك ثغرات غير معالَجة</li>
+</ul>
+
+<h3>ليه الهندسة الاجتماعية فعّالة جدًا</h3>
+<p>البشر هم الأكثر عرضة للتغيّر — رغم السياسات الأمنية المتنوّعة، منعها تحدٍّ حقيقي. صعبة الاكتشاف، ومفيش أي ضمان كامل ضدها — لا يوجد جهاز أو برنامج محدَّد للحماية منها بالكامل. النهج رخيص (أو مجاني) وسهل التنفيذ نسبيًا.</p>
+
+<h3>مراحل هجوم الهندسة الاجتماعية</h3>
+<div class="step-track">
+<div class="step-item">
+<div class="step-num">1</div>
+<div class="step-title">البحث عن الشركة الهدف</div>
+<div class="step-body"><p>جمع معلومات كافية للتسلّل — طبيعة العمل، الموقع، عدد الموظفين، عبر Dumpster Diving وتصفّح الموقع وإيجاد تفاصيل الموظفين.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">2</div>
+<div class="step-title">اختيار هدف</div>
+<div class="step-body"><p>بعد البحث، اختيار هدف لاستخراج معلومات حساسة — غالبًا موظفين ساخطين لأنهم أسهل في التلاعب.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">3</div>
+<div class="step-title">تطوير علاقة</div>
+<div class="step-body"><p>بناء علاقة مع الموظف المستهدَف لتحقيق المهمة.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">4</div>
+<div class="step-title">استغلال العلاقة</div>
+<div class="step-body"><p>استغلال العلاقة واستخراج معلومات حساسة عن حسابات المؤسسة والمعلومات المالية والتقنيات المستخدَمة والخطط القادمة.</p></div>
+</div>
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU5 -->
+<h2 id="lu5"><span class="num">05</span><span class="htext">أنواع الهندسة الاجتماعية — نظرة عامة</span></h2>
+
+<div class="method-grid">
+<div class="method-card"><span class="mnum">بشرية</span><div class="mtitle">Human-based</div><div class="mdesc">تفاعل بشري مباشر — المهاجم يتظاهر بشخص شرعي للتفاعل مع موظف المؤسسة. تقنيات: Impersonation، Vishing، Eavesdropping، Shoulder Surfing، Dumpster Diving، Reverse Social Engineering، Piggybacking، Tailgating، Diversion Theft، Honey Trap، Baiting، Bait and Switch، Quid Pro Quo، Elicitation.</div></div>
+<div class="method-card"><span class="mnum">حاسوبية</span><div class="mtitle">Computer-based</div><div class="mdesc">تعتمد على الحاسوب وأنظمة الإنترنت. تقنيات: Phishing، Spam Mail، Instant Chat Messenger، Pop-up Window Attacks، Scareware، إنشاء فيديوهات Deepfake، واستنساخ الصوت (Voice Cloning).</div></div>
+<div class="method-card"><span class="mnum">محمولة</span><div class="mtitle">Mobile-based</div><div class="mdesc">تطبيقات موبايل تقلّد تطبيقات شهيرة بمميزات جذّابة. تقنيات: نشر تطبيقات خبيثة، إعادة تغليف تطبيقات شرعية، QRLJacking، تطبيقات أمان مزيَّفة، SMiShing.</div></div>
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU6 -->
+<h2 id="lu6"><span class="num">06</span><span class="htext">تقنيات الهندسة الاجتماعية البشرية</span></h2>
+
+<h3>Impersonation (الانتحال) — أنواعه التفصيلية</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>النوع</th><th>الوصف</th></tr></thead>
+<tbody>
+<tr><td>Posing as a Legitimate End User</td><td>انتحال موظف مع هوية مزوَّرة للوصول لبيانات مميَّزة</td></tr>
+<tr><td>Posing as an Important User</td><td>انتحال شخصية مهمة (نائب رئيس، مدير) — يستغل عادة الناس في عدم التشكيك في السلطة، بعنصر تخويف إضافي</td></tr>
+<tr><td>Posing as a Technical Support Agent</td><td>انتحال وكيل دعم فني، فعّال خصوصًا مع ضحايا غير متمكّنين تقنيًا</td></tr>
+<tr><td>Posing as Internal Employee/Client/Vendor</td><td>ارتداء ملابس عمل ودخول مبنى المؤسسة بانتحال مقاول أو عميل — التجوّل بدون ملاحظة والبحث عن كلمات مرور ملصقة أو بيانات في صناديق القمامة</td></tr>
+<tr><td>Posing as a Repairman</td><td>انتحال فني حاسوب أو كهربائي — أشخاص غير مشكوك فيهم عادة — بحث عن كلمات مرور مخفية وزرع أجهزة تنصّت</td></tr>
+</tbody>
+</table></div>
+
+<h3>تقنيات بشرية إضافية</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>التقنية</th><th>الوصف الموجز</th></tr></thead>
+<tbody>
+<tr><td>Vishing</td><td>تصيّد صوتي عبر الهاتف لانتحال جهة موثوقة والحصول على معلومات حساسة</td></tr>
+<tr><td>Eavesdropping</td><td>التنصّت المتعمَّد على محادثات سرّية بين الموظفين</td></tr>
+<tr><td>Shoulder Surfing</td><td>مراقبة سرّية لضحية أثناء إدخال بيانات حساسة (كلمات مرور)</td></tr>
+<tr><td>Dumpster Diving</td><td>البحث في صناديق القمامة عن مستندات ومعلومات حساسة ممزَّقة أو مُهمَلة</td></tr>
+<tr><td>Reverse Social Engineering</td><td>المهاجم بيخلق موقف بيخلّي الضحية هي اللي بتتواصل معاه طالبة المساعدة، فيكسب ثقتها بسهولة</td></tr>
+<tr><td>Piggybacking</td><td>الدخول لمنطقة مقيَّدة بعلم وموافقة موظف شرعي (بطاقة دخول مشتركة)</td></tr>
+<tr><td>Tailgating</td><td>الدخول لمنطقة مقيَّدة بالتبعية الجسدية خلف موظف شرعي بدون علمه</td></tr>
+<tr><td>Diversion Theft</td><td>خداع شركة توصيل أو نقل لتسليم شحنة لمكان مختلف عن وجهتها الصحيحة</td></tr>
+<tr><td>Honey Trap</td><td>استدراج ضحية عبر علاقة عاطفية أو رومانسية وهمية لاستخراج معلومات</td></tr>
+<tr><td>Baiting</td><td>ترك جهاز (USB مثلًا) محمَّل ببرمجية خبيثة في مكان بارز ليلتقطه الضحية ويستخدمه بفضول</td></tr>
+<tr><td>Bait and Switch</td><td>الوعد بشيء (إعلان أو تنزيل) وتسليم شيء ضار بدلًا منه</td></tr>
+<tr><td>Quid Pro Quo</td><td>عرض خدمة أو منفعة مقابل معلومات أو وصول — "أنا هساعدك مقابل كذا"</td></tr>
+<tr><td>Elicitation</td><td>استخلاص معلومات بمحادثة طبيعية وغير مُلفِتة للانتباه بدون إثارة شكوك الضحية</td></tr>
+</tbody>
+</table></div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU7 -->
+<h2 id="lu7"><span class="num">07</span><span class="htext">التصيّد الاحتيالي (Phishing) بالتفصيل</span></h2>
+<p>المهاجم بيبعت بريد إلكتروني أو رابط يدّعي زورًا إنه من موقع شرعي للحصول على معلومات شخصية أو حساب — بيسجّل نطاق مزيَّف، يبني موقع مطابق، ويبعت الرابط للمستخدمين. أسباب نجاح التصيّد: نقص معرفة المستخدمين، الخداع البصري، وعدم الانتباه لمؤشرات الأمان.</p>
+
+<h3>أنواع التصيّد</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>النوع</th><th>الآلية</th></tr></thead>
+<tbody>
+<tr><td>Spear Phishing</td><td>هجوم موجَّه لأفراد محدَّدين داخل مؤسسة بمحتوى مخصَّص لشخص أو مجموعة صغيرة</td></tr>
+<tr><td>Whaling</td><td>استهداف تنفيذيين رفيعي المستوى (CEOs، CFOs) بإمكانية وصول كاملة لمعلومات قيّمة</td></tr>
+<tr><td>Pharming</td><td>إعادة توجيه الترافيك لموقع احتيالي عبر برنامج خبيث — "تصيّد بدون طُعم" عبر DNS Cache Poisoning أو تعديل Host File</td></tr>
+<tr><td>Spimming</td><td>شكل من Spam يستغل منصّات المراسلة الفورية — Bots بتحصد معرّفات المراسلة الفورية</td></tr>
+<tr><td>Clone Phishing</td><td>نسخة شبه مطابقة من تواصل شرعي سابق، معدَّلة ليشير الرابط/المرفق لوجهة خبيثة</td></tr>
+<tr><td>E-wallet Phishing</td><td>استهداف مستخدمي المحافظ الإلكترونية بانتحال مزوّد محفظة شرعي</td></tr>
+<tr><td>Tabnabbing / Reverse Tabnabbing</td><td>Tabnabbing: صفحة خبيثة بتغيّر محتواها لتشبه موقع مألوف وتلتقط بيانات الاعتماد عند العودة للتبويب. Reverse: موقع شرعي ظاهريًا بيخدع المستخدم لفتح رابط خبيث يغيّر محتوى التبويب الأصلي</td></tr>
+<tr><td>Consent Phishing</td><td>استغلال بروتوكول OAuth بتطبيق أو موقع مزيَّف يبدو شرعيًا لاستدراج الضحية لمنح صلاحيات</td></tr>
+<tr><td>Search Engine Phishing</td><td>التلاعب في نتائج محرّك البحث لتوجيه المستخدمين لمواقع احتيالية مصمَّمة لسرقة بيانات أو نشر برمجيات خبيثة</td></tr>
+</tbody>
+</table></div>
+
+<h3>أدوات التصيّد</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>الأداة</th><th>الوظيفة</th></tr></thead>
+<tbody>
+<tr><td>ShellPhish</td><td>تصيّد بيانات اعتماد من منصّات سوشيال ميديا (Instagram، Facebook، Twitter، LinkedIn) — يعرض IP العام للضحية ومعلومات المتصفح والموقع</td></tr>
+<tr><td>Social Engineer Toolkit (SET)</td><td>أداة Python مفتوحة المصدر لاختبار اختراق عبر الهندسة الاجتماعية — تصنّف هجمات البريد والويب وUSB حسب متجه الهجوم</td></tr>
+</tbody>
+</table></div>
+<p><strong>أدوات إضافية:</strong> Dark-Phish، BLACKEYE، SocialFish، Modlishka، Trape، Gophish، King Phisher، LUCY SECURITY، Zphisher.</p>
+
+<div class="callout note">
+<div class="callout-label">صياغة رسائل تصيّد بـ ChatGPT</div>
+<p>مثال Prompt: <em>"Pose as a genuine Microsoft customer support executive with imaginary name; write a concise mail stating that he/she has found suspicious login on user's account and ask them to reset the password on urgent basis"</em> — يوضّح إزاي AI ممكن تؤتمت صياغة رسائل تصيّد مقنعة.</p>
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU8 -->
+<h2 id="lu8"><span class="num">08</span><span class="htext">تقنيات هندسة اجتماعية حاسوبية أخرى</span></h2>
+<div class="table-wrap"><table>
+<thead><tr><th>التقنية</th><th>الوصف</th></tr></thead>
+<tbody>
+<tr><td>Pop-Up Windows</td><td>تخدع المستخدم للنقر على رابط بيوجّه لصفحات مزيَّفة تطلب معلومات شخصية أو تنزيل برمجيات خبيثة (Keyloggers، Trojans، Spyware) — غالبًا بتحذير من مشكلة أو رسالة خطأ واقعية</td></tr>
+<tr><td>Hoax Letters</td><td>رسالة تحذّر من تهديد فيروس غير موجود — مش بتسبّب ضرر فعلي لكن بتهدر إنتاجية وموارد شبكة</td></tr>
+<tr><td>Chain Letters</td><td>رسالة بتعرض هدايا مجانية بشرط إعادة توجيهها لعدد محدَّد من المستلمين — قصص مقنعة عاطفيًا وأنظمة هرمية</td></tr>
+<tr><td>Instant Chat Messenger</td><td>محادثة مع مستخدمين مختارين لجمع معلومات شخصية (تاريخ ميلاد، اسم عائلة) تُستخدَم لكسر الحسابات</td></tr>
+<tr><td>Spam Email</td><td>بريد غير مرغوب مصمَّم لجمع معلومات مالية — غالبًا بمرفقات تحمل برامج خبيثة بأسماء ملفات طويلة لإخفاء الامتداد</td></tr>
+<tr><td>Scareware</td><td>برمجية خبيثة بتخدع المستخدم لزيارة مواقع مصابة أو شراء برمجيات ضارة — نوافذ منبثقة توحي بإصابة الجهاز بفيروس من مصدر "شرعي" زي شركة مضاد فيروسات</td></tr>
+</tbody>
+</table></div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU9 -->
+<h2 id="lu9"><span class="num">09</span><span class="htext">انتحال الهوية بالذكاء الاصطناعي (Deepfake وVoice Cloning)</span></h2>
+
+<h3>هجوم Deepfake</h3>
+<p>نوع من هجمات التصيّد بيصنع المهاجم فيه وسائط مزيَّفة لشخص مستهدَف باستخدام تقنيات متقدّمة زي ML وAI — عبر عينات صوت/فيديو مسجَّلة سابقًا، وممكن يستخدم ده لابتزاز الضحايا بطلب فدية.</p>
+<div class="callout warning">
+<div class="callout-label">المهارات المطلوبة لصنع Deepfake</div>
+<p>خوارزميات تعلّم آلي متقدّمة (CNNs، GANs)، برمجة وScripting لتدريب النماذج، كميات ضخمة من بيانات التدريب (فيديو + معالم وجه)، معالجة وتنقية البيانات، إتقان أدوات تحرير فيديو (Premiere Pro، DaVinci Resolve)، وفهم تأثيرات بصرية (Compositing، Color Grading، Motion Tracking، Rotoscoping).</p>
+</div>
+<p><strong>أدوات صنع Deepfake:</strong> DeepFaceLab (حل شامل من جمع البيانات للمخرج النهائي — استبدال وجوه، تغيير العمر، تعديل الشفاه)، Vidnoz، Deepfakesweb، Synthesia، DeepBrain AI، Hoodem.</p>
+
+<h3>استنساخ الصوت (Voice Cloning)</h3>
+<p>استخدام خوارزميات تعلّم آلي متقدّمة لإنشاء تقليد مقنع جدًا لصوت شخص معيّن — عبر تقنيات تركيب الكلام ونماذج شبكات عصبية.</p>
+<div class="step-track">
+<div class="step-item">
+<div class="step-num">1</div>
+<div class="step-title">جمع البيانات</div>
+<div class="step-body"><p>تسجيلات صوتية من مصادر زي خطابات عامة ومقابلات وBodcasts ومنشورات سوشيال ميديا.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">2</div>
+<div class="step-title">تدريب الشبكات العصبية</div>
+<div class="step-body"><p>تدريب نماذج تعلّم عميق (CNNs، RNNs) على البيانات الصوتية المُجمَّعة لتعلّم أنماط وخصائص الصوت.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">3</div>
+<div class="step-title">إنشاء عينات صوتية</div>
+<div class="step-body"><p>تحويل نص لصوت باستخدام خصائص الصوت المُتعلَّمة — توليد عينات صوتية مطابقة.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">4</div>
+<div class="step-title">انتحال الهدف</div>
+<div class="step-body"><p>استخدام العينات الصوتية لانتحال الشخص الهدف في مكالمات هاتفية أو رسائل صوتية — تخويل معاملات احتيالية أو اختراق أنظمة أمنية.</p></div>
+</div>
+</div>
+<p><strong>أدوات استنساخ الصوت:</strong> VEED.IO (استنساخ لحظي من عينة صوتية واحدة)، Murf.AI، Resemble.AI، ElevenLabs، PlayHT، voice.ai.</p>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU10 -->
+<h2 id="lu10"><span class="num">10</span><span class="htext">الانتحال على مواقع التواصل وتهديدات الشبكات المؤسسية</span></h2>
+<p>المستخدمون الخبيثون بيجمعوا معلومات سرّية من مواقع التواصل وينشئوا حسابات باسم شخص آخر — بيستخدموا البروفايلات المزيَّفة دي لبناء شبكات أصدقاء كبيرة واستخراج معلومات.</p>
+
+<h3>Angler Phishing</h3>
+<p>المهاجم بينشئ حساب سوشيال ميديا مزيَّف ينتحل حساب دعم فني لمؤسسة، ويتواصل مع عملاء ساخطين بنشر روابط خدمة مزيَّفة — عند النقر، إما تتثبّت برمجية خبيثة أو يُوجَّه الضحية لموقع يطلب بياناته.</p>
+
+<h3>تهديدات مواقع التواصل للشبكات المؤسسية</h3>
+<ul>
+<li><strong>سرقة البيانات:</strong> مواقع التواصل قواعد بيانات ضخمة متاحة لملايين، مما يزيد خطر الاستغلال</li>
+<li><strong>تسريب بيانات لا إرادي:</strong> بدون سياسة واضحة، الموظفون ممكن ينشروا بيانات حساسة بدون قصد</li>
+<li><strong>هجمات موجَّهة:</strong> المهاجم بيستخدم معلومات منشورة لشنّ هجمات موجَّهة لأفراد أو شركات محدَّدة</li>
+<li><strong>ثغرات الشبكة:</strong> عيوب وأخطاء (مشاكل تسجيل دخول، ثغرات Java) ممكن تُستغَل لتسريب معلومات</li>
+<li><strong>Spam والتصيّد:</strong> استخدام بريد العمل على السوشيال ميديا بيزيد التعرّض لـ Spam والتصيّد</li>
+<li><strong>تعديل المحتوى:</strong> بدون إجراءات أمنية مناسبة، المدوّنات والقنوات والحسابات ممكن تُزوَّر أو تُخترَق</li>
+</ul>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU11 -->
+<h2 id="lu11"><span class="num">11</span><span class="htext">سرقة الهوية (Identity Theft)</span></h2>
+<p>جريمة بيسرق فيها منتحل معلومات تعريفية شخصية (اسم، رقم بطاقة ائتمان، رقم ضمان اجتماعي أو رخصة قيادة) لارتكاب احتيال أو جرائم أخرى — المهاجمون يستخدموها لانتحال موظفين والوصول فعليًا لمنشآت المؤسسة.</p>
+
+<h3>مؤشرات سرقة الهوية</h3>
+<ul>
+<li>رسوم غير مألوفة على بطاقة الائتمان مش متعرّف عليها</li>
+<li>مكالمات من قسم مكافحة احتيال الائتمان/الخصم</li>
+<li>توقّف استلام كشوف حساب بطاقة الائتمان أو البنك أو المرافق</li>
+<li>رسوم لعلاج أو خدمات طبية لم تحصل عليها</li>
+<li>توقّف استلام فواتير خدمات الكهرباء والغاز والمياه</li>
+</ul>
+
+<h3>أنواع سرقة الهوية</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>النوع</th><th>الوصف</th></tr></thead>
+<tbody>
+<tr><td>Child Identity Theft</td><td>سرقة هوية قاصر — صعبة الاكتشاف لفترة طويلة، تُستخدَم لفتح حسابات ائتمان أو قروض أو استئجار سكن</td></tr>
+<tr><td>Criminal Identity Theft</td><td>الأكثر شيوعًا وضررًا — مجرم بيستخدم هوية شخص آخر للهروب من اتهامات جنائية عند القبض عليه</td></tr>
+<tr><td>Financial Identity Theft</td><td>سرقة معلومات حساب بنكي أو بطاقة ائتمان واستخدامها بطريقة غير قانونية — عبر فيروسات أو تصيّد أو اختراقات بيانات</td></tr>
+<tr><td>Insurance Identity Theft</td><td>استخدام معلومات طبية مسروقة للوصول لتأمين العلاج الطبي — صعوبات في تسوية الفواتير وأقساط تأمين أعلى</td></tr>
+</tbody>
+</table></div>
+
+<h3>تقنيات شائعة للحصول على معلومات شخصية</h3>
+<ul>
+<li><strong>بحث الإنترنت:</strong> جمع معلومات حساسة عبر مواقع شرعية ومحركات بحث</li>
+<li><strong>الهندسة الاجتماعية:</strong> التلاعب بالناس بدون أساليب اختراق تقنية</li>
+<li><strong>Dumpster Diving وShoulder Surfing:</strong> البحث في النفايات والمراقبة السرّية في أماكن زي أجهزة الصراف الآلي والفنادق</li>
+<li><strong>السرقة الفعلية:</strong> محافظ، حواسيب، هواتف، وسائط نسخ احتياطي من فنادق وأماكن ترفيهية</li>
+<li><strong>Skimming:</strong> سرقة أرقام بطاقات بأجهزة تخزين خاصة (Skimmers) أثناء معالجة البطاقة</li>
+<li><strong>Pretexting:</strong> انتحال تنفيذيين من مؤسسات مالية أو شركات اتصالات، كسب الثقة عبر "الكلام المعسول"</li>
+<li><strong>Keyloggers وبرمجيات سرقة كلمات المرور:</strong> إصابة الجهاز بـ Trojans أو فيروسات لتسجيل ضغطات المفاتيح</li>
+<li><strong>Wardriving:</strong> البحث عن شبكات Wi-Fi غير آمنة من مركبات متحرّكة للوصول لمعلومات حساسة مخزَّنة</li>
+</ul>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU12 -->
+<h2 id="lu12"><span class="num">12</span><span class="htext">تقنيات الهندسة الاجتماعية عبر الموبايل</span></h2>
+
+<div class="table-wrap"><table>
+<thead><tr><th>التقنية</th><th>الوصف</th></tr></thead>
+<tbody>
+<tr><td>Publishing Malicious Apps</td><td>تطبيقات خبيثة بأسماء ومميزات مشابهة لتطبيقات شهيرة تُنشَر في متاجر التطبيقات الرئيسية — المستخدم بيحمّلها من غير قصد وتصيبه برمجية بتبعت بيانات الاعتماد للمهاجم</td></tr>
+<tr><td>Repackaging Legitimate Apps</td><td>برمجية خبيثة مخفية داخل تطبيق شرعي — مطوّر خبيث بيعيد تغليف تطبيق ألعاب شرعي ببرمجية خبيثة ويرفعه للمتجر</td></tr>
+<tr><td>Fake Security Applications</td><td>المهاجم بيصيب جهاز الضحية أولًا، بعدين برمجية خبيثة بتعرض نافذة منبثقة تطلب تنزيل تطبيق "أمان" — التطبيق المزيَّف بيسرق بيانات اعتماد الحساب البنكي بما فيها رمز التحقق الثاني عبر SMS</td></tr>
+<tr><td>SMiShing (SMS Phishing)</td><td>رسائل SMS مصمَّمة لاستفزاز إجراء فوري — تنزيل برمجية خبيثة، زيارة صفحة خبيثة، أو الاتصال برقم احتيالي</td></tr>
+<tr><td>QRLJacking</td><td>استغلال طريقة تسجيل الدخول عبر QR Code في تطبيقات ويب لاختطاف جلسات تسجيل الدخول والوصول غير المصرَّح به لحسابات الضحايا</td></tr>
+</tbody>
+</table></div>
+
+<h3>أداة استنساخ QR Code</h3>
+<p><strong>QR TIGER</strong> أداة توليد QR Code تسمح للمهاجم بإنشاء نسخة مطابقة من QR Code شرعي — بتستنسخ أكواد ثابتة وديناميكية، وبتتتبّع معلومات زي عدد المسح ووقت ومكان المسح والجهاز المستخدَم. <strong>أدوات إضافية:</strong> QR Code Generator، Soti MobiControl، QR Code KIT.</p>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU13 -->
+<h2 id="lu13"><span class="num">13</span><span class="htext">إجراءات مواجهة الهندسة الاجتماعية</span></h2>
+<p>أفضل السياسات والإجراءات عديمة الفائدة لو ما اتعلَّمتش وما اتعزّزتش من الموظفين. بعد التدريب، لازم الموظفون يوقّعوا إقرار بفهمهم للسياسات.</p>
+
+<h3>سياسات كلمات المرور والأمان الفيزيائي</h3>
+<div class="method-grid">
+<div class="method-card"><span class="mnum">كلمات المرور</span><div class="mtitle">سياسات دورية</div><div class="mdesc">تغيير دوري، تجنّب كلمات مرور سهلة التخمين، قفل الحساب بعد محاولات فاشلة، زيادة الطول والتعقيد، وتحسين سرّية كلمات المرور.</div></div>
+<div class="method-card"><span class="mnum">أمان فيزيائي</span><div class="mtitle">ضوابط الوصول</div><div class="mdesc">تحديد هوية الموظفين (بطاقات، زي موحَّد)، مرافقة الزوّار، تقييد الوصول لمناطق العمل، تمزيق المستندات غير المُستخدَمة بشكل مناسب، وتوظيف أفراد أمن.</div></div>
+</div>
+
+<h3>استراتيجية الدفاع</h3>
+<p>حملة هندسة اجتماعية تجريبية (Social Engineering Campaign)، تحليل الفجوات (Gap Analysis)، واستراتيجيات معالجة (Remediation Strategies).</p>
+
+<h3>كيفية الدفاع ضد هجمات التصيّد</h3>
+<ol>
+<li>تثقيف الأفراد عبر حملات تصيّد تجريبية</li>
+<li>تفعيل فلاتر Spam للكشف عن بريد من مصادر مشبوهة</li>
+<li>تمرير المؤشر على الروابط للتحقق من وجهتها الصحيحة</li>
+<li>فحص البريد لتحية عامة وأخطاء إملائية ونحوية</li>
+<li>تأكيد المرسل قبل تقديم أي معلومة عبر البريد</li>
+<li>ضمان استخدام الموظفين لمواقع محمية بـ HTTPS</li>
+<li>التحقق من صور بروفايل حساب مشبوه عبر بحث عكسي للصورة</li>
+<li>الإبلاغ الفوري عن حسابات سوشيال ميديا مؤكَّد إنها مزيَّفة</li>
+</ol>
+
+<h3>كيفية اكتشاف رسائل التصيّد</h3>
+<ul>
+<li>مرفقات غير متوقَّعة من مستخدمين مجهولين، أو بصيغة غير مألوفة</li>
+<li>اختلافات في معرّف البريد الإلكتروني للمرسل، أو من نطاق مؤسسي غير مكتمل أو خاطئ</li>
+<li>تحية عامة زي "Dear users"، "Hello"، ومحاولة إثارة إحساس بالإلحاح</li>
+<li>غياب توقيع كامل، وروابط بتعرض موقع أو رابط مختلف عند التمرير فوقها</li>
+<li>رسائل تدّعي إنها من بنك أو مؤسسة مالية، أو طلبات تبرّعات خيرية</li>
+<li>أخطاء إملائية واضحة واستخدام غريب لعلامات الترقيم، وطلب معلومات شخصية</li>
+</ul>
+<p><strong>أدوات كشف التصيّد:</strong> Scanurl، Isitphishing، Threatcop، e.Veritas، Virustotal. <strong>OhPhish</strong> بوابة ويب لاختبار قابلية تأثّر الموظفين بهجمات الهندسة الاجتماعية عبر إطلاق حملات تصيّد تجريبية.</p>
+
+<hr />
+
+<!-- ══════════════════════════════════ METHODOLOGY -->
+<h2 id="methodology"><span class="num">--</span><span class="htext">مراحل هجوم الهندسة الاجتماعية الكاملة</span></h2>
+
+<div class="diagram-card">
+<svg viewBox="0 0 700 150" xmlns="http://www.w3.org/2000/svg">
+  <rect x="5" y="55" width="130" height="55" rx="7" class="dsvg-box-b"/>
+  <text x="70" y="78" text-anchor="middle" class="dsvg-blue" font-size="10.5" font-weight="700">بحث وجمع معلومات</text>
+  <text x="70" y="95" text-anchor="middle" class="dsvg-muted" font-size="8">OSINT / Dumpster Diving</text>
+
+  <rect x="180" y="55" width="120" height="55" rx="7" class="dsvg-box-a"/>
+  <text x="240" y="78" text-anchor="middle" class="dsvg-amber" font-size="10.5" font-weight="700">اختيار الهدف</text>
+  <text x="240" y="95" text-anchor="middle" class="dsvg-muted" font-size="8">موظف ساخط/ضعيف</text>
+
+  <rect x="340" y="55" width="130" height="55" rx="7" class="dsvg-box"/>
+  <text x="405" y="78" text-anchor="middle" class="dsvg-txt" font-size="10.5" font-weight="700">بناء العلاقة والثقة</text>
+  <text x="405" y="95" text-anchor="middle" class="dsvg-muted" font-size="8">Authority / Trust / Liking</text>
+
+  <rect x="510" y="55" width="130" height="55" rx="7" class="dsvg-box-r"/>
+  <text x="575" y="78" text-anchor="middle" class="dsvg-red" font-size="10.5" font-weight="700">استغلال واستخراج</text>
+  <text x="575" y="95" text-anchor="middle" class="dsvg-muted" font-size="8">معلومات / وصول فعلي</text>
+
+  <line x1="135" y1="82" x2="180" y2="82" class="dsvg-line"/>
+  <line x1="300" y1="82" x2="340" y2="82" class="dsvg-line"/>
+  <line x1="470" y1="82" x2="510" y2="82" class="dsvg-line"/>
+</svg>
+<div class="diagram-caption">من البحث الأولي وحتى استغلال العلاقة المبنية — نفس التسلسل بغضّ النظر عن القناة (بشرية/حاسوبية/محمولة)</div>
+</div>
+
+<ul>
+<li>كل هجوم هندسة اجتماعية، بغضّ النظر عن القناة، بيمر بنفس التسلسل الأساسي — البحث هو الأساس اللي بيحدّد نجاح باقي المراحل</li>
+<li>اختيار الهدف مش عشوائي — الموظفون الساخطون أو الجدد أو قليلو الخبرة أهداف مفضَّلة</li>
+<li>بناء العلاقة بيستغل واحد أو أكتر من السلوكيات النفسية السبعة (سلطة، تخويف، إجماع، ندرة، إلحاح، ألفة، ثقة)</li>
+<li>الاستغلال النهائي ممكن يكون معلومة واحدة بس (كلمة مرور) أو سلسلة كاملة تؤدي لاختراق شامل</li>
+</ul>
+
+<hr />
+
+<!-- ══════════════════════════════════ CHEAT SHEET -->
+<h2 id="cheat"><span class="num">--</span><span class="htext">Cheat Sheet مرجعي</span></h2>
+<div class="cheat-section">
+
+<h4>مرجع سريع — تقنيات Human-based</h4>
+<ul>
+<li>Impersonation، Vishing، Eavesdropping، Shoulder Surfing، Dumpster Diving</li>
+<li>Reverse Social Engineering، Piggybacking، Tailgating</li>
+<li>Diversion Theft، Honey Trap، Baiting، Bait and Switch، Quid Pro Quo، Elicitation</li>
+</ul>
+
+<h4>مرجع سريع — أنواع Phishing</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>النوع</th><th>الهدف</th></tr></thead>
+<tbody>
+<tr><td>Spear Phishing</td><td>أفراد محدَّدون</td></tr>
+<tr><td>Whaling</td><td>تنفيذيون رفيعو المستوى</td></tr>
+<tr><td>Pharming</td><td>بدون طُعم — DNS/Host manipulation</td></tr>
+<tr><td>Clone Phishing</td><td>نسخ تواصل سابق شرعي</td></tr>
+<tr><td>Consent Phishing</td><td>استغلال OAuth</td></tr>
+<tr><td>Search Engine Phishing</td><td>نتائج بحث مُتلاعَب بها</td></tr>
+</tbody>
+</table></div>
+
+<h4>فروق Piggybacking مقابل Tailgating</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>التقنية</th><th>الفرق الجوهري</th></tr></thead>
+<tbody>
+<tr><td>Piggybacking</td><td>الموظف الشرعي <strong>على علم</strong> ومتعاون (يفتح الباب عمدًا)</td></tr>
+<tr><td>Tailgating</td><td>الموظف الشرعي <strong>غير مدرك</strong> لدخول المهاجم خلفه</td></tr>
+</tbody>
+</table></div>
+
+<h4>Quick Wins — مراجعة سريعة قبل الامتحان</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>#</th><th>السؤال</th><th>الإجابة السريعة</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>كام سلوك نفسي أساسي مُستغَل في الهندسة الاجتماعية؟</td><td>7: Authority، Intimidation، Consensus، Scarcity، Urgency، Familiarity، Trust</td></tr>
+<tr><td>2</td><td>كام نوع من سرقة الهوية؟</td><td>4: Child، Criminal، Financial، Insurance</td></tr>
+<tr><td>3</td><td>إيه الفرق بين Phishing العادي وPharming؟</td><td>Pharming بدون طُعم أو رابط خادع — إعادة توجيه مباشرة عبر DNS/Host manipulation</td></tr>
+<tr><td>4</td><td>إيه القناة اللي QRLJacking بيستهدفها؟</td><td>طريقة تسجيل دخول QR Code في تطبيقات ويب — Mobile-based</td></tr>
+<tr><td>5</td><td>كام مرحلة لهجوم الهندسة الاجتماعية الكامل؟</td><td>4: بحث → اختيار هدف → بناء علاقة → استغلال العلاقة</td></tr>
+</tbody>
+</table></div>
+
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ SUMMARY -->
+<h2 id="summary"><span class="htext">الخلاصة العامة للموديول</span></h2>
+<p>الموديول ده غطّى الهندسة الاجتماعية بعمق — من المفاهيم الأساسية والسلوكيات النفسية المُستغَلّة، مرورًا بالتقنيات البشرية والحاسوبية والمحمولة، والتصيّد بكل أنواعه، ووصولًا لانتحال الهوية بالذكاء الاصطناعي (Deepfake وVoice Cloning) وسرقة الهوية وإجراءات المواجهة.</p>
+
+<div class="takeaways">
+<div class="takeaways-title">$ cat ./cehv13_module09_summary.txt</div>
+<ul>
+<li>الهندسة الاجتماعية بتستهدف البشر مش الأنظمة — السياسات التقنية وحدها غير كافية للحماية منها</li>
+<li>سبع سلوكيات نفسية أساسية (سلطة، تخويف، إجماع، ندرة، إلحاح، ألفة، ثقة) هي الأساس اللي كل تقنية هندسة اجتماعية مبنية عليه</li>
+<li>الهندسة الاجتماعية فعّالة لأنها رخيصة وسهلة التنفيذ ومفيش حماية تقنية كاملة ضدها — الوعي البشري هو الدفاع الوحيد الفعّال</li>
+<li>التصيّد الاحتيالي أصبح متنوّعًا جدًا (10+ أنواع) — من Spear Phishing المحدَّد وحتى Pharming بدون طُعم</li>
+<li>الذكاء الاصطناعي رفع خطورة انتحال الهوية لمستوى جديد تمامًا عبر Deepfake وVoice Cloning القابلة للاستخدام الفوري</li>
+<li>سرقة الهوية جريمة متعدّدة الأشكال — من سرقة هوية قاصر وحتى الانتحال الجنائي الكامل</li>
+<li>الهندسة الاجتماعية عبر الموبايل بتستغل ثقة المستخدمين في متاجر التطبيقات الرسمية نفسها</li>
+<li>الدفاع الفعّال الوحيد مركَّب من ثلاث طبقات: تدريب وتوعية مستمرّة، سياسات واضحة وموثَّقة، وأدوات كشف واختبار دوري (محاكاة تصيّد)</li>
+</ul>
+</div>
+
+<blockquote>
+<p><strong>الفكرة الجوهرية للموديول:</strong> "لا يوجد دفاع جاهز ضد الهندسة الاجتماعية — فقط اليقظة المستمرّة تقدر تتصدّى لبعض تقنياتها." المهاجم مش بيستغل ثغرة في الكود، هو بيستغل خاصية بشرية أساسية (الثقة، السلطة، الخوف) موجودة في كل إنسان. المختبر الأخلاقي اللي بيفهم علم النفس البشري بنفس عمق فهمه للشبكات هو اللي بيقدر يبني دفاع واقعي.</p>
+</blockquote>
+
+<div class="callout examtip">
+<div class="callout-label">Professional Mindset</div>
+<p>احفظ الفرق الدقيق بين المصطلحات المتشابهة (Piggybacking مقابل Tailgating، Phishing مقابل Pharming، Spear Phishing مقابل Whaling) لأن الامتحان بيركّز عليها كتير. اربط كل تقنية بالسلوك النفسي اللي بتستغله — ده بيخلّيك تتعرّف على أي تقنية جديدة مش مذكورة بالاسم من خلال فهم المبدأ النفسي وراها.</p>
+</div>
+
+<hr />
+<p><em>نهاية نوتس الموديول التاسع — Social Engineering (CEHv13)</em></p>
+<div class="footer-note">-- EOF: cehv13-module-09/social-engineering.md --</div>
+
+</div>
+
+<script>
+(function(){
+  var root=document.documentElement,btn=document.getElementById('themeSwitch');
+  function applyTheme(t){root.setAttribute('data-theme',t);btn.textContent='theme: '+t;try{localStorage.setItem('oscp-notes-theme',t);}catch(e){}}
+  var saved='dark';try{saved=localStorage.getItem('oscp-notes-theme')||'dark';}catch(e){}
+  applyTheme(saved);
+  btn.addEventListener('click',function(){applyTheme(root.getAttribute('data-theme')==='dark'?'light':'dark');});
+  var bar=document.getElementById('progressBar');
+  function onScroll(){var h=document.documentElement,s=h.scrollTop,ht=h.scrollHeight-h.clientHeight;bar.style.width=(ht>0?(s/ht*100):0)+'%';var t=document.getElementById('toTop');s>500?t.classList.add('show'):t.classList.remove('show');}
+  document.addEventListener('scroll',onScroll);onScroll();
+  document.getElementById('toTop').addEventListener('click',function(){window.scrollTo({top:0,behavior:'smooth'});});
+  document.querySelectorAll('.code-wrap').forEach(function(wrap){
+    var c=wrap.querySelector('code');if(!c)return;
+    var b=document.createElement('button');b.className='copy-btn';b.textContent='copy';
+    b.addEventListener('click',function(){if(navigator.clipboard){navigator.clipboard.writeText(c.innerText).then(function(){b.textContent='copied ✓';b.classList.add('copied');setTimeout(function(){b.textContent='copy';b.classList.remove('copied');},1500);});}});
+    wrap.appendChild(b);
+  });
+})();
+</script>
+</body>
+</html>

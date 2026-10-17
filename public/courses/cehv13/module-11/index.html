@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CEHv13 · Module 11: Session Hijacking</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-0:#0B0B0D;--bg-1:#121214;--surface:#17171A;--surface-2:#1D1D21;
+    --border:#2A2A2F;--border-soft:#232326;
+    --text:#E6E6E9;--text-soft:#C4C4CA;--muted:#8A8A92;
+    --red:#E1362F;--red-soft:rgba(225,54,47,0.10);--red-border:rgba(225,54,47,0.35);
+    --red-grad:linear-gradient(90deg,#E1362F,#F2794A);
+    --amber:#E8A23A;--amber-soft:rgba(232,162,58,0.09);--amber-border:rgba(232,162,58,0.30);
+    --green:#3FBF6E;--green-soft:rgba(63,191,110,0.09);--green-border:rgba(63,191,110,0.30);
+    --blue:#4EA1D3;--blue-soft:rgba(78,161,211,0.09);--blue-border:rgba(78,161,211,0.30);
+    --purple:#A179E8;--purple-soft:rgba(161,121,232,0.10);--purple-border:rgba(161,121,232,0.32);
+    --mono:'IBM Plex Mono','Courier New',monospace;
+  }
+  html[data-theme="light"]{--bg-0:#F4F3F1;--bg-1:#ECEBE8;--surface:#FFFFFF;--surface-2:#F3F2EF;--border:#DEDCD6;--border-soft:#E6E4DF;--text:#1C1B19;--text-soft:#3C3A36;--muted:#726F68;}
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;direction:rtl;text-align:right;background:var(--bg-0);}
+  body{font-family:'Cairo','Segoe UI',Tahoma,sans-serif;line-height:1.95;font-size:16.5px;color:var(--text);
+    background:radial-gradient(900px 420px at 12% -8%,rgba(225,54,47,0.10),transparent 60%),radial-gradient(800px 420px at 90% 6%,rgba(232,162,58,0.06),transparent 60%),linear-gradient(180deg,var(--bg-0) 0%,var(--bg-1) 100%);
+    background-attachment:fixed;transition:background 0.2s ease,color 0.2s ease;}
+  html[data-theme="light"] body{background:radial-gradient(900px 420px at 12% -8%,rgba(225,54,47,0.06),transparent 60%),radial-gradient(800px 420px at 90% 6%,rgba(232,162,58,0.05),transparent 60%),linear-gradient(180deg,var(--bg-0) 0%,var(--bg-1) 100%);}
+  .progress-rail{position:fixed;top:0;inset-inline:0;height:3px;background:rgba(255,255,255,0.04);z-index:60;}
+  html[data-theme="light"] .progress-rail{background:rgba(0,0,0,0.05);}
+  .progress-bar{height:100%;width:0%;background:var(--red-grad);transition:width 0.08s linear;}
+  .float-controls{position:fixed;bottom:22px;left:22px;z-index:55;display:flex;flex-direction:column;gap:10px;}
+  .fctrl-btn{width:42px;height:42px;border-radius:50%;background:var(--surface);border:1px solid var(--border);color:var(--text-soft);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;box-shadow:0 10px 24px -10px rgba(0,0,0,0.5);transition:transform 0.15s ease,border-color 0.15s ease,opacity 0.2s ease;}
+  .fctrl-btn:hover{transform:translateY(-2px);border-color:var(--red-border);color:var(--red);}
+  #toTop{opacity:0;pointer-events:none;}#toTop.show{opacity:1;pointer-events:auto;}
+  .page{max-width:860px;margin:0 auto;padding:46px 22px 100px;}
+  .banner{position:relative;overflow:hidden;background:linear-gradient(155deg,var(--surface) 0%,var(--bg-1) 55%,var(--surface) 100%);border:1px solid var(--border-soft);border-radius:10px;padding:0 0 34px;margin-bottom:26px;box-shadow:0 20px 50px -20px rgba(0,0,0,0.6);}
+  .term-bar{display:flex;align-items:center;gap:8px;padding:13px 18px;border-bottom:1px solid var(--border-soft);background:rgba(255,255,255,0.015);direction:ltr;}
+  .term-dot{width:11px;height:11px;border-radius:50%;display:inline-block;}.term-dot.r{background:#E1362F;}.term-dot.y{background:#E8A23A;}.term-dot.g{background:#3FBF6E;}
+  .term-path{margin-inline-start:12px;font-family:var(--mono);font-size:12px;color:var(--muted);}
+  .theme-switch{margin-inline-start:auto;font-family:var(--mono);font-size:11px;color:var(--muted);background:transparent;border:1px solid var(--border);border-radius:4px;padding:4px 9px;cursor:pointer;}
+  .theme-switch:hover{color:var(--amber);border-color:var(--amber-border);}
+  .banner-body{padding:30px 34px 4px;}
+  .banner .kicker{display:inline-block;font-family:var(--mono);font-size:12.5px;letter-spacing:0.03em;color:var(--red);background:var(--red-soft);border:1px solid var(--red-border);border-radius:3px;padding:5px 12px;margin-bottom:20px;direction:ltr;}
+  .banner h1{margin:0 0 14px;font-size:28px;font-weight:800;line-height:1.5;color:var(--text);}
+  .banner .lede{color:var(--muted);font-size:15.5px;line-height:1.95;max-width:640px;margin:0 0 24px;}
+  .tags{display:flex;flex-wrap:wrap;gap:9px;}
+  .tag{font-size:12.5px;font-family:var(--mono);color:var(--amber);background:var(--amber-soft);border:1px solid var(--amber-border);border-radius:3px;padding:5px 11px;}
+  .toc{background:var(--surface);border:1px solid var(--border-soft);border-radius:8px;padding:6px 0 6px;margin-bottom:50px;overflow:hidden;}
+  .toc-title{font-family:var(--mono);font-weight:600;font-size:13px;color:var(--green);padding:14px 22px;border-bottom:1px solid var(--border-soft);direction:ltr;text-align:left;}
+  .toc-list{display:flex;flex-direction:column;}
+  .toc-item{display:flex;align-items:center;gap:14px;padding:12px 22px;color:var(--text-soft);text-decoration:none;font-size:14.5px;border-bottom:1px solid rgba(255,255,255,0.03);transition:background 0.15s ease;}
+  .toc-list .toc-item:last-child{border-bottom:none;}
+  .toc-item:hover{background:var(--red-soft);}
+  .toc-num{flex:none;font-family:var(--mono);font-size:12.5px;font-weight:600;color:#0F0F10;background:var(--red-grad);border-radius:3px;padding:3px 8px;direction:ltr;}
+  h1,h2,h3,h4{font-weight:700;}
+  h2{display:flex;align-items:center;gap:14px;font-size:21px;margin:66px 0 22px;padding-bottom:16px;border-bottom:1px solid var(--border-soft);color:var(--text);}
+  h2 .num{flex:none;font-family:var(--mono);font-size:13px;font-weight:700;color:#0F0F10;background:var(--red-grad);border-radius:5px;padding:7px 12px;direction:ltr;}
+  h2 .htext{line-height:1.5;}
+  h3{font-size:17px;margin:34px 0 14px;color:var(--red);display:flex;align-items:center;gap:9px;}
+  h3::before{content:"#";font-family:var(--mono);color:var(--amber);font-weight:700;}
+  h4{font-size:14.8px;margin:22px 0 10px;color:var(--text-soft);font-family:var(--mono);}
+  p{margin:0 0 17px;color:var(--text);}
+  strong{color:var(--text);font-weight:700;}:root:not([data-theme="light"]) strong{color:#FBFBFC;}
+  a{color:var(--amber);text-decoration:none;border-bottom:1px dashed var(--amber-border);}
+  hr{border:none;height:1px;margin:50px 0;background:linear-gradient(90deg,transparent,var(--border),transparent);}
+  ul,ol{margin:0 0 18px;padding-inline-start:24px;}
+  li{margin-bottom:9px;color:var(--text);}li::marker{color:var(--red);font-family:var(--mono);}li>ul,li>ol{margin-top:9px;}
+  blockquote{margin:24px 0;padding:17px 22px;background:var(--red-soft);border:1px solid var(--red-border);border-inline-start:3px solid var(--red);border-radius:6px;color:var(--text-soft);}
+  blockquote p{margin:0;color:inherit;line-height:1.85;}blockquote p+p{margin-top:10px;}blockquote strong{color:var(--text);}
+  .callout{margin:24px 0;padding:17px 22px 18px;border-radius:6px;border:1px solid var(--border-soft);border-inline-start:3px solid var(--border);background:var(--surface);}
+  .callout p{margin:0;color:var(--text-soft);line-height:1.85;}.callout p+p{margin-top:10px;}.callout ul,.callout ol{margin:6px 0 0;}
+  .callout-label{display:inline-flex;align-items:center;gap:7px;font-family:var(--mono);font-size:11.5px;font-weight:700;letter-spacing:0.02em;text-transform:uppercase;margin-bottom:10px;direction:ltr;}
+  .callout.note{border-inline-start-color:var(--blue);background:var(--blue-soft);}.callout.note .callout-label{color:var(--blue);}
+  .callout.warning{border-inline-start-color:var(--red);background:var(--red-soft);}.callout.warning .callout-label{color:var(--red);}
+  .callout.tip{border-inline-start-color:var(--green);background:var(--green-soft);}.callout.tip .callout-label{color:var(--green);}
+  .callout.examtip{border-inline-start-color:var(--purple);background:var(--purple-soft);}.callout.examtip .callout-label{color:var(--purple);}
+  .callout.case{border-inline-start-color:var(--amber);background:var(--amber-soft);}.callout.case .callout-label{color:var(--amber);}
+  .callout.definition{border-inline-start-color:var(--muted);background:var(--surface-2);}.callout.definition .callout-label{color:var(--text-soft);}
+  .callout.danger{border-inline-start-color:#FF5A52;background:rgba(255,90,82,0.08);}.callout.danger .callout-label{color:#FF5A52;}
+  .table-wrap{overflow-x:auto;margin:22px 0;border:1px solid var(--border-soft);border-radius:8px;}
+  table{width:100%;border-collapse:collapse;font-size:14.2px;min-width:480px;}
+  thead th{background:var(--surface-2);color:var(--amber);font-weight:700;font-family:var(--mono);font-size:12.5px;text-transform:uppercase;letter-spacing:0.02em;text-align:start;padding:13px 15px;border-bottom:1px solid var(--border-soft);white-space:nowrap;}
+  tbody td{padding:12px 15px;border-bottom:1px solid var(--border-soft);color:var(--text-soft);vertical-align:top;}
+  tbody tr:last-child td{border-bottom:none;}tbody tr:nth-child(even){background:rgba(127,127,127,0.03);}tbody tr:hover{background:var(--red-soft);}
+  code{font-family:var(--mono);font-size:13.3px;background:var(--surface-2);border:1px solid var(--border-soft);border-radius:4px;padding:2px 6px;direction:ltr;unicode-bidi:embed;color:var(--green);}
+  .code-wrap{position:relative;overflow-x:auto;margin:22px 0;}
+  .code-tag{position:absolute;top:10px;left:14px;font-family:var(--mono);font-size:10.5px;color:var(--muted);letter-spacing:0.04em;text-transform:uppercase;z-index:2;}
+  .copy-btn{position:absolute;top:8px;right:10px;z-index:2;font-family:var(--mono);font-size:11px;color:var(--muted);background:var(--surface-2);border:1px solid var(--border-soft);border-radius:4px;padding:4px 9px;cursor:pointer;direction:ltr;}
+  .copy-btn:hover{color:var(--amber);border-color:var(--amber-border);}.copy-btn.copied{color:var(--green);border-color:var(--green-border);}
+  pre{background:var(--bg-0);border:1px solid var(--border-soft);border-inline-start:3px solid var(--red);border-radius:8px;padding:30px 22px 18px;direction:ltr;text-align:left;margin:0;}
+  html[data-theme="light"] pre{background:#16181C;}
+  pre code{background:none;border:none;padding:0;color:#B9E8C9;font-size:13.2px;line-height:1.75;}
+  .diagram-card{background:var(--surface);border:1px solid var(--border-soft);border-radius:10px;padding:22px 18px 16px;margin:24px 0;}
+  .diagram-card svg{width:100%;height:auto;display:block;}
+  .diagram-caption{margin-top:10px;text-align:center;font-family:var(--mono);font-size:11.5px;color:var(--muted);}
+  .takeaways{background:var(--surface);border:1px solid var(--border-soft);border-radius:8px;padding:18px 22px 20px;margin:30px 0 10px;}
+  .takeaways-title{font-family:var(--mono);font-size:12.5px;font-weight:700;color:var(--green);margin-bottom:12px;direction:ltr;text-align:left;display:flex;align-items:center;gap:8px;}
+  .takeaways ul{margin:0;padding-inline-start:20px;}.takeaways li{color:var(--text-soft);font-size:14.5px;}
+  .step-track{display:flex;flex-direction:column;gap:0;margin:24px 0;}
+  .step-item{position:relative;padding:0 0 26px 0;padding-inline-start:46px;border-inline-start:2px solid var(--border-soft);}
+  .step-item:last-child{border-inline-start:2px solid transparent;padding-bottom:4px;}
+  .step-num{position:absolute;inset-inline-start:-17px;top:0;width:32px;height:32px;border-radius:50%;background:var(--red-grad);color:#0F0F10;font-family:var(--mono);font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;}
+  .step-title{font-weight:700;color:var(--text);margin-bottom:6px;font-size:15px;}
+  .step-body{color:var(--text-soft);font-size:14.5px;}.step-body p{margin:0 0 10px;}.step-body p:last-child{margin-bottom:0;}.step-body ul{margin:8px 0 0;}
+  .method-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px;margin:22px 0;}
+  .method-card{background:var(--surface);border:1px solid var(--border-soft);border-radius:8px;padding:14px 16px;}
+  .method-card .mtitle{font-weight:700;color:var(--text);font-size:14px;margin-bottom:5px;}.method-card .mdesc{color:var(--text-soft);font-size:13.3px;line-height:1.75;}
+  .cheat-section h4{color:var(--amber);font-size:13px;margin:26px 0 8px;}
+  .footer-note{margin-top:70px;padding-top:26px;border-top:1px solid var(--border-soft);color:var(--muted);font-size:13.3px;font-family:var(--mono);text-align:center;direction:ltr;}
+  @media print{.float-controls,.progress-rail,.copy-btn,.theme-switch{display:none !important;}body{background:#fff;color:#000;}.page{max-width:100%;}}
+  @media(max-width:640px){.page{padding:28px 14px 70px;}.banner-body{padding:24px 20px 4px;}.banner h1{font-size:21px;}h2{font-size:18px;gap:10px;}.float-controls{left:12px;bottom:14px;}}
+</style>
+</head>
+<body>
+<div class="progress-rail"><div class="progress-bar" id="progressBar"></div></div>
+<div class="float-controls"><button class="fctrl-btn" id="toTop" title="ارجع لفوق">↑</button></div>
+
+<div class="page">
+<div class="banner">
+  <div class="term-bar">
+    <span class="term-dot r"></span><span class="term-dot y"></span><span class="term-dot g"></span>
+    <span class="term-path">root@ceh:~/module-11$</span>
+    <button class="theme-switch" id="themeSwitch">theme: dark</button>
+  </div>
+  <div class="banner-body">
+    <span class="kicker">EC-Council · CEHv13 · Module 11</span>
+    <h1>الـ Session Hijacking</h1>
+    <p class="lede">من مفاهيم خطف الجلسات وأنواعها (Passive وActive)، مرورًا بهجمات مستوى التطبيق (سرقة وتخمين الـ Session ID، XSS، CSRF، Fixation) وهجمات مستوى الشبكة (TCP/IP وRST وMITM وPetitPotam)، ووصولًا للإجراءات المضادة وأدوات الكشف وحماية IPsec وDoH.</p>
+    <div class="tags">
+      <span class="tag">session-hijacking</span><span class="tag">session-fixation</span>
+      <span class="tag">tcp-ip-hijacking</span><span class="tag">rst-hijacking</span>
+      <span class="tag">mitm</span><span class="tag">mitb</span>
+      <span class="tag">xss-csrf</span><span class="tag">ipsec-doh</span>
+    </div>
+  </div>
+</div>
+
+<nav class="toc"><div class="toc-title">$ ls learning_units/</div><div class="toc-list">
+  <a class="toc-item" href="#lu1"><span class="toc-num">01</span><span>مفاهيم الـ Session Hijacking — الأنواع والفرق عن الـ Spoofing</span></a>
+  <a class="toc-item" href="#lu2"><span class="toc-num">02</span><span>الـ Application-Level Session Hijacking</span></a>
+  <a class="toc-item" href="#lu3"><span class="toc-num">03</span><span>الـ Network-Level Session Hijacking</span></a>
+  <a class="toc-item" href="#lu4"><span class="toc-num">04</span><span>الإجراءات المضادة وأدوات الكشف</span></a>
+  <a class="toc-item" href="#methodology"><span class="toc-num">--</span><span>عملية الـ Session Hijacking خطوة بخطوة</span></a>
+  <a class="toc-item" href="#cheat"><span class="toc-num">--</span><span>Cheat Sheet مرجعي</span></a>
+  <a class="toc-item" href="#summary"><span class="toc-num">--</span><span>الخلاصة العامة للموديول</span></a>
+</div></nav>
+
+<!-- LU1 -->
+<h2 id="lu1"><span class="num">01</span><span class="htext">مفاهيم الـ Session Hijacking — الأنواع والفرق عن الـ Spoofing</span></h2>
+
+<h3>ما هو الـ Session Hijacking</h3>
+<p>بعد نجاح الـ Authentication، الـ Web Server يبعت للعميل <strong>Session Token</strong> (أو Session ID) بيفرّق بين الجلسات المتعددة اللي السيرفر بيفتحها مع العملاء. الـ Session Hijacking هو هجوم فيه المهاجم يستولي على جلسة TCP صالحة بين جهازين.</p>
+<div class="callout definition"><div class="callout-label">الفكرة الأساسية</div><p>معظم أنواع الـ Authentication بتتم <strong>في بداية الجلسة فقط</strong>، فالمهاجم يقدر يدخل على الجهاز أثناء الجلسة وهي شغّالة. السيرفر يرد على طلبات المهاجم وهو فاكره المستخدم المُصادَق عليه، والمهاجم ممكن يخمّن أو يسرق الـ Session ID الصالح.</p></div>
+
+<p>المهاجم يقدر يعمل Sniff لكل الحركة في جلسات TCP القائمة وينفّذ سرقة هوية، سرقة معلومات، احتيال، وغيرها.</p>
+
+<h3>ليه الـ Session Hijacking بينجح؟</h3>
+<ul>
+<li>غياب قفل الحساب (Account Lockout) عند استخدام Session IDs غير صالحة</li>
+<li>خوارزمية ضعيفة لتوليد الـ Session ID أو IDs قصيرة</li>
+<li>التعامل غير الآمن مع الـ Session IDs</li>
+<li>Session Timeout غير محدّد (جلسة لا تنتهي)</li>
+<li>معظم الأجهزة التي تستخدم TCP/IP معرّضة للثغرة</li>
+<li>معظم الإجراءات المضادة ما تشتغلش من غير تشفير</li>
+</ul>
+
+
+<h3>أنواع الـ Session Hijacking</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>النوع</th><th>الوصف</th><th>مثال</th></tr></thead>
+<tbody>
+<tr><td>Passive</td><td>بعد خطف الجلسة، المهاجم يراقب ويسجّل كل الحركة فقط. يستخدم Sniffers لجمع User IDs وكلمات المرور، ويستخدمها لاحقًا للدخول كمستخدم شرعي</td><td>Password Sniffing — أبسط طريقة للحصول على وصول خام للشبكة</td></tr>
+<tr><td>Active</td><td>المهاجم يستولي على جلسة قائمة بقطع الاتصال من أحد الطرفين أو بالمشاركة الفعلية في المحادثة</td><td>هجوم MITM</td></tr>
+</tbody>
+</table></div>
+
+<div class="callout note"><div class="callout-label">ملحوظة</div><p>لنجاح MITM لازم المهاجم يخمّن الـ Sequence Number قبل ما الهدف يرد على السيرفر. على معظم الشبكات الحديثة الـ Sequence-Number Prediction ما بتنجحش لأن مصنّعي أنظمة التشغيل بيستخدموا قيم عشوائية للـ Initial Sequence Number.</p></div>
+
+
+<h3>الـ Session Hijacking في نموذج OSI</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>المستوى</th><th>التعريف</th><th>ملاحظات</th></tr></thead>
+<tbody>
+<tr><td>Network-Level</td><td>اعتراض الحزم أثناء النقل بين العميل والسيرفر في جلسة TCP/UDP</td><td>المهاجم غالبًا يفضّله لأنه ما يحتاجش يعدّل الهجوم لكل Web Application — بيستهدف تدفق بيانات البروتوكول المشترك بين كل التطبيقات. المعلومات المستخلصة تُستخدم لاحقًا ضد جلسات التطبيق</td></tr>
+<tr><td>Application-Level</td><td>السيطرة على جلسة HTTP بالحصول على الـ Session IDs</td><td>المهاجم يسيطر على جلسة قائمة ويقدر يفتح جلسات جديدة غير مصرّح بها بالبيانات المسروقة. غالبًا النوعان بيحصلوا مع بعض</td></tr>
+</tbody>
+</table></div>
+
+
+<h3>الـ Spoofing مقابل الـ Hijacking</h3>
+<div class="table-wrap"><table>
+<thead><tr><th></th><th>Spoofing Attack</th><th>Session Hijacking</th></tr></thead>
+<tbody>
+<tr><td>الفكرة</td><td>المهاجم ينتحل شخصية مستخدم أو جهاز (الضحية) للحصول على وصول</td><td>الاستيلاء على جلسة نشطة موجودة بالفعل</td></tr>
+<tr><td>الجلسة</td><td>ما بيسيطرش على جلسة قائمة — بيفتح جلسة جديدة باستخدام بيانات اعتماد الضحية المسروقة</td><td>بيعتمد على المستخدم الشرعي إنه ينشئ الاتصال ويعمل Authentication بنفسه</td></tr>
+</tbody>
+</table></div>
+
+
+<!-- LU2 -->
+
+<hr />
+
+<h2 id="lu2"><span class="num">02</span><span class="htext">الـ Application-Level Session Hijacking</span></h2>
+
+
+<p>في الـ Application-Level Session Hijacking المهاجم يسرق أو يتنبأ بـ Session Token صالح عشان يدخل بشكل غير مصرّح على Web Server أو يفتح جلسة جديدة غير مصرّح بها. <strong>عادةً الـ Network-Level والـ Application-Level بيحصلوا مع بعض</strong> لأن نجاح الأول بيدّي المهاجم معلومات وفيرة لتنفيذ الثاني، والـ Application-Level بيعتمد على جلسات HTTP.</p>
+
+<h3>تقنيات الحصول على الـ Session ID</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>التقنية</th><th>الشرح</th></tr></thead>
+<tbody>
+<tr><td>Stealing (السرقة)</td><td>سرقة الـ Session Key بالوصول الفيزيائي (ملفات تحتوي Session IDs أو محتويات الذاكرة على جهاز المستخدم أو السيرفر)، أو باستخدام أدوات Sniffing مثل Wireshark وRiverbed Packet Analyzer Plus لاستخراج الـ Session IDs من الحزم</td></tr>
+<tr><td>Guessing (التخمين)</td><td>المهاجم يراقب متغيّرات الجلسة ويحاول يخمّن الـ IDs. نطاق القيم القابلة للتخمين محدود، فالتقنية فعّالة فقط لو السيرفر بيستخدم آلية توليد ضعيفة أو معيبة</td></tr>
+<tr><td>Brute Forcing</td><td>تجربة كل التباديل الممكنة لقيم الـ Session ID لحد ما يلاقي واحدة تشتغل</td></tr>
+</tbody>
+</table></div>
+
+
+<h3>طرق اختراق الـ Session Token</h3>
+<ul>
+<li>Session Sniffing</li>
+<li>Predictable Session Token</li>
+<li>Man-in-the-Middle (MITM) Attack</li>
+<li>Man-in-the-Browser (MITB) Attack</li>
+<li>Cross-Site Scripting (XSS) Attack</li>
+<li>Cross-Site Request Forgery (CSRF) Attack</li>
+<li>Session Replay Attack</li>
+<li>Session Fixation Attack</li>
+<li>CRIME Attack</li>
+<li>Forbidden Attack</li>
+<li>Session Donation Attack</li>
+<li>PetitPotam Hijacking</li>
+</ul>
+
+
+<h3>اختراق الـ Session IDs بالـ Sniffing وبالتنبؤ بالـ Token</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>الطريقة</th><th>التفاصيل</th></tr></thead>
+<tbody>
+<tr><td>Sniffing</td><td>المهاجم يستخدم Sniffer لالتقاط Session Token/ID صالح، ثم يستخدمه للدخول غير المصرّح على الـ Web Server</td></tr>
+<tr><td>Predicting</td><td>المهاجم يتنبأ بالـ IDs المولَّدة بخوارزميات ضعيفة وينتحل المستخدم. يحلّل الأجزاء المتغيّرة من الـ Session IDs لاكتشاف نمط (يدويًا أو بأدوات Cryptanalysis)، ويجمع عددًا كبيرًا من الـ IDs المتزامنة في نفس النافذة الزمنية مع تثبيت المتغيّر</td></tr>
+</tbody>
+</table></div>
+
+
+<h3>كيف يتم التنبؤ بالـ Session Token</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>النمط</th><th>الشرح</th><th>مثال</th></tr></thead>
+<tbody>
+<tr><td>Sequential Tokens</td><td>Tokens تُصدَر بالتسلسل (001، 002، 003). المهاجم يلاحظ إنها بتزيد بواحد فيتنبأ بالتالي بإضافة 1 لآخر Token</td><td>لو التقط 1001 و1002 و1003، فبعد 1002 يخمّن 1003</td></tr>
+<tr><td>Timestamp-Based Tokens</td><td>Tokens فيها عناصر متوقَّعة زي الـ Timestamp، فالمهاجم يخمّنها بناءً على الوقت الحالي لو عرف الصيغة والتاريخ</td><td><code>user123-20240611T1234</code> فيه Timestamp <code>20240611T1234</code></td></tr>
+</tbody>
+</table></div>
+
+
+<h3>الـ MITM / Manipulator-in-the-Middle</h3>
+<p>يُستخدم للتسلّل إلى اتصال قائم بين نظامين واعتراض الرسائل المتبادلة. المهاجم بيقسّم اتصال TCP إلى اتصالين:</p>
+<ul>
+<li>اتصال <strong>Client-to-Attacker</strong></li>
+<li>اتصال <strong>Attacker-to-Server</strong></li>
+</ul>
+
+<p>بعد الاعتراض، المهاجم يقدر يقرأ ويعدّل ويحقن بيانات احتيالية داخل الاتصال المعترَض. في معاملات HTTP يكون اتصال TCP بين العميل والسيرفر هو الهدف.</p>
+
+<h3>الـ Man-in-the-Browser (MITB) / Manipulator-in-the-Browser</h3>
+<div class="step-track">
+<div class="step-item"><div class="step-num">1</div><div class="step-title">إصابة الجهاز بـ Trojan</div><div class="step-body"><p>الـ Trojan يصيب برمجيات الجهاز أولًا (نظام التشغيل أو تطبيق).</p></div></div>
+<div class="step-item"><div class="step-num">2</div><div class="step-title">تثبيت كود خبيث</div><div class="step-body"><p>يثبّت الـ Trojan كودًا خبيثًا (Extension Files) ويحفظه في إعدادات المتصفح.</p></div></div>
+<div class="step-item"><div class="step-num">3</div><div class="step-title">إعادة تشغيل المتصفح</div><div class="step-body"><p>بعد إعادة تشغيله، يُحمَّل الكود الخبيث على شكل Extension.</p></div></div>
+<div class="step-item"><div class="step-num">4</div><div class="step-title">تسجيل Handler</div><div class="step-body"><p>الـ Extension يسجّل Handler لكل زيارة صفحة ويقارن الـ URL بقائمة المواقع المستهدَفة.</p></div></div>
+<div class="step-item"><div class="step-num">5</div><div class="step-title">تسجيل دخول المستخدم</div><div class="step-body"><p>المستخدم يسجّل دخوله بأمان للموقع، والـ Extension يسجّل Button Event Handler عند اكتشاف نمط تحميل صفحة معيّن.</p></div></div>
+<div class="step-item"><div class="step-num">6</div><div class="step-title">تعديل البيانات</div><div class="step-body"><p>لما المستخدم يضغط الزر، الـ Extension يستخدم واجهة DOM ويستخرج كل البيانات من حقول النموذج ويعدّل القيم.</p></div></div>
+<div class="step-item"><div class="step-num">7</div><div class="step-title">الإرسال للسيرفر</div><div class="step-body"><p>المتصفح يرسل النموذج بالقيم المعدَّلة، والسيرفر يستقبلها ولا يقدر يميّز بين الأصلية والمعدَّلة.</p></div></div>
+</div>
+
+
+<h3>الهجمات من جهة العميل: XSS وCSRF</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>الهجوم</th><th>الشرح</th></tr></thead>
+<tbody>
+<tr><td>Cross-Site Scripting (XSS)</td><td>هجوم من جهة العميل: المهاجم يخترق الـ Session Token باستخدام كود أو برامج خبيثة. يحصل لما صفحة ويب ديناميكية تستقبل بيانات خبيثة من المهاجم وتنفّذها على جهاز المستخدم</td></tr>
+<tr><td>Cross-Site Request Forgery (CSRF)</td><td>اسمه كمان One-Click Attack أو Session Riding. المهاجم يستغل جلسة الضحية النشطة مع موقع موثوق لتنفيذ أنشطة خبيثة (شراء منتجات، تعديل أو استرجاع معلومات الحساب). المهاجم يصنع Form يحتوي معلومات خبيثة ويبعته للمستخدم المصرّح</td></tr>
+</tbody>
+</table></div>
+
+
+<h3>الـ Session Replay Attack</h3>
+<p>المهاجم يسمع المحادثة بين المستخدم والسيرفر ويلتقط <strong>Authentication Token</strong> الخاص بالمستخدم، ثم يعيد إرسال الطلب (Replay) للسيرفر بنفس الـ Token ويحصل على دخول غير مصرّح.</p>
+
+<h3>الـ Session Fixation</h3>
+<p>هجوم يسمح للمهاجم بخطف جلسة مستخدم صالحة. المهاجم يستدرج المستخدم لتسجيل الدخول بـ Session ID <strong>معروف مسبقًا</strong>، ثم يخطف الجلسة بعد توثيقها لأنه عارف الـ ID. على المهاجم إنه يوفّر Session ID شرعي للتطبيق ويستدرج متصفح الضحية لاستخدامه.</p>
+<div class="table-wrap"><table>
+<thead><tr><th>تقنية التنفيذ</th><th>الوصف</th></tr></thead>
+<tbody>
+<tr><td>Session Token في الـ URL</td><td>تمرير الـ Token كـ Argument في الرابط</td></tr>
+<tr><td>Session Token في Hidden Form Field</td><td>تضمين الـ Token في حقل مخفي</td></tr>
+<tr><td>Session ID في Cookie</td><td>تثبيت الـ ID داخل Cookie</td></tr>
+</tbody>
+</table></div>
+
+
+<h3>الـ Forbidden Attack</h3>
+<p>نوع من MITM لخطف جلسات <strong>HTTPS</strong>، يستغل إعادة استخدام الـ Cryptographic Nonce أثناء الـ TLS Handshake. بعد الخطف، المهاجم يحقن كودًا خبيثًا ومحتوى مزوَّر يدفع الضحية للكشف عن معلومات حساسة (أرقام حسابات بنكية، كلمات مرور، أرقام الضمان الاجتماعي).</p>
+
+<h3>الـ Session Donation Attack</h3>
+<p>المهاجم "يتبرّع" بـ Session Identifier (SID) الخاص به للمستخدم المستهدَف: يحصل أولًا على SID صالح بتسجيل الدخول لخدمة، ثم يدخّله للضحية. الـ SID ده يربط الضحية بصفحة حساب المهاجم من غير أي إشعار للضحية.</p>
+
+<!-- LU3 -->
+
+<hr />
+
+<h2 id="lu3"><span class="num">03</span><span class="htext">الـ Network-Level Session Hijacking</span></h2>
+
+
+<p>الـ Network-Level Hijacking بيعتمد على خطف بروتوكولات النقل والإنترنت (Transport/Internet) اللي بتستخدمها تطبيقات الويب في طبقة التطبيق. بمهاجمة جلسات الشبكة، المهاجم يجمع معلومات حرجة تُستخدم لمهاجمة جلسات التطبيق.</p>
+<ul>
+<li>Blind Hijacking</li>
+<li>UDP Hijacking</li>
+<li>TCP/IP Hijacking</li>
+<li>RST Hijacking</li>
+<li>Man-in-the-Middle: Packet Sniffer</li>
+<li>IP Spoofing: Source Routed Packets</li>
+</ul>
+
+
+<h3>الـ Three-Way Handshake</h3>
+<p>لما طرفان يؤسسوا اتصال TCP بيعملوا Three-Way Handshake، وده بيبدأ الاتصال ويتبادل كل الباراميترات اللازمة. في البداية العميل في حالة <code>CLOSED</code> والسيرفر في حالة <code>LISTEN</code>.</p>
+<div class="step-track">
+<div class="step-item"><div class="step-num">1</div><div class="step-title">SYN</div><div class="step-body"><p>العميل يبدأ الاتصال بإرسال الـ Initial Sequence Number (ISN) مع تفعيل علم SYN. حالة العميل: <code>SYN-SENT</code>.</p></div></div>
+<div class="step-item"><div class="step-num">2</div><div class="step-title">SYN + ACK</div><div class="step-body"><p>السيرفر يستقبل الحزمة، ويقرّ بالـ Sequence Number الخاص بالعميل ويرسل الـ ISN الخاص به مع علم SYN. حالة السيرفر: <code>SYN-RECEIVED</code>.</p></div></div>
+<div class="step-item"><div class="step-num">3</div><div class="step-title">ACK</div><div class="step-body"><p>العميل يقرّ بالـ Sequence Number الخاص بالسيرفر بزيادته بواحد وتفعيل علم ACK. حالة العميل: <code>ESTABLISHED</code>، والجهازان يقدرا يتواصلا.</p></div></div>
+</div>
+
+
+<h3>الـ TCP/IP Hijacking</h3>
+<ul>
+<li>استخدام حزم مزوَّرة (Spoofed Packets) للاستيلاء على اتصال بين الضحية والهدف</li>
+<li>اتصال الضحية "يتعلّق"، وبعدها المهاجم يتواصل مع جهاز الهدف كأنه الضحية</li>
+<li>لتنفيذه لازم المهاجم يكون على <strong>نفس الشبكة</strong> مع الضحية</li>
+<li>السيرفر المستهدَف والضحية ممكن يكونوا في أي مكان</li>
+</ul>
+
+
+<h3>الـ IP Spoofing: Source Routed Packets</h3>
+<div class="step-track">
+<div class="step-item"><div class="step-num">1</div><div class="step-title">استخدام Source Routing</div><div class="step-body"><p>تقنية لدخول جهاز بدون تصريح بمساعدة عنوان IP لـ Trusted Host.</p></div></div>
+<div class="step-item"><div class="step-num">2</div><div class="step-title">انتحال IP المضيف</div><div class="step-body"><p>المهاجم ينتحل IP الـ Host فالسيرفر المدير للجلسة يقبل الحزم من المهاجم.</p></div></div>
+<div class="step-item"><div class="step-num">3</div><div class="step-title">حقن حزم مزوَّرة</div><div class="step-body"><p>بعد تأسيس الجلسة، المهاجم يحقن حزمًا مزوَّرة قبل ما الـ Host يرد على السيرفر.</p></div></div>
+<div class="step-item"><div class="step-num">4</div><div class="step-title">ضياع الحزمة الأصلية</div><div class="step-body"><p>حزمة الـ Host الأصلية تضيع لأن السيرفر استقبل حزمة بـ Sequence Number مستخدم بالفعل من المهاجم.</p></div></div>
+<div class="step-item"><div class="step-num">5</div><div class="step-title">التوجيه عبر الـ Host</div><div class="step-body"><p>حزم المهاجم بتتوجّه (Source-Routed) عبر الـ Host إلى الـ Destination IP اللي حدّده المهاجم.</p></div></div>
+</div>
+
+
+<h3>الـ RST Hijacking</h3>
+<p>حقن حزمة <strong>Reset (RST)</strong> تبدو أصلية باستخدام عنوان مصدر مزوَّر مع التنبؤ بـ Acknowledgment Number.</p>
+<ul>
+<li>المهاجم يقدر يعمل Reset لاتصال الضحية لو استخدم Acknowledgment Number صحيح</li>
+<li>الضحية هتعتقد إن المصدر الحقيقي هو اللي بعت الـ Reset فتُنهي الاتصال</li>
+<li>ينفَّذ بأدوات Packet Crafting مثل <strong>Colasoft Packet Builder</strong> وأدوات تحليل TCP/IP مثل <strong>tcpdump</strong></li>
+</ul>
+
+
+<h3>الـ MITM باستخدام Forged ICMP وARP Spoofing</h3>
+<p>في الهجوم ده الـ Packet Sniffer بيشتغل كواجهة بين العميل والسيرفر، والمهاجم بيغيّر الـ Default Gateway في جهاز العميل ويحاول يعيد توجيه الحزم.</p>
+<div class="table-wrap"><table>
+<thead><tr><th>التقنية</th><th>الشرح</th></tr></thead>
+<tbody>
+<tr><td>Forged ICMP</td><td>امتداد لـ IP لإرسال رسائل الأخطاء، والمهاجم يبعت رسائل لخداع العميل والسيرفر</td></tr>
+<tr><td>ARP Spoofing</td><td>ARP بيربط عناوين طبقة الشبكة (IP) بعناوين طبقة الـ Link (MAC)</td></tr>
+</tbody>
+</table></div>
+
+
+<h3>الـ PetitPotam Hijacking</h3>
+<ul>
+<li>المهاجم يجبر <strong>Domain Controller (DC)</strong> على بدء Authentication إلى سيرفر المهاجم</li>
+<li>يستخدم API الخاص بـ <strong>MS-EFSRPC</strong> (Encrypting File System Remote Protocol) لخطف جلسة الـ Authentication</li>
+<li>يعمل Relay لـ NTLM Authentication الصادرة من الـ DC إلى سيرفر <strong>AD CS</strong> (Active Directory Certificate Services) ويولّد Certificate يمنحه صلاحيات Admin</li>
+</ul>
+
+
+<h3>أدوات الـ Session Hijacking</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>الأداة</th><th>الوصف</th></tr></thead>
+<tbody>
+<tr><td>Hetty</td><td>HTTP Toolkit تتيح تنفيذ هجوم MITM HTTP Proxy مع Logs وبحث متقدّم</td></tr>
+<tr><td>Caido</td><td>Toolkit لفحص أمان الويب، يعترض ويعرض طلبات HTTP لحظيًا أثناء التصفح</td></tr>
+<tr><td>Burp Suite</td><td>portswigger.net</td></tr>
+<tr><td>OWASP ZAP</td><td>zaproxy.org</td></tr>
+<tr><td>WebSploit Framework</td><td>sourceforge.net</td></tr>
+<tr><td>sslstrip</td><td>pypi.org</td></tr>
+<tr><td>JHijack</td><td>sourceforge.net</td></tr>
+</tbody>
+</table></div>
+
+
+<!-- LU4 -->
+
+<hr />
+
+<h2 id="lu4"><span class="num">04</span><span class="htext">الإجراءات المضادة وأدوات الكشف</span></h2>
+
+
+
+<h3>الإجراءات المضادة (14 إجراء)</h3>
+<ol>
+<li>استخدام SSH أو OpenSSH لإنشاء قناة اتصال آمنة</li>
+<li>تفعيل خاصية Log-out ليُنهي المستخدم الجلسة</li>
+<li>توليد Session ID بعد تسجيل دخول ناجح وقبول الـ IDs المولَّدة من السيرفر فقط</li>
+<li>تشفير البيانات أثناء النقل وتطبيق Defense-in-Depth</li>
+<li>استخدام أرقام عشوائية طويلة كـ Session Keys</li>
+<li>التحويل من شبكة Hub إلى شبكة Switch لتقليل الخطر</li>
+<li>تطبيق Timeout لتدمير الجلسات عند انتهائها</li>
+<li>عدم وضع الـ Session ID في الـ URL أو Query String</li>
+<li>التأكد إن برامج الحماية (Client-Side وServer-Side) نشطة ومحدَّثة</li>
+<li>استخدام Authentication قوي (مثل Kerberos) أو VPNs من نوع Peer-to-Peer</li>
+<li>ضبط قواعد Spoof مناسبة (داخلية وخارجية) على الـ Gateways</li>
+<li>استخدام منتجات IDS أو <strong>ARPwatch</strong> لمراقبة ARP Cache Poisoning</li>
+<li>تمكين المتصفحات من التحقق من أصالة المواقع عبر Network Notary Servers</li>
+<li>استخدام SFTP أو AS2 Managed File Transfer أو FTPS لإرسال البيانات بتشفير وشهادات رقمية</li>
+</ol>
+
+<h3>أدوات كشف الـ Session Hijacking</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>الأداة</th><th>الوصف</th></tr></thead>
+<tbody>
+<tr><td>USM Anywhere</td><td>كشف تهديدات واستجابة للحوادث وإدارة Compliance عبر السحابة والبيئات المحلية</td></tr>
+<tr><td>Wireshark</td><td>التقاط حركة الشبكة وتصفّحها تفاعليًا</td></tr>
+<tr><td>Quantum IPS</td><td>Check Point</td></tr>
+<tr><td>SolarWinds Security Event Manager</td><td>SolarWinds</td></tr>
+<tr><td>IBM Security Network IPS</td><td>IBM</td></tr>
+<tr><td>LogRhythm</td><td>logrhythm.com</td></tr>
+</tbody>
+</table></div>
+
+
+<h3>منع هجمات MITM: DNS over HTTPS</h3>
+<p>الـ <strong>DoH</strong> نسخة محسّنة من بروتوكول DNS تمنع التجسّس على أنشطة المستخدم أو استعلامات DNS أثناء عملية الـ Lookup. استعلامات الويب والحركة تُرسل عبر HTTPS مشفَّر على <strong>Port 443</strong>.</p>
+
+<h3>الـ IPsec</h3>
+<p>مجموعة بروتوكولات طوّرتها IETF لتأمين اتصالات IP بالـ Authentication وتشفير كل حزمة IP في الجلسة. تُستخدم على نطاق واسع لبناء VPNs وللوصول عن بُعد عبر Dial-up للشبكات الخاصة.</p>
+<div class="table-wrap"><table>
+<thead><tr><th>الخدمة</th><th>الوظيفة</th></tr></thead>
+<tbody>
+<tr><td>Authentication Header (AH)</td><td>يوفّر Authentication لبيانات المرسِل</td></tr>
+<tr><td>Encapsulation Security Payload (ESP)</td><td>يوفّر Authentication وتشفير (Confidentiality) معًا</td></tr>
+</tbody>
+</table></div>
+
+<div class="callout tip"><div class="callout-label">فوائد IPsec</div><p>Network-Level Peer Authentication، Data Origin Authentication، Data Integrity، Data Confidentiality (التشفير)، وReplay Protection.</p></div>
+
+
+<!-- METHODOLOGY -->
+
+<hr />
+
+<h2 id="methodology"><span class="htext">عملية الـ Session Hijacking خطوة بخطوة</span></h2>
+
+
+<p>الشرائح بتعرض "Session Hijacking Process" كرسم، وده تسلسله العام المعتمد في CEH:</p>
+<div class="step-track">
+<div class="step-item"><div class="step-num">1</div><div class="step-title">Sniffing / الاعتراض</div><div class="step-body"><p>المهاجم يضع نفسه بين الضحية والسيرفر (MITM أو Sniffer) لالتقاط الحزم والـ Session IDs.</p></div></div>
+<div class="step-item"><div class="step-num">2</div><div class="step-title">Monitoring / المراقبة</div><div class="step-body"><p>يراقب الجلسة ويتتبع الـ Sequence Numbers والـ Tokens المتبادلة.</p></div></div>
+<div class="step-item"><div class="step-num">3</div><div class="step-title">Session Desynchronization</div><div class="step-body"><p>يكسر الاتصال مع الضحية (مثل RST) عشان ما يرجعش يتزامن مع السيرفر.</p></div></div>
+<div class="step-item"><div class="step-num">4</div><div class="step-title">Session ID Prediction</div><div class="step-body"><p>يسرق أو يتنبأ أو يخمّن أو يعمل Brute Force للـ Session ID/Sequence Number الصالح.</p></div></div>
+<div class="step-item"><div class="step-num">5</div><div class="step-title">Command Injection / الاستيلاء</div><div class="step-body"><p>يحقن حزمًا أو طلبات بالـ Token الصالح فيسيطر على الجلسة وينفّذ أوامر بصلاحيات المستخدم.</p></div></div>
+</div>
+
+
+<!-- CHEAT -->
+
+<hr />
+
+<h2 id="cheat"><span class="htext">Cheat Sheet مرجعي</span></h2>
+
+
+<div class="cheat-section">
+
+<h4>مقارنة هجمات الـ Session Hijacking</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>الهجوم</th><th>المستوى</th><th>الآلية</th><th>المفتاح</th></tr></thead>
+<tbody>
+<tr><td>Session Sniffing</td><td>Application</td><td>التقاط الـ Token بالـ Sniffer</td><td>Wireshark</td></tr>
+<tr><td>Token Prediction</td><td>Application</td><td>تحليل أنماط الـ Tokens (Sequential / Timestamp)</td><td>أدوات Cryptanalysis</td></tr>
+<tr><td>MITM</td><td>Both</td><td>تقسيم TCP إلى اتصالين وقراءة/تعديل البيانات</td><td>Burp، Hetty</td></tr>
+<tr><td>MITB</td><td>Application</td><td>Trojan + Extension يعدّل بيانات الـ Forms</td><td>Trojan</td></tr>
+<tr><td>XSS</td><td>Application</td><td>تنفيذ كود خبيث في متصفح الضحية</td><td>Client-Side</td></tr>
+<tr><td>CSRF</td><td>Application</td><td>استغلال جلسة نشطة لتنفيذ طلب خبيث</td><td>One-Click / Session Riding</td></tr>
+<tr><td>Session Replay</td><td>Application</td><td>إعادة إرسال Token مسروق</td><td>Authentication Token</td></tr>
+<tr><td>Session Fixation</td><td>Application</td><td>فرض Session ID معروف على الضحية</td><td>URL / Hidden Field / Cookie</td></tr>
+<tr><td>Forbidden Attack</td><td>Application (HTTPS)</td><td>إعادة استخدام Nonce في TLS Handshake</td><td>TLS</td></tr>
+<tr><td>Session Donation</td><td>Application</td><td>إعطاء الضحية SID خاص بالمهاجم</td><td>SID</td></tr>
+<tr><td>TCP/IP Hijacking</td><td>Network</td><td>حزم مزوَّرة للاستيلاء على الاتصال</td><td>نفس الشبكة</td></tr>
+<tr><td>RST Hijacking</td><td>Network</td><td>حقن RST بـ ACK Number صحيح</td><td>Colasoft، tcpdump</td></tr>
+<tr><td>IP Spoofing / Source Routing</td><td>Network</td><td>انتحال IP موثوق وتوجيه الحزم</td><td>Source Routing</td></tr>
+<tr><td>PetitPotam</td><td>Network / AD</td><td>إجبار DC على Authentication وعمل NTLM Relay لـ AD CS</td><td>MS-EFSRPC</td></tr>
+</tbody>
+</table></div>
+
+
+<h4>أهم الأوامر والحالات للمراجعة السريعة</h4>
+<div class="code-wrap"><span class="code-tag">tcp — three-way handshake states</span><pre><code>Client                    Server
+CLOSED                    LISTEN
+SYN (ISN)        ----&gt;    SYN-RECEIVED
+SYN-SENT  &lt;----   SYN + ACK
+ESTABLISHED  ACK ----&gt;   ESTABLISHED
+</code></pre></div>
+
+</div>
+
+<!-- SUMMARY -->
+
+<hr />
+
+<h2 id="summary"><span class="htext">الخلاصة العامة للموديول</span></h2>
+
+
+<p>الموديول ده ناقش مفاهيم الـ Session Hijacking وأنواعه (Passive وActive)، وتفصيل هجمات الـ Application-Level والـ Network-Level، وأدوات الـ Session Hijacking، ثم كيفية الكشف والحماية والدفاع بالأدوات والإجراءات المضادة اللي بيستخدمها المدافعون ضد المهاجمين.</p>
+
+<div class="takeaways">
+<div class="takeaways-title">$ cat ./module11_summary.txt</div>
+<ul>
+<li>الـ Authentication بيتم غالبًا في بداية الجلسة فقط — وده اللي بيخلّي خطف الجلسة أثناء استمرارها ممكنًا</li>
+<li>Passive = مراقبة وتسجيل فقط، وActive = الاستيلاء على الجلسة أو المشاركة فيها (زي MITM)</li>
+<li>الـ Spoofing بيفتح جلسة جديدة ببيانات مسروقة، أما الـ Hijacking فبيستولي على جلسة قائمة بالفعل</li>
+<li>الـ Application-Level بيستهدف الـ Session IDs (Stealing، Guessing، Brute Force)، والـ Network-Level بيستهدف بروتوكولات TCP/UDP نفسها</li>
+<li>الـ Session Fixation: المهاجم يفرض ID معروف على الضحية، أما Session Donation فيربط الضحية بحساب المهاجم</li>
+<li>الـ Forbidden Attack يستهدف HTTPS عبر إعادة استخدام الـ Nonce في TLS</li>
+<li>الدفاع الأساسي: التشفير (SSH، HTTPS، IPsec، DoH)، Session IDs عشوائية وطويلة، Timeout، وعدم وضع الـ ID في الـ URL</li>
+</ul>
+</div>
+
+<blockquote>
+<p><strong>الـ Session Hijacking مش بيكسر كلمة المرور — هو بيتخطّاها.</strong> المهاجم اللي معاه Session Token صالح بيتصرّف بصلاحيات المستخدم كأنه دخل بنفسه، وعشان كده حماية الـ Token نفسه (توليد عشوائي، تشفير النقل، إنهاء الجلسة) أهم من قوة كلمة المرور وحدها.</p>
+</blockquote>
+
+<div class="callout examtip"><div class="callout-label">Exam Tip</div><p>أسئلة هذا الموديول غالبًا تُركِّز على: الفرق بين Passive وActive، الفرق بين Spoofing وHijacking، الفرق بين Network-Level وApplication-Level، حالات الـ Three-Way Handshake (SYN-SENT، SYN-RECEIVED، ESTABLISHED)، الفرق بين Session Fixation وSession Donation، RST Hijacking، PetitPotam، والفرق بين AH وESP في IPsec.</p></div>
+
+
+<hr />
+<p><em>نهاية نوتس الموديول الحادي عشر — Session Hijacking</em></p>
+<div class="footer-note">-- EOF: module-11/session-hijacking.md --</div>
+</div>
+
+<script>
+(function(){
+  var root=document.documentElement,btn=document.getElementById('themeSwitch');
+  function applyTheme(t){root.setAttribute('data-theme',t);btn.textContent='theme: '+t;try{localStorage.setItem('oscp-notes-theme',t);}catch(e){}}
+  var saved='dark';try{saved=localStorage.getItem('oscp-notes-theme')||'dark';}catch(e){}
+  applyTheme(saved);
+  btn.addEventListener('click',function(){applyTheme(root.getAttribute('data-theme')==='dark'?'light':'dark');});
+  var bar=document.getElementById('progressBar');
+  function onScroll(){var h=document.documentElement,s=h.scrollTop,ht=h.scrollHeight-h.clientHeight;bar.style.width=(ht>0?(s/ht*100):0)+'%';var t=document.getElementById('toTop');s>500?t.classList.add('show'):t.classList.remove('show');}
+  document.addEventListener('scroll',onScroll);onScroll();
+  document.getElementById('toTop').addEventListener('click',function(){window.scrollTo({top:0,behavior:'smooth'});});
+  document.querySelectorAll('.code-wrap').forEach(function(wrap){
+    var c=wrap.querySelector('code');if(!c)return;
+    var b=document.createElement('button');b.className='copy-btn';b.textContent='copy';
+    b.addEventListener('click',function(){if(navigator.clipboard){navigator.clipboard.writeText(c.innerText).then(function(){b.textContent='copied ✓';b.classList.add('copied');setTimeout(function(){b.textContent='copy';b.classList.remove('copied');},1500);});}});
+    wrap.appendChild(b);
+  });
+})();
+</script>
+</body>
+</html>

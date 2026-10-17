@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CEHv13 · Module 08: الـ Sniffing وتحليل الحزم</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-0:#0B0B0D;--bg-1:#121214;--surface:#17171A;--surface-2:#1D1D21;
+    --border:#2A2A2F;--border-soft:#232326;
+    --text:#E6E6E9;--text-soft:#C4C4CA;--muted:#8A8A92;
+    --red:#E1362F;--red-soft:rgba(225,54,47,0.10);--red-border:rgba(225,54,47,0.35);
+    --red-grad:linear-gradient(90deg,#E1362F,#F2794A);
+    --amber:#E8A23A;--amber-soft:rgba(232,162,58,0.09);--amber-border:rgba(232,162,58,0.30);
+    --green:#3FBF6E;--green-soft:rgba(63,191,110,0.09);--green-border:rgba(63,191,110,0.30);
+    --blue:#4EA1D3;--blue-soft:rgba(78,161,211,0.09);--blue-border:rgba(78,161,211,0.30);
+    --purple:#A179E8;--purple-soft:rgba(161,121,232,0.10);--purple-border:rgba(161,121,232,0.32);
+    --mono:'IBM Plex Mono','Courier New',monospace;
+  }
+  html[data-theme="light"]{--bg-0:#F4F3F1;--bg-1:#ECEBE8;--surface:#FFFFFF;--surface-2:#F3F2EF;--border:#DEDCD6;--border-soft:#E6E4DF;--text:#1C1B19;--text-soft:#3C3A36;--muted:#726F68;}
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;direction:rtl;text-align:right;background:var(--bg-0);}
+  body{font-family:'Cairo','Segoe UI',Tahoma,sans-serif;line-height:1.95;font-size:16.5px;color:var(--text);
+    background:radial-gradient(900px 420px at 12% -8%,rgba(225,54,47,0.10),transparent 60%),radial-gradient(800px 420px at 90% 6%,rgba(232,162,58,0.06),transparent 60%),linear-gradient(180deg,var(--bg-0) 0%,var(--bg-1) 100%);
+    background-attachment:fixed;transition:background 0.2s ease,color 0.2s ease;}
+  html[data-theme="light"] body{background:radial-gradient(900px 420px at 12% -8%,rgba(225,54,47,0.06),transparent 60%),radial-gradient(800px 420px at 90% 6%,rgba(232,162,58,0.05),transparent 60%),linear-gradient(180deg,var(--bg-0) 0%,var(--bg-1) 100%);}
+  .progress-rail{position:fixed;top:0;inset-inline:0;height:3px;background:rgba(255,255,255,0.04);z-index:60;}
+  html[data-theme="light"] .progress-rail{background:rgba(0,0,0,0.05);}
+  .progress-bar{height:100%;width:0%;background:var(--red-grad);transition:width 0.08s linear;}
+  .float-controls{position:fixed;bottom:22px;left:22px;z-index:55;display:flex;flex-direction:column;gap:10px;}
+  .fctrl-btn{width:42px;height:42px;border-radius:50%;background:var(--surface);border:1px solid var(--border);color:var(--text-soft);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;box-shadow:0 10px 24px -10px rgba(0,0,0,0.5);transition:transform 0.15s ease,border-color 0.15s ease,opacity 0.2s ease;}
+  .fctrl-btn:hover{transform:translateY(-2px);border-color:var(--red-border);color:var(--red);}
+  #toTop{opacity:0;pointer-events:none;}#toTop.show{opacity:1;pointer-events:auto;}
+  .page{max-width:860px;margin:0 auto;padding:46px 22px 100px;}
+  .banner{position:relative;overflow:hidden;background:linear-gradient(155deg,var(--surface) 0%,var(--bg-1) 55%,var(--surface) 100%);border:1px solid var(--border-soft);border-radius:10px;padding:0 0 34px;margin-bottom:26px;box-shadow:0 20px 50px -20px rgba(0,0,0,0.6);}
+  .term-bar{display:flex;align-items:center;gap:8px;padding:13px 18px;border-bottom:1px solid var(--border-soft);background:rgba(255,255,255,0.015);direction:ltr;}
+  .term-dot{width:11px;height:11px;border-radius:50%;display:inline-block;}.term-dot.r{background:#E1362F;}.term-dot.y{background:#E8A23A;}.term-dot.g{background:#3FBF6E;}
+  .term-path{margin-inline-start:12px;font-family:var(--mono);font-size:12px;color:var(--muted);}
+  .theme-switch{margin-inline-start:auto;font-family:var(--mono);font-size:11px;color:var(--muted);background:transparent;border:1px solid var(--border);border-radius:4px;padding:4px 9px;cursor:pointer;}
+  .theme-switch:hover{color:var(--amber);border-color:var(--amber-border);}
+  .banner-body{padding:30px 34px 4px;}
+  .banner .kicker{display:inline-block;font-family:var(--mono);font-size:12.5px;letter-spacing:0.03em;color:var(--red);background:var(--red-soft);border:1px solid var(--red-border);border-radius:3px;padding:5px 12px;margin-bottom:20px;direction:ltr;}
+  .banner h1{margin:0 0 14px;font-size:28px;font-weight:800;line-height:1.5;color:var(--text);}
+  .banner .lede{color:var(--muted);font-size:15.5px;line-height:1.95;max-width:640px;margin:0 0 24px;}
+  .tags{display:flex;flex-wrap:wrap;gap:9px;}
+  .tag{font-size:12.5px;font-family:var(--mono);color:var(--amber);background:var(--amber-soft);border:1px solid var(--amber-border);border-radius:3px;padding:5px 11px;}
+  .toc{background:var(--surface);border:1px solid var(--border-soft);border-radius:8px;padding:6px 0 6px;margin-bottom:50px;overflow:hidden;}
+  .toc-title{font-family:var(--mono);font-weight:600;font-size:13px;color:var(--green);padding:14px 22px;border-bottom:1px solid var(--border-soft);direction:ltr;text-align:left;}
+  .toc-list{display:flex;flex-direction:column;}
+  .toc-item{display:flex;align-items:center;gap:14px;padding:12px 22px;color:var(--text-soft);text-decoration:none;font-size:14.5px;border-bottom:1px solid rgba(255,255,255,0.03);transition:background 0.15s ease;}
+  .toc-list .toc-item:last-child{border-bottom:none;}
+  .toc-item:hover{background:var(--red-soft);}
+  .toc-num{flex:none;font-family:var(--mono);font-size:12.5px;font-weight:600;color:#0F0F10;background:var(--red-grad);border-radius:3px;padding:3px 8px;direction:ltr;}
+  h1,h2,h3,h4{font-weight:700;}
+  h2{display:flex;align-items:center;gap:14px;font-size:21px;margin:66px 0 22px;padding-bottom:16px;border-bottom:1px solid var(--border-soft);color:var(--text);}
+  h2 .num{flex:none;font-family:var(--mono);font-size:13px;font-weight:700;color:#0F0F10;background:var(--red-grad);border-radius:5px;padding:7px 12px;direction:ltr;}
+  h2 .htext{line-height:1.5;}
+  h3{font-size:17px;margin:34px 0 14px;color:var(--red);display:flex;align-items:center;gap:9px;}
+  h3::before{content:"#";font-family:var(--mono);color:var(--amber);font-weight:700;}
+  h4{font-size:14.8px;margin:22px 0 10px;color:var(--text-soft);font-family:var(--mono);}
+  p{margin:0 0 17px;color:var(--text);}
+  strong{color:var(--text);font-weight:700;}:root:not([data-theme="light"]) strong{color:#FBFBFC;}
+  a{color:var(--amber);text-decoration:none;border-bottom:1px dashed var(--amber-border);}
+  hr{border:none;height:1px;margin:50px 0;background:linear-gradient(90deg,transparent,var(--border),transparent);}
+  ul,ol{margin:0 0 18px;padding-inline-start:24px;}
+  li{margin-bottom:9px;color:var(--text);}li::marker{color:var(--red);font-family:var(--mono);}li>ul,li>ol{margin-top:9px;}
+  blockquote{margin:24px 0;padding:17px 22px;background:var(--red-soft);border:1px solid var(--red-border);border-inline-start:3px solid var(--red);border-radius:6px;color:var(--text-soft);}
+  blockquote p{margin:0;color:inherit;line-height:1.85;}blockquote p+p{margin-top:10px;}blockquote strong{color:var(--text);}
+  .callout{margin:24px 0;padding:17px 22px 18px;border-radius:6px;border:1px solid var(--border-soft);border-inline-start:3px solid var(--border);background:var(--surface);}
+  .callout p{margin:0;color:var(--text-soft);line-height:1.85;}.callout p+p{margin-top:10px;}.callout ul,.callout ol{margin:6px 0 0;}
+  .callout-label{display:inline-flex;align-items:center;gap:7px;font-family:var(--mono);font-size:11.5px;font-weight:700;letter-spacing:0.02em;text-transform:uppercase;margin-bottom:10px;direction:ltr;}
+  .callout.note{border-inline-start-color:var(--blue);background:var(--blue-soft);}.callout.note .callout-label{color:var(--blue);}
+  .callout.warning{border-inline-start-color:var(--red);background:var(--red-soft);}.callout.warning .callout-label{color:var(--red);}
+  .callout.tip{border-inline-start-color:var(--green);background:var(--green-soft);}.callout.tip .callout-label{color:var(--green);}
+  .callout.examtip{border-inline-start-color:var(--purple);background:var(--purple-soft);}.callout.examtip .callout-label{color:var(--purple);}
+  .callout.case{border-inline-start-color:var(--amber);background:var(--amber-soft);}.callout.case .callout-label{color:var(--amber);}
+  .callout.definition{border-inline-start-color:var(--muted);background:var(--surface-2);}.callout.definition .callout-label{color:var(--text-soft);}
+  .callout.danger{border-inline-start-color:#FF5A52;background:rgba(255,90,82,0.08);}.callout.danger .callout-label{color:#FF5A52;}
+  .table-wrap{overflow-x:auto;margin:22px 0;border:1px solid var(--border-soft);border-radius:8px;}
+  table{width:100%;border-collapse:collapse;font-size:14.2px;min-width:480px;}
+  thead th{background:var(--surface-2);color:var(--amber);font-weight:700;font-family:var(--mono);font-size:12.5px;text-transform:uppercase;letter-spacing:0.02em;text-align:start;padding:13px 15px;border-bottom:1px solid var(--border-soft);white-space:nowrap;}
+  tbody td{padding:12px 15px;border-bottom:1px solid var(--border-soft);color:var(--text-soft);vertical-align:top;}
+  tbody tr:last-child td{border-bottom:none;}tbody tr:nth-child(even){background:rgba(127,127,127,0.03);}tbody tr:hover{background:var(--red-soft);}
+  code{font-family:var(--mono);font-size:13.3px;background:var(--surface-2);border:1px solid var(--border-soft);border-radius:4px;padding:2px 6px;direction:ltr;unicode-bidi:embed;color:var(--green);}
+  .code-wrap{position:relative;overflow-x:auto;margin:22px 0;}
+  .code-tag{position:absolute;top:10px;left:14px;font-family:var(--mono);font-size:10.5px;color:var(--muted);letter-spacing:0.04em;text-transform:uppercase;z-index:2;}
+  .copy-btn{position:absolute;top:8px;right:10px;z-index:2;font-family:var(--mono);font-size:11px;color:var(--muted);background:var(--surface-2);border:1px solid var(--border-soft);border-radius:4px;padding:4px 9px;cursor:pointer;direction:ltr;}
+  .copy-btn:hover{color:var(--amber);border-color:var(--amber-border);}.copy-btn.copied{color:var(--green);border-color:var(--green-border);}
+  pre{background:var(--bg-0);border:1px solid var(--border-soft);border-inline-start:3px solid var(--red);border-radius:8px;padding:30px 22px 18px;direction:ltr;text-align:left;margin:0;}
+  html[data-theme="light"] pre{background:#16181C;}
+  pre code{background:none;border:none;padding:0;color:#B9E8C9;font-size:13.2px;line-height:1.75;}
+  .diagram-card{background:var(--surface);border:1px solid var(--border-soft);border-radius:10px;padding:22px 18px 16px;margin:24px 0;}
+  .diagram-card svg{width:100%;height:auto;display:block;}
+  .diagram-caption{margin-top:10px;text-align:center;font-family:var(--mono);font-size:11.5px;color:var(--muted);}
+  .takeaways{background:var(--surface);border:1px solid var(--border-soft);border-radius:8px;padding:18px 22px 20px;margin:30px 0 10px;}
+  .takeaways-title{font-family:var(--mono);font-size:12.5px;font-weight:700;color:var(--green);margin-bottom:12px;direction:ltr;text-align:left;display:flex;align-items:center;gap:8px;}
+  .takeaways ul{margin:0;padding-inline-start:20px;}.takeaways li{color:var(--text-soft);font-size:14.5px;}
+  .step-track{display:flex;flex-direction:column;gap:0;margin:24px 0;}
+  .step-item{position:relative;padding:0 0 26px 0;padding-inline-start:46px;border-inline-start:2px solid var(--border-soft);}
+  .step-item:last-child{border-inline-start:2px solid transparent;padding-bottom:4px;}
+  .step-num{position:absolute;inset-inline-start:-17px;top:0;width:32px;height:32px;border-radius:50%;background:var(--red-grad);color:#0F0F10;font-family:var(--mono);font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;}
+  .step-title{font-weight:700;color:var(--text);margin-bottom:6px;font-size:15px;}
+  .step-body{color:var(--text-soft);font-size:14.5px;}.step-body p{margin:0 0 10px;}.step-body p:last-child{margin-bottom:0;}.step-body ul{margin:8px 0 0;}
+  .method-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px;margin:22px 0;}
+  .method-card{background:var(--surface);border:1px solid var(--border-soft);border-radius:8px;padding:14px 16px;}
+  .method-card .mtitle{font-weight:700;color:var(--text);font-size:14px;margin-bottom:5px;}.method-card .mdesc{color:var(--text-soft);font-size:13.3px;line-height:1.75;}
+  .cheat-section h4{color:var(--amber);font-size:13px;margin:26px 0 8px;}
+  .footer-note{margin-top:70px;padding-top:26px;border-top:1px solid var(--border-soft);color:var(--muted);font-size:13.3px;font-family:var(--mono);text-align:center;direction:ltr;}
+  @media print{.float-controls,.progress-rail,.copy-btn,.theme-switch{display:none !important;}body{background:#fff;color:#000;}.page{max-width:100%;}}
+  @media(max-width:640px){.page{padding:28px 14px 70px;}.banner-body{padding:24px 20px 4px;}.banner h1{font-size:21px;}h2{font-size:18px;gap:10px;}.float-controls{left:12px;bottom:14px;}}
+</style>
+</head>
+<body>
+<div class="progress-rail"><div class="progress-bar" id="progressBar"></div></div>
+<div class="float-controls"><button class="fctrl-btn" id="toTop" title="ارجع لفوق">↑</button></div>
+
+<div class="page">
+<div class="banner">
+  <div class="term-bar">
+    <span class="term-dot r"></span><span class="term-dot y"></span><span class="term-dot g"></span>
+    <span class="term-path">root@ceh:~/module-08$</span>
+    <button class="theme-switch" id="themeSwitch">theme: dark</button>
+  </div>
+  <div class="banner-body">
+    <span class="kicker">EC-Council · CEHv13 · Module 08</span>
+    <h1>الـ Sniffing وتحليل حزم الشبكة</h1>
+    <p class="lede">من مفاهيم الـ Passive والـ Active Sniffing وعمل الـ Sniffer في طبقة البيانات، مرورًا بهجمات MAC وDHCP وتسمّم ARP وهجمات الانتحال (MAC Spoofing، VLAN Hopping، STP)، ووصولاً لتسمّم DNS وإجراءات الكشف والمكافحة.</p>
+    <div class="tags">
+      <span class="tag">passive-sniffing</span><span class="tag">active-sniffing</span>
+      <span class="tag">mac-flooding</span><span class="tag">arp-poisoning</span>
+      <span class="tag">dhcp-starvation</span><span class="tag">dns-poisoning</span>
+      <span class="tag">vlan-hopping</span><span class="tag">mac-spoofing</span>
+    </div>
+  </div>
+</div>
+
+<nav class="toc"><div class="toc-title">$ ls learning_units/</div><div class="toc-list">
+  <a class="toc-item" href="#lu1"><span class="toc-num">01</span><span>مفاهيم الـ Sniffing — كيف يعمل الـ Sniffer وأنواعه</span></a>
+  <a class="toc-item" href="#lu2"><span class="toc-num">02</span><span>هجمات MAC — CAM Flooding وSwitch Port Stealing</span></a>
+  <a class="toc-item" href="#lu3"><span class="toc-num">03</span><span>هجمات DHCP — Starvation وRogue Server</span></a>
+  <a class="toc-item" href="#lu4"><span class="toc-num">04</span><span>تسمّم ARP (ARP Poisoning)</span></a>
+  <a class="toc-item" href="#lu5"><span class="toc-num">05</span><span>هجمات الانتحال — MAC وIRDP وVLAN وSTP</span></a>
+  <a class="toc-item" href="#lu6"><span class="toc-num">06</span><span>تسمّم DNS (DNS Poisoning)</span></a>
+  <a class="toc-item" href="#lu7"><span class="toc-num">07</span><span>الإجراءات المضادة وطرق الكشف</span></a>
+  <a class="toc-item" href="#methodology"><span class="toc-num">--</span><span>منهجية تنفيذ هجوم Sniffing كامل</span></a>
+  <a class="toc-item" href="#cheat"><span class="toc-num">--</span><span>Cheat Sheet مرجعي</span></a>
+  <a class="toc-item" href="#summary"><span class="toc-num">--</span><span>الخلاصة العامة للموديول</span></a>
+</div></nav>
+
+<!-- ══════════════════════════════════ LU1 -->
+<h2 id="lu1"><span class="num">01</span><span class="htext">مفاهيم الـ Sniffing — كيف يعمل الـ Sniffer وأنواعه</span></h2>
+
+<h3>ما هو الـ Packet Sniffing</h3>
+<p>الـ Sniffing هو عملية مراقبة والتقاط كل حزم البيانات المارّة عبر شبكة معيّنة باستخدام برنامج أو جهاز عتاد. الـ Sniffing سهل في الشبكات القائمة على الـ Hub لأن الحركة على أي جزء تمرّ بكل الأجهزة المرتبطة به — لكن معظم الشبكات الحديثة تعمل على مفاتيح Switches.</p>
+
+<div class="callout definition">
+<div class="callout-label">Hub مقابل Switch</div>
+<p>الـ <strong>Hub</strong> يُرسل البيانات لكل البورتات بدون تمييز. الـ <strong>Switch</strong> يُسجِّل عنوان MAC المرتبط بكل بورت في جدول CAM ويُرسل البيانات للبورت الصحيح فقط — وده بيجعل الـ Passive Sniffing صعبًا في بيئة الـ Switch. المهاجم يحتاج التلاعب بوظيفة الـ Switch (ARP Spoofing أو MAC Flooding) لرؤية كل الحركة المارّة.</p>
+</div>
+
+<h3>كيف يعمل الـ Sniffer</h3>
+<p>كل حاسوب على الشبكة المحلية (LAN) عنده عنوانان: MAC Address وIP Address. عنوان MAC محفوظ في كرت الشبكة (NIC) ويُستخدَم في طبقة Data Link (الطبقة الثانية في نموذج OSI) بدل عنوان IP لنقل إطارات البيانات. برامج الـ Sniffing بتُعطِّل الفلتر في NIC وبتضعها في Promiscuous Mode حتى يقدر الجهاز يرى وصول حركة الشبكة كلها وليس الخاصة به فقط.</p>
+
+<div class="diagram-card">
+<svg viewBox="0 0 700 160" xmlns="http://www.w3.org/2000/svg">
+  <rect x="10" y="50" width="130" height="55" rx="7" fill="rgba(78,161,211,0.09)" stroke="rgba(78,161,211,0.30)"/>
+  <text x="75" y="72" text-anchor="middle" fill="var(--blue)" font-size="12" font-weight="700" font-family="IBM Plex Mono,monospace">Host A</text>
+  <text x="75" y="90" text-anchor="middle" fill="var(--muted)" font-size="9" font-family="IBM Plex Mono,monospace">source</text>
+
+  <rect x="285" y="30" width="130" height="95" rx="7" fill="rgba(232,162,58,0.09)" stroke="rgba(232,162,58,0.30)"/>
+  <text x="350" y="60" text-anchor="middle" fill="var(--amber)" font-size="12" font-weight="700" font-family="IBM Plex Mono,monospace">Switch</text>
+  <text x="350" y="78" text-anchor="middle" fill="var(--muted)" font-size="9" font-family="IBM Plex Mono,monospace">CAM Table</text>
+  <text x="350" y="93" text-anchor="middle" fill="var(--muted)" font-size="8" font-family="IBM Plex Mono,monospace">MAC → Port</text>
+  <text x="350" y="108" text-anchor="middle" fill="var(--muted)" font-size="8" font-family="IBM Plex Mono,monospace">unicast routing</text>
+
+  <rect x="560" y="50" width="130" height="55" rx="7" fill="rgba(63,191,110,0.09)" stroke="rgba(63,191,110,0.30)"/>
+  <text x="625" y="72" text-anchor="middle" fill="var(--green)" font-size="12" font-weight="700" font-family="IBM Plex Mono,monospace">Host B</text>
+  <text x="625" y="90" text-anchor="middle" fill="var(--muted)" font-size="9" font-family="IBM Plex Mono,monospace">destination</text>
+
+  <rect x="560" y="130" width="130" height="25" rx="5" fill="rgba(225,54,47,0.10)" stroke="rgba(225,54,47,0.35)"/>
+  <text x="625" y="146" text-anchor="middle" fill="var(--red)" font-size="10" font-weight="700" font-family="IBM Plex Mono,monospace">Attacker (Sniffer)</text>
+
+  <line x1="140" y1="77" x2="285" y2="77" stroke="var(--border)" stroke-width="1.5"/>
+  <line x1="415" y1="77" x2="560" y2="77" stroke="var(--border)" stroke-width="1.5"/>
+  <line x1="415" y1="100" x2="560" y2="142" stroke="var(--red-border)" stroke-width="1.5" stroke-dasharray="4 3"/>
+  <text x="468" y="126" fill="var(--red)" font-size="8" font-family="IBM Plex Mono,monospace">ARP Spoof / MAC Flood</text>
+</svg>
+<div class="diagram-caption">في الـ Switch البيانات تروح للوجهة الصحيحة فقط — المهاجم محتاج تقنية نشطة لاعتراضها</div>
+</div>
+
+<h3>بيئات Ethernet ونوعا الـ Sniffing</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>النوع</th><th>البيئة</th><th>الوصف</th><th>الكشف</th></tr></thead>
+<tbody>
+<tr><td>Passive Sniffing</td><td>Shared Ethernet (Hub)</td><td>لا يُرسل أي حزم — يلتقط ويراقب فقط. الشبكة كلها ترى حركة بعضها. أيضًا عبر Trojan مُثبَّت يُفعِّل Sniffer مُخفيًا</td><td>صعب جدًا — لا توجد حركة مُولَّدة</td></tr>
+<tr><td>Active Sniffing</td><td>Switched Ethernet</td><td>يحقن حركة مرور في الشبكة لرؤية الحزم. تقنياته: MAC Flooding، ARP Poisoning، DNS Poisoning، DHCP Attacks، Switch Port Stealing، Spoofing</td><td>أسهل نسبيًا بسبب الحركة المُولَّدة</td></tr>
+</tbody>
+</table></div>
+
+<div class="callout tip"><div class="callout-label">مقارنة</div><p>الـ Passive Sniffing يتميّز بميزة تخفٍّ كبيرة على الـ Active Sniffing — لكنه محدود بشبكات الـ Hub فقط. الشبكات الحديثة تُستخدَم فيها الـ Switches فتُجبر المهاجم على اللجوء للـ Sniffing النشط.</p></div>
+
+<h3>خطوات اختراق الشبكة باستخدام الـ Sniffers</h3>
+<div class="step-track">
+<div class="step-item"><div class="step-num">1</div><div class="step-title">اكتشاف الـ Switch المناسب والاتصال به</div><div class="step-body"><p>المهاجم يجد الـ Switch المناسب ويوصّل جهازه أو Laptop بأحد بورتاته.</p></div></div>
+<div class="step-item"><div class="step-num">2</div><div class="step-title">تحديد طوبولوجيا الشبكة</div><div class="step-body"><p>يستخدم أدوات اكتشاف الشبكة لتحديد معلومات كطوبولوجيا الشبكة.</p></div></div>
+<div class="step-item"><div class="step-num">3</div><div class="step-title">تحديد الجهاز المستهدَف</div><div class="step-body"><p>بتحليل الطوبولوجيا، يُحدِّد جهاز الضحية المراد استهداف هجماته عليه.</p></div></div>
+<div class="step-item"><div class="step-num">4</div><div class="step-title">تنفيذ ARP Spoofing</div><div class="step-body"><p>يُرسل رسائل ARP مزيَّفة (Spoofed) لتحويل حركة الضحية.</p></div></div>
+<div class="step-item"><div class="step-num">5</div><div class="step-title">تحويل كل الحركة نحو جهاز المهاجم (MITM)</div><div class="step-body"><p>كل الحركة من الضحية بتمرّ الآن عبر جهاز المهاجم قبل وصولها للوجهة الحقيقية.</p></div></div>
+<div class="step-item"><div class="step-num">6</div><div class="step-title">استخراج معلومات حساسة</div><div class="step-body"><p>يرى الآن كل الحزم المُرسَلة والمستقبَلة من الضحية — كلمات المرور، أسماء المستخدمين، بيانات بطاقات الائتمان، والأرقام السرية.</p></div></div>
+</div>
+
+<h3>البروتوكولات الضعيفة أمام الـ Sniffing</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>البروتوكول</th><th>البورت</th><th>نقطة الضعف</th></tr></thead>
+<tbody>
+<tr><td>Telnet / Rlogin</td><td>23</td><td>نقل البيانات بـ Plaintext — المهاجم يعمل Sniffing لضغطات المفاتيح كاملةً بما فيها كلمات المرور</td></tr>
+<tr><td>HTTP</td><td>80</td><td>نقل بيانات المستخدمين عبر الشبكة بـ Plaintext — اعتراض بيانات الاعتماد</td></tr>
+<tr><td>SMTP</td><td>25</td><td>غالبًا يُرسل رسائل بـ Cleartext دون أي حماية من الـ Sniffing</td></tr>
+<tr><td>SNMP v1/v2</td><td>161</td><td>لا يوفّر أمانًا قويًا — نقل البيانات بـ Cleartext</td></tr>
+<tr><td>POP</td><td>110</td><td>تطبيقات أمان ضعيفة — البيانات في Cleartext</td></tr>
+<tr><td>FTP</td><td>21</td><td>لا يوفّر تشفيرًا — المهاجم يعمل Sniffing لبيانات الاعتماد بأدوات كـ hashcat</td></tr>
+<tr><td>IMAP</td><td>143</td><td>أمان غير كافٍ — يسمح للمهاجم بالحصول على البيانات بـ Cleartext</td></tr>
+<tr><td>NNTP</td><td>119</td><td>لا يُشفِّر البيانات</td></tr>
+<tr><td>TFTP</td><td>69 (UDP)</td><td>لا مصادقة ولا تشفير — البيانات متاحة لأي جهاز على نفس الشبكة</td></tr>
+</tbody>
+</table></div>
+
+<h3>مفاهيم متقدّمة</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>المفهوم</th><th>الوصف</th></tr></thead>
+<tbody>
+<tr><td>Hardware Protocol Analyzer</td><td>جهاز عتاد يُفسِّر الحركة المارّة عبر الشبكة بدون تعديل الجزء المخصَّص — يلتقط إشاراتٍ ويحلّل محتوى كل حزمة. أمثلة: VIAVI Xgig 1000، SierraNet M1288</td></tr>
+<tr><td>SPAN Port (Port Mirroring)</td><td>خاصية في مفاتيح Cisco — تُرسل نسخة من كل حزمة تمرّ بالمفتاح لبورت مخصَّص للمراقبة. مصدر واحد أو أكثر، ووجهة واحدة فقط. تُستخدَم لتحليل الحركة وكشف الأخطاء</td></tr>
+<tr><td>Active Wiretapping</td><td>هجوم MITM — مراقبة وتسجيل حركة الاتصال مع إمكانية تعديل أو حقن بيانات</td></tr>
+<tr><td>Passive Wiretapping</td><td>التنصّت أو التجسّس — مراقبة وتسجيل الحركة فقط بدون تعديل</td></tr>
+<tr><td>Lawful Interception (LI)</td><td>اعتراض قانوني لاتصالات البيانات بين نقطتَين بهدف المراقبة على شبكات الاتصال التقليدية وVoIP والبيانات. تُنفَّذ من وكالات إنفاذ القانون (LEAs) بموافقة مزوّد الخدمة</td></tr>
+</tbody>
+</table></div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU2 -->
+<h2 id="lu2"><span class="num">02</span><span class="htext">هجمات MAC — CAM Flooding وSwitch Port Stealing</span></h2>
+
+<h3>جدول CAM</h3>
+<p>جدول CAM (Content Addressable Memory) هو جدول ديناميكي ذو حجم ثابت في الـ Switch — يُخزِّن معلومات كعناوين MAC المتاحة على البورتات الفيزيائية مع معاملات الـ VLAN. عند استقبال الـ Switch بيانات، يبحث عن عنوان MAC الوجهة في جدول CAM ويُرسل البيانات عبر البورت المرتبط به مباشرةً.</p>
+
+<div class="callout danger"><div class="callout-label">ماذا يحدث لما يمتلئ جدول CAM؟</div><p>جدول CAM له حجم محدود — يجعله عرضة لهجمات MAC Flooding اللي بتُغرقه بعناوين MAC مزيَّفة. بعد امتلاء الجدول، يدخل الـ Switch وضع <strong>Fail-Open Mode</strong> وبيبدأ يعمل كـ Hub — يُبثّ (Broadcast) كل الحركة الواردة لكل البورتات، مما يُسهِّل الـ Sniffing. هذا الهجوم يملأ أيضًا جداول CAM المفاتيح المجاورة.</p></div>
+
+<h3>عنوان MAC — التفاصيل التقنية</h3>
+<p>عنوان MAC مكوَّن من 48 بت مقسَّمة لقسمين: أول 24 بت هي OUI (Organizationally Unique Identifier) تُحدِّد المصنِّع، والـ 24 بت الأخيرة هي الرقم التسلسلي للـ NIC. مثال: <code>D4-BE-D9-14-C8-29</code> — الأول <code>D4BED9</code> = Dell Inc.، الثاني <code>14C829</code> = الرقم التسلسلي.</p>
+
+<h3>هجوم MAC Flooding</h3>
+<p>تقنية لاختراق أمان مفاتيح الشبكة — المهاجم يُغرق الـ Switch بعناوين MAC وIP عشوائية مزيَّفة مما يملأ جدول CAM ويُجبر الـ Switch على العمل كـ Hub. أداة <strong>macof</strong> (جزء من مجموعة dsniff) تُغرق جدول CAM بمعدّل 131,000 إدخال في الدقيقة.</p>
+<div class="code-wrap"><span class="code-tag">linux — mac flooding with macof</span><pre><code>macof -i eth0          # تشغيل هجوم MAC Flooding على الواجهة eth0
+macof -i eth0 -n 1000  # إرسال 1000 إدخال MAC عشوائي فقط
+</code></pre></div>
+
+<h3>هجوم Switch Port Stealing</h3>
+<p>يستغلّ جدول MAC الديناميكي للـ Switch بإرسال حزم ARP Gratuitous مزيَّفة متكرّرة — المهاجم ينتحل عنوان MAC الجهاز المستهدَف كمصدر ويُدخلها من بورت الجهاز المهاجم، مما يُنشئ حالة تنافس (Race Condition) بين الحركة الشرعية والحزم المزيَّفة.</p>
+<div class="callout case"><div class="callout-label">سيناريو</div><p>ثلاثة أجهزة: Host A، Host B (الهدف)، Host C (المهاجم). المهاجم يُرسل ARP Reply زائفة بعنوان MAC منتحَل لـ Host B — الـ Switch يُسجِّل إن عنوان MAC الخاص بـ Host B متصل ببورت المهاجم. نتيجة: كل الحزم الموجَّهة لـ Host B تذهب لـ Host C تلقائيًا. المهاجم ممكن يُبطئ Host B (DoS) لضمان فوزه بالسباق.</p></div>
+
+<h3>الدفاع ضد هجمات MAC — Port Security</h3>
+<p>Port Security خاصية تُحدِّد عناوين MAC المصرَّح لها بالوصول للبورت وتُقيِّدها. إذا وصل جهاز بعنوان MAC غير مُدرَج، أو وصل عدد الأجهزة للحد الأقصى — يحدث انتهاك أمني ويُرسَل تنبيه SNMP. يُقيِّد Port Security هجمات MAC Flooding ويُقفل البورتات.</p>
+<p>ثلاث طرق لإضافة عناوين MAC الآمنة: يدوياً عبر أمر <code>switchport port-security mac-address</code>، بشكل ديناميكي عبر تعلّم الأجهزة المتصلة، أو مزيج من الاثنتين.</p>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU3 -->
+<h2 id="lu3"><span class="num">03</span><span class="htext">هجمات DHCP — Starvation وRogue Server</span></h2>
+
+<h3>كيف يعمل DHCP</h3>
+<p>DHCP (Dynamic Host Configuration Protocol) بروتوكول Client-Server يُوفِّر IP Address لأجهزة الشبكة. بالإضافة للـ IP، يُقدِّم إعدادات مثل Default Gateway وSubnet Mask. سيرفر DHCP يحتفظ بقاعدة بيانات لـ: معاملات TCP/IP الصالحة، عناوين IP المتاحة، ومدة الإيجار (Lease Duration).</p>
+
+<h3>هجوم DHCP Starvation</h3>
+<p>في هجوم DHCP Starvation، المهاجم يُغرق سيرفر DHCP بطلبات DHCP كثيرة ويستخدم كل عناوين IP المتاحة في نطاق DHCP. النتيجة: السيرفر لا يستطيع إصدار أي عنوان IP جديد، مما يُؤدي إلى هجوم DoS — المستخدمون الشرعيون لا يستطيعون الحصول على IP أو تجديده والوصول للشبكة. أداة <strong>Yersinia</strong> تُرسل عدد كبير من الطلبات بعناوين MAC مزيَّفة.</p>
+
+<h3>هجوم Rogue DHCP Server</h3>
+<p>بعد نجاح DHCP Starvation واستنزاف مساحة IP، يُنشئ المهاجم سيرفر DHCP مزيَّف على الشبكة خارج سيطرة مدير الشبكة. السيرفر المزيَّف ينتحل صفة السيرفر الشرعي ويُقدِّم عناوين IP ومعلومات شبكية للعملاء، ويعمل كـ Default Gateway. العملاء المتصلون بالسيرفر المزيَّف يصبحون ضحايا هجمات MITM.</p>
+
+<div class="diagram-card">
+<svg viewBox="0 0 700 150" xmlns="http://www.w3.org/2000/svg">
+  <rect x="10" y="45" width="130" height="55" rx="7" fill="rgba(78,161,211,0.09)" stroke="rgba(78,161,211,0.30)"/>
+  <text x="75" y="68" text-anchor="middle" fill="var(--blue)" font-size="11" font-weight="700" font-family="IBM Plex Mono,monospace">Client</text>
+  <text x="75" y="85" text-anchor="middle" fill="var(--muted)" font-size="8" font-family="IBM Plex Mono,monospace">DHCP Discover</text>
+
+  <rect x="280" y="20" width="140" height="55" rx="7" fill="rgba(63,191,110,0.09)" stroke="rgba(63,191,110,0.30)"/>
+  <text x="350" y="43" text-anchor="middle" fill="var(--green)" font-size="11" font-weight="700" font-family="IBM Plex Mono,monospace">Real DHCP Server</text>
+  <text x="350" y="60" text-anchor="middle" fill="var(--muted)" font-size="8" font-family="IBM Plex Mono,monospace">slower response</text>
+
+  <rect x="280" y="90" width="140" height="50" rx="7" fill="rgba(225,54,47,0.10)" stroke="rgba(225,54,47,0.35)"/>
+  <text x="350" y="111" text-anchor="middle" fill="var(--red)" font-size="11" font-weight="700" font-family="IBM Plex Mono,monospace">Rogue DHCP</text>
+  <text x="350" y="128" text-anchor="middle" fill="var(--muted)" font-size="8" font-family="IBM Plex Mono,monospace">wins the race → MITM</text>
+
+  <line x1="140" y1="65" x2="280" y2="48" stroke="var(--border)" stroke-width="1.5"/>
+  <line x1="140" y1="75" x2="280" y2="110" stroke="var(--red-border)" stroke-width="1.5" stroke-dasharray="4 3"/>
+  <text x="190" y="58" fill="var(--muted)" font-size="8" font-family="IBM Plex Mono,monospace" text-anchor="middle">broadcast</text>
+</svg>
+<div class="diagram-caption">الـ Client يقبل أول Offer يصله — Rogue DHCP بيكسب السباق ويُصبح MITM</div>
+</div>
+
+<div class="callout tip"><div class="callout-label">الدفاع</div><p>تفعيل <strong>DHCP Snooping</strong> على الـ Switch — يُميِّز بين بورتات موثوقة (Trusted) مرتبطة بسيرفرات DHCP شرعية وبورتات غير موثوقة (Untrusted) لا تقبل رسائل DHCP Offer. أدوات هجوم إضافية: mitm6، Ettercap، Gobbler.</p></div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU4 -->
+<h2 id="lu4"><span class="num">04</span><span class="htext">تسمّم ARP (ARP Poisoning)</span></h2>
+
+<h3>ما هو ARP</h3>
+<p>ARP (Address Resolution Protocol) بروتوكول TCP/IP عديم الحالة (Stateless) يُحوِّل عناوين IP لعناوين MAC المرتبطة بها. يُستخدَم لما يريد جهاز إرسال حزمة لجهاز آخر ويحتاج معرفة عنوان MAC الوجهة. نظام التشغيل يُحافظ على جدول ARP مُولَّد من الردود المستقبَلة على طلبات ARP.</p>
+
+<h3>سير عملية ARP الطبيعية</h3>
+<div class="step-track">
+<div class="step-item"><div class="step-num">1</div><div class="step-title">إرسال ARP Request</div><div class="step-body"><p>الجهاز المصدر يُنشئ حزمة ARP Request تحتوي على MAC الأصل وIP الأصل وIP الوجهة، ويُرسلها للـ Switch.</p></div></div>
+<div class="step-item"><div class="step-num">2</div><div class="step-title">الـ Switch يبحث في جدول CAM</div><div class="step-body"><p>يقرأ MAC الأصل ويُحدِّث جدوله. إذا لم يجد الوجهة، يُبثّ الطلب لكل الشبكة.</p></div></div>
+<div class="step-item"><div class="step-num">3</div><div class="step-title">مطابقة IP والرد</div><div class="step-body"><p>فقط الجهاز الذي يتطابق IP الوجهة مع IP الخاص به يردّ بـ ARP Reply يحتوي على MAC الخاص به.</p></div></div>
+<div class="step-item"><div class="step-num">4</div><div class="step-title">تحديث جدول ARP وبدء الاتصال</div><div class="step-body"><p>الجهاز المصدر يُحدِّث جدول ARP الخاص به بإدخال IP وMAC الوجهة ويبدأ الاتصال.</p></div></div>
+</div>
+
+<h3>هجوم ARP Spoofing/Poisoning</h3>
+<p>ARP لا يُوفِّر أي وسيلة للتحقق من صحة الجهاز الرادّ — حتى الأجهزة التي لم تُرسل ARP Request تقبل ARP Replies من أجهزة أخرى. المهاجم يستغلّ هذا الخلل بإنشاء ردود ARP مزيَّفة تحتوي على IP وMAC مُنتحَلَين — جهاز الضحية يقبلها بشكل أعمى ويُدخلها في جدول ARP الخاص به.</p>
+
+<div class="callout danger"><div class="callout-label">تهديدات ARP Poisoning</div>
+<ul>
+<li>Packet Sniffing: التقاط الحركة عبر الشبكة أو جزء منها</li>
+<li>Session Hijacking: سرقة معلومات جلسة صالحة واستخدامها للوصول غير المصرَّح به</li>
+<li>VoIP Call Tapping: التنصّت على مكالمات VoIP بانتقاء حركة VoIP بعنوان MAC</li>
+<li>Manipulating Data: التقاط وتعديل البيانات أو إيقاف تدفق الحركة</li>
+<li>Man-in-the-Middle Attack: المهاجم يجلس بين الضحية والسيرفر</li>
+<li>Data Interception: اعتراض IP وMAC وVLANs المتصلة بالـ Switch</li>
+<li>Connection Hijacking: التلاعب باتصال العميل للسيطرة الكاملة</li>
+</ul>
+</div>
+
+<div class="code-wrap"><span class="code-tag">linux — arpspoof</span><pre><code># إعادة توجيه حزم الهدف للمهاجم بتزوير ردود ARP
+arpspoof -i eth0 -t &lt;target_host&gt; &lt;gateway&gt;
+# مثال: arpspoof -i eth0 -t 192.168.1.10 192.168.1.1
+
+# تفعيل IP Forwarding لتمرير الحزم بعد الاعتراض (MITM)
+echo 1 &gt; /proc/sys/net/ipv4/ip_forward
+</code></pre></div>
+<p>أداة <strong>Capsa Portable Network Analyzer</strong> تُستخدَم للكشف عن ARP Spoofing.</p>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU5 -->
+<h2 id="lu5"><span class="num">05</span><span class="htext">هجمات الانتحال — MAC وIRDP وVLAN وSTP</span></h2>
+
+<h3>MAC Spoofing/Duplicating</h3>
+<p>انتحال MAC يعني تزوير عنوان MAC الخاص بالجهاز بعنوان MAC مستخدم شرعي آخر على الشبكة. المهاجم أولًا يعمل Sniffing للشبكة ليجد عناوين MAC للعملاء النشطين المتصلين ببورتات الـ Switch، ثم ينتحل أحدها. إذا نجح، يستقبل كل الحركة الموجَّهة لذلك العميل ويأخذ هويته.</p>
+
+<p>للتغيير في Windows 11: Control Panel ← Network and Internet ← Network and Sharing Center ← Ethernet ← Properties ← Configure ← Advanced ← Network Address ← كتابة عنوان MAC الجديد (بدون `:`)، ثم التحقق عبر <code>ipconfig /all</code>. أداة <strong>MAC Address Changer</strong> تُنشئ عنوان MAC عشوائي وتُعيد الأصلي عند الحاجة.</p>
+
+<h3>IRDP Spoofing</h3>
+<p>IRDP (ICMP Router Discovery Protocol) يسمح للأجهزة باكتشاف IP الراوترات النشطة على الشبكة الفرعية بالاستماع لرسائل الإعلان والاستفسار. المهاجم يُرسل رسائل Router Advertisement مزيَّفة مع مستوى تفضيل ومدة تشغيل عالية — لأن IRDP لا يتطلّب مصادقة، الجهاز المستهدَف سيُفضِّل المسار الذي عرّفه المهاجم على مسار DHCP الشرعي.</p>
+<div class="table-wrap"><table>
+<thead><tr><th>هجوم IRDP Spoofing</th><th>الأثر</th></tr></thead>
+<tbody>
+<tr><td>Passive Sniffing</td><td>في الشبكة المُبدَّلة، المهاجم يُعيد توجيه الحركة الخارجية للأجهزة المستهدَفة عبر جهازه</td></tr>
+<tr><td>MITM</td><td>بعد بدء الـ Sniffing، المهاجم يعمل كـ Proxy بين الضحية والوجهة ويُحاول تعديل الحركة</td></tr>
+<tr><td>DoS</td><td>يُضيف مداخل مسار خاطئة في جدول توجيه الضحية — العنوان الخاطئ يُسبّب DoS</td></tr>
+</tbody>
+</table></div>
+<p>الدفاع: تعطيل IRDP على الأجهزة إذا سمح نظام التشغيل بذلك.</p>
+
+<h3>VLAN Hopping</h3>
+<p>طريقة هجوم شبكي للوصول غير المصرَّح به لموارد VLAN آخر — يستهدف تجاوز ضوابط تقسيم الشبكة المصمَّمة لعزل حركة المرور. الشبكات ذات التطبيق الضعيف أو الإعدادات الخاطئة عُرضة لهذا الهجوم.</p>
+
+<div class="table-wrap"><table>
+<thead><tr><th>أسلوب VLAN Hopping</th><th>الآلية</th></tr></thead>
+<tbody>
+<tr><td>Switch Spoofing</td><td>يوصّل المهاجم Switch مزيَّف بالشبكة ويخدع Switch الشرعي لإنشاء Trunk Link بينهما — حركة VLANs المتعدّدة تمرّ للـ Switch المزيَّف. ينجح فقط إذا كان الـ Switch الشرعي يفاوض على Trunk أو البورت مُهيَّأ بـ "dynamic auto" أو "dynamic desirable" أو "trunk"</td></tr>
+<tr><td>Double Tagging</td><td>المهاجم يُضيف إطار Ethernet بعلامتَي 802.1Q — الخارجية = VLAN الأصلي (Native) للمهاجم، الداخلية = VLAN الهدف. الـ Switch يُزيل العلامة الخارجية ويُوصِّل الإطار للـ Trunk وفقًا للعلامة الداخلية. يعمل فقط إذا كانت بورتات الـ Switch مُهيَّأة بـ Native VLANs</td></tr>
+</tbody>
+</table></div>
+
+<h3>STP Attack</h3>
+<p>في هجوم STP (Spanning Tree Protocol)، المهاجم يوصّل Switch مزيَّف بالشبكة لتغيير عمل بروتوكول STP وعمل Sniffing لكل حركة الشبكة. STP يُزيل الحلقات المحتملة في الشبكات المُبدَّلة ويُعيِّن Root Bridge داخل الشبكة لتتبع المسار الأمثل. المهاجم بإضافة Switch مزيَّف بأولوية أعلى يُمكنه أن يُصبح Root Bridge ويُعيد توجيه الحركة عبر جهازه.</p>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU6 -->
+<h2 id="lu6"><span class="num">06</span><span class="htext">تسمّم DNS (DNS Poisoning)</span></h2>
+
+<h3>كيف يعمل DNS Poisoning</h3>
+<p>DNS يُترجم أسماء النطاقات (مثل www.example.com) لعناوين IP. في DNS Poisoning (يُعرف أيضًا بـ DNS Spoofing)، المهاجم يخدع سيرفر DNS ليُصدِّق إنه استقبل معلومات أصيلة بينما في الواقع لم يستقبل. يُحاول تحويل الضحية لسيرفر خبيث بدل السيرفر الشرعي عبر التلاعب بمداخل جدول DNS — استبدال IP الموقع الحقيقي بـ IP خادم المهاجم.</p>
+
+<h3>أساليب تسمّم DNS</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>الأسلوب</th><th>الوصف</th></tr></thead>
+<tbody>
+<tr><td>Intranet DNS Spoofing</td><td>ينفَّذ على شبكة LAN مُبدَّلة بمساعدة ARP Poisoning — المهاجم يكون متصلًا بالـ LAN وقادرًا على عمل Sniffing للحزم. بعد الحصول على معرِّف طلب DNS، يُرسل ردًّا خبيثًا للمُرسِل قبل أن يردّ سيرفر DNS الحقيقي</td></tr>
+<tr><td>Internet DNS Spoofing</td><td>تسمّم DNS عبر الإنترنت بانتحال هوية سيرفر DNS المُفضَّل ومطابقة معرِّف طلب DNS</td></tr>
+<tr><td>Proxy Server DNS Poisoning</td><td>المهاجم يُنشئ Proxy Server مع DNS مزيَّف كإدخال DNS أساسي. يُغيِّر إعدادات Proxy الضحية بـ Trojan لتوجيه حركتها للموقع المزيَّف حيث يُمكن عمل Sniffing لبياناتها السرية ثم إعادة توجيه الطلب للموقع الحقيقي</td></tr>
+<tr><td>DNS Cache Poisoning</td><td>تعديل أو إضافة سجلات DNS مزيَّفة في ذاكرة Cache لمُحلِّل DNS — الـ Cache يحتفظ بأسماء النطاقات المُحلَّلة مؤخرًا. إذا لم يستطع مُحلِّل DNS التحقق من مصدر الردود، يُخزِّن المداخل الخاطئة محليًا ويُقدِّمها للمستخدمين الذين يطلبون نفس النطاق</td></tr>
+<tr><td>SAD DNS Attack</td><td>متغيِّر جديد من DNS Cache Poisoning — يستغلّ القنوات الجانبية (Side Channels) وثغرات في برمجيات DNS القديمة. يُحقن سجلات DNS ضارة في Cache لتحويل كل الحركة نحو سيرفرات المهاجم</td></tr>
+</tbody>
+</table></div>
+
+<div class="callout warning"><div class="callout-label">تأثير DNS Cache Poisoning</div><p>حتى بعد تصحيح البيانات الأصلية على سيرفر DNS الحقيقي، الـ Cache المُسمَّم في أجهزة المستخدمين وسيرفرات DNS الوسيطة قد يستمر في توجيه المستخدمين للموقع الخبيث لحين انتهاء مدة TTL (Time to Live) الخاصة بالإدخال المزيَّف.</p></div>
+<p>أداة <strong>DerpNSpoof</strong> تُساعد في تزوير حزم استعلام DNS لعنوان IP معيّن أو مجموعة Hosts في الشبكة.</p>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU7 -->
+<h2 id="lu7"><span class="num">07</span><span class="htext">الإجراءات المضادة وطرق الكشف</span></h2>
+
+<h3>الدفاع ضد الـ Sniffing</h3>
+<ul>
+<li>تقييد الوصول الفيزيائي لوسائط الشبكة لمنع تثبيت Sniffer</li>
+<li>استخدام التشفير الكامل (End-to-End) لحماية المعلومات السرية</li>
+<li>إضافة عنوان MAC للـ Gateway بشكل دائم في جدول ARP (Static ARP Entry)</li>
+<li>استخدام عناوين IP ثابتة وجداول ARP ثابتة لمنع المهاجمين من إضافة مداخل ARP مزيَّفة</li>
+<li>إيقاف بث تعريف الشبكة (Network Identification Broadcasts) وتقييدها للمستخدمين المصرَّح لهم فقط</li>
+<li>استخدام IPv6 بدل IPv4 — IPsec إلزامي في IPv6 بينما اختياري في IPv4</li>
+</ul>
+
+<h3>كشف الـ Sniffing</h3>
+<p>كشف الـ Sniffer ليس سهلًا لأنه يُشغِّل NIC في Promiscuous Mode ولا يُرسل بيانات — لا يترك أثرًا مباشرًا. طريقة Reverse DNS Lookup تُساعد في كشف الـ Sniffers غير المستقلّة. بالإضافة لأدوات مثل Nmap للكشف عن Promiscuous Mode.</p>
+<div class="callout note"><div class="callout-label">Promiscuous Mode</div><p>وضع في الـ NIC يسمح للجهاز بالتقاط وقراءة كل حزمة شبكية تصل إليه كاملةً، بصرف النظر عن عنوان الوجهة. الـ Sniffer يعمل في هذا الوضع.</p></div>
+<ul>
+<li>IDS يُراقب الشبكة وينبّه المدير عند حدوث نشاط مشبوه كالـ Sniffing أو MAC Spoofing</li>
+<li>أداة <strong>Capsa Portable Network Analyzer</strong> تُراقب الشبكة لحزم غير عادية كالحزم بعناوين مزيَّفة، وتجمع وتُوحِّد وتُركِّز وتُحلِّل بيانات الحركة عبر موارد الشبكة المختلفة</li>
+<li>متابعة تغييرات عناوين MAC لأجهزة معيّنة (كالراوتر) كمؤشّر على MAC Spoofing</li>
+</ul>
+
+<hr />
+
+<!-- ══════════════════════════════════ METHODOLOGY -->
+<h2 id="methodology"><span class="htext">منهجية تنفيذ هجوم Sniffing كامل</span></h2>
+
+<div class="step-track">
+<div class="step-item"><div class="step-num">1</div><div class="step-title">الاستطلاع وتحديد الهدف</div><div class="step-body"><p>الاتصال بالشبكة المستهدَفة وتحديد طوبولوجيا الشبكة بأدوات اكتشاف الشبكة — تحديد الأجهزة المستهدَفة وعناوين IP وMAC الخاصة بها.</p></div></div>
+<div class="step-item"><div class="step-num">2</div><div class="step-title">تفعيل الـ Sniffer في Promiscuous Mode</div><div class="step-body"><p>تشغيل Sniffer (كـ Wireshark أو tcpdump) على الواجهة الصحيحة — تُعطَّل فلاتر NIC ويبدأ التقاط كل الحزم.</p></div></div>
+<div class="step-item"><div class="step-num">3</div><div class="step-title">تنفيذ تقنية Active Sniffing (في بيئة Switch)</div><div class="step-body">
+<p>اختيار الأسلوب المناسب:</p>
+<ul>
+<li>ARP Spoofing لتحويل الحركة عبر جهاز المهاجم (MITM)</li>
+<li>MAC Flooding لإجبار الـ Switch على العمل كـ Hub</li>
+<li>DHCP Starvation + Rogue DHCP Server</li>
+<li>DNS Poisoning لإعادة توجيه الضحية لموقع خبيث</li>
+</ul>
+</div></div>
+<div class="step-item"><div class="step-num">4</div><div class="step-title">تفعيل IP Forwarding (لهجمات MITM)</div><div class="step-body"><p>في Linux: <code>echo 1 &gt; /proc/sys/net/ipv4/ip_forward</code> — يضمن تمرير الحزم المعترضة لوجهتها الحقيقية لتجنّب توقف الاتصال وكشف الهجوم.</p></div></div>
+<div class="step-item"><div class="step-num">5</div><div class="step-title">التقاط وتحليل البيانات</div><div class="step-body"><p>تصفية الحزم للبروتوكولات الضعيفة (HTTP، FTP، TELNET، SMTP) — استخراج بيانات الاعتماد والمعلومات الحساسة من الحزم الملتقَطة.</p></div></div>
+<div class="step-item"><div class="step-num">6</div><div class="step-title">إخفاء الآثار</div><div class="step-body"><p>إعادة جدول ARP للحالة الأصلية واستعادة إعدادات DNS لتفادي إشارات كشف واضحة.</p></div></div>
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ CHEAT SHEET -->
+<h2 id="cheat"><span class="htext">Cheat Sheet مرجعي</span></h2>
+<div class="cheat-section">
+
+<h4>مقارنة تقنيات الـ Active Sniffing</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>التقنية</th><th>الهدف</th><th>الأثر</th><th>الأداة</th></tr></thead>
+<tbody>
+<tr><td>MAC Flooding</td><td>جدول CAM للـ Switch</td><td>Switch يعمل كـ Hub → يُبثّ الحركة لكل البورتات</td><td>macof</td></tr>
+<tr><td>ARP Poisoning</td><td>جداول ARP للأجهزة</td><td>MITM — تحويل الحركة عبر المهاجم</td><td>arpspoof، Ettercap</td></tr>
+<tr><td>DHCP Starvation</td><td>سيرفر DHCP</td><td>DoS — استنزاف نطاق IP كامل</td><td>Yersinia، Gobbler</td></tr>
+<tr><td>Rogue DHCP Server</td><td>العملاء الجدد</td><td>MITM — العملاء يستخدمون سيرفر مزيَّف</td><td>mitm6، Ettercap</td></tr>
+<tr><td>DNS Cache Poisoning</td><td>Cache في مُحلِّل DNS</td><td>إعادة توجيه لموقع خبيث</td><td>DerpNSpoof</td></tr>
+<tr><td>Switch Spoofing</td><td>مفاوضة Trunk</td><td>وصول لحركة VLANs متعدّدة</td><td>Yersinia</td></tr>
+<tr><td>Double Tagging</td><td>VLAN Native</td><td>القفز لـ VLAN آخر</td><td>يدوي/Scapy</td></tr>
+<tr><td>STP Attack</td><td>Root Bridge Election</td><td>إعادة توجيه الحركة عبر Switch مزيَّف</td><td>Yersinia</td></tr>
+</tbody>
+</table></div>
+
+<h4>مرجع أوامر سريعة</h4>
+<div class="code-wrap"><span class="code-tag">linux — sniffing toolkit quick reference</span><pre><code># MAC Flooding
+macof -i eth0
+
+# ARP Spoofing (MITM)
+echo 1 &gt; /proc/sys/net/ipv4/ip_forward
+arpspoof -i eth0 -t &lt;victim_ip&gt; &lt;gateway_ip&gt;
+arpspoof -i eth0 -t &lt;gateway_ip&gt; &lt;victim_ip&gt;
+
+# Syntax أداة arpspoof
+arpspoof -i [Interface] -t [Target Host]
+
+# فحص جدول ARP
+arp -a                          # Windows/Linux
+arp -n                          # Linux
+
+# Promiscuous Mode (الكشف)
+ip link show eth0 | grep PROMISC
+ifconfig eth0 | grep PROMISC
+</code></pre></div>
+
+<h4>البروتوكولات الضعيفة — مرجع سريع</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>بروتوكول آمن</th><th>بديل عن</th><th>التشفير</th></tr></thead>
+<tbody>
+<tr><td>SSH (22)</td><td>Telnet (23) / Rlogin</td><td>كامل</td></tr>
+<tr><td>HTTPS (443)</td><td>HTTP (80)</td><td>TLS/SSL</td></tr>
+<tr><td>SMTPS (465/587)</td><td>SMTP (25)</td><td>TLS</td></tr>
+<tr><td>SNMPv3</td><td>SNMPv1/v2 (161)</td><td>كامل + مصادقة</td></tr>
+<tr><td>SFTP / SCP</td><td>FTP (21)</td><td>كامل</td></tr>
+<tr><td>IMAPS (993)</td><td>IMAP (143)</td><td>TLS/SSL</td></tr>
+<tr><td>POP3S (995)</td><td>POP3 (110)</td><td>TLS/SSL</td></tr>
+</tbody>
+</table></div>
+
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ SUMMARY -->
+<h2 id="summary"><span class="htext">الخلاصة العامة للموديول</span></h2>
+<p>الموديول ده ناقش مفاهيم الـ Sniffing وعمل الـ Sniffer في طبقة Data Link من نموذج OSI. غطّى تقنيات الـ Sniffing المتنوّعة — هجمات MAC (Flooding، Switch Port Stealing)، هجمات DHCP (Starvation، Rogue Server)، تسمّم ARP وتهديداته، هجمات الانتحال (MAC Spoofing، IRDP، VLAN Hopping، STP)، وتسمّم DNS بتقنياته الخمس. كمان وضَّح الأدوات المستخدَمة في كل هجوم، وختم بالإجراءات المضادة وطرق كشف الـ Sniffing.</p>
+
+<div class="takeaways">
+<div class="takeaways-title">$ cat ./module08_summary.txt</div>
+<ul>
+<li>الـ Sniffing في بيئة الـ Hub أسهل وأكثر تخفّيًا (Passive) — بيئة الـ Switch تحتاج تقنيات نشطة مثل ARP Poisoning أو MAC Flooding</li>
+<li>ARP بروتوكول عديم الحالة ولا يُصادق — أي جهاز يقبل ARP Reply حتى بدون طلب، وده الثغرة الجوهرية للـ ARP Poisoning</li>
+<li>MAC Flooding يُجبر الـ Switch على العمل كـ Hub بملء جدول CAM — Port Security هو الحل الأساسي لمنعه</li>
+<li>DHCP Starvation + Rogue Server كومبو خطير — الأول يُعطِّل سيرفر DHCP الحقيقي والثاني يحلّ محلّه لتنفيذ MITM</li>
+<li>DNS Cache Poisoning أثره يمتدّ لفترة بعد تصحيح المصدر الأصلي — مدة TTL للإدخال المزيَّف تحدّد طول الأثر</li>
+<li>VLAN Hopping يستغلّ الإعدادات الخاطئة في Switch ports — التهيئة الصريحة وإيقاف DTP (Dynamic Trunking Protocol) هو الحل</li>
+<li>كل بروتوكولات Cleartext (Telnet، HTTP، FTP، SMTP) يجب استبدالها بنظائرها المشفَّرة (SSH، HTTPS، SFTP، SMTPS)</li>
+</ul>
+</div>
+
+<blockquote>
+<p><strong>الـ Sniffing مش مجرّد أداة مراقبة — هو الخطوة السابقة لمعظم هجمات الشبكات الأخرى.</strong> اعتراض بيانات الاعتماد عبر ARP Poisoning بيُستخدَم للحركة الجانبية، DNS Poisoning بيُمهِّد لهجمات Phishing متطوّرة، وMAC Flooding بيُوفِّر رؤية كاملة للشبكة لأول خطوة في تحليل البنية التحتية. فهم آليات هذه الهجمات بعمق هو ما يُمكِّن المحلّل من الكشف الفعّال والمبكِّر.</p>
+</blockquote>
+
+<div class="callout examtip">
+<div class="callout-label">Exam Tip</div>
+<p>أسئلة هذا الموديول غالبًا تُركِّز على: الفرق بين Passive وActive Sniffing (وفي أي بيئة يُستخدَم كل منهما)، ماذا يحدث لما يمتلئ جدول CAM (Fail-Open Mode)، الفرق بين ARP Spoofing وSwitch Port Stealing، آلية Rogue DHCP Server كـ MITM، وأنواع DNS Poisoning الأربعة (Intranet، Proxy Server، Cache، SAD DNS). كذلك أنواع VLAN Hopping (Switch Spoofing vs Double Tagging) وشروط نجاح كل منهما.</p>
+</div>
+
+<hr />
+<p><em>نهاية نوتس الموديول الثامن — Sniffing</em></p>
+<div class="footer-note">-- EOF: module-08/sniffing.md --</div>
+</div>
+
+<script>
+(function(){
+  var root=document.documentElement,btn=document.getElementById('themeSwitch');
+  function applyTheme(t){root.setAttribute('data-theme',t);btn.textContent='theme: '+t;try{localStorage.setItem('oscp-notes-theme',t);}catch(e){}}
+  var saved='dark';try{saved=localStorage.getItem('oscp-notes-theme')||'dark';}catch(e){}
+  applyTheme(saved);
+  btn.addEventListener('click',function(){applyTheme(root.getAttribute('data-theme')==='dark'?'light':'dark');});
+  var bar=document.getElementById('progressBar');
+  function onScroll(){var h=document.documentElement,s=h.scrollTop,ht=h.scrollHeight-h.clientHeight;bar.style.width=(ht>0?(s/ht*100):0)+'%';var t=document.getElementById('toTop');s>500?t.classList.add('show'):t.classList.remove('show');}
+  document.addEventListener('scroll',onScroll);onScroll();
+  document.getElementById('toTop').addEventListener('click',function(){window.scrollTo({top:0,behavior:'smooth'});});
+  document.querySelectorAll('.code-wrap').forEach(function(wrap){
+    var c=wrap.querySelector('code');if(!c)return;
+    var b=document.createElement('button');b.className='copy-btn';b.textContent='copy';
+    b.addEventListener('click',function(){if(navigator.clipboard){navigator.clipboard.writeText(c.innerText).then(function(){b.textContent='copied ✓';b.classList.add('copied');setTimeout(function(){b.textContent='copy';b.classList.remove('copied');},1500);});}});
+    wrap.appendChild(b);
+  });
+})();
+</script>
+</body>
+</html>
