@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CEHv13 · Module 18: IoT and OT Hacking</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-0:#0B0B0D;--bg-1:#121214;--surface:#17171A;--surface-2:#1D1D21;
+    --border:#2A2A2F;--border-soft:#232326;
+    --text:#E6E6E9;--text-soft:#C4C4CA;--muted:#8A8A92;
+    --red:#E1362F;--red-soft:rgba(225,54,47,0.10);--red-border:rgba(225,54,47,0.35);
+    --red-grad:linear-gradient(90deg,#E1362F,#F2794A);
+    --amber:#E8A23A;--amber-soft:rgba(232,162,58,0.09);--amber-border:rgba(232,162,58,0.30);
+    --green:#3FBF6E;--green-soft:rgba(63,191,110,0.09);--green-border:rgba(63,191,110,0.30);
+    --blue:#4EA1D3;--blue-soft:rgba(78,161,211,0.09);--blue-border:rgba(78,161,211,0.30);
+    --purple:#A179E8;--purple-soft:rgba(161,121,232,0.10);--purple-border:rgba(161,121,232,0.32);
+    --mono:'IBM Plex Mono','Courier New',monospace;
+  }
+  html[data-theme="light"]{--bg-0:#F4F3F1;--bg-1:#ECEBE8;--surface:#FFFFFF;--surface-2:#F3F2EF;--border:#DEDCD6;--border-soft:#E6E4DF;--text:#1C1B19;--text-soft:#3C3A36;--muted:#726F68;}
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;direction:rtl;text-align:right;background:var(--bg-0);}
+  body{font-family:'Cairo','Segoe UI',Tahoma,sans-serif;line-height:1.95;font-size:16.5px;color:var(--text);
+    background:radial-gradient(900px 420px at 12% -8%,rgba(225,54,47,0.10),transparent 60%),radial-gradient(800px 420px at 90% 6%,rgba(232,162,58,0.06),transparent 60%),linear-gradient(180deg,var(--bg-0) 0%,var(--bg-1) 100%);
+    background-attachment:fixed;transition:background 0.2s ease,color 0.2s ease;}
+  html[data-theme="light"] body{background:radial-gradient(900px 420px at 12% -8%,rgba(225,54,47,0.06),transparent 60%),radial-gradient(800px 420px at 90% 6%,rgba(232,162,58,0.05),transparent 60%),linear-gradient(180deg,var(--bg-0) 0%,var(--bg-1) 100%);}
+  .progress-rail{position:fixed;top:0;inset-inline:0;height:3px;background:rgba(255,255,255,0.04);z-index:60;}
+  html[data-theme="light"] .progress-rail{background:rgba(0,0,0,0.05);}
+  .progress-bar{height:100%;width:0%;background:var(--red-grad);transition:width 0.08s linear;}
+  .float-controls{position:fixed;bottom:22px;left:22px;z-index:55;display:flex;flex-direction:column;gap:10px;}
+  .fctrl-btn{width:42px;height:42px;border-radius:50%;background:var(--surface);border:1px solid var(--border);color:var(--text-soft);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;box-shadow:0 10px 24px -10px rgba(0,0,0,0.5);transition:transform 0.15s ease,border-color 0.15s ease,opacity 0.2s ease;}
+  .fctrl-btn:hover{transform:translateY(-2px);border-color:var(--red-border);color:var(--red);}
+  #toTop{opacity:0;pointer-events:none;}#toTop.show{opacity:1;pointer-events:auto;}
+  .page{max-width:860px;margin:0 auto;padding:46px 22px 100px;}
+  .banner{position:relative;overflow:hidden;background:linear-gradient(155deg,var(--surface) 0%,var(--bg-1) 55%,var(--surface) 100%);border:1px solid var(--border-soft);border-radius:10px;padding:0 0 34px;margin-bottom:26px;box-shadow:0 20px 50px -20px rgba(0,0,0,0.6);}
+  .term-bar{display:flex;align-items:center;gap:8px;padding:13px 18px;border-bottom:1px solid var(--border-soft);background:rgba(255,255,255,0.015);direction:ltr;}
+  .term-dot{width:11px;height:11px;border-radius:50%;display:inline-block;}.term-dot.r{background:#E1362F;}.term-dot.y{background:#E8A23A;}.term-dot.g{background:#3FBF6E;}
+  .term-path{margin-inline-start:12px;font-family:var(--mono);font-size:12px;color:var(--muted);}
+  .theme-switch{margin-inline-start:auto;font-family:var(--mono);font-size:11px;color:var(--muted);background:transparent;border:1px solid var(--border);border-radius:4px;padding:4px 9px;cursor:pointer;}
+  .theme-switch:hover{color:var(--amber);border-color:var(--amber-border);}
+  .banner-body{padding:30px 34px 4px;}
+  .banner .kicker{display:inline-block;font-family:var(--mono);font-size:12.5px;letter-spacing:0.03em;color:var(--red);background:var(--red-soft);border:1px solid var(--red-border);border-radius:3px;padding:5px 12px;margin-bottom:20px;direction:ltr;}
+  .banner h1{margin:0 0 14px;font-size:28px;font-weight:800;line-height:1.5;color:var(--text);}
+  .banner .lede{color:var(--muted);font-size:15.5px;line-height:1.95;max-width:640px;margin:0 0 24px;}
+  .tags{display:flex;flex-wrap:wrap;gap:9px;}
+  .tag{font-size:12.5px;font-family:var(--mono);color:var(--amber);background:var(--amber-soft);border:1px solid var(--amber-border);border-radius:3px;padding:5px 11px;}
+  .toc{background:var(--surface);border:1px solid var(--border-soft);border-radius:8px;padding:6px 0 6px;margin-bottom:50px;overflow:hidden;}
+  .toc-title{font-family:var(--mono);font-weight:600;font-size:13px;color:var(--green);padding:14px 22px;border-bottom:1px solid var(--border-soft);direction:ltr;text-align:left;}
+  .toc-list{display:flex;flex-direction:column;}
+  .toc-item{display:flex;align-items:center;gap:14px;padding:12px 22px;color:var(--text-soft);text-decoration:none;font-size:14.5px;border-bottom:1px solid rgba(255,255,255,0.03);transition:background 0.15s ease;}
+  .toc-list .toc-item:last-child{border-bottom:none;}
+  .toc-item:hover{background:var(--red-soft);}
+  .toc-num{flex:none;font-family:var(--mono);font-size:12.5px;font-weight:600;color:#0F0F10;background:var(--red-grad);border-radius:3px;padding:3px 8px;direction:ltr;}
+  h1,h2,h3,h4{font-weight:700;}
+  h2{display:flex;align-items:center;gap:14px;font-size:21px;margin:66px 0 22px;padding-bottom:16px;border-bottom:1px solid var(--border-soft);color:var(--text);}
+  h2 .num{flex:none;font-family:var(--mono);font-size:13px;font-weight:700;color:#0F0F10;background:var(--red-grad);border-radius:5px;padding:7px 12px;direction:ltr;}
+  h2 .htext{line-height:1.5;}
+  h3{font-size:17px;margin:34px 0 14px;color:var(--red);display:flex;align-items:center;gap:9px;}
+  h3::before{content:"#";font-family:var(--mono);color:var(--amber);font-weight:700;}
+  h4{font-size:14.8px;margin:22px 0 10px;color:var(--text-soft);font-family:var(--mono);}
+  p{margin:0 0 17px;color:var(--text);}
+  strong{color:var(--text);font-weight:700;}:root:not([data-theme="light"]) strong{color:#FBFBFC;}
+  a{color:var(--amber);text-decoration:none;border-bottom:1px dashed var(--amber-border);}
+  hr{border:none;height:1px;margin:50px 0;background:linear-gradient(90deg,transparent,var(--border),transparent);}
+  ul,ol{margin:0 0 18px;padding-inline-start:24px;}
+  li{margin-bottom:9px;color:var(--text);}li::marker{color:var(--red);font-family:var(--mono);}li>ul,li>ol{margin-top:9px;}
+  blockquote{margin:24px 0;padding:17px 22px;background:var(--red-soft);border:1px solid var(--red-border);border-inline-start:3px solid var(--red);border-radius:6px;color:var(--text-soft);}
+  blockquote p{margin:0;color:inherit;line-height:1.85;}blockquote p+p{margin-top:10px;}blockquote strong{color:var(--text);}
+  .callout{margin:24px 0;padding:17px 22px 18px;border-radius:6px;border:1px solid var(--border-soft);border-inline-start:3px solid var(--border);background:var(--surface);}
+  .callout p{margin:0;color:var(--text-soft);line-height:1.85;}.callout p+p{margin-top:10px;}.callout ul,.callout ol{margin:6px 0 0;}
+  .callout-label{display:inline-flex;align-items:center;gap:7px;font-family:var(--mono);font-size:11.5px;font-weight:700;letter-spacing:0.02em;text-transform:uppercase;margin-bottom:10px;direction:ltr;}
+  .callout.note{border-inline-start-color:var(--blue);background:var(--blue-soft);}.callout.note .callout-label{color:var(--blue);}
+  .callout.warning{border-inline-start-color:var(--red);background:var(--red-soft);}.callout.warning .callout-label{color:var(--red);}
+  .callout.tip{border-inline-start-color:var(--green);background:var(--green-soft);}.callout.tip .callout-label{color:var(--green);}
+  .callout.examtip{border-inline-start-color:var(--purple);background:var(--purple-soft);}.callout.examtip .callout-label{color:var(--purple);}
+  .callout.case{border-inline-start-color:var(--amber);background:var(--amber-soft);}.callout.case .callout-label{color:var(--amber);}
+  .callout.definition{border-inline-start-color:var(--muted);background:var(--surface-2);}.callout.definition .callout-label{color:var(--text-soft);}
+  .callout.danger{border-inline-start-color:#FF5A52;background:rgba(255,90,82,0.08);}.callout.danger .callout-label{color:#FF5A52;}
+  .table-wrap{overflow-x:auto;margin:22px 0;border:1px solid var(--border-soft);border-radius:8px;}
+  table{width:100%;border-collapse:collapse;font-size:14.2px;min-width:480px;}
+  thead th{background:var(--surface-2);color:var(--amber);font-weight:700;font-family:var(--mono);font-size:12.5px;text-transform:uppercase;letter-spacing:0.02em;text-align:start;padding:13px 15px;border-bottom:1px solid var(--border-soft);white-space:nowrap;}
+  tbody td{padding:12px 15px;border-bottom:1px solid var(--border-soft);color:var(--text-soft);vertical-align:top;}
+  tbody tr:last-child td{border-bottom:none;}tbody tr:nth-child(even){background:rgba(127,127,127,0.03);}tbody tr:hover{background:var(--red-soft);}
+  code{font-family:var(--mono);font-size:13.3px;background:var(--surface-2);border:1px solid var(--border-soft);border-radius:4px;padding:2px 6px;direction:ltr;unicode-bidi:embed;color:var(--green);}
+  .code-wrap{position:relative;overflow-x:auto;margin:22px 0;}
+  .code-tag{position:absolute;top:10px;left:14px;font-family:var(--mono);font-size:10.5px;color:var(--muted);letter-spacing:0.04em;text-transform:uppercase;z-index:2;}
+  .copy-btn{position:absolute;top:8px;right:10px;z-index:2;font-family:var(--mono);font-size:11px;color:var(--muted);background:var(--surface-2);border:1px solid var(--border-soft);border-radius:4px;padding:4px 9px;cursor:pointer;direction:ltr;}
+  .copy-btn:hover{color:var(--amber);border-color:var(--amber-border);}.copy-btn.copied{color:var(--green);border-color:var(--green-border);}
+  pre{background:var(--bg-0);border:1px solid var(--border-soft);border-inline-start:3px solid var(--red);border-radius:8px;padding:30px 22px 18px;direction:ltr;text-align:left;margin:0;}
+  html[data-theme="light"] pre{background:#16181C;}
+  pre code{background:none;border:none;padding:0;color:#B9E8C9;font-size:13.2px;line-height:1.75;}
+  .diagram-card{background:var(--surface);border:1px solid var(--border-soft);border-radius:10px;padding:22px 18px 16px;margin:24px 0;}
+  .diagram-card svg{width:100%;height:auto;display:block;}
+  .diagram-caption{margin-top:10px;text-align:center;font-family:var(--mono);font-size:11.5px;color:var(--muted);}
+  .takeaways{background:var(--surface);border:1px solid var(--border-soft);border-radius:8px;padding:18px 22px 20px;margin:30px 0 10px;}
+  .takeaways-title{font-family:var(--mono);font-size:12.5px;font-weight:700;color:var(--green);margin-bottom:12px;direction:ltr;text-align:left;display:flex;align-items:center;gap:8px;}
+  .takeaways ul{margin:0;padding-inline-start:20px;}.takeaways li{color:var(--text-soft);font-size:14.5px;}
+  .step-track{display:flex;flex-direction:column;gap:0;margin:24px 0;}
+  .step-item{position:relative;padding:0 0 26px 0;padding-inline-start:46px;border-inline-start:2px solid var(--border-soft);}
+  .step-item:last-child{border-inline-start:2px solid transparent;padding-bottom:4px;}
+  .step-num{position:absolute;inset-inline-start:-17px;top:0;width:32px;height:32px;border-radius:50%;background:var(--red-grad);color:#0F0F10;font-family:var(--mono);font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;}
+  .step-title{font-weight:700;color:var(--text);margin-bottom:6px;font-size:15px;}
+  .step-body{color:var(--text-soft);font-size:14.5px;}.step-body p{margin:0 0 10px;}.step-body p:last-child{margin-bottom:0;}.step-body ul{margin:8px 0 0;}
+  .method-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px;margin:22px 0;}
+  .method-card{background:var(--surface);border:1px solid var(--border-soft);border-radius:8px;padding:14px 16px;}
+  .method-card .mtitle{font-weight:700;color:var(--text);font-size:14px;margin-bottom:5px;}.method-card .mdesc{color:var(--text-soft);font-size:13.3px;line-height:1.75;}
+  .cheat-section h4{color:var(--amber);font-size:13px;margin:26px 0 8px;}
+  .footer-note{margin-top:70px;padding-top:26px;border-top:1px solid var(--border-soft);color:var(--muted);font-size:13.3px;font-family:var(--mono);text-align:center;direction:ltr;}
+  @media print{.float-controls,.progress-rail,.copy-btn,.theme-switch{display:none !important;}body{background:#fff;color:#000;}.page{max-width:100%;}}
+  @media(max-width:640px){.page{padding:28px 14px 70px;}.banner-body{padding:24px 20px 4px;}.banner h1{font-size:21px;}h2{font-size:18px;gap:10px;}.float-controls{left:12px;bottom:14px;}}
+</style>
+</head>
+<body>
+<div class="progress-rail"><div class="progress-bar" id="progressBar"></div></div>
+<div class="float-controls"><button class="fctrl-btn" id="toTop" title="ارجع لفوق">↑</button></div>
+
+<div class="page">
+<div class="banner">
+  <div class="term-bar">
+    <span class="term-dot r"></span><span class="term-dot y"></span><span class="term-dot g"></span>
+    <span class="term-path">root@ceh:~/module-18$</span>
+    <button class="theme-switch" id="themeSwitch">theme: dark</button>
+  </div>
+  <div class="banner-body">
+    <span class="kicker">EC-Council · CEHv13 · Module 18</span>
+    <h1>IoT and OT Hacking</h1>
+    <p class="lede">من مفاهيم IoT وبروتوكولاته ونماذج اتصاله، مرورًا بأكثر من 20 نوع هجوم IoT (DDoS وBlueBorne وRolling Code وSDR وJamming وFault Injection)، ومنهجية الاختراق الكاملة (Shodan وFirmware Analysis وmodbus-cli)، وصولاً لمفاهيم OT وICS وSCADA والـ Purdue Model وهجماته (PLC Rootkit وEvil PLC وHMI Attacks وCOSMICENERGY) والإجراءات المضادة.</p>
+    <div class="tags">
+      <span class="tag">iot-hacking</span><span class="tag">ot-scada</span>
+      <span class="tag">ics-plc</span><span class="tag">shodan</span>
+      <span class="tag">firmware-analysis</span><span class="tag">modbus-cli</span>
+      <span class="tag">blueborne</span><span class="tag">purdue-model</span>
+    </div>
+  </div>
+</div>
+
+<nav class="toc"><div class="toc-title">$ ls learning_units/</div><div class="toc-list">
+  <a class="toc-item" href="#lu1"><span class="toc-num">01</span><span>مفاهيم IoT — البنية والبروتوكولات ونماذج الاتصال</span></a>
+  <a class="toc-item" href="#lu2"><span class="toc-num">02</span><span>تهديدات وهجمات IoT</span></a>
+  <a class="toc-item" href="#lu3"><span class="toc-num">03</span><span>منهجية اختراق IoT والأدوات</span></a>
+  <a class="toc-item" href="#lu4"><span class="toc-num">04</span><span>الإجراءات المضادة لـ IoT</span></a>
+  <a class="toc-item" href="#lu5"><span class="toc-num">05</span><span>مفاهيم OT — ICS وSCADA والـ Purdue Model</span></a>
+  <a class="toc-item" href="#lu6"><span class="toc-num">06</span><span>تهديدات وهجمات OT ومنهجية الاختراق</span></a>
+  <a class="toc-item" href="#lu7"><span class="toc-num">07</span><span>الإجراءات المضادة لـ OT</span></a>
+  <a class="toc-item" href="#cheat"><span class="toc-num">--</span><span>Cheat Sheet مرجعي</span></a>
+  <a class="toc-item" href="#summary"><span class="toc-num">--</span><span>الخلاصة العامة للموديول</span></a>
+</div></nav>
+
+<!-- LU1 -->
+<h2 id="lu1"><span class="num">01</span><span class="htext">مفاهيم IoT — البنية والبروتوكولات ونماذج الاتصال</span></h2>
+
+<h3>ما هو IoT؟</h3>
+<p>الـ <strong>Internet of Things (IoT)</strong> — أو Internet of Everything (IoE) — أجهزة حاسوبية مُوصَّلة بالويب لها قدرة الاستشعار وجمع وإرسال البيانات عبر أجهزة استشعار وعتاد اتصال ومعالجات مدمجة. الـ IoT يُضيِّق الفجوة بين العالمَين الافتراضي والمادي.</p>
+
+<h3>مكوّنات IoT الأساسية</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>المكوّن</th><th>الشرح</th></tr></thead>
+<tbody>
+<tr><td>Sensing Technology</td><td>أجهزة استشعار مدمجة تستشعر درجة الحرارة والغازات والموقع وبيانات المرضى والآلات الصناعية</td></tr>
+<tr><td>IoT Gateways</td><td>تجسر الفجوة بين الجهاز (الشبكة الداخلية) والمستخدم النهائي (الشبكة الخارجية) — تُرسِل البيانات للمستخدم أو السحابة</td></tr>
+<tr><td>Cloud Server/Data Storage</td><td>تخزين البيانات وتحليلها بعد وصولها عبر البوابة — النتائج تُرسَل للمستخدم لاتخاذ الإجراء المناسب</td></tr>
+<tr><td>Remote Control via Mobile App</td><td>المستخدم النهائي يُراقِب ويُتحكّم ويسترجع البيانات من الأجهزة عن بُعد عبر تطبيق موبايل</td></tr>
+</tbody>
+</table></div>
+
+
+<h3>بنية IoT — الطبقات</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>الطبقة</th><th>الشرح</th></tr></thead>
+<tbody>
+<tr><td>Edge Technology Layer</td><td>طبقة العتاد: أجهزة الاستشعار وRFID Tags والقراءات وأجهزة الاستشعار الناعمة — المكوّن الأساسي لمستشعرات البيانات في الميدان</td></tr>
+<tr><td>Access Gateway Layer</td><td>تجسر الفجوة بين نقطتَي الاتصال — المعالجة الأولية للبيانات وتوجيه الرسائل وتحديدها والاشتراك بها</td></tr>
+<tr><td>Internet Layer</td><td>الطبقة المحورية للتواصل: Device-to-Device، Device-to-Cloud، Device-to-Gateway، Back-end Data Sharing</td></tr>
+<tr><td>Middleware Layer</td><td>وسيط ثنائي الاتجاه بين طبقة التطبيق وطبقة العتاد — إدارة البيانات والأجهزة، تحليل البيانات وتجميعها وتصفيتها، اكتشاف الأجهزة، التحكّم في الوصول</td></tr>
+<tr><td>Application Layer</td><td>قمة الهرم — تُوصِّل الخدمات للمستخدمين في قطاعات البناء والصناعة والتصنيع والسيارات والأمن والرعاية الصحية</td></tr>
+</tbody>
+</table></div>
+
+
+<h3>بروتوكولات IoT</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>النطاق</th><th>البروتوكول</th><th>الشرح</th></tr></thead>
+<tbody>
+<tr><td>قصير المدى</td><td>BLE</td><td>Bluetooth Low Energy — للرعاية الصحية والأمن والترفيه واللياقة</td></tr>
+<tr><td>قصير المدى</td><td>Li-Fi</td><td>Visible Light Communications — 224 Gbps عبر مصابيح الإضاءة</td></tr>
+<tr><td>قصير المدى</td><td>NFC</td><td>استحثاث مجال مغناطيسي قصير المدى — الدفع اللاتلامسي وتحديد الوثائق</td></tr>
+<tr><td>قصير المدى</td><td>RFID</td><td>تخزين بيانات في Tags تُقرأ بحقول كهرومغناطيسية</td></tr>
+<tr><td>قصير المدى</td><td>Thread</td><td>بروتوكول شبكي IPv6 لتوصيل أجهزة المنزل الذكي محليًا</td></tr>
+<tr><td>قصير المدى</td><td>ZigBee</td><td>IEEE 803.15.4 — نطاق 10-100م لنقل بيانات متقطّع بمعدّل منخفض</td></tr>
+<tr><td>قصير المدى</td><td>Z-Wave</td><td>تحكّم منزلي منخفض الطاقة (HVAC والثرموستات والمرائب وأنظمة السينما)</td></tr>
+<tr><td>قصير المدى</td><td>ANT</td><td>شبكات استشعار لاسلكية لأجهزة الرياضة واللياقة</td></tr>
+<tr><td>متوسط المدى</td><td>HaLow</td><td>امتداد Wi-Fi لمناطق ريفية — معدّل بيانات منخفض</td></tr>
+<tr><td>متوسط المدى</td><td>LTE-Advanced</td><td>تحسين LTE لسعة ومدى وكفاءة أعلى</td></tr>
+<tr><td>متوسط المدى</td><td>6LoWPAN</td><td>IPv6 على شبكات اتصال شخصية منخفضة الطاقة</td></tr>
+<tr><td>بعيد المدى</td><td>LoRaWAN</td><td>شبكة واسعة النطاق للتطبيقات الصناعية وIoT والمدن الذكية</td></tr>
+<tr><td>بعيد المدى</td><td>Sigfox</td><td>للأجهزة قصيرة عمر البطارية ذات كميات بيانات محدودة</td></tr>
+<tr><td>بعيد المدى</td><td>MQTT</td><td>بروتوكول خفيف معياري ISO لنقل الرسائل عبر مسافات طويلة (الأقمار الصناعية)</td></tr>
+<tr><td>بعيد المدى</td><td>NB-IoT</td><td>Narrowband IoT — متغيّر LoRaWAN/Sigfox بتقنية طبقة فيزيائية محسَّنة</td></tr>
+<tr><td>سلكي</td><td>Ethernet</td><td>LAN سلكية — الأكثر شيوعًا</td></tr>
+<tr><td>سلكي</td><td>PLC</td><td>Power-Line Communication — نقل الطاقة والبيانات معًا عبر الأسلاك الكهربائية</td></tr>
+</tbody>
+</table></div>
+
+
+<h3>بروتوكولات تطبيقات IoT</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>البروتوكول</th><th>الشرح</th></tr></thead>
+<tbody>
+<tr><td>CoAP</td><td>Constrained Application Protocol — نقل رسائل M2M في شبكات IoT المقيَّدة (بناء ذكي وطاقة ذكية)</td></tr>
+<tr><td>XMPP</td><td>eXtensible Messaging and Presence Protocol — اتصال Real-time لتطوير أجهزة وتطبيقات IoT قابلة للتشغيل البيني</td></tr>
+<tr><td>LWM2M</td><td>Lightweight Machine-to-Machine — بروتوكول طبقة تطبيق لإدارة أجهزة IoT</td></tr>
+<tr><td>Physical Web</td><td>تفاعل سريع مع أجهزة IoT القريبة عبر عرض URLs تبثّها Beacons بـ BLE</td></tr>
+<tr><td>Edge Computing</td><td>نقل المعالجة الحسابية لحافة الشبكة — يُحسِّن التخزين المؤقّت والتسليم والإدارة</td></tr>
+</tbody>
+</table></div>
+
+
+<h3>نماذج اتصال IoT</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>النموذج</th><th>الشرح</th><th>مثال</th></tr></thead>
+<tbody>
+<tr><td>Device-to-Device</td><td>أجهزة مترابطة تتواصل مع بعضها عبر الإنترنت (ZigBee أو Z-Wave أو Bluetooth) — حزم بيانات صغيرة بمعدّل منخفض</td><td>أجهزة المنزل الذكي: الثرموستات والإضاءة والأقفال وكاميرات CCTV والثلاجات. أجهزة قابلة للارتداء: ECG مُزوَّج بالسمارتفون</td></tr>
+<tr><td>Device-to-Cloud</td><td>الجهاز يتواصل مع السحابة مباشرةً (Wi-Fi أو Ethernet أو Cellular) — العميل يصل للسحابة بعد المصادقة</td><td>كاميرا CCTV تُرسِل للسحابة ← المستخدم يصلها من بُعد</td></tr>
+<tr><td>Device-to-Gateway</td><td>الجهاز يتواصل مع بوابة وسيطة (Smartphone أو Hub) توفّر أمانًا وترجمة للبيانات/البروتوكول ← ثم إلى السحابة. يستخدم ZigBee وZ-Wave</td><td>TV ذكي يتصل بالسحابة عبر تطبيق الجوال</td></tr>
+<tr><td>Back-End Data Sharing</td><td>امتداد Device-to-Cloud يُتيح لأطراف ثالثة مصرَّح لها الوصول لبيانات الأجهزة من السحابة</td><td>تحليل استهلاك الطاقة السنوي/الشهري لشركة لتوفير التكاليف</td></tr>
+</tbody>
+</table></div>
+
+
+<h3>تحديات IoT</h3>
+<ul>
+<li><strong>انعدام الأمان والخصوصية:</strong> معظم أجهزة IoT تفتقر لسياسات أمان أساسية</li>
+<li><strong>واجهات ويب ضعيفة:</strong> تقنية Web Server مدمجة تجعلها عرضةً للهجمات</li>
+<li><strong>Hardcoded Credentials:</strong> كلمات مرور افتراضية وضعيفة ومشفَّرة في الكود</li>
+<li><strong>Clear Text Protocols + Open Ports:</strong> غياب التشفير أثناء نقل البيانات وأبواب مفتوحة غير ضرورية</li>
+<li><strong>Buffer Overflow:</strong> خدمات ويب مدمجة عرضة لثغرات SQL Injection وBuffer Overflow</li>
+</ul>
+
+
+<!-- LU2 -->
+
+<hr />
+
+<h2 id="lu2"><span class="num">02</span><span class="htext">تهديدات وهجمات IoT</span></h2>
+
+
+
+<div class="table-wrap"><table>
+<thead><tr><th>الهجوم</th><th>الآلية</th></tr></thead>
+<tbody>
+<tr><td>DDoS Attack</td><td>تحويل الأجهزة لـ Botnets لاستهداف سيرفر بعينه — المهاجم يستغل ثغرات الأجهزة ← يحقن Malware ← يستخدم C&C Center لتوجيه الـ Botnets</td></tr>
+<tr><td>Attack on HVAC Systems</td><td>استغلال ثغرات HVAC لسرقة بيانات الدخول والوصول للشبكة الداخلية (خطوات: Shodan → defpass.com → Default Credentials → HVAC Access)</td></tr>
+<tr><td>Rolling Code Attack</td><td>تشويش إشارة RF من Remote Key Fob ← التقاط الكود الأول وإعادة توجيهه لفتح السيارة ← استخدام الكود الثاني لاحقًا للسرقة</td></tr>
+<tr><td>BlueBorne Attack</td><td>الاتصال بالأجهزة القريبة عبر Bluetooth دون Discoverable Mode ← استغلال ثغرات البروتوكول ← Remote Code Execution أو MITM</td></tr>
+<tr><td>Jamming Attack</td><td>إرسال حجم هائل من حركة خبيثة على تردّد الجهاز المستهدَف ← تظهر كـ Noise ← الجهاز يُعلِّق إرساله → DoS</td></tr>
+<tr><td>Backdoor (SCADA/Smart Grid)</td><td>Phishing بمرفق خبيث → Backdoor يُثبَّت تلقائيًا → وصول لشبكة SCADA → استبدال Firmware شرعي بآخر خبيث → تعطيل الكهرباء</td></tr>
+<tr><td>SDR-Based Attacks</td><td>استخدام Radio Software-Defined لفحص إشارات الشبكة وإرسال Spam أو تغيير الإشارات بين الأجهزة</td></tr>
+<tr><td>Replay Attack</td><td>التقاط تسلسل أوامر من الأجهزة المتصلة وإعادة إرسالها لاحقًا باستخدام URH (Universal Radio Hacker)</td></tr>
+<tr><td>Cryptanalysis Attack</td><td>نفس Replay Attack + Reverse Engineering للبروتوكول للحصول على الإشارة الأصلية — يتطلّب مهارات تشفير ونظرية اتصالات</td></tr>
+<tr><td>Fault Injection Attack</td><td>حقن سلوك معيب في جهاز IoT: Optical/EMFI/BBI أو Power/Clock/Reset Glitching أو Temperature Attacks أو Frequency/Voltage Tampering</td></tr>
+<tr><td>DNS Rebinding Attack</td><td>JavaScript خبيث محقون في صفحة ويب للوصول لراوتر الضحية — ثم السيطرة على أجهزة IoT محلية بكلمات المرور الافتراضية</td></tr>
+<tr><td>Sybil Attack</td><td>هويات متعددة مزوَّرة لإيهام الشبكة بازدحام مروري — تؤثّر على الاتصال بين العقد المجاورة</td></tr>
+<tr><td>Side-Channel Attack</td><td>استخراج مفاتيح التشفير من إشارات جانبية (Side Channels) مُصدَرة من أجهزة IoT</td></tr>
+<tr><td>Ransomware Attack</td><td>تشفير ملفات الجهاز أو قفل الشاشة لمنع الوصول</td></tr>
+<tr><td>FOTA Attack</td><td>اعتراض والتلاعب في عملية تحديث الـ Firmware لحقن كود خبيث</td></tr>
+<tr><td>Forged Malicious Device</td><td>استبدال أجهزة IoT الأصلية بأجهزة خبيثة عند الوصول الفيزيائي للشبكة</td></tr>
+<tr><td>Network Pivoting</td><td>استخدام جهاز ذكي خبيث للوصول لسيرفر مغلق ثم الانتقال لأجهزة وشبكات أخرى</td></tr>
+</tbody>
+</table></div>
+
+
+<div class="callout note"><div class="callout-label">Rolling Code — التسلسل التفصيلي</div><p>1. الضحية تضغط زر Remote لفتح السيارة. 2. المهاجم يُشوِّش الاستقبال ويلتقط الكود الأول في نفس الوقت. 3. السيارة لا تُفتَح — الضحية تُعيد المحاولة. 4. المهاجم يلتقط الكود الثاني ويُرسِل الكود الأول للسيارة ← تُفتَح. 5. المهاجم يستخدم الكود الثاني لاحقًا لسرقة السيارة.</p></div>
+
+
+<div class="callout note"><div class="callout-label">BlueBorne — التسلسل التفصيلي</div><p>1. المهاجم يكتشف الأجهزة النشطة المُفعَّل فيها Bluetooth (حتى في Non-Discoverable Mode). 2. يحصل على MAC Address الجهاز. 3. يُرسِل Probes متواصلة لتحديد نظام التشغيل. 4. يستغل ثغرات Bluetooth بناءً على النظام. 5. يُنفِّذ Remote Code Execution أو MITM.</p></div>
+
+
+<h3>IoT Malware</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>Malware</th><th>الشرح</th></tr></thead>
+<tbody>
+<tr><td>KmsdBot (Kmsdx)</td><td>يفحص عناوين IP عشوائية لأبواب SSH مفتوحة ← يحاول تسجيل الدخول بقائمة كلمات مرور من سيرفر C2. الإصدار الجديد يفحص Telnet على Port 23 أيضًا</td></tr>
+<tr><td>IZ1H9 (Mirai-based)</td><td>Botnet Malware يُحدِّد الأجهزة الضعيفة ← يُضيفها للـ Botnet ← يستخدم Shell Script Downloader لتجاوز الأمان والاتصال بـ C2 للاستمرارية</td></tr>
+<tr><td>WailingCrab، P2PInfect، NKAbuse، IoTroop، XorDdos</td><td>Malware IoT إضافية متنوّعة</td></tr>
+</tbody>
+</table></div>
+
+
+<!-- LU3 -->
+
+<hr />
+
+<h2 id="lu3"><span class="num">03</span><span class="htext">منهجية اختراق IoT والأدوات</span></h2>
+
+
+<p>منهجية اختراق IoT: <strong>Information Gathering → Vulnerability Scanning → Launch Attacks → Gain Remote Access → Maintain Access</strong></p>
+
+<h3>1 — Information Gathering</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>الأداة</th><th>الشرح</th></tr></thead>
+<tbody>
+<tr><td>Shodan</td><td>محرّك بحث يوفّر معلومات عن كل الأجهزة المتصلة بالإنترنت (راوترات وكاميرات وSCADA وأجهزة ذكية) — IP وHostname وISP وموقع جغرافي وBanner</td></tr>
+<tr><td>Censys، FOFA</td><td>بدائل Shodan لجمع معلومات الأجهزة المتصلة</td></tr>
+<tr><td>MultiPing</td><td>إيجاد IP أي جهاز IoT في الشبكة المستهدَفة</td></tr>
+<tr><td>Cascoda Packet Sniffer</td><td>التقاط حركة IEEE 802.15.4 لبروتوكولات IoT (Thread وKNX-IoT وZigBee) باستخدام Chili2D Firmware مع Wireshark — RSSI ومؤشرات جودة الرابط</td></tr>
+<tr><td>Suphacap</td><td>Z-Wave Sniffer — مراقبة وتسجيل حزم شبكات Z-Wave في Real-time</td></tr>
+<tr><td>Wireshark</td><td>التقاط وتحليل حركة البيانات في شبكات IoT</td></tr>
+</tbody>
+</table></div>
+
+
+<h3>2 — Vulnerability Scanning</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>الأداة</th><th>الشرح</th></tr></thead>
+<tbody>
+<tr><td>IoTSeeker</td><td>فحص الشبكة للكشف عن أجهزة IoT تستخدم Credentials افتراضية عرضة لهجمات Hijacking</td></tr>
+<tr><td>Genzai</td><td>Toolkit أمان IoT — يكتشف ويفحص لوحات تحكّم IoT (راوترات وكاميرات وHMIs) للكشف عن كلمات مرور افتراضية وثغرات</td></tr>
+<tr><td>beSTORM</td><td>Smart Fuzzer يكتشف ثغرات Buffer Overflow بأتمتة إيصال مدخلات تالفة ومراقبة الردود</td></tr>
+<tr><td>Gqrx</td><td>SDR مبني بـ GNU Radio وGUI — يُحلِّل الطيف الراديوي لأجهزة استشعار درجة الحرارة والرطوبة ومفاتيح الضوء ومفاتيح السيارات</td></tr>
+<tr><td>ONEKEY</td><td>اكتشاف أجهزة IoT الهدف وتحليل حركة الشبكة لتحديد الثغرات</td></tr>
+</tbody>
+</table></div>
+
+
+<h3>3 — Launch Attacks — أدوات SDR</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>الأداة</th><th>الشرح</th></tr></thead>
+<tbody>
+<tr><td>Universal Radio Hacker (URH)</td><td>تحليل بروتوكولات لاسلكية مجهولة — تحديد Hardware Interfaces وDemodulation وتحليل البروتوكول والـ Fuzzing لكشف ثغرات الأمان</td></tr>
+<tr><td>RFCrack</td><td>الحصول على Rolling Code لفتح مركبات أو الأجهزة اللاسلكية وإعادة استخدامه — اختبار اتصالات RF على ترددات أقل من GHz</td></tr>
+<tr><td>HackRF One</td><td>عتاد وبرنامج Radio يعمل من 1MHz لـ 6GHz — يُرسِل ويستقبل في Half-Duplex. يُستخدَم لـ BlueBorne وAirBorne وReplay وFuzzing وJamming</td></tr>
+<tr><td>Open Sniffer</td><td>التقاط كل إطارات 802.15.4 (ZigBee) ضمن النطاق — DoS وReplay Attacks</td></tr>
+<tr><td>CatSniffer</td><td>مراقبة حركة IoT بصمت لجمع معلومات الأجهزة والبروتوكولات وتبادل البيانات</td></tr>
+</tbody>
+</table></div>
+
+
+<h3>تحديد واجهات الاتصال في IoT</h3>
+<p>المهاجمون يُحدِّدون الواجهات التسلسلية والتوازية مثل <strong>UART وSPI وJTAG وI2C</strong> للحصول على Shell واستخراج الـ Firmware. أدوات: BUS Auditor، DIVA، JTAGulator، Attify Badge، Saleae Logic Analyzer.</p>
+<div class="callout note"><div class="callout-label">NAND Glitching</div><p>الحصول على Root Access المميَّز أثناء تشغيل الجهاز بإجراء اتصال Ground مع الـ Serial I/O Pin لرقاقة Flash Memory.</p></div>
+
+
+<h3>4 — Maintain Access — تحليل وتعديل Firmware</h3>
+<p>المهاجم يُعيد بناء Firmware خبيث من الشرعي بـ <strong>Firmware Mod Kit</strong>، ويُحلِّله للبحث عن كلمات المرور وAPI Tokens وnقاط النهاية والخدمات الضعيفة والـ Backdoors والمفاتيح الخاصة.</p>
+<div class="code-wrap"><span class="code-tag">bash — firmware analysis workflow</span><pre><code># 1. تحليل أساسي
+file xyz.bin
+md5sum xyz.bin
+strings -n 10 xyz.bin > strings.out
+hexdump -C xyz.bin | head
+
+# 2. استخراج Filesystem
+binwalk xyz.bin
+dd if=xyz.bin bs=1 skip=<offset> count=<size> of=xyz.squashfs
+
+# 3. Mount الـ Filesystem
+mkdir rootfs
+sudo mount -t ext2 filename rootfs
+
+# 4. تحليل المحتوى
+grep -rnw /path -e "password"
+find . -name "*.conf" -o -name "*.pem" -o -name "*.key"
+
+# 5. Emulation بـ QEMU
+qemu-mipsel -L <prefix> <binary>
+qemu-arm -L <prefix> <binary></code></pre></div>
+
+
+<!-- LU4 -->
+
+<hr />
+
+<h2 id="lu4"><span class="num">04</span><span class="htext">الإجراءات المضادة لـ IoT</span></h2>
+
+
+
+<ol>
+<li>تعطيل حسابات "guest" و"demo" إن كانت مُفعَّلة</li>
+<li>تفعيل Account Lockout بعد محاولات دخول فاشلة متعدّدة</li>
+<li>تطبيق آليات مصادقة قوية</li>
+<li>عزل شبكات وأجهزة أنظمة التحكّم خلف جدران الحماية وفصلها عن شبكة الأعمال</li>
+<li>تطبيق IPS وIDS في الشبكة</li>
+<li>تطبيق تشفير End-to-End واستخدام Public Key Infrastructure (PKI)</li>
+<li>استخدام VPN Architecture للاتصالات الآمنة</li>
+<li>السماح فقط لعناوين IP الموثوقة بالوصول للجهاز من الإنترنت</li>
+<li>تعطيل Telnet (Port 23) وUPnP على الراوترات</li>
+<li>تصحيح الثغرات وتحديث Firmware الجهاز بانتظام</li>
+<li>مراقبة Port 48101 (الأجهزة المصابة تنشر الملفات الخبيثة عبره)</li>
+<li>حماية الأجهزة من التلاعب الجسدي</li>
+</ol>
+
+<h3>إرشادات عامة للمصنّعين وأفضل ممارسات الأمان</h3>
+<ul>
+<li>استخدام SSL/TLS للاتصال مع فحص الشهادات وقوائم إبطال الشهادات</li>
+<li>تشجيع استخدام كلمات مرور قوية وعدم Hardcoding الـ Credentials</li>
+<li>تأمين عملية التحديث بـ Chain of Trust</li>
+<li>تطبيق Account Lockout بعد محاولات دخول خاطئة</li>
+<li>تقييد نقاط الدخول وتطبيق Hardware Tamper Protection</li>
+<li>تأمين مفاتيح المصادقة ومراقبة Secure Booting</li>
+<li>تطبيق Root-on-Trust Mechanism وحفظ سجلات الأحداث</li>
+</ul>
+
+
+<!-- LU5 -->
+
+<hr />
+
+<h2 id="lu5"><span class="num">05</span><span class="htext">مفاهيم OT — ICS وSCADA والـ Purdue Model</span></h2>
+
+
+
+<h3>ما هو OT؟</h3>
+<p><strong>Operational Technology (OT)</strong> برمجيات وعتاد مُصمَّمة لاكتشاف التغييرات في العمليات الصناعية أو إحداثها عبر المراقبة المباشرة و/أو التحكّم في الأجهزة الفيزيائية الصناعية. OT تتضمّن <strong>ICS (Industrial Control Systems)</strong> التي تُعيِّن: SCADA وRTU وPLC وDCS وغيرها.</p>
+
+<h3>مكوّنات ICS</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>المكوّن</th><th>الشرح</th></tr></thead>
+<tbody>
+<tr><td>DCS (Distributed Control System)</td><td>يُتحكّم في أنظمة إنتاج موزَّعة جغرافيًا في نفس المكان — للصناعات الكيميائية والنووية ومعالجة المياه وتوليد الكهرباء وتصنيع السيارات. نظام تحكّم مُهيكَل وواسع النطاق مع وحدة إشراف مركزية تُتحكّم في آلاف نقاط I/O</td></tr>
+<tr><td>SCADA</td><td>نظام تحكّم إشرافي مركزي لمراقبة وتحكّم المرافق الصناعية والبنية التحتية على نطاق جغرافي واسع — نقل النفط والغاز ومعالجة المياه وشبكات الكهرباء والنقل العام</td></tr>
+<tr><td>PLC (Programmable Logic Controller)</td><td>حاسوب رقمي Real-time للتشغيل الصناعي — يتميّز بمتانة البناء وسهولة البرمجة والتحكّم التسلسلي. يتكوّن من: CPU Module (معالج + ذاكرة RAM/ROM/Retentive)، Power Supply Module (AC→DC)، I/O Modules (Digital وAnalog وCommunication)</td></tr>
+<tr><td>BPCS (Basic Process Control System)</td><td>يُنفِّذ التحكّم والمراقبة للعمليات الصناعية — يستجيب لإشارات الإدخال ويُولِّد إشارات إخراج. ديناميكي وقابل للتكيّف</td></tr>
+<tr><td>SIS (Safety Instrumented System)</td><td>نظام تحكّم آلي لحماية بيئة التصنيع عند حوادث خطيرة — يُغلِق النظام أو ينقله لحالة آمنة. يشمل: Sensors (استشعار) + Logic Solvers (قرار) + Final Control Elements (تنفيذ)</td></tr>
+</tbody>
+</table></div>
+
+
+<h3>الـ Purdue Model — مستويات النظام</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>المستوى</th><th>الاسم</th><th>الشرح</th></tr></thead>
+<tbody>
+<tr><td>L5</td><td>Enterprise Network (IT)</td><td>شبكة مؤسسية: B2B وB2C وإنترنت وإدارة. تجمّع بيانات المصانع وتُراقب الإنتاج</td></tr>
+<tr><td>L4</td><td>Business Logistics Systems (IT)</td><td>أنظمة IT داعمة للإنتاج: App Servers وFile Servers وDatabase Servers وEmail وجدولة وتخطيط</td></tr>
+<tr><td>IDMZ</td><td>Industrial DMZ</td><td>حاجز بين OT وIT — يُفتِّش البنية ويحمي من انتشار الاختراق. يضمّ Domain Controllers وDatabase Replication وProxy Servers</td></tr>
+<tr><td>L3</td><td>Operational Systems (OT)</td><td>إدارة الإنتاج والمراقبة والتحكّم على مستوى المصنع: MES/MOMS وData Historians وجدولة الإنتاج</td></tr>
+<tr><td>L2</td><td>Control Systems / Area Supervisory Controls (OT)</td><td>مراقبة وتحكّم في العملية الفيزيائية: DCS وSCADA Software وHMIs والبرمجيات Real-time</td></tr>
+<tr><td>L1</td><td>Basic Controls / Intelligent Devices (OT)</td><td>تحليل وتغيير العملية الفيزيائية: Start Motors وOpen Valves. يضمّ IEDs وPLCs وRTUs وPID Controllers وVFDs</td></tr>
+<tr><td>L0</td><td>Physical Process (OT)</td><td>العملية الفيزيائية الفعلية والتصنيع — يُراقِبه ويُتحكّم فيه المستويات الأعلى. يضمّ Sensors وActuators</td></tr>
+</tbody>
+</table></div>
+
+
+<h3>بروتوكولات OT الرئيسية بحسب المستوى</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>المستوى</th><th>البروتوكولات</th></tr></thead>
+<tbody>
+<tr><td>L4-L5</td><td>DCOM، FTP/SFTP، GE-SRTP، IPv4/IPv6، OPC UA، TCP/IP، SMTP، HTTP/HTTPS، Wi-Fi</td></tr>
+<tr><td>L3</td><td>CC-Link، HSCP، ICCP (IEC 60870-6)، IEC 61850، IEC 60870-5-104، Modbus، NTP، Profinet، SuiteLink، ControlNet، Profibus PA/DP</td></tr>
+<tr><td>L2</td><td>6LoWPAN، DNP3، DNS/DNSSEC، FTE، HART-IP</td></tr>
+<tr><td>L0-L1</td><td>BACnet، EtherCAT، CANopen، DeviceNet، ZigBee، S7 Communication (Siemens)، Modbus، FOUNDATION Fieldbus، WiMax</td></tr>
+</tbody>
+</table></div>
+
+
+<!-- LU6 -->
+
+<hr />
+
+<h2 id="lu6"><span class="num">06</span><span class="htext">تهديدات وهجمات OT ومنهجية الاختراق</span></h2>
+
+
+
+<h3>تهديدات OT</h3>
+<ul>
+<li>Maintenance and Administrative Threat</li>
+<li>Data Leakage</li>
+<li>Protocol Abuse</li>
+<li>Potential Destruction of ICS Resources</li>
+<li>Reconnaissance Attacks</li>
+<li>Denial-of-Service Attacks</li>
+<li>HMI-based Attacks</li>
+<li>Exploiting Enterprise Specific Systems</li>
+<li>Spear Phishing</li>
+<li>Malware Attacks</li>
+<li>Exploiting Unpatched Vulnerabilities</li>
+<li>Side-Channel Attacks</li>
+<li>Buffer Overflow Attacks</li>
+<li>Exploiting RF Remote Controllers</li>
+</ul>
+
+
+<h3>HMI-Based Attacks</h3>
+<p>الـ HMI (Human-Machine Interface) مركز تحكّم البنية التحتية الحرجة — اختراقه يُتيح تضرّر فيزيائي لأجهزة SCADA أو استخراج معلومات حسّاسة وتعطيل تنبيهات التهديدات.</p>
+<div class="table-wrap"><table>
+<thead><tr><th>نوع الثغرة</th><th>الشرح</th></tr></thead>
+<tbody>
+<tr><td>Memory Corruption</td><td>ثغرات كود Out-of-bound Read/Write وBuffer Overflow — تغيير محتوى الذاكرة يؤدّي لتعطّل البرنامج أو تنفيذ غير مقصود</td></tr>
+<tr><td>Credential Management</td><td>Hardcoded Passwords وتخزين Cleartext وحماية غير ملائمة — تُتيح الوصول Admin وتعديل قواعد البيانات</td></tr>
+<tr><td>Lack of Auth/Insecure Defaults</td><td>نقل معلومات سرية Cleartext وعدم وجود تشفير وActiveX Controls غير آمن</td></tr>
+<tr><td>Code Injection</td><td>SQL وOS وCommand Injection وEvalExpression في Gamma (لغة HMI) → تنفيذ أوامر عشوائية على نظام SCADA</td></tr>
+<tr><td>Side-Channel Attacks</td><td>Timing Analysis (مراقبة وقت المصادقة لاستنتاج الأحرف الصحيحة) وPower Analysis (مراقبة استهلاك الكهرباء خلال Clock Cycles)</td></tr>
+</tbody>
+</table></div>
+
+
+<h3>MITRE ATT&CK for ICS</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>التكتيك</th><th>الشرح</th></tr></thead>
+<tbody>
+<tr><td>Initial Access</td><td>Drive-by Compromise واستغلال تطبيقات عامة وخدمات بعيدة</td></tr>
+<tr><td>Execution</td><td>تغيير وضع التشغيل (Operating Mode) واستخدام CLI وتنفيذ عبر APIs</td></tr>
+<tr><td>Persistence</td><td>تعديل البرامج وحقن Module Firmware وإصابة Project Files</td></tr>
+<tr><td>Privilege Escalation</td><td>استغلال البرمجيات والـ Hooking</td></tr>
+<tr><td>Evasion</td><td>إزالة المؤشّرات والـ Rootkits وتغيير Operating Mode</td></tr>
+<tr><td>Discovery</td><td>تعداد اتصالات الشبكة وNetwork Sniffing وتحديد الأنظمة البعيدة</td></tr>
+<tr><td>Lateral Movement</td><td>Default Credentials وتحميل برامج وRemote Services</td></tr>
+<tr><td>Collection</td><td>جمع آلي ومستودعات معلومات وصور I/O</td></tr>
+<tr><td>Command and Control</td><td>تعطيل أو السيطرة أو استغلال عمليات التحكّم الفيزيائية</td></tr>
+<tr><td>Inhibit Response Function</td><td>تفعيل Firmware Update Mode وحجب رسائل الأوامر وحجب رسائل التقارير</td></tr>
+<tr><td>Impair Process Control</td><td>I/O Brute-forcing وتعديل Parameters وحقن Module Firmware خبيث</td></tr>
+</tbody>
+</table></div>
+
+
+<h3>هجمات PLC</h3>
+<div class="step-track">
+<div class="step-item"><div class="step-num">1</div><div class="step-title">اكتشاف PLCs مكشوفة</div><div class="step-body"><p>المهاجم يستخدم Shodan وCensys لتحديد PLCs متصلة بالإنترنت.</p></div></div>
+<div class="step-item"><div class="step-num">2</div><div class="step-title">حقن Rootkit والحصول على Root Access</div><div class="step-body"><p>المهاجم يُجري Control-flow Attack ضد PLC Runtime لتخمين كلمة المرور الافتراضية والحصول على Root.</p></div></div>
+<div class="step-item"><div class="step-num">3</div><div class="step-title">رسم خريطة I/O</div><div class="step-body"><p>المهاجم يُعيِّن وحدات الإدخال والإخراج ومواقعها في الذاكرة لتعديل بارامترات PLC.</p></div></div>
+<div class="step-item"><div class="step-num">4</div><div class="step-title">التلاعب في I/O Initialization</div><div class="step-body"><p>بعد معرفة تخطيط I/O Pins ومنطق PLC، المهاجم يتلاعب في تسلسل التهيئة للسيطرة الكاملة.</p></div></div>
+</div>
+
+
+<h3>Evil PLC Attack</h3>
+<div class="step-track">
+<div class="step-item"><div class="step-num">1</div><div class="step-title">تحديد PLC ضعيف</div><div class="step-body"><p>المهاجم يستخدم Shodan أو Censys لإيجاد PLCs ضعيفة.</p></div></div>
+<div class="step-item"><div class="step-num">2</div><div class="step-title">تسليح الـ PLC</div><div class="step-body"><p>استغلال Firmware الـ PLC الضعيف وتعديل منطق برمجته عبر إجراءات التحميل.</p></div></div>
+<div class="step-item"><div class="step-num">3</div><div class="step-title">استغلال محطات العمل</div><div class="step-body"><p>الـ PLC المصاب يُطلِق إجراءات Upload على محطات العمل المتصلة لتنفيذ كود عشوائي.</p></div></div>
+</div>
+
+
+<h3>هجمات RF Remote Controllers الصناعية</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>الهجوم</th><th>الشرح</th></tr></thead>
+<tbody>
+<tr><td>Replay Attack</td><td>تسجيل أوامر RF (Packets) من المشغّل وإعادة إرسالها للسيطرة الأساسية على النظام</td></tr>
+<tr><td>Command Injection</td><td>Reverse Engineering لبروتوكولات RF ← حقن أوامر مخصَّصة للتحكّم الكامل في الآلة</td></tr>
+<tr><td>Abusing E-stop</td><td>إرسال أوامر إيقاف طوارئ متعدّدة → DoS على الجهاز المستهدَف</td></tr>
+<tr><td>Re-pairing Attack</td><td>خطف الـ Remote Controller الأصلي والإقران مع الآلة بـ Controller خبيث منتحل هوية الشرعي</td></tr>
+<tr><td>Malicious Reprogramming</td><td>حقن Malware في Firmware الـ Remote Controller للسيطرة الدائمة عن بُعد</td></tr>
+</tbody>
+</table></div>
+
+
+<h3>OT Malware</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>Malware</th><th>الشرح</th></tr></thead>
+<tbody>
+<tr><td>Fuxnet</td><td>Malware ICS مُدمِّر مُصمَّم لتعطيل بيئات OT — يُعدِّل بيانات حرجة ويمنع الوصول لبوابات الاستشعار ويُتلِف أجهزة الاستشعار الفيزيائية</td></tr>
+<tr><td>COSMICENERGY</td><td>Malware ICS/OT مُصمَّم لتعطيل الكهرباء عبر التفاعل مع أجهزة IEC 60870-5-104 (IEC-104) مثل RTUs — مشابه لـ INDUSTROYER وINDUSTROYER.V2</td></tr>
+</tbody>
+</table></div>
+
+
+<h3>منهجية اختراق OT</h3>
+
+<h4>1 — Information Gathering</h4>
+<div class="code-wrap"><span class="code-tag">shodan — ICS/SCADA port queries</span><pre><code># الأبواب الرئيسية لأنظمة ICS/SCADA
+port:502          # Modbus
+port:1089-91      # Fieldbus
+port:19999        # DNP
+port:2222         # Ethernet/IP
+port:20000        # DNP3
+port:34962-64     # PROFINET
+port:34980        # EtherCAT
+
+# البحث عن Schneider Electric TM221
+TM221ME16R
+
+# البحث عن أنظمة HVAC
+product:Siemens country:US</code></pre></div>
+
+<div class="table-wrap"><table>
+<thead><tr><th>الأداة</th><th>الشرح</th></tr></thead>
+<tbody>
+<tr><td>Shodan</td><td>بحث SCADA بالبورت أو اسم PLC أو الشركة المصنّعة</td></tr>
+<tr><td>Kamerka-GUI</td><td>أداة Reconnaissance لتحديد ورسم خرائط ICS المكشوف على الإنترنت — خرائط حرارية للمناطق الأكثر ثغرةً</td></tr>
+<tr><td>CIRT.net</td><td>قاعدة بيانات كلمات مرور افتراضية لأجهزة متنوّعة (راوترات وSwitches وICS)</td></tr>
+<tr><td>Malcolm</td><td>تحليل حركة شبكة قوي للكشف عن بروتوكولات ICS المستخدَمة</td></tr>
+<tr><td>Criminal IP، ZoomEye، ONYPHE</td><td>أدوات إضافية لجمع معلومات OT</td></tr>
+</tbody>
+</table></div>
+
+
+<h4>2 — Vulnerability Scanning</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>الأداة</th><th>الشرح</th></tr></thead>
+<tbody>
+<tr><td>Nessus</td><td>فحص ثغرات ICS وSCADA — سياسات افتراضية وقوالب جاهزة — تجميع الثغرات وتصنيفها</td></tr>
+<tr><td>Skybox Vulnerability Control</td><td>تحليل مسار تفصيلي عبر شبكات OT/IT المجمَّعة — تحديد أولويات ملايين الثغرات بناءً على المخاطر</td></tr>
+<tr><td>SmartRF Packet Sniffer</td><td>التقاط وعرض حزم Over-the-Air — يدعم ZigBee وEasyLink وBLE مع Wireshark</td></tr>
+<tr><td>Fuzzowski</td><td>فحص بروتوكولات ICS (Modbus وBACnet وIPP) لاكتشاف الثغرات القابلة للاستغلال</td></tr>
+</tbody>
+</table></div>
+
+
+<h4>5 — PLC Hacking بـ modbus-cli</h4>
+<div class="code-wrap"><span class="code-tag">bash — modbus-cli PLC exploitation</span><pre><code># تثبيت modbus-cli
+gem install modbus-cli
+
+# قراءة Register Values (10 كلمات)
+modbus read <Target IP> %MW100 10        # Schneider address
+modbus read <Target IP> 400101 10        # Modicon address
+
+# تعديل Register Values
+modbus write <Target IP> %MW100 2 2 2 2 2 2 2 2
+modbus write <Target IP> 400101 2 2 2 2 2 2 2 2
+
+# قراءة Coil Values (Boolean ON/OFF)
+modbus read <Target IP> 101 10
+modbus read <Target IP> %M100 10
+
+# تشغيل كل الـ Coils (ON)
+modbus write <Target IP> 101 1 1 1 1 1 1 1 1 1 1
+modbus write <Target IP> %M100 1 1 1 1 1 1 1 1 1 1
+
+# حفظ البيانات في ملف
+modbus read --output SCADAregisters.txt <Target IP> 400101 200
+modbus read --output SCADAcoils.txt <IP> 101 100</code></pre></div>
+
+
+<!-- LU7 -->
+
+<hr />
+
+<h2 id="lu7"><span class="num">07</span><span class="htext">الإجراءات المضادة لـ OT</span></h2>
+
+
+
+<ul>
+<li>إجراء تقييمات مخاطر دورية</li>
+<li>استخدام مستشعرات مخصَّصة لاكتشاف الثغرات بصمت</li>
+<li>دمج Threat Intelligence لتحديد أولويات Patches</li>
+<li>ترقية عتاد وبرمجيات OT بانتظام</li>
+<li>تعطيل البورتات والخدمات غير المستخدَمة</li>
+<li>تطبيق Secure Configuration وSecure Coding لتطبيقات OT</li>
+<li>تحديث الأنظمة بانتظام وتصحيح الثغرات</li>
+<li>صيانة سجل الأصول (Asset Register) للنظم القديمة وغير المدعومة</li>
+<li>مراقبة مستمرّة وكشف في سجلات OT لرصد الهجمات Real-time</li>
+<li>تنفيذ خطط Incident Response واستمرارية الأعمال</li>
+<li>تأمين محيط الشبكة لتصفية حركة البيانات غير المصرّح بها</li>
+<li>فحص دوري بأدوات Anti-malware</li>
+<li>تقييد حركة الشبكة بـ Rate-limiting وWhitelisting لمنع DDoS والـ Brute-force</li>
+<li>تقوية الأنظمة بتعطيل الخدمات والوظائف غير المستخدَمة</li>
+<li>نشر IDPS المتخصَّص لـ OT القادر على تحديد وحجب التهديدات الإلكترونية</li>
+<li>تأمين البروتوكولات الصناعية (Modbus وDNP3 وOPC) بالتشفير والمصادقة وحماية التكامل</li>
+<li>نشر حلول Endpoint Protection على أجهزة OT</li>
+<li>تطبيق VPN مع MFA وتشفير الجلسات للوصول عن بُعد</li>
+<li>تطبيق PKI للتحقّق من وتشفير الحركة بين السيرفرات والـ PLCs ومحطات العمل والعملاء</li>
+</ul>
+
+
+<!-- CHEAT -->
+
+<hr />
+
+<h2 id="cheat"><span class="htext">Cheat Sheet مرجعي</span></h2>
+
+
+<div class="cheat-section">
+
+<h4>مقارنة هجمات IoT</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>الهجوم</th><th>الهدف</th><th>الأداة</th></tr></thead>
+<tbody>
+<tr><td>DDoS</td><td>تحويل الأجهزة لـ Botnets</td><td>Malware + C2 Server</td></tr>
+<tr><td>Rolling Code</td><td>سرقة مركبات بـ Key Fob</td><td>RFCrack، Jammer</td></tr>
+<tr><td>BlueBorne</td><td>اختراق Bluetooth في Non-Discoverable Mode</td><td>HackRF One</td></tr>
+<tr><td>Replay</td><td>إعادة أوامر ملتقطة</td><td>URH، HackRF One</td></tr>
+<tr><td>Jamming</td><td>DoS بتشويش الإشارة</td><td>Hardware Jammer</td></tr>
+<tr><td>DNS Rebinding</td><td>السيطرة على أجهزة IoT محلية</td><td>Singularity of Origin</td></tr>
+<tr><td>Fault Injection</td><td>زرع سلوك معيب (EMFI/BBI/Glitching)</td><td>Multi-meter، Oscilloscope</td></tr>
+<tr><td>FOTA</td><td>حقن كود خبيث في تحديث Firmware</td><td>MITM + Firmware Mod Kit</td></tr>
+</tbody>
+</table></div>
+
+
+<h4>Purdue Model — مرجع سريع</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>الزون</th><th>المستوى</th><th>المكوّنات</th></tr></thead>
+<tbody>
+<tr><td>Enterprise (IT)</td><td>L5 — Enterprise Network</td><td>Corporate Network وB2B/B2C وInternet</td></tr>
+<tr><td>Enterprise (IT)</td><td>L4 — Business Logistics</td><td>App/File/Database Servers وEmail وERP</td></tr>
+<tr><td>IDMZ</td><td>—</td><td>Domain Controllers وDB Replication وProxy</td></tr>
+<tr><td>Manufacturing (OT)</td><td>L3 — Operational Systems</td><td>MES/MOMS وData Historians وJob Scheduling</td></tr>
+<tr><td>Manufacturing (OT)</td><td>L2 — Control Systems</td><td>DCS وSCADA وHMIs والبرمجيات Real-time</td></tr>
+<tr><td>Manufacturing (OT)</td><td>L1 — Basic Controls</td><td>PLCs وRTUs وIEDs وVFDs</td></tr>
+<tr><td>Manufacturing (OT)</td><td>L0 — Physical Process</td><td>Sensors وActuators والمعدّات الصناعية</td></tr>
+</tbody>
+</table></div>
+
+
+<h4>بروتوكولات SCADA — الأبواب الرئيسية</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>البروتوكول</th><th>البورت</th></tr></thead>
+<tbody>
+<tr><td>Modbus</td><td>502</td></tr>
+<tr><td>Fieldbus</td><td>1089-91</td></tr>
+<tr><td>DNP</td><td>19999</td></tr>
+<tr><td>Ethernet/IP</td><td>2222</td></tr>
+<tr><td>DNP3</td><td>20000</td></tr>
+<tr><td>PROFINET</td><td>34962-64</td></tr>
+<tr><td>EtherCAT</td><td>34980</td></tr>
+</tbody>
+</table></div>
+
+
+</div>
+
+<!-- SUMMARY -->
+
+<hr />
+
+<h2 id="summary"><span class="htext">الخلاصة العامة للموديول</span></h2>
+
+
+<p>الموديول ناقش مفاهيم IoT (البنية والطبقات وبروتوكولات قصيرة وبعيدة ونماذج الاتصال الأربعة)، وأكثر من 15 نوع هجوم IoT (DDoS وBlueBorne وRolling Code وSDR وFault Injection وDNS Rebinding)، ومنهجية اختراق IoT الكاملة بالأدوات، والإجراءات المضادة. ثم انتقل لمفاهيم OT وICS (DCS وSCADA وPLC وBPCS وSIS) والـ Purdue Model وبروتوكولات OT، وتهديدات OT وHMI وMITRE ATT&CK for ICS وهجمات PLC وEvil PLC وRF Controllers وOT Malware، ومنهجية اختراق OT مع modbus-cli، وختم بالإجراءات المضادة.</p>
+
+<div class="takeaways">
+<div class="takeaways-title">$ cat ./module18_summary.txt</div>
+<ul>
+<li>IoT يجمع 3 طبقات (Sensing وGateway وCloud) في 4 نماذج اتصال — كل نموذج سطح هجوم مختلف</li>
+<li>Rolling Code لا يكسر التشفير — يستغل توقيت المستخدم وجهاز التشويش لالتقاط الكود قبل استخدامه</li>
+<li>BlueBorne يعمل حتى في Non-Discoverable Mode — الـ Bluetooth مفعَّل = ثغرة محتملة</li>
+<li>Firmware Analysis هي مفتاح فهم أجهزة IoT المجهولة — binwalk وstrings وQEMU</li>
+<li>الـ Purdue Model يفصل OT عن IT بـ IDMZ — اختراق أي طبقة يمكن أن ينتشر للطبقات الأخرى</li>
+<li>Modbus يعمل بـ Plaintext بلا مصادقة — modbus-cli يقرأ ويُعدِّل Registers وCoils مباشرةً</li>
+<li>COSMICENERGY يستهدف IEC-104 الخاص بـ RTUs — نفس أسلوب INDUSTROYER لتعطيل الشبكات الكهربائية</li>
+</ul>
+</div>
+
+<blockquote>
+<p><strong>IoT وOT يجمعهما عيب واحد: الثقة.</strong> أجهزة IoT تثق في كل طلب على الشبكة، وبروتوكولات OT مثل Modbus تثق في كل أمر على الخط. من Rolling Code يستغل توقيت ضغطة زر، لـ Modbus-cli يُرسِل أوامر لـ PLC يتحكّم في شبكة كهرباء — السطح لا حدود له، والدفاع يبدأ بعدم افتراض أن الشبكة الداخلية آمنة.</p>
+</blockquote>
+
+<div class="callout examtip"><div class="callout-label">Exam Tip</div><p>أسئلة هذا الموديول تُركِّز على: طبقات بنية IoT الخمس، الفرق بين نماذج الاتصال الأربعة، الفرق بين Rolling Code وReplay وSDR Attacks، مكوّنات ICS (DCS وSCADA وPLC وBPCS وSIS)، مستويات Purdue Model (L0-L5 وIDMZ)، بروتوكولات SCADA وأبوابها (Modbus 502 وDNP3 20000)، وأسلوب Evil PLC Attack.</p></div>
+
+
+<hr />
+<p><em>نهاية نوتس الموديول الثامن عشر — IoT and OT Hacking</em></p>
+<div class="footer-note">-- EOF: module-18/iot-ot-hacking.md --</div>
+</div>
+
+<script>
+(function(){
+  var root=document.documentElement,btn=document.getElementById('themeSwitch');
+  function applyTheme(t){root.setAttribute('data-theme',t);btn.textContent='theme: '+t;try{localStorage.setItem('oscp-notes-theme',t);}catch(e){}}
+  var saved='dark';try{saved=localStorage.getItem('oscp-notes-theme')||'dark';}catch(e){}
+  applyTheme(saved);
+  btn.addEventListener('click',function(){applyTheme(root.getAttribute('data-theme')==='dark'?'light':'dark');});
+  var bar=document.getElementById('progressBar');
+  function onScroll(){var h=document.documentElement,s=h.scrollTop,ht=h.scrollHeight-h.clientHeight;bar.style.width=(ht>0?(s/ht*100):0)+'%';var t=document.getElementById('toTop');s>500?t.classList.add('show'):t.classList.remove('show');}
+  document.addEventListener('scroll',onScroll);onScroll();
+  document.getElementById('toTop').addEventListener('click',function(){window.scrollTo({top:0,behavior:'smooth'});});
+  document.querySelectorAll('.code-wrap').forEach(function(wrap){
+    var c=wrap.querySelector('code');if(!c)return;
+    var b=document.createElement('button');b.className='copy-btn';b.textContent='copy';
+    b.addEventListener('click',function(){if(navigator.clipboard){navigator.clipboard.writeText(c.innerText).then(function(){b.textContent='copied ✓';b.classList.add('copied');setTimeout(function(){b.textContent='copy';b.classList.remove('copied');},1500);});}});
+    wrap.appendChild(b);
+  });
+})();
+</script>
+</body>
+</html>

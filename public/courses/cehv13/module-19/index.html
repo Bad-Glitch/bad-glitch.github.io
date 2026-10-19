@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CEHv13 · Module 19: Cloud Computing</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-0:#0B0B0D;--bg-1:#121214;--surface:#17171A;--surface-2:#1D1D21;
+    --border:#2A2A2F;--border-soft:#232326;
+    --text:#E6E6E9;--text-soft:#C4C4CA;--muted:#8A8A92;
+    --red:#E1362F;--red-soft:rgba(225,54,47,0.10);--red-border:rgba(225,54,47,0.35);
+    --red-grad:linear-gradient(90deg,#E1362F,#F2794A);
+    --amber:#E8A23A;--amber-soft:rgba(232,162,58,0.09);--amber-border:rgba(232,162,58,0.30);
+    --green:#3FBF6E;--green-soft:rgba(63,191,110,0.09);--green-border:rgba(63,191,110,0.30);
+    --blue:#4EA1D3;--blue-soft:rgba(78,161,211,0.09);--blue-border:rgba(78,161,211,0.30);
+    --purple:#A179E8;--purple-soft:rgba(161,121,232,0.10);--purple-border:rgba(161,121,232,0.32);
+    --mono:'IBM Plex Mono','Courier New',monospace;
+  }
+  html[data-theme="light"]{--bg-0:#F4F3F1;--bg-1:#ECEBE8;--surface:#FFFFFF;--surface-2:#F3F2EF;--border:#DEDCD6;--border-soft:#E6E4DF;--text:#1C1B19;--text-soft:#3C3A36;--muted:#726F68;}
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;direction:rtl;text-align:right;background:var(--bg-0);}
+  body{font-family:'Cairo','Segoe UI',Tahoma,sans-serif;line-height:1.95;font-size:16.5px;color:var(--text);
+    background:radial-gradient(900px 420px at 12% -8%,rgba(225,54,47,0.10),transparent 60%),radial-gradient(800px 420px at 90% 6%,rgba(232,162,58,0.06),transparent 60%),linear-gradient(180deg,var(--bg-0) 0%,var(--bg-1) 100%);
+    background-attachment:fixed;transition:background 0.2s ease,color 0.2s ease;}
+  html[data-theme="light"] body{background:radial-gradient(900px 420px at 12% -8%,rgba(225,54,47,0.06),transparent 60%),radial-gradient(800px 420px at 90% 6%,rgba(232,162,58,0.05),transparent 60%),linear-gradient(180deg,var(--bg-0) 0%,var(--bg-1) 100%);}
+  .progress-rail{position:fixed;top:0;inset-inline:0;height:3px;background:rgba(255,255,255,0.04);z-index:60;}
+  html[data-theme="light"] .progress-rail{background:rgba(0,0,0,0.05);}
+  .progress-bar{height:100%;width:0%;background:var(--red-grad);transition:width 0.08s linear;}
+  .float-controls{position:fixed;bottom:22px;left:22px;z-index:55;display:flex;flex-direction:column;gap:10px;}
+  .fctrl-btn{width:42px;height:42px;border-radius:50%;background:var(--surface);border:1px solid var(--border);color:var(--text-soft);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;box-shadow:0 10px 24px -10px rgba(0,0,0,0.5);transition:transform 0.15s ease,border-color 0.15s ease,opacity 0.2s ease;}
+  .fctrl-btn:hover{transform:translateY(-2px);border-color:var(--red-border);color:var(--red);}
+  #toTop{opacity:0;pointer-events:none;}#toTop.show{opacity:1;pointer-events:auto;}
+  .page{max-width:860px;margin:0 auto;padding:46px 22px 100px;}
+  .banner{position:relative;overflow:hidden;background:linear-gradient(155deg,var(--surface) 0%,var(--bg-1) 55%,var(--surface) 100%);border:1px solid var(--border-soft);border-radius:10px;padding:0 0 34px;margin-bottom:26px;box-shadow:0 20px 50px -20px rgba(0,0,0,0.6);}
+  .term-bar{display:flex;align-items:center;gap:8px;padding:13px 18px;border-bottom:1px solid var(--border-soft);background:rgba(255,255,255,0.015);direction:ltr;}
+  .term-dot{width:11px;height:11px;border-radius:50%;display:inline-block;}.term-dot.r{background:#E1362F;}.term-dot.y{background:#E8A23A;}.term-dot.g{background:#3FBF6E;}
+  .term-path{margin-inline-start:12px;font-family:var(--mono);font-size:12px;color:var(--muted);}
+  .theme-switch{margin-inline-start:auto;font-family:var(--mono);font-size:11px;color:var(--muted);background:transparent;border:1px solid var(--border);border-radius:4px;padding:4px 9px;cursor:pointer;}
+  .theme-switch:hover{color:var(--amber);border-color:var(--amber-border);}
+  .banner-body{padding:30px 34px 4px;}
+  .banner .kicker{display:inline-block;font-family:var(--mono);font-size:12.5px;letter-spacing:0.03em;color:var(--red);background:var(--red-soft);border:1px solid var(--red-border);border-radius:3px;padding:5px 12px;margin-bottom:20px;direction:ltr;}
+  .banner h1{margin:0 0 14px;font-size:28px;font-weight:800;line-height:1.5;color:var(--text);}
+  .banner .lede{color:var(--muted);font-size:15.5px;line-height:1.95;max-width:640px;margin:0 0 24px;}
+  .tags{display:flex;flex-wrap:wrap;gap:9px;}
+  .tag{font-size:12.5px;font-family:var(--mono);color:var(--amber);background:var(--amber-soft);border:1px solid var(--amber-border);border-radius:3px;padding:5px 11px;}
+  .toc{background:var(--surface);border:1px solid var(--border-soft);border-radius:8px;padding:6px 0 6px;margin-bottom:50px;overflow:hidden;}
+  .toc-title{font-family:var(--mono);font-weight:600;font-size:13px;color:var(--green);padding:14px 22px;border-bottom:1px solid var(--border-soft);direction:ltr;text-align:left;}
+  .toc-list{display:flex;flex-direction:column;}
+  .toc-item{display:flex;align-items:center;gap:14px;padding:12px 22px;color:var(--text-soft);text-decoration:none;font-size:14.5px;border-bottom:1px solid rgba(255,255,255,0.03);transition:background 0.15s ease;}
+  .toc-list .toc-item:last-child{border-bottom:none;}
+  .toc-item:hover{background:var(--red-soft);}
+  .toc-num{flex:none;font-family:var(--mono);font-size:12.5px;font-weight:600;color:#0F0F10;background:var(--red-grad);border-radius:3px;padding:3px 8px;direction:ltr;}
+  h1,h2,h3,h4{font-weight:700;}
+  h2{display:flex;align-items:center;gap:14px;font-size:21px;margin:66px 0 22px;padding-bottom:16px;border-bottom:1px solid var(--border-soft);color:var(--text);}
+  h2 .num{flex:none;font-family:var(--mono);font-size:13px;font-weight:700;color:#0F0F10;background:var(--red-grad);border-radius:5px;padding:7px 12px;direction:ltr;}
+  h2 .htext{line-height:1.5;}
+  h3{font-size:17px;margin:34px 0 14px;color:var(--red);display:flex;align-items:center;gap:9px;}
+  h3::before{content:"#";font-family:var(--mono);color:var(--amber);font-weight:700;}
+  h4{font-size:14.8px;margin:22px 0 10px;color:var(--text-soft);font-family:var(--mono);}
+  p{margin:0 0 17px;color:var(--text);}
+  strong{color:var(--text);font-weight:700;}:root:not([data-theme="light"]) strong{color:#FBFBFC;}
+  a{color:var(--amber);text-decoration:none;border-bottom:1px dashed var(--amber-border);}
+  hr{border:none;height:1px;margin:50px 0;background:linear-gradient(90deg,transparent,var(--border),transparent);}
+  ul,ol{margin:0 0 18px;padding-inline-start:24px;}
+  li{margin-bottom:9px;color:var(--text);}li::marker{color:var(--red);font-family:var(--mono);}li>ul,li>ol{margin-top:9px;}
+  blockquote{margin:24px 0;padding:17px 22px;background:var(--red-soft);border:1px solid var(--red-border);border-inline-start:3px solid var(--red);border-radius:6px;color:var(--text-soft);}
+  blockquote p{margin:0;color:inherit;line-height:1.85;}blockquote p+p{margin-top:10px;}blockquote strong{color:var(--text);}
+  .callout{margin:24px 0;padding:17px 22px 18px;border-radius:6px;border:1px solid var(--border-soft);border-inline-start:3px solid var(--border);background:var(--surface);}
+  .callout p{margin:0;color:var(--text-soft);line-height:1.85;}.callout p+p{margin-top:10px;}.callout ul,.callout ol{margin:6px 0 0;}
+  .callout-label{display:inline-flex;align-items:center;gap:7px;font-family:var(--mono);font-size:11.5px;font-weight:700;letter-spacing:0.02em;text-transform:uppercase;margin-bottom:10px;direction:ltr;}
+  .callout.note{border-inline-start-color:var(--blue);background:var(--blue-soft);}.callout.note .callout-label{color:var(--blue);}
+  .callout.warning{border-inline-start-color:var(--red);background:var(--red-soft);}.callout.warning .callout-label{color:var(--red);}
+  .callout.tip{border-inline-start-color:var(--green);background:var(--green-soft);}.callout.tip .callout-label{color:var(--green);}
+  .callout.examtip{border-inline-start-color:var(--purple);background:var(--purple-soft);}.callout.examtip .callout-label{color:var(--purple);}
+  .callout.case{border-inline-start-color:var(--amber);background:var(--amber-soft);}.callout.case .callout-label{color:var(--amber);}
+  .callout.definition{border-inline-start-color:var(--muted);background:var(--surface-2);}.callout.definition .callout-label{color:var(--text-soft);}
+  .callout.danger{border-inline-start-color:#FF5A52;background:rgba(255,90,82,0.08);}.callout.danger .callout-label{color:#FF5A52;}
+  .table-wrap{overflow-x:auto;margin:22px 0;border:1px solid var(--border-soft);border-radius:8px;}
+  table{width:100%;border-collapse:collapse;font-size:14.2px;min-width:480px;}
+  thead th{background:var(--surface-2);color:var(--amber);font-weight:700;font-family:var(--mono);font-size:12.5px;text-transform:uppercase;letter-spacing:0.02em;text-align:start;padding:13px 15px;border-bottom:1px solid var(--border-soft);white-space:nowrap;}
+  tbody td{padding:12px 15px;border-bottom:1px solid var(--border-soft);color:var(--text-soft);vertical-align:top;}
+  tbody tr:last-child td{border-bottom:none;}tbody tr:nth-child(even){background:rgba(127,127,127,0.03);}tbody tr:hover{background:var(--red-soft);}
+  code{font-family:var(--mono);font-size:13.3px;background:var(--surface-2);border:1px solid var(--border-soft);border-radius:4px;padding:2px 6px;direction:ltr;unicode-bidi:embed;color:var(--green);}
+  .code-wrap{position:relative;overflow-x:auto;margin:22px 0;}
+  .code-tag{position:absolute;top:10px;left:14px;font-family:var(--mono);font-size:10.5px;color:var(--muted);letter-spacing:0.04em;text-transform:uppercase;z-index:2;}
+  .copy-btn{position:absolute;top:8px;right:10px;z-index:2;font-family:var(--mono);font-size:11px;color:var(--muted);background:var(--surface-2);border:1px solid var(--border-soft);border-radius:4px;padding:4px 9px;cursor:pointer;direction:ltr;}
+  .copy-btn:hover{color:var(--amber);border-color:var(--amber-border);}.copy-btn.copied{color:var(--green);border-color:var(--green-border);}
+  pre{background:var(--bg-0);border:1px solid var(--border-soft);border-inline-start:3px solid var(--red);border-radius:8px;padding:30px 22px 18px;direction:ltr;text-align:left;margin:0;}
+  html[data-theme="light"] pre{background:#16181C;}
+  pre code{background:none;border:none;padding:0;color:#B9E8C9;font-size:13.2px;line-height:1.75;}
+  .diagram-card{background:var(--surface);border:1px solid var(--border-soft);border-radius:10px;padding:22px 18px 16px;margin:24px 0;}
+  .diagram-card svg{width:100%;height:auto;display:block;}
+  .diagram-caption{margin-top:10px;text-align:center;font-family:var(--mono);font-size:11.5px;color:var(--muted);}
+  .takeaways{background:var(--surface);border:1px solid var(--border-soft);border-radius:8px;padding:18px 22px 20px;margin:30px 0 10px;}
+  .takeaways-title{font-family:var(--mono);font-size:12.5px;font-weight:700;color:var(--green);margin-bottom:12px;direction:ltr;text-align:left;display:flex;align-items:center;gap:8px;}
+  .takeaways ul{margin:0;padding-inline-start:20px;}.takeaways li{color:var(--text-soft);font-size:14.5px;}
+  .step-track{display:flex;flex-direction:column;gap:0;margin:24px 0;}
+  .step-item{position:relative;padding:0 0 26px 0;padding-inline-start:46px;border-inline-start:2px solid var(--border-soft);}
+  .step-item:last-child{border-inline-start:2px solid transparent;padding-bottom:4px;}
+  .step-num{position:absolute;inset-inline-start:-17px;top:0;width:32px;height:32px;border-radius:50%;background:var(--red-grad);color:#0F0F10;font-family:var(--mono);font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;}
+  .step-title{font-weight:700;color:var(--text);margin-bottom:6px;font-size:15px;}
+  .step-body{color:var(--text-soft);font-size:14.5px;}.step-body p{margin:0 0 10px;}.step-body p:last-child{margin-bottom:0;}.step-body ul{margin:8px 0 0;}
+  .method-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px;margin:22px 0;}
+  .method-card{background:var(--surface);border:1px solid var(--border-soft);border-radius:8px;padding:14px 16px;}
+  .method-card .mtitle{font-weight:700;color:var(--text);font-size:14px;margin-bottom:5px;}.method-card .mdesc{color:var(--text-soft);font-size:13.3px;line-height:1.75;}
+  .cheat-section h4{color:var(--amber);font-size:13px;margin:26px 0 8px;}
+  .footer-note{margin-top:70px;padding-top:26px;border-top:1px solid var(--border-soft);color:var(--muted);font-size:13.3px;font-family:var(--mono);text-align:center;direction:ltr;}
+  @media print{.float-controls,.progress-rail,.copy-btn,.theme-switch{display:none !important;}body{background:#fff;color:#000;}.page{max-width:100%;}}
+  @media(max-width:640px){.page{padding:28px 14px 70px;}.banner-body{padding:24px 20px 4px;}.banner h1{font-size:21px;}h2{font-size:18px;gap:10px;}.float-controls{left:12px;bottom:14px;}}
+</style>
+</head>
+<body>
+<div class="progress-rail"><div class="progress-bar" id="progressBar"></div></div>
+<div class="float-controls"><button class="fctrl-btn" id="toTop" title="ارجع لفوق">↑</button></div>
+
+<div class="page">
+<div class="banner">
+  <div class="term-bar">
+    <span class="term-dot r"></span><span class="term-dot y"></span><span class="term-dot g"></span>
+    <span class="term-path">root@ceh:~/module-19$</span>
+    <button class="theme-switch" id="themeSwitch">theme: dark</button>
+  </div>
+  <div class="banner-body">
+    <span class="kicker">EC-Council · CEHv13 · Module 19</span>
+    <h1>Cloud Computing Hacking</h1>
+    <p class="lede">من مفاهيم Cloud Computing وأنواع خدماته (IaaS وPaaS وSaaS وFaaS) ونماذج نشره (Public وPrivate وHybrid وMulti وDistributed)، مرورًا ببنية Docker وKubernetes وServerless، وهجمات Cloud (MITC وWrapping وCloud Hopper وCryptojacking وIMDS)، وصولاً لاختراق AWS وAzure وGCP والـ Containers (S3 Buckets وIAM Privilege Escalation وKubernetes etcd وLXD)، والإجراءات المضادة وZero Trust.</p>
+    <div class="tags">
+      <span class="tag">cloud-hacking</span><span class="tag">aws-s3-iam</span>
+      <span class="tag">azure-ad</span><span class="tag">gcp-iam</span>
+      <span class="tag">docker-kubernetes</span><span class="tag">imds-attack</span>
+      <span class="tag">container-escape</span><span class="tag">zero-trust</span>
+    </div>
+  </div>
+</div>
+
+<nav class="toc"><div class="toc-title">$ ls learning_units/</div><div class="toc-list">
+  <a class="toc-item" href="#lu1"><span class="toc-num">01</span><span>مفاهيم Cloud Computing — الخدمات ونماذج النشر</span></a>
+  <a class="toc-item" href="#lu2"><span class="toc-num">02</span><span>Container Technology — Docker وKubernetes</span></a>
+  <a class="toc-item" href="#lu3"><span class="toc-num">03</span><span>تهديدات وهجمات Cloud Computing</span></a>
+  <a class="toc-item" href="#lu4"><span class="toc-num">04</span><span>منهجية اختراق Cloud وAWS Hacking</span></a>
+  <a class="toc-item" href="#lu5"><span class="toc-num">05</span><span>Azure وGCP وContainer Hacking</span></a>
+  <a class="toc-item" href="#lu6"><span class="toc-num">06</span><span>Cloud Security — الإجراءات المضادة وأفضل الممارسات</span></a>
+  <a class="toc-item" href="#cheat"><span class="toc-num">--</span><span>Cheat Sheet مرجعي</span></a>
+  <a class="toc-item" href="#summary"><span class="toc-num">--</span><span>الخلاصة العامة للموديول</span></a>
+</div></nav>
+
+<!-- LU1 -->
+<h2 id="lu1"><span class="num">01</span><span class="htext">مفاهيم Cloud Computing — الخدمات ونماذج النشر</span></h2>
+
+<h3>خصائص Cloud Computing</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>الخاصية</th><th>الشرح</th></tr></thead>
+<tbody>
+<tr><td>On-demand Self-service</td><td>توفير موارد السحابة (Computing وStorage وNetwork) تلقائيًا دون تدخّل بشري مع مزوّد الخدمة</td></tr>
+<tr><td>Distributed Storage</td><td>تخزين موزَّع يوفّر Scalability وAvailability وReliability أعلى — قد يُثير مخاوف أمنية وامتثالية</td></tr>
+<tr><td>Rapid Elasticity</td><td>توفير فوري للقدرات للتوسّع أو الانكماش حسب الطلب</td></tr>
+<tr><td>Automated Management</td><td>أتمتة تُقلِّل تدخّل المستخدم وتُسرِّع العمليات وتُقلِّل الأخطاء البشرية</td></tr>
+<tr><td>Broad Network Access</td><td>موارد السحابة متاحة عبر الشبكة عبر مجموعة واسعة من المنصّات (Laptops وMobiles وPDAs)</td></tr>
+<tr><td>Resource Pooling</td><td>مجمع موارد متعدّد المستأجرين (Multi-tenant) يُوزَّع ديناميكيًا على الطلب</td></tr>
+<tr><td>Measured Service</td><td>نموذج Pay-per-use — المشترك يدفع شهريًا أو حسب الاستخدام (Storage وCPU وBandwidth)</td></tr>
+<tr><td>Virtualization Technology</td><td>تُتيح التوسّع السريع للموارد بطريقة مستحيلة في البيئات غير الافتراضية</td></tr>
+</tbody>
+</table></div>
+
+
+<h3>أنواع خدمات Cloud Computing</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>الخدمة</th><th>الشرح</th><th>أمثلة</th></tr></thead>
+<tbody>
+<tr><td>IaaS</td><td>موارد IT أساسية On-demand: Computing وVirtualization وStorage وNetwork — CSP يُدير البنية التحتية الأساسية</td><td>Amazon EC2، Microsoft OneDrive، Rackspace</td></tr>
+<tr><td>PaaS</td><td>منصّة لتطوير التطبيقات بدون إدارة البنية التحتية — يُتيح Dynamic Scalability وAutomated Backups</td><td>Google App Engine، Salesforce، Microsoft Azure</td></tr>
+<tr><td>IDaaS</td><td>خدمات إدارة الهوية والوصول: SSO وMFA وIGA وAccess Management — مُدارة من طرف ثالث</td><td>OneLogin، Centrify، Azure AD، Okta</td></tr>
+<tr><td>SECaaS</td><td>خدمات أمنية متكاملة (اختبار اختراق ومصادقة وكشف تسلّل ومكافحة Malware) — بدون عتاد فيزيائي</td><td>eSentire MDR، OneNeck IT</td></tr>
+<tr><td>CaaS</td><td>Containers وClusters كخدمة — Virtualization لمحرّكات Containers وإدارتها</td><td>Amazon EC2، Google Kubernetes Engine</td></tr>
+<tr><td>FaaS (Serverless)</td><td>منصّة تطوير وتشغيل التطبيقات بدون تعقيد البنية التحتية — لا رسوم عند عدم الاستخدام</td><td>AWS Lambda، Google Cloud Functions، Azure Functions</td></tr>
+<tr><td>XaaS</td><td>أي شيء كخدمة عبر الإنترنت — أدوات وتطبيقات وتقنيات وأغذية ونقل وخدمات طبية</td><td>متنوّع</td></tr>
+<tr><td>FWaaS</td><td>جدران حماية كخدمة — Packet Filtering وNetwork Analysis وIPsec وكشف Malware</td><td>Zscaler، Fortinet، Cisco، Sophos</td></tr>
+<tr><td>DaaS</td><td>سطح مكتب افتراضي On-demand — CSP يُدير البنية التحتية والتخزين والـ Patching</td><td>Amazon WorkSpaces، Citrix، Azure Windows VD</td></tr>
+<tr><td>MBaaS</td><td>Backend للتطبيقات عبر API وSDK — إدارة المستخدمين وPush Notifications وCloud Storage</td><td>Firebase، AWS Amplify، Apple CloudKit</td></tr>
+</tbody>
+</table></div>
+
+
+<h3>نماذج نشر Cloud Computing</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>النموذج</th><th>الشرح</th><th>أمثلة</th></tr></thead>
+<tbody>
+<tr><td>Public Cloud</td><td>CSP يُتيح الخدمات للعموم عبر الإنترنت (مجانًا أو Pay-per-use)</td><td>Amazon EC2، Google App Engine، Windows Azure</td></tr>
+<tr><td>Private Cloud</td><td>بنية تحتية لمؤسسة واحدة داخل Firewall الشركة — تحكّم كامل في بيانات الشركة</td><td>BMC Software، VMware vRealize، SAP Cloud Platform</td></tr>
+<tr><td>Community Cloud</td><td>بنية تحتية مشتركة بين مؤسسات من مجتمع محدّد (متطلّبات أمنية أو تنظيمية مشتركة)</td><td>Cisco Cloud Solutions، Salesforce Health Cloud</td></tr>
+<tr><td>Hybrid Cloud</td><td>بيئة تجمع سحابتَين أو أكثر (خاصة وعامة ومجتمعية) تبقى كيانات مستقلّة لكن مترابطة</td><td>Microsoft Azure، Logicalis</td></tr>
+<tr><td>Multi Cloud</td><td>بيئة ديناميكية غير متجانسة تجمع أعباء عمل من موردّين متعدّدين عبر واجهة واحدة — توزّع Assets والتطبيقات</td><td>Azure Arc، Google Cloud Anthos</td></tr>
+<tr><td>Distributed Cloud</td><td>سحابة مركزية من سحابات عامة/خاصة موزَّعة جغرافيًا عبر مستوى تحكّم واحد — Edge Computing محلي</td><td>—</td></tr>
+<tr><td>Poly Cloud</td><td>عدّة أنواع من خدمات Cloud على منصّة واحدة — تتميّز بخدمات AI وML متخصَّصة</td><td>Google Cloud Platform، AWS</td></tr>
+</tbody>
+</table></div>
+
+
+<h3>NIST Cloud Reference Architecture — الأدوار</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>الدور</th><th>الشرح</th></tr></thead>
+<tbody>
+<tr><td>Cloud Consumer</td><td>شخص أو مؤسسة تُبقي علاقة عمل مع CSP وتستخدم خدماته — يتصفّح الكتالوج ويُنشئ عقودًا</td></tr>
+<tr><td>Cloud Provider</td><td>يحصل على البنية التحتية ويُديرها لتقديم الخدمات عبر الشبكة</td></tr>
+<tr><td>Cloud Carrier</td><td>وسيط يُوفِّر اتصالية ونقل البيانات بين CSPs والمستهلكين</td></tr>
+<tr><td>Cloud Auditor</td><td>يُجري فحصًا مستقلًّا لضوابط خدمات Cloud — يُقيِّم الأمان والخصوصية والأداء</td></tr>
+<tr><td>Cloud Broker</td><td>يُدير استخدام وأداء وتسليم خدمات Cloud — وسيط بين CSPs والمستهلكين. فئات: Service Intermediation وService Aggregation وService Arbitrage</td></tr>
+</tbody>
+</table></div>
+
+
+<h3>Fog Computing مقابل Edge Computing</h3>
+<div class="table-wrap"><table>
+<thead><tr><th></th><th>Cloud Computing</th><th>Fog Computing</th><th>Edge Computing</th></tr></thead>
+<tbody>
+<tr><td>النموذج</td><td>مركزي</td><td>لامركزي - Distributed</td><td>لامركزي - Distributed</td></tr>
+<tr><td>الموقع</td><td>مراكز بيانات بعيدة</td><td>بين مصادر البيانات والسحابة</td><td>قريب من أجهزة IoT</td></tr>
+<tr><td>الحجم</td><td>آلاف من السيرفرات</td><td>ملايين Fog Nodes</td><td>مليارات نقاط نهاية</td></tr>
+<tr><td>الاستخدام</td><td>تحليل بيانات واسع النطاق</td><td>مدن ذكية وشبكات كهرباء ذكية وسيارات متصلة</td><td>معالجة عمليات صغيرة وعاجلة (ملي-ثانية)</td></tr>
+</tbody>
+</table></div>
+
+
+<!-- LU2 -->
+
+<hr />
+
+<h2 id="lu2"><span class="num">02</span><span class="htext">Container Technology — Docker وKubernetes</span></h2>
+
+
+
+<h3>ما هو Container؟</h3>
+<p>حزمة تطبيق/برنامج مع كل تبعياته (Libraries وملفات إعداد وثنائيات) تعمل باستقلالية عن العمليات الأخرى. CaaS يتضمّن Virtualization وإدارة Containers عبر Orchestrators.</p>
+
+<h3>بنية Container Technology — الطبقات</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>الطبقة</th><th>الوصف</th></tr></thead>
+<tbody>
+<tr><td>Tier-1: Developer Machines</td><td>إنشاء واختبار واعتماد الصور (Images)</td></tr>
+<tr><td>Tier-2: Testing & Accreditation</td><td>التحقّق والتصديق وتوقيع الصور وإرسالها للـ Registries</td></tr>
+<tr><td>Tier-3: Registries</td><td>تخزين الصور وتوزيعها على الـ Orchestrators (Docker Hub وAmazon ECR وDTR)</td></tr>
+<tr><td>Tier-4: Orchestrators</td><td>تحويل الصور لـ Containers ونشر الـ Containers على Hosts</td></tr>
+<tr><td>Tier-5: Hosts</td><td>تشغيل وإدارة الـ Containers وفق تعليمات الـ Orchestrator</td></tr>
+</tbody>
+</table></div>
+
+
+<h3>Docker Architecture</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>المكوّن</th><th>الشرح</th></tr></thead>
+<tbody>
+<tr><td>Docker Daemon (dockerd)</td><td>يعالج طلبات API ويُدير كائنات Docker: Containers وVolumes وImages وNetworks</td></tr>
+<tr><td>Docker Client</td><td>الواجهة الرئيسية للتفاعل مع Docker — يُرسِل أوامر لـ dockerd عبر Docker API</td></tr>
+<tr><td>Docker Registries</td><td>مواقع تخزين الصور (عامة أو خاصة) — Docker Hub المكان الافتراضي</td></tr>
+<tr><td>Images</td><td>قوالب ثنائية Read-only لإنشاء Containers</td></tr>
+<tr><td>Containers</td><td>مثيل قابل للتشغيل من Image — يُنشَأ ويُشغَّل ويُوقَف ويُحذَف بـ CLI أو API</td></tr>
+<tr><td>Volumes</td><td>تخزين للبيانات الدائمة التي تُولِّدها Docker وتستخدمها الـ Containers</td></tr>
+<tr><td>Services</td><td>تُوسِّع عدد الـ Containers عبر Daemons في Swarm بعدّة Managers وWorkers</td></tr>
+<tr><td>Docker Swarm</td><td>وضع إدارة عدّة Docker Engines — تعيين مهام ولموازنة الحِمل وفحص الصحة وتحديثات متزامنة</td></tr>
+</tbody>
+</table></div>
+
+
+<h3>Docker Networking — CNM</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>النوع</th><th>الشرح</th></tr></thead>
+<tbody>
+<tr><td>Host Driver</td><td>الـ Container يستخدم مكدّس الشبكة الخاص بالـ Host</td></tr>
+<tr><td>Bridge Driver</td><td>جسر Linux على الـ Host يُدار بـ Docker (الافتراضي)</td></tr>
+<tr><td>Overlay Driver</td><td>اتصال Containers عبر البنية التحتية الفيزيائية</td></tr>
+<tr><td>MACVLAN</td><td>اتصال بين واجهات Container والواجهات الأصلية للـ Host</td></tr>
+<tr><td>None</td><td>مكدّس شبكة خاص معزول كليًا</td></tr>
+<tr><td>Contiv (Cisco)</td><td>سياسات أمان وبنية تحتية لـ Multi-tenant Microservices</td></tr>
+<tr><td>Weave</td><td>شبكة افتراضية لربط Containers عبر سحابات متعدّدة</td></tr>
+<tr><td>Kuryr</td><td>تطبيق Docker libnetwork Remote Driver باستخدام OpenStack Neutron</td></tr>
+</tbody>
+</table></div>
+
+
+<h3>Kubernetes (K8s)</h3>
+<p>منصّة Orchestration مفتوحة المصدر من Google لإدارة التطبيقات المُعبَّأة في Containers والـ Microservices. تُوفِّر: Service Discovery وLoad Balancing وStorage Orchestration وAutomated Rollouts/Rollbacks وAutomatic Bin Packing وSelf-Healing.</p>
+
+<h4>مكوّنات Master Node</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>المكوّن</th><th>الشرح</th></tr></thead>
+<tbody>
+<tr><td>Kube-apiserver</td><td>مكوّن لوحة التحكّم الرئيسي — يستجيب لكل طلبات API ويتفاعل مع etcd وحده</td></tr>
+<tr><td>etcd Cluster</td><td>تخزين Key-Value موزَّع ومتسق — بيانات Cluster وتفاصيل Service Discovery وAPI Objects</td></tr>
+<tr><td>Kube-scheduler</td><td>يفحص الـ Pods الجديدة ويُعيِّن نودًا لها بناءً على متطلّبات الموارد والموقع والقيود</td></tr>
+<tr><td>Kube-controller-manager</td><td>يُشغِّل Controllers (Node وEndpoint وReplication وService Account) في عملية واحدة</td></tr>
+<tr><td>Cloud-controller-manager</td><td>يُشغِّل Controllers تتواصل مع مزوّدي Cloud — يُتيح تطوير كود Kubernetes وCloud بشكل مستقل</td></tr>
+</tbody>
+</table></div>
+
+
+<h4>مكوّنات Worker Node</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>المكوّن</th><th>الشرح</th></tr></thead>
+<tbody>
+<tr><td>Kubelet</td><td>عميل خدمة يعمل على كل نود — يضمن تشغيل الـ Containers في الـ Pod وصحّتها</td></tr>
+<tr><td>Kube-proxy</td><td>Proxy شبكي يُدير قواعد الشبكة لتمكين اتصالات الـ Pods</td></tr>
+<tr><td>Container Runtime</td><td>برنامج يُشغِّل الـ Containers — Docker وrktlet وcontainerd وcri-o</td></tr>
+</tbody>
+</table></div>
+
+
+<h3>Serverless Computing</h3>
+<p>FaaS — بنية تطبيق Cloud تُوفِّر البنية التحتية حسب الطلب بدون إدارة السيرفر. تُستخدَم أساسًا في Microservices. لا رسوم عند عدم الاستخدام. أمثلة: AWS Lambda وGoogle Cloud Functions وAzure Functions.</p>
+
+<!-- LU3 -->
+
+<hr />
+
+<h2 id="lu3"><span class="num">03</span><span class="htext">تهديدات وهجمات Cloud Computing</span></h2>
+
+
+
+<div class="table-wrap"><table>
+<thead><tr><th>الهجوم</th><th>الشرح</th></tr></thead>
+<tbody>
+<tr><td>Service Hijacking — Social Engineering</td><td>خداع المستخدمين للكشف عن بيانات اعتماد Cloud عبر Phishing وهندسة اجتماعية</td></tr>
+<tr><td>Service Hijacking — Network Sniffing</td><td>اعتراض بيانات الاعتماد أثناء نقلها عبر الشبكة</td></tr>
+<tr><td>Side-Channel / Cross-guest VM Breach</td><td>المهاجم يضع VM خبيثًا على نفس الخادم الفيزيائي للـ VM الهدف ← استغلال الموارد المشتركة (Processor Cache)</td></tr>
+<tr><td>Wrapping Attack</td><td>تكرار (Duplicate) جسم رسالة SOAP أثناء الترجمة في طبقة TLS وإرساله للسيرفر كمستخدم شرعي</td></tr>
+<tr><td>MITC (Man-in-the-Cloud)</td><td>نسخة متطوّرة من MITM — استغلال خدمات مزامنة Cloud (Google Drive أو Dropbox). المهاجم يزرع كودًا خبيثًا ← يسرق Synchronization Token الضحية ← يصل للملفات ← يُعيد Token الأصلي ليبقى غير مكتشَف</td></tr>
+<tr><td>Cloud Hopper Attack</td><td>هجمات Spear-phishing على موظّفي Managed Service Providers (MSPs) لسرقة بيانات سرية بـ Custom Malware</td></tr>
+<tr><td>Cloud Cryptojacking</td><td>استخدام غير مصرَّح لأجهزة الضحية لتعدين العملات الرقمية — يستغل Cloud Misconfigurations وSSRF وثغرات Client/Server</td></tr>
+<tr><td>Cloudborne Attack</td><td>ثغرة في Bare-metal Cloud Server تُتيح زرع Backdoor خبيث في Firmware الجهاز — تجاوز الأمان ومراقبة النشاط وسرقة البيانات</td></tr>
+<tr><td>IMDS Attack</td><td>Instance Metadata Service: استغلال ثغرة Zero-day أو Reverse Proxy مُسرَّب للاتصال بـ Cloud Instance واستخراج User Data والـ Roles والـ Cloud Keys</td></tr>
+<tr><td>CPDoS / CDN Cache Poisoning</td><td>طلبات HTTP مشوَّهة أو ضخمة الحجم لخداع الـ Origin Server بإرجاع محتوى خبيث يُخزَّن في CDN — DoS للمستخدمين الشرعيين</td></tr>
+<tr><td>Cloud Snooper Attack</td><td>استغلال ضعف في AWS Security Groups للتنصّت الخفيّ واستخراج بيانات — Rootkits تُموِّه C2 كحركة شرعية على Port 80/443</td></tr>
+<tr><td>Golden SAML Attack</td><td>الحصول على وصول Admin لـ Identity Provider (ADFS) ← استغلال Token Signing Certificates لتوليد SAML Tokens مزوَّرة</td></tr>
+<tr><td>Living Off the Cloud (LotC)</td><td>استغلال أدوات وخدمات Cloud الشرعية الخاصة بالضحية لتنفيذ أنشطة خبيثة بدون أثر أو Artifacts</td></tr>
+</tbody>
+</table></div>
+
+
+<div class="callout note"><div class="callout-label">MITC — آلية التنفيذ</div><p>1. المهاجم يخدع الضحية لتثبيت كود خبيث يزرع Token المزامنة الخاص بالمهاجم في Drive الضحية. 2. المهاجم يسرق Token المزامنة الخاص بالضحية. 3. يستخدم Token مسروق للوصول لملفات الضحية. 4. يُعيد لاحقًا Token الخبيث مستبدلًا بـ Token الأصلي للضحية → يبقى غير مكتشَف.</p></div>
+
+
+<h3>Cloud Malware</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>Malware</th><th>الشرح</th></tr></thead>
+<tbody>
+<tr><td>Cuttlefish</td><td>Packet-sniffing Malware يتنكّر في هيئة برامج شرعية للتسلّل لراوترات SOHO والمؤسسات — يسرق بيانات مصادقة Cloud ويُرسِلها لسيرفر C2</td></tr>
+<tr><td>Denonia، LemonDuck</td><td>Cloud Malware متخصَّص</td></tr>
+<tr><td>RansomCloud</td><td>Ransomware يستهدف بيانات Cloud</td></tr>
+<tr><td>DBatLoader/ModiLoader، Goldbackdoor</td><td>Loaders وBackdoors للسحابة</td></tr>
+</tbody>
+</table></div>
+
+
+<!-- LU4 -->
+
+<hr />
+
+<h2 id="lu4"><span class="num">04</span><span class="htext">منهجية اختراق Cloud وAWS Hacking</span></h2>
+
+
+
+<h3>Cloud Hacking Methodology</h3>
+<div class="step-track">
+<div class="step-item"><div class="step-num">1</div><div class="step-title">Information Gathering</div><div class="step-body"><p>جمع أكبر قدر من المعلومات عن البنية التحتية Cloud المستهدَفة — Shodan وCensys للكشف عن خدمات Cloud المكشوفة وMasscan لاكتشاف البورتات.</p></div></div>
+<div class="step-item"><div class="step-num">2</div><div class="step-title">Vulnerability Assessment</div><div class="step-body"><p>تقييم نقاط الضعف الأمنية: Misconfigurations وبرمجيات غير مُصحَّحة وثغرات في الشبكة والتطبيقات والخدمات — أدوات: Prowler وCloudSploit.</p></div></div>
+<div class="step-item"><div class="step-num">3</div><div class="step-title">Exploitation</div><div class="step-body"><p>الاستغلال الفعلي للثغرات للحصول على وصول غير مصرَّح أو التحكّم في البنية التحتية — قد يؤدّي لتسرّب بيانات أو تعطّل خدمات أو خسائر مالية.</p></div></div>
+<div class="step-item"><div class="step-num">4</div><div class="step-title">Post-Exploitation</div><div class="step-body"><p>الحفاظ على الوصول وتغطية الآثار والتعمّق في الشبكة — سرقة بيانات والاستعداد لهجمات أعمق. تشمل: Log Manipulation وحذف Credentials المؤقتة وإنشاء Backdoors مخفية.</p></div></div>
+</div>
+
+
+<h3>AWS Hacking — تعداد S3 Buckets</h3>
+<p>S3 (Simple Storage Service) خدمة تخزين سحابية قابلة للتوسّع. المهاجمون يستغلّون Misconfigurations للوصول للملفات والمجلدات والكائنات المخزَّنة. ترك S3 Bucket مفتوحًا يُتيح تعديل ملفات JavaScript وحقن Malware.</p>
+<div class="table-wrap"><table>
+<thead><tr><th>تقنية التعداد</th><th>الشرح</th></tr></thead>
+<tbody>
+<tr><td>Inspecting HTML</td><td>تحليل Source Code صفحات HTML للعثور على URLs لـ S3 Buckets مضمَّنة في الخلفية</td></tr>
+<tr><td>Brute-forcing URL</td><td>تجربة جميع احتمالات bucket_name في <code>http://s3.amazonaws.com/[bucket_name]</code> بـ Burp Suite Intruder</td></tr>
+<tr><td>Advanced Google Hacking</td><td>استخدام Google Dorks مثل <code>inurl:s3.amazonaws.com</code> و<code>inurl:s3.amazonaws.com/backup/</code></td></tr>
+<tr><td>S3Scanner</td><td>تحديد S3 Buckets المفتوحة واسترداد محتواها</td></tr>
+<tr><td>BucketLoot</td><td>فحص صلاحيات S3 Buckets تلقائيًا — يكتشف Misconfigurations واستخراج URLs وNested Domains</td></tr>
+<tr><td>CloudBrute</td><td>إيجاد البنية التحتية والملفات والتطبيقات لشركة مستهدَفة عبر أكبر موردّي Cloud (Amazon وGoogle وMicrosoft وDigitalOcean وAlicloud)</td></tr>
+</tbody>
+</table></div>
+
+
+<div class="code-wrap"><span class="code-tag">google dorks — S3 bucket discovery</span><pre><code>inurl:s3.amazonaws.com
+inurl:s3.amazonaws.com/audio/
+inurl:s3.amazonaws.com/video/
+inurl:s3.amazonaws.com/backup/
+inurl:s3.amazonaws.com/image/
+
+# Shodan queries for SCADA / Cloud
+product:Siemens  country:US
+org:"Amazon"     port:22
+org:"Microsoft"  port:3389</code></pre></div>
+
+
+<h3>AWS IMDS Attack وAWS IAM Hacking</h3>
+<div class="code-wrap"><span class="code-tag">bash — AWS IMDS attack & IAM enumeration</span><pre><code># 1. استخراج IAM Roles المتاحة على الـ Instance
+curl http://169.254.169.254/latest/meta-data/iam/security-credentials/
+
+# 2. استخراج Cloud Keys للـ Role
+curl http://169.254.169.254/latest/meta-data/iam/security-credentials/<IAM-Role-Name>
+
+# 3. Pacu — IAM Privilege Escalation
+pacu
+# create new policy version (admin access)
+aws iam create-policy-version --policy-arn <ARN> --policy-document file://admin.json --set-as-default
+
+# 4. Endgame — Backdoor IAM
+endgame list-resources -s iam
+endgame list-resources --service s3
+endgame expose --service iam --name test-resource-exposure</code></pre></div>
+
+
+<h3>طرق اختراق AWS IAM Credentials</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>الطريقة</th><th>الشرح</th></tr></thead>
+<tbody>
+<tr><td>Repository Misconfigurations</td><td>مطوّرون يشاركون AWS Keys في Git Repositories — Insiders غاضبون قد يُسيئون استخدامها</td></tr>
+<tr><td>Social Engineering</td><td>Phishing وMails وSMS مزوَّرة لسرقة API Keys</td></tr>
+<tr><td>Password Reuse</td><td>كلمة مرور موقع واحد مُخترَق → وصول لخدمات Cloud أخرى بنفس البيانات</td></tr>
+<tr><td>SSRF</td><td>استغلال SSRF في تطبيق ويب للوصول لـ EC2 Metadata API الداخلية</td></tr>
+<tr><td>Reading Local Files</td><td>AWS Keys مخزَّنة في <code>~/.aws/credentials</code> أو متغيّرات البيئة</td></tr>
+<tr><td>Third-party Software</td><td>اختراق برامج إدارة كلمات مرور أو برامج أمان يُتيح وصولًا عالي المستوى</td></tr>
+<tr><td>Insider Threat</td><td>موظّفون/شركاء تجاريون لديهم وصول مُسبَق — لا يحتاجون لاختراق Credentials</td></tr>
+</tbody>
+</table></div>
+
+
+<h3>AWS IAM Privilege Escalation Techniques</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>التقنية</th><th>الإذن المطلوب</th><th>الأثر</th></tr></thead>
+<tbody>
+<tr><td>Create a new policy version</td><td>iam:CreatePolicyVersion</td><td>إنشاء نسخة جديدة بصلاحيات مخصَّصة + --set-as-default → وصول Admin</td></tr>
+<tr><td>Set default policy version</td><td>iam:SetDefaultPolicyVersion</td><td>تفعيل نسخة سياسة غير مستخدَمة قد تحمل صلاحيات أعلى</td></tr>
+<tr><td>Create EC2 with instance profile</td><td>iam:PassRole + ec2:RunInstances</td><td>إنشاء EC2 مع Instance Profile للوصول لنظام التشغيل</td></tr>
+<tr><td>Create new user access key</td><td>iam:CreateAccessKey</td><td>إنشاء Access Key لمستخدم آخر ← نفس مستوى صلاحياته</td></tr>
+<tr><td>Create/update login profile</td><td>iam:CreateLoginProfile أو UpdateLoginProfile</td><td>إنشاء أو تعديل Login Profile لمستخدم آخر → تصعيد الصلاحيات</td></tr>
+<tr><td>Create/update inline policy</td><td>iam:PutUserPolicy أو PutGroupPolicy أو PutRolePolicy</td><td>إنشاء أو تحديث Inline Policy لمستخدم/مجموعة/دور → Admin كامل</td></tr>
+<tr><td>Add user to group</td><td>iam:AddUserToGroup</td><td>إضافة النفس لمجموعة موجودة ذات صلاحيات عالية</td></tr>
+</tbody>
+</table></div>
+
+
+<h3>Docker Containers على AWS (CCAT)</h3>
+<div class="step-track">
+<div class="step-item"><div class="step-num">1</div><div class="step-title">إساءة استخدام AWS Credentials</div><div class="step-body"><p>استعراض ECR Repositories المتاحة بـ CCAT "Enumerate ECR" module.</p></div></div>
+<div class="step-item"><div class="step-num">2</div><div class="step-title">سحب Docker Image</div><div class="step-body"><p>تحديد وسحب Docker Image للمؤسسة المستهدَفة بـ CCAT "Pull Repos from ECR".</p></div></div>
+<div class="step-item"><div class="step-num">3</div><div class="step-title">إنشاء Backdoor Image</div><div class="step-body"><p>إنشاء Reverse Shell Backdoor في الـ Docker Image بـ CCAT "Docker Backdoor" module.</p></div></div>
+<div class="step-item"><div class="step-num">4</div><div class="step-title">رفع الـ Backdoor Image</div><div class="step-body"><p>رفع الـ Image المُعدَّل للـ ECR Repository بـ CCAT "Push Repos to ECR" module.</p></div></div>
+</div>
+
+
+<!-- LU5 -->
+
+<hr />
+
+<h2 id="lu5"><span class="num">05</span><span class="htext">Azure وGCP وContainer Hacking</span></h2>
+
+
+
+<h3>Azure Hacking</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>الأداة / التقنية</th><th>الشرح</th></tr></thead>
+<tbody>
+<tr><td>AADInternals</td><td>PowerShell Module لإدارة Azure AD وOffice 365 — Reconnaissance وExploitation وPost-exploitation</td></tr>
+<tr><td>AzureGraph</td><td>تعداد Azure AD Accounts وAdmin Groups</td></tr>
+<tr><td>Stormspotter (Stormcollector)</td><td>تعداد Resources وConfigurations وثغرات محتملة في Azure Subscription</td></tr>
+<tr><td>AzureHound</td><td>جمع بيانات من AzureAD وAzureRM</td></tr>
+<tr><td>Goblob</td><td>الوصول لـ Blob Storage المكشوفة</td></tr>
+<tr><td>Open NSGs</td><td>استغلال Network Security Groups المفتوحة على SSH (22) وHTTP (80) وMySQL (3306) — Brute-force وتنفيذ أوامر وسرقة بيانات</td></tr>
+<tr><td>Managed Identities</td><td>استغلال Managed Identity للمصادقة على أي خدمة تدعم Azure AD بدون إدارة بيانات دخول</td></tr>
+<tr><td>Service Principals (Backdoor)</td><td>إنشاء Backdoors بأدوار Azure AD للحفاظ على وصول دائم بدون أثر — Azure CLI وPowerShell وBloodHound</td></tr>
+<tr><td>VNet Peering Exploitation</td><td>استغلال اتصالات VNet Peering للحركة الجانبية وسرقة البيانات</td></tr>
+<tr><td>Shadow Admins (SkyArk)</td><td>AWStealth وAzureStealth لاكتشاف حسابات ذات صلاحيات حسّاسة وخطيرة</td></tr>
+</tbody>
+</table></div>
+
+
+<h3>GCP Hacking</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>الأداة / التقنية</th><th>الشرح</th></tr></thead>
+<tbody>
+<tr><td>Google Cloud CLI</td><td>تعداد شامل لـ Resources والخدمات والإعدادات والصلاحيات في بيئة GCP</td></tr>
+<tr><td>GCP Scanner</td><td>تحديد مستوى وصول بيانات اعتماد في GCP — يدعم GCE وGCS وGKE وApp Engine وCloud SQL وBigQuery وغيرها</td></tr>
+<tr><td>cloud_enum</td><td>أداة OSINT متعدّدة السحابات — تعداد GCP Buckets وFirebase وApp Engine Sites وCloud Functions</td></tr>
+<tr><td>GCP Privilege Escalation Scanner</td><td>Python Script يُحدِّد ثغرات Privilege Escalation في GCP بتقييم IAM Policies</td></tr>
+<tr><td>GCPBucketBrute</td><td>تعداد Google Storage Buckets والتحقّق من مستويات الوصول وفحص إمكانية تصعيد الصلاحيات عبر TestIamPermissions API</td></tr>
+<tr><td>GCPGoat</td><td>بنية GCP ضعيفة بالتصميم لتدريب المهاجمين — OWASP Top 10 وXSS وSSRF وIAM Privilege Escalation</td></tr>
+</tbody>
+</table></div>
+
+
+<h3>Container Hacking</h3>
+<div class="code-wrap"><span class="code-tag">bash — kubectl & container hacking</span><pre><code># kubectl: جمع معلومات Kubernetes
+kubectl get pods --all-namespaces
+kubectl get secrets --all-namespaces
+kubectl get serviceaccounts --all-namespaces
+
+# etcd: استخراج Secrets (Port 2379)
+etcdctl --endpoints=http://127.0.0.1:2379 get / --prefix --keys-only
+
+# Docker Remote API
+docker -H tcp://<target>:2375 ps
+docker -H tcp://<target>:2375 run -v /:/host -it alpine chroot /host
+
+# LXD Privilege Escalation
+lxc image import alpine.tar.gz --alias alpine
+lxc init alpine privesc -c security.privileged=true
+lxc config device add privesc mydevice disk source=/ path=/mnt/root recursive=true
+lxc start privesc && lxc exec privesc /bin/sh</code></pre></div>
+
+
+<h4>أدوات Vulnerability Scanning للـ Containers</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>الأداة</th><th>الشرح</th></tr></thead>
+<tbody>
+<tr><td>Trivy Vulnerability Scanner</td><td>فحص شامل لثغرات الـ Containers</td></tr>
+<tr><td>Anchore، Clair</td><td>ماسحات Containers شائعة</td></tr>
+<tr><td>Kubescape، kube-hunter، kubeaudit</td><td>أدوات Kubernetes Security Assessment</td></tr>
+<tr><td>KubiScan، Krane</td><td>تحليل صلاحيات Kubernetes</td></tr>
+</tbody>
+</table></div>
+
+
+<h4>هجمات Kubernetes etcd</h4>
+<p>الـ etcd تخزين Key-Value موزَّع لبيانات Cluster وتفاصيل Service Discovery وAPI Objects — الوصول له يُعادل Root على النظام. يُحدِّد المهاجمون Port 2379 لاكتشاف نقاط الاتصال بالـ Kubernetes.</p>
+
+<h4>LXD/LXC Privilege Escalation</h4>
+<p>لو المستخدم في مجموعة 'lxd' يمكنه إنشاء Container مميَّز وربط نظام ملفات الـ Host به ← Privilege Escalation للـ Root. الأمر المستخدَم: <code>lxc config device add privesc mydevice disk source=/ path=/mnt/root</code>.</p>
+
+<!-- LU6 -->
+
+<hr />
+
+<h2 id="lu6"><span class="num">06</span><span class="htext">Cloud Security — الإجراءات المضادة وأفضل الممارسات</span></h2>
+
+
+
+<h3>طبقات ضوابط أمان Cloud</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>الطبقة</th><th>ضوابط الأمان</th></tr></thead>
+<tbody>
+<tr><td>Application Layer</td><td>SDLC وBinary Analysis وScanners وWeb App Firewalls وTransactional Security — معايير OWASP</td></tr>
+<tr><td>Information Layer</td><td>DLP وContent Monitoring وDatabase Activity Monitoring وEncryption</td></tr>
+<tr><td>Management Layer</td><td>GRC وIAM وVA/VM وPatch Management وConfiguration Management والمراقبة</td></tr>
+<tr><td>Network Layer</td><td>Network IPS/IDS وFirewalls وDeep Packet Inspection وAnti-DDoS وQoS وDNSSEC وOAuth</td></tr>
+<tr><td>Trusted Computing</td><td>Hardware وSoftware Root of Trust (RoT) وAPIs</td></tr>
+<tr><td>Computation & Storage</td><td>Host-based Firewalls وHIDS/HIPS وIntegrity & File/Log Management وEncryption والـ Masking</td></tr>
+<tr><td>Physical Layer</td><td>Physical Plant Security وFences وGuards وCCTV وPhysical Authentication وSecurity Patrols</td></tr>
+</tbody>
+</table></div>
+
+
+<h3>أفضل الممارسات لأمان Cloud</h3>
+<ul>
+<li>تطبيق آليات حماية البيانات والنسخ الاحتياطي والاحتفاظ</li>
+<li>تطبيق SLAs للـ Patching ومعالجة الثغرات</li>
+<li>إجراء AICPA SSAE 18 Type II Audits دوريًا</li>
+<li>التحقّق من Cloud في قوائم Blacklists العامة</li>
+<li>تطبيق عقود قانونية في سياسة سلوك الموظّفين</li>
+<li>حظر مشاركة بيانات الاعتماد بين المستخدمين والتطبيقات والخدمات</li>
+<li>تطبيق ضوابط مصادقة وتفويض وتدقيق قوية</li>
+<li>التحقّق من حماية البيانات في مرحلتَي التصميم والتشغيل</li>
+<li>مراقبة حركة العميل للأنشطة الخبيثة</li>
+</ul>
+
+
+<h3>أفضل ممارسات أمان الـ Containers</h3>
+<ul>
+<li>مراقبة CVEs لـ Container Runtime ومعالجتها فور اكتشافها</li>
+<li>تفعيل Logging وAuditing الشامل</li>
+<li>تشغيل التطبيقات كمستخدمين عاديين لمنع Privilege Escalation</li>
+<li>ضبط Root File System للـ Host في وضع Read-only</li>
+<li>تجنّب برامج الطرف الثالث واستخدام أدوات Application Security Scanning</li>
+<li>فحص الصور في Repository دوريًا</li>
+<li>نشر Application Firewalls لتحسين أمان الـ Container</li>
+</ul>
+
+
+<h3>أفضل ممارسات أمان Docker</h3>
+<ul>
+<li>تجنّب كشف Docker Daemon Socket (نقطة الدخول الأساسية للـ Docker API)</li>
+<li>استخدام Docker Images الموثوقة فقط</li>
+<li>تصحيح Host OS وDocker بانتظام</li>
+<li>تقييد القدرات: <code>--cap-drop all</code> ثم إضافة ما هو ضروري فقط</li>
+<li>دائمًا تشغيل Docker Images بـ <code>--security-opt=no-new-privileges</code></li>
+</ul>
+
+
+<h3>أفضل ممارسات أمان Kubernetes</h3>
+<ul>
+<li>التحقّق الصحيح من محتوى الملفات ومساراتها في كل مرحلة معالجة</li>
+<li>استخدام Configuration Methods للمسارات الحسّاسة بدلًا من Hard-coded Paths</li>
+<li>رفع أخطاء صريحة بعد كل خطوة من العمليات المركّبة</li>
+<li>استخدام well-tested JSON Libraries وأنواع بنيات صحيحة للتعامل مع Kubernetes APIs</li>
+<li>عدم استخدام Shell Commands المركّبة بدون تحقّق لأنها تؤثّر على حالة النظام</li>
+</ul>
+
+
+<h3>Zero Trust Networks</h3>
+<p>نموذج أمان يفترض أن كل مستخدم يحاول الوصول للشبكة غير موثوق بشكل افتراضي ← يتحقّق من كل اتصال قبل السماح بالوصول. يتّبع مبدأ: <strong>"Trust no one and validate before providing a cloud service"</strong>. يُطبِّق تحكّمًا صارمًا في الوصول ويراقب تدفّق حركة الشبكة.</p>
+
+<!-- CHEAT -->
+
+<hr />
+
+<h2 id="cheat"><span class="htext">Cheat Sheet مرجعي</span></h2>
+
+
+<div class="cheat-section">
+
+<h4>أنواع Cloud Services — مرجع سريع</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>الخدمة</th><th>من يُدير التطبيق؟</th><th>من يُدير البنية التحتية؟</th><th>مثال</th></tr></thead>
+<tbody>
+<tr><td>IaaS</td><td>المستهلك</td><td>CSP</td><td>Amazon EC2</td></tr>
+<tr><td>PaaS</td><td>المستهلك (التطبيق فقط)</td><td>CSP</td><td>Google App Engine</td></tr>
+<tr><td>SaaS</td><td>CSP (كل شيء)</td><td>CSP</td><td>Gmail، Office 365</td></tr>
+<tr><td>FaaS/Serverless</td><td>المستهلك (الكود فقط)</td><td>CSP</td><td>AWS Lambda</td></tr>
+<tr><td>CaaS</td><td>المستهلك (Containers)</td><td>CSP</td><td>Google Kubernetes Engine</td></tr>
+</tbody>
+</table></div>
+
+
+<h4>هجمات Cloud — مرجع سريع</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>الهجوم</th><th>الهدف</th><th>الأداة</th></tr></thead>
+<tbody>
+<tr><td>MITC</td><td>سرقة Sync Token من Cloud Storage</td><td>Malicious Code + Drive</td></tr>
+<tr><td>IMDS Attack</td><td>استخراج IAM Roles وCloud Keys</td><td>curl 169.254.169.254</td></tr>
+<tr><td>S3 Bucket Enum</td><td>اكتشاف Buckets مكشوفة</td><td>S3Scanner، CloudBrute، BucketLoot</td></tr>
+<tr><td>IAM Privilege Escalation</td><td>الحصول على Admin Access في AWS</td><td>Pacu، Endgame</td></tr>
+<tr><td>Azure AD Backdoor</td><td>استمرارية الوصول عبر Service Principals</td><td>Azure CLI، BloodHound</td></tr>
+<tr><td>GCP Bucket Escalation</td><td>الحصول على Admin-level Access</td><td>GCPBucketBrute</td></tr>
+<tr><td>Docker API Exploit</td><td>تشغيل Container كـ Root على الـ Host</td><td>docker -H tcp://<target>:2375</td></tr>
+<tr><td>LXD Escalation</td><td>Root Privilege Escalation عبر lxd Group</td><td>lxc init + security.privileged=true</td></tr>
+<tr><td>etcd Access</td><td>Root-level Access للـ Kubernetes Cluster</td><td>etcdctl --endpoints port 2379</td></tr>
+<tr><td>Wrapping Attack</td><td>استنساخ SOAP Messages في TLS</td><td>MITM + SOAP Manipulation</td></tr>
+<tr><td>Cloud Snooper</td><td>Rootkit مُموَّه خلف Port 80/443 في AWS SGs</td><td>Rootkit + C2 Masquerading</td></tr>
+<tr><td>Golden SAML</td><td>SAML Tokens مزوَّرة من ADFS</td><td>Admin Access to IdP</td></tr>
+</tbody>
+</table></div>
+
+
+<h4>Kubernetes Components — مرجع سريع</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>المكوّن</th><th>نوعه</th><th>الوظيفة</th></tr></thead>
+<tbody>
+<tr><td>kube-apiserver</td><td>Master</td><td>واجهة API الوحيدة للـ Cluster — يتواصل مع etcd</td></tr>
+<tr><td>etcd</td><td>Master</td><td>تخزين بيانات الـ Cluster — الوصول إليه = Root</td></tr>
+<tr><td>kube-scheduler</td><td>Master</td><td>جدولة Pods على Nodes</td></tr>
+<tr><td>kube-controller-manager</td><td>Master</td><td>إدارة Controllers (Node وEndpoint وReplication)</td></tr>
+<tr><td>kubelet</td><td>Worker</td><td>يضمن تشغيل Containers في كل Pod</td></tr>
+<tr><td>kube-proxy</td><td>Worker</td><td>إدارة قواعد الشبكة للـ Pods</td></tr>
+<tr><td>Container Runtime</td><td>Worker</td><td>Docker أو containerd أو cri-o</td></tr>
+</tbody>
+</table></div>
+
+
+</div>
+
+<!-- SUMMARY -->
+
+<hr />
+
+<h2 id="summary"><span class="htext">الخلاصة العامة للموديول</span></h2>
+
+
+<p>الموديول ناقش مفاهيم Cloud Computing (8 خصائص و10+ أنواع خدمات و7 نماذج نشر والـ NIST Reference Architecture وFog/Edge Computing)، وبنية Containers وDocker وKubernetes وServerless، وأكثر من 12 نوع هجوم Cloud (MITC وWrapping وCloud Hopper وCryptojacking وIMDS وCPDoS وCloud Snooper وGolden SAML وLotC)، ومنهجية الاختراق الكاملة مع AWS (S3 Enumeration وIAM Privilege Escalation وIMDS وECR/Docker) وAzure وGCP وContainer Hacking (Docker API وLXD وKubernetes etcd)، وختم بطبقات أمان Cloud وأفضل الممارسات وZero Trust.</p>
+
+<div class="takeaways">
+<div class="takeaways-title">$ cat ./module19_summary.txt</div>
+<ul>
+<li>الفرق الجوهري بين IaaS وPaaS وSaaS هو من يُدير ماذا — IaaS تُدير الـ OS فصاعدًا، SaaS CSP يُدير كل شيء</li>
+<li>MITC يختلف عن MITM في أنه يستغل خدمات Cloud الشرعية للمزامنة — لا اعتراض للحزم</li>
+<li>IMDS على 169.254.169.254 هو خطر SSRF رئيسي في AWS — يُتيح استخراج IAM Roles وCloud Keys مباشرةً</li>
+<li>S3 Misconfigurations هي الثغرة الأكثر شيوعًا في AWS — Bucket مفتوح = ملفات وبيانات اعتماد متاحة للجميع</li>
+<li>etcd في Kubernetes يُخزِّن كل بيانات الـ Cluster — الوصول لـ Port 2379 = Root Level Access</li>
+<li>LXD Group Membership يُتيح Privilege Escalation للـ Root عبر Container Privileged مع ربط نظام ملفات الـ Host</li>
+<li>Zero Trust يفترض إن كل شيء مخترق مسبقًا — "Trust no one and validate before providing a cloud service"</li>
+</ul>
+</div>
+
+<blockquote>
+<p><strong>السحابة لا تعني أن البيانات آمنة — تعني أن المسؤولية مُشتركة.</strong> S3 Bucket مفتوح بغلطة إعداد واحدة، IAM Role بإذن زائد، IMDS مكشوف لـ SSRF — كل هذا بأمثلة حقيقية أدّت لتسرّبات بيانات ضخمة. الدفاع يبدأ بالـ Least Privilege وينتهي بـ Zero Trust.</p>
+</blockquote>
+
+<div class="callout examtip"><div class="callout-label">Exam Tip</div><p>أسئلة هذا الموديول تُركِّز على: الفرق بين IaaS وPaaS وSaaS وFaaS، نماذج نشر Cloud السبعة، NIST Cloud Actors الخمسة، الفرق بين Fog وEdge Computing، الفرق بين MITM وMITC، آلية IMDS Attack وعنوانه (169.254.169.254)، AWS IAM Privilege Escalation Techniques، مكوّنات Kubernetes Master/Worker، وآلية LXD Privilege Escalation.</p></div>
+
+
+<hr />
+<p><em>نهاية نوتس الموديول التاسع عشر — Cloud Computing</em></p>
+<div class="footer-note">-- EOF: module-19/cloud-computing.md --</div>
+</div>
+
+<script>
+(function(){
+  var root=document.documentElement,btn=document.getElementById('themeSwitch');
+  function applyTheme(t){root.setAttribute('data-theme',t);btn.textContent='theme: '+t;try{localStorage.setItem('oscp-notes-theme',t);}catch(e){}}
+  var saved='dark';try{saved=localStorage.getItem('oscp-notes-theme')||'dark';}catch(e){}
+  applyTheme(saved);
+  btn.addEventListener('click',function(){applyTheme(root.getAttribute('data-theme')==='dark'?'light':'dark');});
+  var bar=document.getElementById('progressBar');
+  function onScroll(){var h=document.documentElement,s=h.scrollTop,ht=h.scrollHeight-h.clientHeight;bar.style.width=(ht>0?(s/ht*100):0)+'%';var t=document.getElementById('toTop');s>500?t.classList.add('show'):t.classList.remove('show');}
+  document.addEventListener('scroll',onScroll);onScroll();
+  document.getElementById('toTop').addEventListener('click',function(){window.scrollTo({top:0,behavior:'smooth'});});
+  document.querySelectorAll('.code-wrap').forEach(function(wrap){
+    var c=wrap.querySelector('code');if(!c)return;
+    var b=document.createElement('button');b.className='copy-btn';b.textContent='copy';
+    b.addEventListener('click',function(){if(navigator.clipboard){navigator.clipboard.writeText(c.innerText).then(function(){b.textContent='copied ✓';b.classList.add('copied');setTimeout(function(){b.textContent='copy';b.classList.remove('copied');},1500);});}});
+    wrap.appendChild(b);
+  });
+})();
+</script>
+</body>
+</html>
