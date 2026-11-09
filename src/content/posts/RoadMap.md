@@ -12,4 +12,4 @@ draft: false
 
 Explore the learning roadmap and follow a structured path through the topics and skills you need to build your cybersecurity journey.
 
-[**Open the RoadMap →**](https://bad-glitch.github.io/RoadMap/)
+<a href="https://bad-glitch.github.io/RoadMap/" data-no-swup><strong>Open the RoadMap &rarr;</strong></a>
