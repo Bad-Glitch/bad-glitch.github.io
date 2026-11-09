@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CEHv13 · Module 01: مقدمة في الاختراق الأخلاقي</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-0:#0B0B0D;--bg-1:#121214;--surface:#17171A;--surface-2:#1D1D21;
+    --border:#2A2A2F;--border-soft:#232326;
+    --text:#E6E6E9;--text-soft:#C4C4CA;--muted:#8A8A92;
+    --red:#E1362F;--red-soft:rgba(225,54,47,0.10);--red-border:rgba(225,54,47,0.35);
+    --red-grad:linear-gradient(90deg,#E1362F,#F2794A);
+    --amber:#E8A23A;--amber-soft:rgba(232,162,58,0.09);--amber-border:rgba(232,162,58,0.30);
+    --green:#3FBF6E;--green-soft:rgba(63,191,110,0.09);--green-border:rgba(63,191,110,0.30);
+    --blue:#4EA1D3;--blue-soft:rgba(78,161,211,0.09);--blue-border:rgba(78,161,211,0.30);
+    --purple:#A179E8;--purple-soft:rgba(161,121,232,0.10);--purple-border:rgba(161,121,232,0.32);
+    --mono:'IBM Plex Mono','Courier New',monospace;
+  }
+  html[data-theme="light"]{
+    --bg-0:#F4F3F1;--bg-1:#ECEBE8;--surface:#FFFFFF;--surface-2:#F3F2EF;
+    --border:#DEDCD6;--border-soft:#E6E4DF;--text:#1C1B19;--text-soft:#3C3A36;--muted:#726F68;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;direction:rtl;text-align:right;background:var(--bg-0);}
+  body{font-family:'Cairo','Segoe UI',Tahoma,sans-serif;line-height:1.95;font-size:16.5px;color:var(--text);
+    background:radial-gradient(900px 420px at 12% -8%,rgba(225,54,47,0.10),transparent 60%),
+               radial-gradient(800px 420px at 90% 6%,rgba(232,162,58,0.06),transparent 60%),
+               linear-gradient(180deg,var(--bg-0) 0%,var(--bg-1) 100%);
+    background-attachment:fixed;transition:background 0.2s ease,color 0.2s ease;}
+  html[data-theme="light"] body{background:radial-gradient(900px 420px at 12% -8%,rgba(225,54,47,0.06),transparent 60%),radial-gradient(800px 420px at 90% 6%,rgba(232,162,58,0.05),transparent 60%),linear-gradient(180deg,var(--bg-0) 0%,var(--bg-1) 100%);}
+  .progress-rail{position:fixed;top:0;inset-inline:0;height:3px;background:rgba(255,255,255,0.04);z-index:60;}
+  html[data-theme="light"] .progress-rail{background:rgba(0,0,0,0.05);}
+  .progress-bar{height:100%;width:0%;background:var(--red-grad);transition:width 0.08s linear;}
+  .float-controls{position:fixed;bottom:22px;left:22px;z-index:55;display:flex;flex-direction:column;gap:10px;}
+  .fctrl-btn{width:42px;height:42px;border-radius:50%;background:var(--surface);border:1px solid var(--border);color:var(--text-soft);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;box-shadow:0 10px 24px -10px rgba(0,0,0,0.5);transition:transform 0.15s ease,border-color 0.15s ease,opacity 0.2s ease;}
+  .fctrl-btn:hover{transform:translateY(-2px);border-color:var(--red-border);color:var(--red);}
+  #toTop{opacity:0;pointer-events:none;}
+  #toTop.show{opacity:1;pointer-events:auto;}
+  .page{max-width:860px;margin:0 auto;padding:46px 22px 100px;}
+  .banner{position:relative;overflow:hidden;background:linear-gradient(155deg,var(--surface) 0%,var(--bg-1) 55%,var(--surface) 100%);border:1px solid var(--border-soft);border-radius:10px;padding:0 0 34px;margin-bottom:26px;box-shadow:0 20px 50px -20px rgba(0,0,0,0.6);}
+  .term-bar{display:flex;align-items:center;gap:8px;padding:13px 18px;border-bottom:1px solid var(--border-soft);background:rgba(255,255,255,0.015);direction:ltr;}
+  .term-dot{width:11px;height:11px;border-radius:50%;display:inline-block;}
+  .term-dot.r{background:#E1362F;}.term-dot.y{background:#E8A23A;}.term-dot.g{background:#3FBF6E;}
+  .term-path{margin-inline-start:12px;font-family:var(--mono);font-size:12px;color:var(--muted);}
+  .theme-switch{margin-inline-start:auto;font-family:var(--mono);font-size:11px;color:var(--muted);background:transparent;border:1px solid var(--border);border-radius:4px;padding:4px 9px;cursor:pointer;}
+  .theme-switch:hover{color:var(--amber);border-color:var(--amber-border);}
+  .banner-body{padding:30px 34px 4px;}
+  .banner .kicker{display:inline-block;font-family:var(--mono);font-size:12.5px;letter-spacing:0.03em;color:var(--red);background:var(--red-soft);border:1px solid var(--red-border);border-radius:3px;padding:5px 12px;margin-bottom:20px;direction:ltr;}
+  .banner h1{margin:0 0 14px;font-size:28px;font-weight:800;line-height:1.5;color:var(--text);}
+  .banner .lede{color:var(--muted);font-size:15.5px;line-height:1.95;max-width:640px;margin:0 0 24px;}
+  .tags{display:flex;flex-wrap:wrap;gap:9px;}
+  .tag{font-size:12.5px;font-family:var(--mono);color:var(--amber);background:var(--amber-soft);border:1px solid var(--amber-border);border-radius:3px;padding:5px 11px;}
+  .toc{background:var(--surface);border:1px solid var(--border-soft);border-radius:8px;padding:6px 0 6px;margin-bottom:50px;overflow:hidden;}
+  .toc-title{font-family:var(--mono);font-weight:600;font-size:13px;color:var(--green);padding:14px 22px;border-bottom:1px solid var(--border-soft);direction:ltr;text-align:left;}
+  .toc-list{display:flex;flex-direction:column;}
+  .toc-item{display:flex;align-items:center;gap:14px;padding:12px 22px;color:var(--text-soft);text-decoration:none;font-size:14.5px;border-bottom:1px solid rgba(255,255,255,0.03);transition:background 0.15s ease;}
+  .toc-list .toc-item:last-child{border-bottom:none;}
+  .toc-item:hover{background:var(--red-soft);}
+  .toc-num{flex:none;font-family:var(--mono);font-size:12.5px;font-weight:600;color:#0F0F10;background:var(--red-grad);border-radius:3px;padding:3px 8px;direction:ltr;}
+  h1,h2,h3,h4{font-weight:700;}
+  h2{display:flex;align-items:center;gap:14px;font-size:21px;margin:66px 0 22px;padding-bottom:16px;border-bottom:1px solid var(--border-soft);color:var(--text);}
+  h2 .num{flex:none;font-family:var(--mono);font-size:13px;font-weight:700;color:#0F0F10;background:var(--red-grad);border-radius:5px;padding:7px 12px;direction:ltr;}
+  h2 .htext{line-height:1.5;}
+  h3{font-size:17px;margin:34px 0 14px;color:var(--red);display:flex;align-items:center;gap:9px;}
+  h3::before{content:"#";font-family:var(--mono);color:var(--amber);font-weight:700;}
+  h4{font-size:14.8px;margin:22px 0 10px;color:var(--text-soft);font-family:var(--mono);}
+  p{margin:0 0 17px;color:var(--text);}
+  strong{color:var(--text);font-weight:700;}
+  :root:not([data-theme="light"]) strong{color:#FBFBFC;}
+  a{color:var(--amber);text-decoration:none;border-bottom:1px dashed var(--amber-border);}
+  hr{border:none;height:1px;margin:50px 0;background:linear-gradient(90deg,transparent,var(--border),transparent);}
+  ul,ol{margin:0 0 18px;padding-inline-start:24px;}
+  li{margin-bottom:9px;color:var(--text);}
+  li::marker{color:var(--red);font-family:var(--mono);}
+  li>ul,li>ol{margin-top:9px;}
+  .goals-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px;margin:0 0 22px;}
+  .goal-card{display:flex;gap:10px;align-items:flex-start;background:var(--surface);border:1px solid var(--border-soft);border-radius:7px;padding:13px 15px;font-size:14px;color:var(--text-soft);}
+  .goal-card .gi{flex:none;font-family:var(--mono);font-size:11px;font-weight:700;color:var(--green);background:var(--green-soft);border:1px solid var(--green-border);border-radius:4px;width:22px;height:22px;display:flex;align-items:center;justify-content:center;}
+  blockquote{margin:24px 0;padding:17px 22px;background:var(--red-soft);border:1px solid var(--red-border);border-inline-start:3px solid var(--red);border-radius:6px;color:var(--text-soft);}
+  blockquote p{margin:0;color:inherit;line-height:1.85;}
+  blockquote p+p{margin-top:10px;}
+  blockquote strong{color:var(--text);}
+  .callout{margin:24px 0;padding:17px 22px 18px;border-radius:6px;border:1px solid var(--border-soft);border-inline-start:3px solid var(--border);background:var(--surface);}
+  .callout p{margin:0;color:var(--text-soft);line-height:1.85;}
+  .callout p+p{margin-top:10px;}
+  .callout ul{margin:6px 0 0;}
+  .callout-label{display:inline-flex;align-items:center;gap:7px;font-family:var(--mono);font-size:11.5px;font-weight:700;letter-spacing:0.02em;text-transform:uppercase;margin-bottom:10px;direction:ltr;}
+  .callout.note{border-inline-start-color:var(--blue);background:var(--blue-soft);}
+  .callout.note .callout-label{color:var(--blue);}
+  .callout.warning{border-inline-start-color:var(--red);background:var(--red-soft);}
+  .callout.warning .callout-label{color:var(--red);}
+  .callout.tip{border-inline-start-color:var(--green);background:var(--green-soft);}
+  .callout.tip .callout-label{color:var(--green);}
+  .callout.examtip{border-inline-start-color:var(--purple);background:var(--purple-soft);}
+  .callout.examtip .callout-label{color:var(--purple);}
+  .callout.case{border-inline-start-color:var(--amber);background:var(--amber-soft);}
+  .callout.case .callout-label{color:var(--amber);}
+  .callout.definition{border-inline-start-color:var(--muted);background:var(--surface-2);}
+  .callout.definition .callout-label{color:var(--text-soft);}
+  .callout.danger{border-inline-start-color:#FF5A52;background:rgba(255,90,82,0.08);}
+  .callout.danger .callout-label{color:#FF5A52;}
+  .table-wrap{overflow-x:auto;margin:22px 0;border:1px solid var(--border-soft);border-radius:8px;}
+  table{width:100%;border-collapse:collapse;font-size:14.2px;min-width:480px;}
+  thead th{background:var(--surface-2);color:var(--amber);font-weight:700;font-family:var(--mono);font-size:12.5px;text-transform:uppercase;letter-spacing:0.02em;text-align:start;padding:13px 15px;border-bottom:1px solid var(--border-soft);white-space:nowrap;}
+  tbody td{padding:12px 15px;border-bottom:1px solid var(--border-soft);color:var(--text-soft);vertical-align:top;}
+  tbody tr:last-child td{border-bottom:none;}
+  tbody tr:nth-child(even){background:rgba(127,127,127,0.03);}
+  tbody tr:hover{background:var(--red-soft);}
+  code{font-family:var(--mono);font-size:13.3px;background:var(--surface-2);border:1px solid var(--border-soft);border-radius:4px;padding:2px 6px;direction:ltr;unicode-bidi:embed;color:var(--green);}
+  .code-wrap{position:relative;overflow-x:auto;margin:22px 0;}
+  .code-tag{position:absolute;top:10px;left:14px;font-family:var(--mono);font-size:10.5px;color:var(--muted);letter-spacing:0.04em;text-transform:uppercase;z-index:2;}
+  .copy-btn{position:absolute;top:8px;right:10px;z-index:2;font-family:var(--mono);font-size:11px;color:var(--muted);background:var(--surface-2);border:1px solid var(--border-soft);border-radius:4px;padding:4px 9px;cursor:pointer;direction:ltr;}
+  .copy-btn:hover{color:var(--amber);border-color:var(--amber-border);}
+  .copy-btn.copied{color:var(--green);border-color:var(--green-border);}
+  pre{background:var(--bg-0);border:1px solid var(--border-soft);border-inline-start:3px solid var(--red);border-radius:8px;padding:30px 22px 18px;direction:ltr;text-align:left;margin:0;}
+  html[data-theme="light"] pre{background:#16181C;}
+  pre code{background:none;border:none;padding:0;color:#B9E8C9;font-size:13.2px;line-height:1.75;}
+  .diagram-card{background:var(--surface);border:1px solid var(--border-soft);border-radius:10px;padding:22px 18px 16px;margin:24px 0;}
+  .diagram-card svg{width:100%;height:auto;display:block;}
+  .diagram-caption{margin-top:10px;text-align:center;font-family:var(--mono);font-size:11.5px;color:var(--muted);}
+  .takeaways{background:var(--surface);border:1px solid var(--border-soft);border-radius:8px;padding:18px 22px 20px;margin:30px 0 10px;}
+  .takeaways-title{font-family:var(--mono);font-size:12.5px;font-weight:700;color:var(--green);margin-bottom:12px;direction:ltr;text-align:left;display:flex;align-items:center;gap:8px;}
+  .takeaways ul{margin:0;padding-inline-start:20px;}
+  .takeaways li{color:var(--text-soft);font-size:14.5px;}
+  .cheat-section h4{color:var(--amber);font-size:13px;margin:26px 0 8px;}
+  .step-track{display:flex;flex-direction:column;gap:0;margin:24px 0;}
+  .step-item{position:relative;padding:0 0 26px 0;padding-inline-start:46px;border-inline-start:2px solid var(--border-soft);}
+  .step-item:last-child{border-inline-start:2px solid transparent;padding-bottom:4px;}
+  .step-num{position:absolute;inset-inline-start:-17px;top:0;width:32px;height:32px;border-radius:50%;background:var(--red-grad);color:#0F0F10;font-family:var(--mono);font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;}
+  .step-title{font-weight:700;color:var(--text);margin-bottom:6px;font-size:15px;}
+  .step-body{color:var(--text-soft);font-size:14.5px;}
+  .step-body p{margin:0 0 10px;}
+  .step-body p:last-child{margin-bottom:0;}
+  .method-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px;margin:22px 0;}
+  .method-card{background:var(--surface);border:1px solid var(--border-soft);border-radius:8px;padding:14px 16px;}
+  .method-card .mnum{font-family:var(--mono);font-size:11px;font-weight:700;color:#0F0F10;background:var(--red-grad);border-radius:4px;padding:2px 8px;display:inline-block;margin-bottom:8px;direction:ltr;}
+  .method-card .mtitle{font-weight:700;color:var(--text);font-size:14px;margin-bottom:5px;}
+  .method-card .mdesc{color:var(--text-soft);font-size:13.3px;line-height:1.75;}
+  .footer-note{margin-top:70px;padding-top:26px;border-top:1px solid var(--border-soft);color:var(--muted);font-size:13.3px;font-family:var(--mono);text-align:center;direction:ltr;}
+  .dsvg-box{fill:var(--surface-2);stroke:var(--border-soft);stroke-width:1;}
+  .dsvg-box-r{fill:var(--red-soft);stroke:var(--red-border);stroke-width:1;}
+  .dsvg-box-g{fill:var(--green-soft);stroke:var(--green-border);stroke-width:1;}
+  .dsvg-box-b{fill:var(--blue-soft);stroke:var(--blue-border);stroke-width:1;}
+  .dsvg-box-a{fill:var(--amber-soft);stroke:var(--amber-border);stroke-width:1;}
+  .dsvg-box-p{fill:var(--purple-soft);stroke:var(--purple-border);stroke-width:1;}
+  .dsvg-line{stroke:var(--border);stroke-width:1.5;fill:none;}
+  .dsvg-arr{fill:var(--border);}
+  .dsvg-arr-r{fill:var(--red);}
+  .dsvg-txt{fill:var(--text);font-family:IBM Plex Mono,monospace;}
+  .dsvg-muted{fill:var(--muted);font-family:IBM Plex Mono,monospace;}
+  .dsvg-red{fill:var(--red);}
+  .dsvg-green{fill:var(--green);}
+  .dsvg-amber{fill:var(--amber);}
+  .dsvg-blue{fill:var(--blue);}
+  @media print{.float-controls,.progress-rail,.copy-btn,.theme-switch{display:none !important;}body{background:#fff;color:#000;}.page{max-width:100%;}}
+  @media(max-width:640px){.page{padding:28px 14px 70px;}.banner-body{padding:24px 20px 4px;}.banner h1{font-size:21px;}h2{font-size:18px;gap:10px;}.float-controls{left:12px;bottom:14px;}}
+</style>
+</head>
+<body>
+
+<div class="progress-rail"><div class="progress-bar" id="progressBar"></div></div>
+<div class="float-controls">
+  <button class="fctrl-btn" id="toTop" title="ارجع لفوق">↑</button>
+</div>
+
+<div class="page">
+
+<div class="banner">
+  <div class="term-bar">
+    <span class="term-dot r"></span><span class="term-dot y"></span><span class="term-dot g"></span>
+    <span class="term-path">root@cehv13:~/module-01$</span>
+    <button class="theme-switch" id="themeSwitch">theme: dark</button>
+  </div>
+  <div class="banner-body">
+    <span class="kicker">CEHv13 · EC-Council · Module 01</span>
+    <h1>مقدمة في الاختراق الأخلاقي (Introduction to Ethical Hacking)</h1>
+    <p class="lede">من عناصر أمن المعلومات الأساسية وتصنيف الهجمات، مرورًا بفئات الهاكرز ومنهجيات الاختراق (CEH Framework، Cyber Kill Chain، MITRE ATT&CK)، ووصولًا لضوابط الأمن وإدارة المخاطر والذكاء الاصطناعي في الأمن السيبراني والقوانين المعمول بها.</p>
+    <div class="tags">
+      <span class="tag">information-security</span>
+      <span class="tag">hacker-classes</span>
+      <span class="tag">ethical-hacking</span>
+      <span class="tag">cyber-kill-chain</span>
+      <span class="tag">mitre-attck</span>
+      <span class="tag">risk-management</span>
+      <span class="tag">threat-intelligence</span>
+      <span class="tag">compliance</span>
+    </div>
+  </div>
+</div>
+
+<nav class="toc"><div class="toc-title">$ ls learning_units/</div><div class="toc-list">
+  <a class="toc-item" href="#lu1"><span class="toc-num">01</span><span>عناصر أمن المعلومات</span></a>
+  <a class="toc-item" href="#lu2"><span class="toc-num">02</span><span>هجمات أمن المعلومات — الدوافع والأساليب</span></a>
+  <a class="toc-item" href="#lu3"><span class="toc-num">03</span><span>تصنيف الهجمات</span></a>
+  <a class="toc-item" href="#lu4"><span class="toc-num">04</span><span>الحرب المعلوماتية (Information Warfare)</span></a>
+  <a class="toc-item" href="#lu5"><span class="toc-num">05</span><span>مفاهيم الاختراق وفئات الهاكرز</span></a>
+  <a class="toc-item" href="#lu6"><span class="toc-num">06</span><span>مفاهيم الاختراق الأخلاقي ونطاقه</span></a>
+  <a class="toc-item" href="#lu7"><span class="toc-num">07</span><span>مهارات المخترق الأخلاقي والذكاء الاصطناعي</span></a>
+  <a class="toc-item" href="#lu8"><span class="toc-num">08</span><span>أدوات ChatGPT للمخترقين الأخلاقيين</span></a>
+  <a class="toc-item" href="#lu9"><span class="toc-num">09</span><span>منهجية CEH لاختبار الاختراق</span></a>
+  <a class="toc-item" href="#lu10"><span class="toc-num">10</span><span>منهجية Cyber Kill Chain</span></a>
+  <a class="toc-item" href="#lu11"><span class="toc-num">11</span><span>TTPs وتحديد سلوك الخصم</span></a>
+  <a class="toc-item" href="#lu12"><span class="toc-num">12</span><span>MITRE ATT&CK ونموذج Diamond</span></a>
+  <a class="toc-item" href="#lu13"><span class="toc-num">13</span><span>ضوابط أمن المعلومات</span></a>
+  <a class="toc-item" href="#lu14"><span class="toc-num">14</span><span>إدارة المخاطر (Risk Management)</span></a>
+  <a class="toc-item" href="#lu15"><span class="toc-num">15</span><span>استخبارات التهديدات السيبرانية</span></a>
+  <a class="toc-item" href="#lu16"><span class="toc-num">16</span><span>نمذجة التهديدات (Threat Modeling)</span></a>
+  <a class="toc-item" href="#lu17"><span class="toc-num">17</span><span>إدارة الحوادث والاستجابة لها</span></a>
+  <a class="toc-item" href="#lu18"><span class="toc-num">18</span><span>دور الذكاء الاصطناعي في الأمن السيبراني</span></a>
+  <a class="toc-item" href="#lu19"><span class="toc-num">19</span><span>القوانين والمعايير الأمنية المعمول بها</span></a>
+  <a class="toc-item" href="#cheat"><span class="toc-num">--</span><span>Cheat Sheet مرجعي</span></a>
+  <a class="toc-item" href="#summary"><span class="toc-num">--</span><span>الخلاصة العامة للموديول</span></a>
+</div></nav>
+
+<!-- ══════════════════════════════════ LU1 -->
+<h2 id="lu1"><span class="num">01</span><span class="htext">عناصر أمن المعلومات</span></h2>
+<p>أمن المعلومات (Information Security) هو حماية المعلومات وأنظمة المعلومات اللي بتستخدم وتخزّن وتنقل المعلومات من الوصول والإفصاح والتعديل والتدمير غير المصرَّح بهم. المعلومات أصل حرج لازم المؤسسة تؤمّنه — لو وقعت في الأيدي الخطأ، المؤسسة ممكن تتعرّض لخسائر مالية وسمعة وعملاء.</p>
+
+<div class="method-grid">
+<div class="method-card"><span class="mnum">C</span><div class="mtitle">Confidentiality (السرّية)</div><div class="mdesc">ضمان إن المعلومات متاحة بس للمصرَّح لهم. ضوابطها: تصنيف البيانات، التشفير، التخلّص الآمن من الأجهزة.</div></div>
+<div class="method-card"><span class="mnum">I</span><div class="mtitle">Integrity (السلامة)</div><div class="mdesc">مصداقية البيانات ومنع التعديلات غير المصرَّح بها. ضوابطها: Checksum والتحكّم في الوصول.</div></div>
+<div class="method-card"><span class="mnum">A</span><div class="mtitle">Availability (التوافر)</div><div class="mdesc">ضمان إن الأنظمة متاحة وقت الحاجة للمستخدمين المصرَّح لهم. ضوابطها: مصفوفات أقراص احتياطية، مضاد فيروسات، أنظمة منع DDoS.</div></div>
+<div class="method-card"><span class="mnum">+</span><div class="mtitle">Authenticity & Non-Repudiation</div><div class="mdesc"><strong>Authenticity:</strong> ضمان أصالة البيانات والمستخدمين (بيومترية، شهادات رقمية). <strong>Non-Repudiation:</strong> ضمان عدم إنكار المرسل أو المستلم لإرسال/استلام رسالة — عبر التوقيعات الرقمية.</div></div>
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU2 -->
+<h2 id="lu2"><span class="num">02</span><span class="htext">هجمات أمن المعلومات — الدوافع والأساليب</span></h2>
+<p>الهجوم إجراء بيُنفَّذ بنيّة خرق أمان نظام معلوماتي باستغلال ثغراته — محاولة للحصول على معلومات أو تعديلها أو إزالتها أو تدميرها أو زرعها أو كشفها بدون تصريح.</p>
+<blockquote><p><strong>المعادلة الأساسية:</strong> هجوم = الدافع (الهدف) + الأسلوب (TTP) + الثغرة</p></blockquote>
+
+<h3>دوافع الهجمات</h3>
+<div class="goals-grid">
+  <div class="goal-card"><span class="gi">1</span><span>تعطيل استمرارية العمل</span></div>
+  <div class="goal-card"><span class="gi">2</span><span>سرقة المعلومات</span></div>
+  <div class="goal-card"><span class="gi">3</span><span>التلاعب بالبيانات</span></div>
+  <div class="goal-card"><span class="gi">4</span><span>خلق خوف وفوضى بتعطيل بنية تحتية حرجة</span></div>
+  <div class="goal-card"><span class="gi">5</span><span>إلحاق خسائر مالية بالهدف</span></div>
+  <div class="goal-card"><span class="gi">6</span><span>نشر معتقدات دينية أو سياسية</span></div>
+  <div class="goal-card"><span class="gi">7</span><span>تحقيق أهداف عسكرية لدولة</span></div>
+  <div class="goal-card"><span class="gi">8</span><span>الإضرار بسمعة الهدف، الانتقام، أو طلب فدية</span></div>
+</div>
+
+<h3>التكتيكات والتقنيات والإجراءات (TTPs)</h3>
+<ul>
+<li><strong>Tactics (التكتيكات):</strong> الاستراتيجية اللي المهاجم بيتبعها لتنفيذ الهجوم من البداية للنهاية</li>
+<li><strong>Techniques (التقنيات):</strong> الأساليب التقنية اللي المهاجم بيستخدمها لتحقيق نتائج وسيطة أثناء الهجوم</li>
+<li><strong>Procedures (الإجراءات):</strong> النهج المنهجي اللي بيتبعه فاعلو التهديد لإطلاق الهجوم</li>
+</ul>
+
+<h3>الثغرة (Vulnerability)</h3>
+<p>نقطة ضعف في تصميم أو تطبيق نظام ممكن تُستغَل للإخلال بأمانه — غالبًا ثغرة أمنية بتخلّي المهاجم يدخل النظام متجاوزًا مصادقة المستخدم. السببان الرئيسيان للأنظمة الضعيفة: سوء إعداد البرمجيات/الأجهزة، وممارسات برمجة سيئة.</p>
+
+<h3>أسباب شائعة لوجود الثغرات</h3>
+<ul>
+<li><strong>سوء إعداد الأجهزة/البرمجيات:</strong> بروتوكول غير مشفَّر مثلًا ممكن يؤدي لاختراق الشبكة وتسريب معلومات حساسة</li>
+<li><strong>تصميم غير آمن للشبكة والتطبيق:</strong> جدران نارية أو IDS أو VPN غير مُطبَّقة بأمان بتعرّض الشبكة لتهديدات كتيرة</li>
+<li><strong>ضعف تقني متأصّل:</strong> أجهزة أو تطبيقات أو متصفحات معينة عرضة لهجمات DoS أو MITM — خصوصًا الأنظمة اللي مش محدَّثة</li>
+<li><strong>إهمال المستخدم النهائي:</strong> السلوك البشري عرضة للهندسة الاجتماعية، مشاركة بيانات الاعتماد، أو الاتصال بشبكات غير آمنة</li>
+<li><strong>أفعال متعمَّدة من المستخدم النهائي:</strong> موظفون سابقون لسه عندهم وصول لمحركات أقراص مشتركة ممكن يسيئوا استخدامها</li>
+</ul>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU3 -->
+<h2 id="lu3"><span class="num">03</span><span class="htext">تصنيف الهجمات</span></h2>
+<p>حسب إطار IATF، الهجمات الأمنية بتتصنّف لخمس فئات: سلبية، فعّالة، قريبة، داخلية، وتوزيع.</p>
+
+<div class="table-wrap"><table>
+<thead><tr><th>النوع</th><th>الآلية</th><th>أمثلة</th></tr></thead>
+<tbody>
+<tr><td>Passive</td><td>اعتراض ومراقبة الترافيك بدون التلاعب في البيانات — صعبة الاكتشاف لعدم وجود تفاعل فعّال</td><td>Footprinting، Sniffing، تحليل الترافيك، فك تشفير ضعيف</td></tr>
+<tr><td>Active</td><td>التلاعب في البيانات أثناء النقل أو تعطيل التواصل بين الأنظمة — قابلة للاكتشاف</td><td>DoS، اختطاف جلسة، SQLi، XSS، Spoofing، MITM، تصعيد صلاحيات</td></tr>
+<tr><td>Close-in</td><td>المهاجم في قرب فعلي من النظام الهدف لجمع أو تعديل معلومات</td><td>Shoulder Surfing، Dumpster Diving، هندسة اجتماعية</td></tr>
+<tr><td>Insider</td><td>أشخاص موثوقون عندهم وصول فعلي للأصول الحرجة بيستغلّوه عمدًا</td><td>Wiretapping، Pod Slurping، سرقة أجهزة، زرع Keyloggers</td></tr>
+<tr><td>Distribution</td><td>العبث بالأجهزة أو البرمجيات قبل التثبيت — في المصدر أو أثناء النقل</td><td>أبواب خلفية مزروعة من مصنّعي البرمجيات/الأجهزة</td></tr>
+</tbody>
+</table></div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU4 -->
+<h2 id="lu4"><span class="num">04</span><span class="htext">الحرب المعلوماتية (Information Warfare)</span></h2>
+<p>استخدام تقنيات المعلومات والاتصالات (ICT) لتحقيق ميزة تنافسية على خصم — أسلحتها تشمل الفيروسات، الديدان، أحصنة طروادة، القنابل المنطقية، الأبواب الخلفية، والتشويش الإلكتروني. قسّمها Martin Libicki لسبع فئات:</p>
+<div class="table-wrap"><table>
+<thead><tr><th>الفئة</th><th>الوصف</th></tr></thead>
+<tbody>
+<tr><td>Command & Control Warfare</td><td>التأثير اللي المهاجم عنده على نظام أو شبكة مخترَقة يتحكّم فيها</td></tr>
+<tr><td>Intelligence-Based Warfare</td><td>تقنية قائمة على مستشعرات بتفسد الأنظمة التقنية مباشرة — تصميم وحماية ومنع الأنظمة اللي بتبحث عن معرفة كافية للسيطرة على ساحة المعركة</td></tr>
+<tr><td>Electronic Warfare</td><td>تقنيات راديوية-إلكترونية وتشفيرية لتقويض التواصل — إما بمهاجمة الوسائل الفيزيائية أو تعطيل البت والبايت</td></tr>
+<tr><td>Psychological Warfare</td><td>استخدام الدعاية والترهيب لإضعاف معنويات الخصم</td></tr>
+<tr><td>Hacker Warfare</td><td>تعطيل الأنظمة، أخطاء البيانات، سرقة المعلومات/الخدمات، المراقبة، الرسائل المزيّفة — عبر فيروسات وقنابل منطقية وأحصنة طروادة</td></tr>
+<tr><td>Economic Warfare</td><td>التأثير على اقتصاد شركة أو دولة عبر منع تدفّق المعلومات</td></tr>
+<tr><td>Cyberwarfare</td><td>الأوسع من كل أنواع الحرب المعلوماتية — استخدام أنظمة المعلومات ضد الشخصيات الافتراضية للأفراد أو الجماعات، يشمل إرهاب المعلومات والهجمات الدلالية</td></tr>
+</tbody>
+</table></div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU5 -->
+<h2 id="lu5"><span class="num">05</span><span class="htext">مفاهيم الاختراق وفئات الهاكرز</span></h2>
+<p>الاختراق (Hacking) في أمن الحاسوب يعني استغلال ثغرات النظام وتجاوز ضوابط الأمان للوصول غير المصرَّح به أو غير المناسب لموارد النظام — بتعديل ميزات نظام أو تطبيق لتحقيق هدف خارج الغرض الأصلي من صنعه. الهاكر فرد ذكي بمهارات حاسوبية ممتازة وقدرة على ابتكار واستكشاف برمجيات وأجهزة الحاسوب.</p>
+
+<h3>فئات الهاكرز حسب الدوافع</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>الفئة</th><th>الدافع والنشاط</th></tr></thead>
+<tbody>
+<tr><td>Script Kiddies</td><td>مهاجمون غير ماهرين بيستخدموا سكريبتات وأدوات جاهزة طوّرها هاكرز حقيقيون — التركيز على الكمية مش الجودة</td></tr>
+<tr><td>White Hat Hackers</td><td>يستخدموا مهاراتهم لأغراض دفاعية بتفويض من صاحب النظام (مختبرو الاختراق)</td></tr>
+<tr><td>Black Hat Hackers</td><td>مهارات حاسوبية استثنائية لأغراض غير قانونية أو خبيثة — يُعرَفوا أيضًا بـ Crackers</td></tr>
+<tr><td>Gray Hat Hackers</td><td>يشتغلوا هجوميًا ودفاعيًا في أوقات مختلفة — ممكن يساعدوا هاكرز لإيجاد ثغرات، وفي نفس الوقت يساعدوا مزوّدين لتحسين منتجاتهم</td></tr>
+<tr><td>Hacktivists</td><td>اختراق أنظمة حكومية أو شركات كشكل احتجاج لرفع الوعي بأجندات اجتماعية أو سياسية</td></tr>
+<tr><td>State-Sponsored Hackers</td><td>موظَّفون من حكومة لاختراق أنظمة حكومات/جيوش أخرى — جمع استخبارات أو معلومات حساسة</td></tr>
+<tr><td>Cyber Terrorists</td><td>مدفوعون بمعتقدات دينية أو سياسية لخلق خوف من اضطراب واسع في الشبكات</td></tr>
+<tr><td>Corporate (Industrial) Spies</td><td>تجسّس على مؤسسات منافسة لسرقة مخططات وصيغ وتصاميم منتجات وأسرار تجارية — يستخدموا APTs ويمكثوا بدون اكتشاف لسنوات</td></tr>
+<tr><td>Blue Hat Hackers</td><td>محترفون بعقد مع المؤسسات لتقييم الأنظمة والبرمجيات بحثًا عن ثغرات</td></tr>
+<tr><td>Red Hat Hackers</td><td>تكتيكات عدوانية زي Black Hats لكن بهدف تحييد التهديدات قبل حدوث ضرر — يتخطّوا الدفاع ليدمّروا نشاط Black Hat فعليًا</td></tr>
+<tr><td>Green Hat Hackers</td><td>مدفوعون بالرغبة في أن يصبحوا محترفين في الأمن السيبراني — بيدرسوا الاختراق الأخلاقي</td></tr>
+<tr><td>Hacker Teams</td><td>تحالف هاكرز ماهرين بموارد وتمويل خاص، يشتغلوا سوا على أبحاث تقنيات متطوّرة</td></tr>
+<tr><td>Criminal Syndicates</td><td>مجموعات بأنشطة إجرامية منظَّمة ومستمرّة، صعبة التحديد لاستهدافهم ضحايا من ولايات قضائية مختلفة</td></tr>
+<tr><td>Organized Hackers</td><td>مجموعات بهيكل هرمي (قادة وعمّال)، بيستخدموا أجهزة مُؤجَّرة أو Botnets لسرقة أموال وبيع معلومات</td></tr>
+</tbody>
+</table></div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU6 -->
+<h2 id="lu6"><span class="num">06</span><span class="htext">مفاهيم الاختراق الأخلاقي ونطاقه</span></h2>
+<p>المخترق الأخلاقي بيتبع نفس خطوات المخترق الخبيث للوصول للنظام والحفاظ عليه — الخطوات متشابهة بغضّ النظر عن نيّة الهاكر، والفرق في الهدف والنتيجة.</p>
+
+<h3>ليه الاختراق الأخلاقي ضروري</h3>
+<ul>
+<li>منع الهاكرز من الوصول لأنظمة معلومات المؤسسة</li>
+<li>اكتشاف ثغرات الأنظمة واستكشاف إمكانية استغلالها كمخاطر</li>
+<li>تحليل وتقوية الوضع الأمني للمؤسسة — السياسات، بنية حماية الشبكة، ممارسات المستخدم النهائي</li>
+<li>توفير إجراءات وقائية كافية لتجنّب الاختراقات الأمنية وحماية بيانات العملاء</li>
+<li>تعزيز الوعي الأمني على كل مستويات العمل</li>
+</ul>
+
+<h3>الأسئلة الثلاثة الأساسية</h3>
+<ol>
+<li><strong>إيه اللي المهاجم يقدر يشوفه على النظام الهدف؟</strong> — المخترق الأخلاقي لازم يفكّر زي المهاجم في مراحل الاستطلاع والفحص</li>
+<li><strong>إيه اللي المتسلّل يقدر يعمله بالمعلومة دي؟</strong> — لازم يميّز نيّة وغرض الهجوم لتحديد الإجراءات المضادة المناسبة</li>
+<li><strong>هل محاولات المهاجمين ملحوظة على الأنظمة الهدف؟</strong> — أحيانًا المهاجمون بيحاولوا لأسابيع قبل ما يتصرّفوا — لازم المخترق الأخلاقي يلاحظ ويوقف الهجوم أثناء مراحل الاستطلاع وإخفاء الأثر</li>
+</ol>
+
+<h3>نطاق وقيود الاختراق الأخلاقي</h3>
+<p>عملية تقييم أمني منظَّمة، غالبًا جزء من اختبار اختراق أو تدقيق أمني — مكوّن حاسم من تقييم المخاطر، التدقيق، مكافحة الاحتيال، وأفضل ممارسات أمن أنظمة المعلومات.</p>
+<div class="callout warning">
+<div class="callout-label">قواعد إلزامية للمخترق الأخلاقي</div>
+<ul>
+<li>الحصول على تفويض من العميل وعقد موقَّع يسمح بإجراء الاختبار</li>
+<li>الحفاظ على السرّية والالتزام باتفاقية عدم إفصاح (NDA) للمعلومات السرّية المكشوفة أثناء الاختبار</li>
+<li>إجراء الاختبار حتى الحدود المتَّفق عليها بالضبط — مثلًا هجمات DoS لازم تُنفَّذ بس لو مُتَّفق عليها مسبقًا</li>
+</ul>
+</div>
+
+<h3>خطوات تدقيق أمني منظَّم</h3>
+<ol>
+<li>التحدّث مع العميل ومناقشة الاحتياجات اللي لازم تُعالَج أثناء الاختبار</li>
+<li>تحضير وتوقيع مستندات NDA</li>
+<li>تنظيم فريق الاختراق الأخلاقي وإعداد جدول الاختبار</li>
+<li>إجراء الاختبار</li>
+<li>تحليل نتائج الاختبار وإعداد تقرير</li>
+<li>عرض نتائج التقرير على العميل</li>
+</ol>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU7 -->
+<h2 id="lu7"><span class="num">07</span><span class="htext">مهارات المخترق الأخلاقي والذكاء الاصطناعي</span></h2>
+
+<div class="method-grid">
+<div class="method-card"><span class="mnum">تقنية</span><div class="mtitle">مهارات فنية</div><div class="mdesc">معرفة عميقة بأنظمة التشغيل الرئيسية (Windows، Unix، Linux، Mac)، مفاهيم الشبكات وتقنياتها، خبرة تقنية عميقة، معرفة بمجالات الأمان، ومعرفة فنية عالية لإطلاق هجمات متطوّرة.</div></div>
+<div class="method-card"><span class="mnum">غير تقنية</span><div class="mtitle">مهارات غير فنية</div><div class="mdesc">القدرة على التعلّم السريع والتكيّف مع التقنيات الجديدة، أخلاقيات عمل قوية ومهارات حل مشاكل وتواصل جيدة، الالتزام بسياسات أمان المؤسسة، والوعي بالمعايير والقوانين المحلية.</div></div>
+</div>
+
+<h3>الاختراق الأخلاقي المدعوم بالذكاء الاصطناعي</h3>
+<p>نهج حديث للأمن السيبراني بيستخدم تقنيات الذكاء الاصطناعي لتعزيز قدرات المخترقين الأخلاقيين — الاختراق الأخلاقي بيبقى أكثر كفاءة وقابلية للتوسّع وفعالية لما يتم دمجه مع AI.</p>
+
+<h3>فوائد الاعتماد على الذكاء الاصطناعي</h3>
+<div class="goals-grid">
+  <div class="goal-card"><span class="gi">1</span><span><strong>الكفاءة</strong> — معالجة كميات كبيرة من البيانات بسرعة</span></div>
+  <div class="goal-card"><span class="gi">2</span><span><strong>الدقة</strong> — تقليل الخطأ البشري في تقييمات الثغرات</span></div>
+  <div class="goal-card"><span class="gi">3</span><span><strong>قابلية التوسّع</strong> — التعامل مع تعقيد وحجم التهديدات المتزايد</span></div>
+  <div class="goal-card"><span class="gi">4</span><span><strong>فعالية التكلفة</strong> — الأتمتة والكفاءة بتقلّل تكاليف الأمن السيبراني الإجمالية</span></div>
+</div>
+
+<h3>كيف يساعد الاختراق الأخلاقي المدعوم بـ AI</h3>
+<ul>
+<li>أتمتة المهام المتكرّرة (فحص الثغرات، مراقبة الترافيك، تحديد التهديدات المحتملة)</li>
+<li>التحليل التنبؤي — توقّع الاختراقات الأمنية المحتملة بتحليل الأنماط والشذوذ</li>
+<li>كشف تهديدات متقدّم (ثغرات Zero-Day) عبر التعلّم العميق وتقنيات كشف الشذوذ</li>
+<li>اتخاذ قرار محسَّن، تعلّم تكيّفي، تقارير محسَّنة، محاكاة واختبار هجمات واقعية</li>
+<li>قابلية توسّع للبيئات الكبيرة، مراقبة مستمرّة، وآليات دفاع تكيّفية تتحدّث مع التهديدات الناشئة</li>
+</ul>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU8 -->
+<h2 id="lu8"><span class="num">08</span><span class="htext">أدوات ChatGPT للمخترقين الأخلاقيين</span></h2>
+<p>أدوات مدعومة بنموذج ChatGPT من OpenAI بتغيّر مفهوم الاختراق الأخلاقي — بدمج معالجة اللغة الطبيعية (NLP) والتعلّم الآلي، بتساعد المخترقين الأخلاقيين في جوانب متعدّدة من عملهم.</p>
+
+<h3>ميزات رئيسية</h3>
+<ul>
+<li><strong>جمع البيانات والإعداد:</strong> تجميع بيانات من مصادر متنوّعة (سوشيال ميديا، منتديات، مواقع، قواعد بيانات عامة) لتحسين تحديد الثغرات</li>
+<li><strong>مساعدة لحظية وأتمتة المهام:</strong> أتمتة فحص الثغرات وتحليل التهديدات والتقارير</li>
+<li><strong>التكامل مع قواعد استخبارات التهديدات:</strong> سياق إضافي وتحليل أدق للتهديدات المكتشَفة</li>
+</ul>
+
+<div class="table-wrap"><table>
+<thead><tr><th>الأداة</th><th>الوظيفة</th></tr></thead>
+<tbody>
+<tr><td>ShellGPT</td><td>توليد وإكمال أوامر Shell، كتابة Snippets كود آمن، توثيق الكود</td></tr>
+<tr><td>AutoGPT</td><td>أتمتة تنفيذ المهام ومعالجة البيانات، توليد رؤى قابلة للتنفيذ</td></tr>
+<tr><td>WormGPT</td><td>أتمتة توليد سكريبتات وحمولات شبيهة بالديدان لأغراض الاختبار والدفاع</td></tr>
+<tr><td>ChatGPT with DAN Prompt</td><td>نسخة مخصَّصة تستخدم Prompt "Do Anything Now" لتوسيع القدرات</td></tr>
+<tr><td>FreedomGPT</td><td>وصول غير مقيَّد لـ AI، يهدف لتجاوز فلاتر المحتوى التقليدية</td></tr>
+<tr><td>FraudGPT</td><td>كشف ومنع الأنشطة الاحتيالية بتحليل الأنماط والسلوكيات المشبوهة</td></tr>
+<tr><td>ChaosGPT</td><td>محاكاة وفهم السلوكيات الفوضوية وغير المتوقَّعة</td></tr>
+<tr><td>PoisonGPT</td><td>دراسة تسميم نماذج AI (Model Poisoning) وتطوير دفاعات ضدها</td></tr>
+</tbody>
+</table></div>
+
+<h3>أدوات ChatGPT إضافية للاختراق</h3>
+<p>HackerGPT (مساعدة لحظية لاكتشاف الثغرات)، BurpGPT (تكامل مع Burp Suite لتقليل False Positives)، BugBountyGPT (مُصمَّم لصائدي الثغرات)، PentestGPT (أتمتة جوانب اختبار الاختراق)، GPT White Hack، CybGPT، BugHunterGPT، Hacking APIs GPT، h4ckGPT، HackerNewsGPT، وEthical Hacker GPT — كل دي أدوات بتعزّز قدرات المخترقين الأخلاقيين عبر الأتمتة والرؤى اللحظية.</p>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU9 -->
+<h2 id="lu9"><span class="num">09</span><span class="htext">منهجية CEH لاختبار الاختراق</span></h2>
+<p>إطار عمل CEH من EC-Council بيحدّد العملية خطوة بخطوة لتنفيذ الاختراق الأخلاقي — بتتبع نفس عملية المهاجم، والفرق الوحيد في الأهداف والاستراتيجيات.</p>
+
+<div class="step-track">
+<div class="step-item">
+<div class="step-num">1</div>
+<div class="step-title">Reconnaissance (الاستطلاع)</div>
+<div class="step-body"><p>مرحلة تحضيرية — المهاجم بيجمع أكبر قدر من المعلومات عن الهدف قبل إطلاق الهجوم: نطاق IP، Namespace، الموظفين. الموقع الإلكتروني للمؤسسة ممكن يكشف سير ذاتية للموظفين تُستخدَم في الهندسة الاجتماعية، واستعلامات Whois بتكشف شبكات ونطاقات مرتبطة بالمؤسسة.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">2</div>
+<div class="step-title">Scanning (الفحص)</div>
+<div class="step-body"><p>تحديد المضيفين النشطين والمنافذ المفتوحة والخدمات غير الضرورية المفعَّلة. امتداد منطقي للاستطلاع الفعّال، لكن بفحص أعمق — غالبًا مراحل الاستطلاع والفحص متداخلة ويصعب فصلها.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">3</div>
+<div class="step-title">Enumeration & Vulnerability Assessment (التعداد وتقييم الثغرات)</div>
+<div class="step-body"><p>اتصالات فعّالة مع النظام الهدف أو استعلامات مباشرة لجمع قوائم مستخدمين، جداول توجيه، ثغرات، مستخدمين/مجموعات مشتركة، وتطبيقات وBanners. تقييم الثغرات بيفحص قدرة النظام على الصمود أمام الهجوم.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">4</div>
+<div class="step-title">Gaining Access & Escalating Privileges (الوصول وتصعيد الصلاحيات)</div>
+<div class="step-body"><p>الاختراق الفعلي بيحدث هنا — استخدام تقنيات زي كسر كلمات المرور واستغلال Buffer Overflows للوصول للنظام. بعدها، تصعيد الصلاحيات من حساب منخفض لمستوى أدمن لتنفيذ عمليات محمية.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">5</div>
+<div class="step-title">Maintaining Access (الحفاظ على الوصول)</div>
+<div class="step-body"><p>محاولة الاحتفاظ بملكية النظام — بمجرد الوصول بصلاحيات أدمن/Root، المهاجم يقدر يستخدم النظام وموارده بحرّية، سواء كنقطة انطلاق لفحص واستغلال أنظمة أخرى أو الاستمرار بصمت.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">6</div>
+<div class="step-title">Clearing Tracks (إخفاء الأثر)</div>
+<div class="step-body"><p>محو كل أدلة الاختراق الأمني من النظام — تعديل أو حذف السجلات باستخدام أدوات محو السجلات لإزالة كل أثر لوجود المهاجم.</p></div>
+</div>
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU10 -->
+<h2 id="lu10"><span class="num">10</span><span class="htext">منهجية Cyber Kill Chain</span></h2>
+<p>مكوّن من الدفاع المدفوع بالاستخبارات لتحديد ومنع أنشطة الاختراق الخبيثة — بتساعد المختصين الأمنيين في تحديد الخطوات اللي الخصوم بيتبعوها لتحقيق أهدافهم.</p>
+
+<div class="step-track">
+<div class="step-item">
+<div class="step-num">1</div>
+<div class="step-title">Reconnaissance</div>
+<div class="step-body"><p>جمع أكبر قدر من المعلومات عن الهدف — معلومات عامة من الإنترنت، معلومات شبكة ونظام ومعلومات تنظيمية. البحث عن منافذ وخدمات مفتوحة وثغرات وبيانات اعتماد لتسهيل الوصول للباب الخلفي.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">2</div>
+<div class="step-title">Weaponization</div>
+<div class="step-body"><p>تحليل البيانات المُجمَّعة لتحديد الثغرات والتقنيات القابلة للاستغلال، واختيار أو إنشاء حمولة خبيثة مخصَّصة (برنامج وصول عن بُعد) باستخدام استغلال وباب خلفي.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">3</div>
+<div class="step-title">Delivery</div>
+<div class="step-body"><p>نقل الحمولة للضحية المستهدَفة — عبر مرفق بريد إلكتروني، رابط خبيث، تطبيق ويب عرضة، أو USB. مرحلة حاسمة بتقيس فعالية الدفاعات المُطبَّقة من المؤسسة الهدف.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">4</div>
+<div class="step-title">Exploitation</div>
+<div class="step-body"><p>بعد نقل السلاح، الاستغلال بيشغّل الكود الخبيث لاستغلال ثغرة في نظام التشغيل أو التطبيق أو السيرفر على النظام الهدف.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">5</div>
+<div class="step-title">Installation</div>
+<div class="step-body"><p>تحميل وتثبيت برمجيات خبيثة إضافية على النظام الهدف للحفاظ على الوصول لفترة طويلة — أبواب خلفية، وصول عن بُعد، وطرق لإبقاء الباب الخلفي مخفيًا شغّالًا.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">6</div>
+<div class="step-title">Command & Control</div>
+<div class="step-body"><p>الخصم بيتحكّم في نظام الضحية من موقع بعيد عبر قناة تواصل مشفَّرة — يقدر يسرق أو يحذف بيانات ويطلق هجمات إضافية.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">7</div>
+<div class="step-title">Actions on Objectives</div>
+<div class="step-body"><p>الخصم بيحقّق أهدافه النهائية — الوصول لبيانات سرّية، تعطيل الخدمات أو الشبكة، أو تدمير القدرة التشغيلية للهدف. ممكن يستخدم ده كنقطة انطلاق لهجمات تانية.</p></div>
+</div>
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU11 -->
+<h2 id="lu11"><span class="num">11</span><span class="htext">TTPs وتحديد سلوك الخصم</span></h2>
+<p>فهم المؤسسات لـ TTPs بيمكّنها من إيقاف الهجمات في مراحلها الأولى، حاميةً الشبكة من أضرار واسعة.</p>
+<ul>
+<li><strong>Tactics:</strong> طريقة عمل فاعل التهديد خلال مراحل الهجوم المختلفة — جمع معلومات، تصعيد صلاحيات، حركة جانبية، آليات استمرارية. مجموعات APT عادة بتعتمد على تكتيكات ثابتة، لكن بتتكيّف أحيانًا حسب الظروف</li>
+<li><strong>Techniques:</strong> الأساليب اللي فاعلو التهديد بيستخدموها أثناء التنفيذ — استغلال أولي، إعداد قنوات C2، الوصول للبنية التحتية، إخفاء أثر التسريب</li>
+<li><strong>Procedures:</strong> تسلسل إجراءات لتنفيذ خطوات مختلفة من دورة حياة الهجوم — فاعل تهديد متقدّم بيستخدم إجراءات أكثر تعقيدًا لتحقيق نفس النتيجة الوسيطة</li>
+</ul>
+
+<h3>تحديد سلوك الخصم (Adversary Behavioral Identification)</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>السلوك</th><th>وصف وكيفية الرصد</th></tr></thead>
+<tbody>
+<tr><td>Internal Reconnaissance</td><td>تعداد الأنظمة والعمليات داخل الشبكة بعد الاختراق — يُرصَد بمراقبة أوامر غير معتادة في Batch/PowerShell</td></tr>
+<tr><td>استخدام PowerShell</td><td>أتمتة تسريب البيانات وشنّ هجمات — يُرصَد عبر Transcript Logs أو Windows Event Logs</td></tr>
+<tr><td>نشاط Proxy غير محدَّد</td><td>عدة نطاقات تشاور لنفس المضيف للتبديل السريع وتجنّب الاكتشاف</td></tr>
+<tr><td>استخدام CLI</td><td>التفاعل مع النظام، تصفّح الملفات، إنشاء حسابات — يُرصَد عبر فحص سجلات Process ID والملفات المحمَّلة</td></tr>
+<tr><td>HTTP User Agent</td><td>تعديل حقل User Agent للتواصل مع النظام المخترَق</td></tr>
+<tr><td>Command & Control Server</td><td>تواصل مشفَّر مع النظام المخترَق — يُرصَد بتتبّع اتصالات صادرة ومنافذ غير مرغوبة</td></tr>
+<tr><td>DNS Tunneling</td><td>إخفاء ترافيك خبيث جوه ترافيك DNS شرعي للتواصل مع C2 وتجاوز الضوابط</td></tr>
+<tr><td>Web Shell</td><td>التلاعب في سيرفر الويب بإنشاء Shell داخل موقع للوصول عن بُعد</td></tr>
+<tr><td>Data Staging</td><td>تجميع ودمج أكبر قدر من البيانات الحساسة قبل التسريب أو التدمير</td></tr>
+</tbody>
+</table></div>
+
+<div class="callout note">
+<div class="callout-label">مؤشرات الاختراق (IoCs)</div>
+<p>ترافيك شبكي غير معتاد، نشاط غير عادي عبر حساب مميَّز، شذوذ جغرافي، محاولات دخول فاشلة متعدّدة، زيادة حجم قراءة قاعدة البيانات، حجم استجابة HTML كبير، طلبات متكرّرة لنفس الملف، ترافيك منفذ-تطبيق غير متطابق، تغييرات مشبوهة في السجل أو ملفات النظام.</p>
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU12 -->
+<h2 id="lu12"><span class="num">12</span><span class="htext">MITRE ATT&CK ونموذج Diamond</span></h2>
+
+<h3>MITRE ATT&CK Framework</h3>
+<p>قاعدة معرفة عالمية الوصول لتكتيكات وتقنيات الخصوم مبنية على ملاحظات واقعية — تُستخدَم كأساس لتطوير نماذج ومنهجيات تهديدات محدَّدة في القطاع الخاص والحكومي ومجتمع منتجات/خدمات الأمن السيبراني. تتكوّن من ثلاث مجموعات: Enterprise وMobile وPRE-ATT&CK. إطار Enterprise يحتوي 14 فئة تكتيكات مشتقّة من المراحل اللاحقة لـ Cyber Kill Chain السباعية.</p>
+<p>تكتيكات ATT&CK for Enterprise: Reconnaissance، Resource Development، Initial Access، Execution، Persistence، Privilege Escalation، Defense Evasion، Credential Access، Discovery، Lateral Movement، Collection، Command and Control، Exfiltration، Impact.</p>
+
+<h3>Diamond Model of Intrusion Analysis</h3>
+<p>إطار لتحديد مجموعات الأحداث المترابطة على أي من أنظمة المؤسسة — بيتحكّم في العنصر الذري الحيوي اللي بيحدث في أي نشاط اختراق (يُسمى Diamond Event). باستخدام النموذج ده، ممكن تطوير نهج معالجة فعّال وزيادة الكفاءة التحليلية.</p>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU13 -->
+<h2 id="lu13"><span class="num">13</span><span class="htext">ضوابط أمن المعلومات</span></h2>
+<p>ضوابط أمن المعلومات بتمنع حدوث أحداث غير مرغوبة وتقلّل المخاطر على أصول معلومات المؤسسة. المفاهيم الأساسية: السرّية والسلامة والتوافر (للمعلومات)، والمصادقة والتفويض وعدم الإنكار (للأشخاص الوصولين للمعلومة).</p>
+
+<h3>ضمان المعلومات (Information Assurance)</h3>
+<p>ضمان سلامة وتوافر وسرّية وأصالة المعلومات وأنظمة المعلومات أثناء الاستخدام والمعالجة والتخزين والنقل — يُحقَّق عبر ضوابط فيزيائية وتقنية وإدارية. العمليات المساعدة: وضع سياسات محلية، تصميم استراتيجية مصادقة شبكة ومستخدم، تحديد ثغرات وتهديدات الشبكة، تحديد مشاكل ومتطلبات موارد، وتطبيق ضوابط ضمان معلومات مناسبة.</p>
+
+<h3>الاستراتيجية الأمنية التكيّفية (Adaptive Security Strategy)</h3>
+<div class="method-grid">
+<div class="method-card"><span class="mnum">01</span><div class="mtitle">Protection (الحماية)</div><div class="mdesc">إجراءات مضادة مسبقة للقضاء على الثغرات الممكنة — سياسات أمنية، أمان فيزيائي، أمان مضيف، جدار ناري، IDS.</div></div>
+<div class="method-card"><span class="mnum">02</span><div class="mtitle">Detection (الكشف)</div><div class="mdesc">تقييم الشبكة بحثًا عن شذوذ (هجمات، أضرار، محاولات وصول غير مصرَّح) وتحديد مواقعها — مراقبة منتظمة لترافيك الشبكة.</div></div>
+<div class="method-card"><span class="mnum">03</span><div class="mtitle">Response (الاستجابة)</div><div class="mdesc">تحديد الحوادث وأسبابها الجذرية والتخطيط لإجراءات معالجتها — استجابة للحوادث، تحقيق، احتواء، تخفيف الأثر، استئصال.</div></div>
+<div class="method-card"><span class="mnum">04</span><div class="mtitle">Prediction (التنبّؤ)</div><div class="mdesc">تحديد الهجمات والأهداف والأساليب المحتملة قبل تحوّلها لهجوم فعلي — تقييم مخاطر وثغرات، تحليل سطح الهجوم، استهلاك بيانات استخبارات التهديدات.</div></div>
+</div>
+
+<h3>الدفاع المتعمّق (Defense-in-Depth)</h3>
+<p>استراتيجية أمنية بتستخدم طبقات حماية متعدّدة عبر نظام المعلومات بأكمله — مبنية على المبدأ العسكري إن هزيمة نظام دفاع معقّد متعدّد الطبقات أصعب بكتير من اختراق حاجز واحد. لو المهاجم وصل لنظام، الدفاع المتعمّق بيقلّل التأثير السلبي ويدّي المسؤولين وقت لنشر إجراءات مضادة جديدة أو محدَّثة.</p>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU14 -->
+<h2 id="lu14"><span class="num">14</span><span class="htext">إدارة المخاطر (Risk Management)</span></h2>
+
+<h3>تعريف الخطر (Risk)</h3>
+<blockquote><p><strong>الخطر = التهديد × الثغرة × قيمة الأصل</strong><br><strong>مستوى الخطر = النتيجة × الاحتمالية</strong></p></blockquote>
+<p>درجة عدم اليقين أو توقّع الضرر المحتمل اللي حدث سلبي ممكن يسبّبه للنظام أو موارده — احتمالية حدوث تهديد أو حدث هيضر بالمؤسسة، سواء من التزامات داخلية أو خارجية.</p>
+
+<h3>مصفوفة المخاطر (Risk Matrix)</h3>
+<p>تمثيل بياني لشدّة الخطر ومدى قدرة الضوابط على التخفيف منه — تربط احتمالية حدوث الخطر بعواقبه/تأثيره، وتساعد الإدارة في اتخاذ القرار. كل مؤسسة لازم تبني مصفوفة خاصة بيها حتى وإن وُجدت مصفوفات قياسية.</p>
+
+<h3>مراحل إدارة المخاطر الأربعة</h3>
+<div class="step-track">
+<div class="step-item">
+<div class="step-num">1</div>
+<div class="step-title">Risk Identification</div>
+<div class="step-body"><p>تحديد المخاطر — مصادرها وأسبابها وعواقبها الداخلية والخارجية — قبل ما تسبّب ضرر. العملية بتعتمد على مهارات الفريق وبتختلف من مؤسسة لأخرى.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">2</div>
+<div class="step-title">Risk Assessment</div>
+<div class="step-body"><p>تقييم مخاطر المؤسسة وتقدير احتمالية حدوثها وتأثيرها — عملية تكرارية مستمرّة بترتّب أولويات التخفيف والتنفيذ.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">3</div>
+<div class="step-title">Risk Treatment</div>
+<div class="step-body"><p>اختيار وتطبيق ضوابط مناسبة على المخاطر المحدَّدة لتعديلها حسب مستوى خطورتها — القرارات مبنية على نتائج تقييم المخاطر.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">4</div>
+<div class="step-title">Risk Tracking and Review</div>
+<div class="step-body"><p>تتبّع ومراجعة فعّالية التحديد والتقييم والضوابط المُطبَّقة — فحوصات منتظمة للسياسات والمعايير لتحديد فرص التحسين وضمان الفهم السليم للإجراءات.</p></div>
+</div>
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU15 -->
+<h2 id="lu15"><span class="num">15</span><span class="htext">استخبارات التهديدات السيبرانية</span></h2>
+<p>التهديد هو إمكانية محاولة خبيثة للإضرار أو تعطيل شبكة أو نظام حاسوبي — حدث غير مرغوب بيقدر يضرّ ويعطّل الأنشطة التشغيلية والوظيفية للمؤسسة. وجود التهديد ممكن يكون عرضي أو متعمَّد.</p>
+
+<div class="table-wrap"><table>
+<thead><tr><th>النوع</th><th>المستهلِك</th><th>المحتوى</th></tr></thead>
+<tbody>
+<tr><td>Strategic</td><td>الإدارة العليا وCISO</td><td>وضع أمني عام، تأثير مالي للأنشطة السيبرانية، اتجاهات الهجمات، منسوبية الاختراقات، مشهد التهديدات حسب القطاع</td></tr>
+<tr><td>Tactical</td><td>مدراء الأمن، فرق NOC، الإداريون</td><td>معلومات TTPs المستخدَمة من فاعلي التهديد — تقارير حملات، برمجيات خبيثة، تقارير حوادث، استخبارات بشرية</td></tr>
+<tr><td>Operational</td><td>فرق IR والطب الشرعي</td><td>معلومات سياقية عن أحداث وحوادث أمنية محدَّدة — منهجيات المهاجمين ونشاط خبيث سابق</td></tr>
+<tr><td>Technical</td><td>فرق SOC وIR</td><td>موارد المهاجم (قنوات C2، أدوات) — عمر قصير، تركيز على IoC محدَّد (IPs، نطاقات، Hashes)</td></tr>
+</tbody>
+</table></div>
+
+<h3>دورة حياة استخبارات التهديدات</h3>
+<ol>
+<li><strong>Planning & Direction:</strong> وضع خطة بناءً على متطلبات الاستخبارات الاستراتيجية وترتيب أولويات المعلومات</li>
+<li><strong>Collection:</strong> جمع الاستخبارات المطلوبة عبر HUMINT، IMINT، MASINT، SIGINT، OSINT، IoCs وأطراف ثالثة</li>
+<li><strong>Processing & Exploitation:</strong> تحويل البيانات الخام لمعلومات مفيدة — هيكلة، فك تشفير، ترجمة، تنقية، ترابط، تجميع</li>
+<li><strong>Analysis & Production:</strong> تحليل موضوعي ودقيق وقابل للتنفيذ باستخدام الاستنباط والاستقراء والاستدلال والمنهج العلمي</li>
+<li><strong>Dissemination & Integration:</strong> توزيع المعلومات المُحلَّلة للمستهلكين المقصودين — آليًا أو يدويًا</li>
+</ol>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU16 -->
+<h2 id="lu16"><span class="num">16</span><span class="htext">نمذجة التهديدات (Threat Modeling)</span></h2>
+<p>نهج تقييم مخاطر لتحليل أمان تطبيق عبر جمع وتنظيم وتحليل كل المعلومات المؤثّرة عليه — ركائزه الأساسية: فهم منظور الخصم، توصيف أمان النظام، وتحديد التهديدات. كل تطبيق لازم يكون له نموذج تهديدات موثَّق يتجدّد مع تطوّر التطبيق.</p>
+
+<div class="step-track">
+<div class="step-item">
+<div class="step-num">1</div>
+<div class="step-title">تحديد الأهداف الأمنية</div>
+<div class="step-body"><p>الأهداف المتعلّقة بالسرّية والسلامة والتوافر — إيه البيانات اللي محتاجة حماية؟ فيه متطلبات امتثال؟ متطلبات جودة خدمة محدَّدة؟ أصول غير ملموسة لحمايتها؟</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">2</div>
+<div class="step-title">نظرة عامة على التطبيق</div>
+<div class="step-body"><p>تحديد المكوّنات وتدفّقات البيانات وحدود الثقة، والتقنيات المستخدَمة (أنظمة تشغيل، سيرفرات ويب/قواعد بيانات، لغات تطوير)، وآليات الأمان المُطبَّقة (تحقّق المدخلات، مصادقة وتفويض، إدارة الجلسات، التشفير).</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">3</div>
+<div class="step-title">تفكيك التطبيق</div>
+<div class="step-body"><p>تحديد حدود الثقة وتدفّقات البيانات ونقاط الدخول والخروج — بيسهّل إيجاد ثغرات وتهديدات أكثر تفصيلًا وملاءمة.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">4</div>
+<div class="step-title">تحديد التهديدات</div>
+<div class="step-body"><p>تحديد التهديدات ذات الصلة بالسيناريو والسياق، بجمع فرق التطوير والاختبار، باستخدام قائمة تهديدات شائعة مصنَّفة حسب فئة ثغرة التطبيق.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">5</div>
+<div class="step-title">تحديد الثغرات</div>
+<div class="step-body"><p>تحديد نقاط الضعف المرتبطة بالتهديدات المكتشَفة باستخدام فئات الثغرات، وإصلاحها مسبقًا لمنع المتسلّلين.</p></div>
+</div>
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU17 -->
+<h2 id="lu17"><span class="num">17</span><span class="htext">إدارة الحوادث والاستجابة لها</span></h2>
+<p>إدارة الحوادث (Incident Management) مجموعة عمليات محدَّدة لتحديد وتحليل وترتيب أولوية وحل الحوادث الأمنية لإعادة النظام لخدمة طبيعية بأسرع وقت ومنع تكرار الحادثة.</p>
+
+<h3>خطوات الاستجابة للحوادث (IH&R)</h3>
+<div class="step-track">
+<div class="step-item">
+<div class="step-num">1</div>
+<div class="step-title">Preparation</div>
+<div class="step-body"><p>تدقيق الموارد والأصول، تحديد القواعد والسياسات، بناء وتدريب فريق الاستجابة، وجمع الأدوات المطلوبة.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">2</div>
+<div class="step-title">Incident Recording and Assignment</div>
+<div class="step-body"><p>التبليغ والتسجيل الأولي للحادثة — تحديد خطط تواصل واضحة للموظفين وطرق إبلاغ الدعم التقني.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">3</div>
+<div class="step-title">Incident Triage</div>
+<div class="step-body"><p>تحليل وتصنيف وترتيب أولوية الحوادث المحدَّدة — تحديد نوع الهجوم وشدّته وهدفه وتأثيره وطريقة انتشاره والثغرات المستغَلّة.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">4</div>
+<div class="step-title">Notification</div>
+<div class="step-body"><p>إبلاغ أصحاب المصلحة (الإدارة، موردين خارجيين، عملاء) بالحادثة المحدَّدة.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">5</div>
+<div class="step-title">Containment</div>
+<div class="step-body"><p>منع انتشار العدوى لأصول تنظيمية أخرى، ومنع أي أضرار إضافية.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">6</div>
+<div class="step-title">Evidence Gathering and Forensic Analysis</div>
+<div class="step-body"><p>جمع كل الأدلة الممكنة وتسليمها لقسم الطب الشرعي — كشف أسلوب الهجوم والثغرات المستغَلّة والأجهزة المصابة.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">7</div>
+<div class="step-title">Eradication</div>
+<div class="step-body"><p>إزالة السبب الجذري للحادثة وإغلاق كل متجهات الهجوم لمنع تكرار حوادث مشابهة.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">8</div>
+<div class="step-title">Recovery</div>
+<div class="step-body"><p>استعادة الأنظمة والخدمات والموارد والبيانات المتأثّرة، مع ضمان عدم تعطيل خدمات أو أعمال المؤسسة.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">9</div>
+<div class="step-title">Post-Incident Activities</div>
+<div class="step-body"><p>مراجعة نهائية تشمل توثيق الحادثة، تقييم تأثيرها، مراجعة وتعديل السياسات، إغلاق التحقيق، والإفصاح عن الحادثة.</p></div>
+</div>
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU18 -->
+<h2 id="lu18"><span class="num">18</span><span class="htext">دور الذكاء الاصطناعي في الأمن السيبراني</span></h2>
+
+<h3>أنواع تصنيف التعلّم الآلي</h3>
+<div class="method-grid">
+<div class="method-card"><span class="mnum">Supervised</span><div class="mtitle">تعلّم خاضع للإشراف</div><div class="mdesc">بيانات تدريب مُصنَّفة — يتفرّع لـ Classification (فئات منفصلة تمامًا) وRegression (بيانات مستمرّة غير منفصلة).</div></div>
+<div class="method-card"><span class="mnum">Unsupervised</span><div class="mtitle">تعلّم غير خاضع للإشراف</div><div class="mdesc">بيانات غير مُصنَّفة بدون توجيه — يتفرّع لـ Clustering (تقسيم البيانات حسب التشابه) وDimensionality Reduction (تقليل أبعاد البيانات).</div></div>
+</div>
+
+<h3>طرق حماية AI/ML من الهجمات السيبرانية</h3>
+<ul>
+<li><strong>حماية كلمات المرور والمصادقة:</strong> تحسين التحقق البيومتري والتعرّف على الوجه بتتبّع الارتباطات الرئيسية والأنماط</li>
+<li><strong>كشف ومنع التصيّد:</strong> فحص وتحديد رسائل التصيّد بسرعة أكبر من البشر، والتمييز بين المواقع الخبيثة والشرعية</li>
+<li><strong>كشف التهديدات:</strong> تحليل منطقي مستمر للبيانات لإعلام الإداريين بالتهديدات الوشيكة قبل اختراق الأنظمة</li>
+<li><strong>إدارة الثغرات:</strong> فحص ديناميكي مستمر وتنبيه الإداريين قبل استغلال الثغرات، مع توقّع متى وكيف ممكن تحدث</li>
+<li><strong>تحليل سلوكي (Behavioral Analytics):</strong> توليد أنماط استخدام محدَّدة للمستخدمين وتنبيه فوري عند أي شذوذ أو نشاط مشبوه</li>
+<li><strong>أمان الشبكة:</strong> تحليل ترافيك الشبكة واقتراح سياسات أمنية فعّالة تلقائيًا</li>
+<li><strong>مضاد فيروسات قائم على AI:</strong> كشف شذوذ في سلوك البرامج بدل مطابقة توقيعات ثابتة — يكتشف سلوك برامج مشبوهة بدل الفيروسات المعروفة بس</li>
+<li><strong>AI لمواجهة تهديدات AI:</strong> كشف الهجمات المعزَّزة بالذكاء الاصطناعي اللي يستخدمها المهاجمون قبل اختراق الشبكة</li>
+</ul>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU19 -->
+<h2 id="lu19"><span class="num">19</span><span class="htext">القوانين والمعايير الأمنية المعمول بها</span></h2>
+<p>القوانين نظام قواعد وإرشادات تفرضها دولة أو مجتمع لتنظيم السلوك. المعايير مستندات مُتَّفَق عليها ومعتمَدة من هيئة معترَف بها لتوفير قواعد وإرشادات لاستخدام متكرّر ومشترك، بهدف تحقيق أقصى درجة من النظام في سياق معيّن.</p>
+
+<div class="table-wrap"><table>
+<thead><tr><th>القانون/المعيار</th><th>النطاق والهدف</th></tr></thead>
+<tbody>
+<tr><td>PCI DSS</td><td>معيار ملكية خاصة للمؤسسات اللي بتتعامل مع بيانات حاملي البطاقات (ائتمان، خصم، مسبقة الدفع) — يشمل التجار والمعالجين والمُصدرين ومزوّدي الخدمة</td></tr>
+<tr><td>ISO/IEC 27001:2022</td><td>معيار دولي لأنظمة إدارة أمن المعلومات (ISMS) — متطلبات إنشاء وتطبيق وصيانة وتحسين مستمر لضمان السرّية والسلامة والتوافر</td></tr>
+<tr><td>ISO/IEC 27701:2019</td><td>توسيع لـ ISO/IEC 27001 يشمل إدارة الخصوصية، بالتركيز على حماية المعلومات الشخصية القابلة للتحديد (PII)</td></tr>
+<tr><td>ISO/IEC 27002:2022</td><td>أفضل الممارسات وأهداف الضوابط لمجالات حرجة (التحكّم في الوصول، التشفير، الموظفون الأمنيون)</td></tr>
+<tr><td>ISO/IEC 27033-7:2023</td><td>إرشادات تطبيق أمان افتراض الشبكات (Network Virtualization Security)</td></tr>
+<tr><td>HIPAA</td><td>حماية فيدرالية لمعلومات الصحة القابلة للتحديد الفردي — يشمل Privacy Rule وSecurity Rule وEmployer Identifier Standard وEnforcement Rule</td></tr>
+<tr><td>SOX (2002)</td><td>حماية الجمهور والمستثمرين عبر زيادة دقة وموثوقية الإفصاحات المؤسسية — يحدّد نوع السجلات اللي لازم تُحفَظ ومدّة حفظها</td></tr>
+<tr><td>GDPR</td><td>من أكثر قوانين الخصوصية صرامة عالميًا — يفرض التزامات على أي مؤسسة بتستهدف أو تجمع بيانات أفراد في الاتحاد الأوروبي، بغرامات قد تصل لعشرات الملايين من اليورو</td></tr>
+<tr><td>UK DPA 2018</td><td>إطار قانون حماية البيانات في المملكة المتحدة — حدّث وحلّ محل قانون 1998، وتم تعديله بعد خروج بريطانيا من الاتحاد الأوروبي</td></tr>
+</tbody>
+</table></div>
+
+<hr />
+
+<!-- ══════════════════════════════════ CHEAT SHEET -->
+<h2 id="cheat"><span class="num">--</span><span class="htext">Cheat Sheet مرجعي</span></h2>
+<div class="cheat-section">
+
+<h4>مراحل منهجية CEH (مرجع سريع)</h4>
+<ul>
+<li>Reconnaissance → Scanning → Enumeration/Vulnerability Assessment</li>
+<li>Gaining Access → Escalating Privileges → Maintaining Access → Clearing Tracks</li>
+</ul>
+
+<h4>مراحل Cyber Kill Chain السبعة</h4>
+<ul>
+<li>Reconnaissance → Weaponization → Delivery → Exploitation → Installation → Command & Control → Actions on Objectives</li>
+</ul>
+
+<h4>تكتيكات MITRE ATT&CK for Enterprise (14)</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>#</th><th>التكتيك</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>Reconnaissance</td></tr>
+<tr><td>2</td><td>Resource Development</td></tr>
+<tr><td>3</td><td>Initial Access</td></tr>
+<tr><td>4</td><td>Execution</td></tr>
+<tr><td>5</td><td>Persistence</td></tr>
+<tr><td>6</td><td>Privilege Escalation</td></tr>
+<tr><td>7</td><td>Defense Evasion</td></tr>
+<tr><td>8</td><td>Credential Access</td></tr>
+<tr><td>9</td><td>Discovery</td></tr>
+<tr><td>10</td><td>Lateral Movement</td></tr>
+<tr><td>11</td><td>Collection</td></tr>
+<tr><td>12</td><td>Command and Control</td></tr>
+<tr><td>13</td><td>Exfiltration</td></tr>
+<tr><td>14</td><td>Impact</td></tr>
+</tbody>
+</table></div>
+
+<h4>معادلات أساسية للحفظ</h4>
+<div class="code-wrap"><span class="code-tag">core formulas</span><pre><code>Attack = Motive (Goal) + Method (TTP) + Vulnerability
+Risk = Threat × Vulnerability × Asset Value
+Level of Risk = Consequence × Likelihood
+</code></pre></div>
+
+<h4>Quick Wins — مراجعة سريعة قبل الامتحان</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>#</th><th>السؤال</th><th>الإجابة السريعة</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>الفرق بين Passive وActive Attack؟</td><td>Passive بدون تلاعب في البيانات (صعبة الاكتشاف) — Active بتلاعب فعّال (قابلة للاكتشاف)</td></tr>
+<tr><td>2</td><td>الفرق بين White وGray وRed Hat؟</td><td>White: دفاعي بتفويض — Gray: هجومي ودفاعي بالتبادل — Red: عدواني لتحييد التهديدات فعليًا</td></tr>
+<tr><td>3</td><td>كام مرحلة في Cyber Kill Chain؟</td><td>7 مراحل من Reconnaissance حتى Actions on Objectives</td></tr>
+<tr><td>4</td><td>كام فئة تكتيكات في MITRE ATT&CK for Enterprise؟</td><td>14 فئة</td></tr>
+<tr><td>5</td><td>إيه أربع مراحل إدارة المخاطر؟</td><td>Identification → Assessment → Treatment → Tracking and Review</td></tr>
+</tbody>
+</table></div>
+
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ SUMMARY -->
+<h2 id="summary"><span class="htext">الخلاصة العامة للموديول</span></h2>
+<p>الموديول ده أسّس لكل مفاهيم الاختراق الأخلاقي الأساسية — من عناصر أمن المعلومات وتصنيف الهجمات، مرورًا بفئات الهاكرز ومنهجيات الاختراق المعتمَدة عالميًا (CEH، Cyber Kill Chain، MITRE ATT&CK، Diamond Model)، ووصولًا لضوابط الأمن وإدارة المخاطر واستخبارات التهديدات ودور الذكاء الاصطناعي والقوانين المنظِّمة للمجال.</p>
+
+<div class="takeaways">
+<div class="takeaways-title">$ cat ./cehv13_module01_summary.txt</div>
+<ul>
+<li>أمن المعلومات مبني على السرّية والسلامة والتوافر (CIA)، بالإضافة للأصالة وعدم الإنكار</li>
+<li>كل هجوم = دافع + أسلوب (TTP) + ثغرة — فهم الدافع ضروري لتوقّع نمط الهجوم</li>
+<li>الهجمات تتصنّف لخمس فئات: سلبية، فعّالة، قريبة، داخلية، وتوزيع — كل فئة محتاجة استراتيجية كشف مختلفة</li>
+<li>فئات الهاكرز متعدّدة ومتدرّجة في الدافع — من Script Kiddies حتى الجماعات المنظَّمة والمدعومة من دول</li>
+<li>الاختراق الأخلاقي يتبع نفس خطوات المهاجم بالضبط، لكن بتفويض رسمي وقواعد اشتباك واضحة</li>
+<li>الذكاء الاصطناعي بقى جزء أساسي من أدوات المخترق الأخلاقي الحديث — من الأتمتة وحتى التحليل التنبؤي</li>
+<li>منهجيات زي CEH وCyber Kill Chain وMITRE ATT&CK بتوفّر لغة مشتركة لفهم وتوثيق مراحل أي هجوم</li>
+<li>إدارة المخاطر واستخبارات التهديدات ونمذجة التهديدات كلها عمليات مستمرّة ومتكرّرة، مش خطوات لمرة واحدة</li>
+<li>الالتزام بالقوانين والمعايير (PCI DSS، ISO/IEC، HIPAA، GDPR) جزء لا يتجزّأ من أي عمل أمني احترافي</li>
+</ul>
+</div>
+
+<blockquote>
+<p><strong>الفكرة الجوهرية للموديول:</strong> زي ما قال Sun Tzu في "فن الحرب" — "لو عرفت نفسك بس مش عدوّك، هتخسر بقدر ما تنتصر." المخترق الأخلاقي الناجح هو اللي بيفهم عقلية المهاجم ودوافعه وأساليبه بنفس عمق فهمه للدفاعات اللي بيحميها، ومش بيفصل بين الاثنين أبدًا.</p>
+</blockquote>
+
+<div class="callout examtip">
+<div class="callout-label">Professional Mindset</div>
+<p>احفظ المصطلحات الدقيقة (Tactics/Techniques/Procedures، فئات الهاكرز، مراحل كل منهجية) لأن CEH بيختبر الدقة اللغوية والتصنيفية بشكل مباشر. اربط كل منهجية بالتانية — مراحل CEH وCyber Kill Chain وMITRE ATT&CK بتوصف نفس العملية من زوايا مختلفة، وفهم العلاقة بينهم أهم من حفظهم منفصلين.</p>
+</div>
+
+<hr />
+<p><em>نهاية نوتس الموديول الأول — Introduction to Ethical Hacking (CEHv13)</em></p>
+<div class="footer-note">-- EOF: cehv13-module-01/introduction-to-ethical-hacking.md --</div>
+
+</div>
+
+<script>
+(function(){
+  var root=document.documentElement,btn=document.getElementById('themeSwitch');
+  function applyTheme(t){root.setAttribute('data-theme',t);btn.textContent='theme: '+t;try{localStorage.setItem('oscp-notes-theme',t);}catch(e){}}
+  var saved='dark';try{saved=localStorage.getItem('oscp-notes-theme')||'dark';}catch(e){}
+  applyTheme(saved);
+  btn.addEventListener('click',function(){applyTheme(root.getAttribute('data-theme')==='dark'?'light':'dark');});
+  var bar=document.getElementById('progressBar');
+  function onScroll(){var h=document.documentElement,s=h.scrollTop,ht=h.scrollHeight-h.clientHeight;bar.style.width=(ht>0?(s/ht*100):0)+'%';var t=document.getElementById('toTop');s>500?t.classList.add('show'):t.classList.remove('show');}
+  document.addEventListener('scroll',onScroll);onScroll();
+  document.getElementById('toTop').addEventListener('click',function(){window.scrollTo({top:0,behavior:'smooth'});});
+  document.querySelectorAll('.code-wrap').forEach(function(wrap){
+    var c=wrap.querySelector('code');if(!c)return;
+    var b=document.createElement('button');b.className='copy-btn';b.textContent='copy';
+    b.addEventListener('click',function(){if(navigator.clipboard){navigator.clipboard.writeText(c.innerText).then(function(){b.textContent='copied ✓';b.classList.add('copied');setTimeout(function(){b.textContent='copy';b.classList.remove('copied');},1500);});}});
+    wrap.appendChild(b);
+  });
+})();
+</script>
+</body>
+</html>

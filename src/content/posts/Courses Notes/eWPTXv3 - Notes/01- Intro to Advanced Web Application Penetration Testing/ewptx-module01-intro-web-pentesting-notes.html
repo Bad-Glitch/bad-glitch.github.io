@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>eWPTXv3 · Module 01: مقدمة في اختبار اختراق تطبيقات الويب المتقدم</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-0:#0B0B0D;--bg-1:#121214;--surface:#17171A;--surface-2:#1D1D21;
+    --border:#2A2A2F;--border-soft:#232326;
+    --text:#E6E6E9;--text-soft:#C4C4CA;--muted:#8A8A92;
+    --red:#E1362F;--red-soft:rgba(225,54,47,0.10);--red-border:rgba(225,54,47,0.35);
+    --red-grad:linear-gradient(90deg,#E1362F,#F2794A);
+    --amber:#E8A23A;--amber-soft:rgba(232,162,58,0.09);--amber-border:rgba(232,162,58,0.30);
+    --green:#3FBF6E;--green-soft:rgba(63,191,110,0.09);--green-border:rgba(63,191,110,0.30);
+    --blue:#4EA1D3;--blue-soft:rgba(78,161,211,0.09);--blue-border:rgba(78,161,211,0.30);
+    --purple:#A179E8;--purple-soft:rgba(161,121,232,0.10);--purple-border:rgba(161,121,232,0.32);
+    --mono:'IBM Plex Mono','Courier New',monospace;
+  }
+  html[data-theme="light"]{
+    --bg-0:#F4F3F1;--bg-1:#ECEBE8;--surface:#FFFFFF;--surface-2:#F3F2EF;
+    --border:#DEDCD6;--border-soft:#E6E4DF;--text:#1C1B19;--text-soft:#3C3A36;--muted:#726F68;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;direction:rtl;text-align:right;background:var(--bg-0);}
+  body{font-family:'Cairo','Segoe UI',Tahoma,sans-serif;line-height:1.95;font-size:16.5px;color:var(--text);
+    background:radial-gradient(900px 420px at 12% -8%,rgba(225,54,47,0.10),transparent 60%),
+               radial-gradient(800px 420px at 90% 6%,rgba(232,162,58,0.06),transparent 60%),
+               linear-gradient(180deg,var(--bg-0) 0%,var(--bg-1) 100%);
+    background-attachment:fixed;transition:background 0.2s ease,color 0.2s ease;}
+  html[data-theme="light"] body{background:radial-gradient(900px 420px at 12% -8%,rgba(225,54,47,0.06),transparent 60%),radial-gradient(800px 420px at 90% 6%,rgba(232,162,58,0.05),transparent 60%),linear-gradient(180deg,var(--bg-0) 0%,var(--bg-1) 100%);}
+  .progress-rail{position:fixed;top:0;inset-inline:0;height:3px;background:rgba(255,255,255,0.04);z-index:60;}
+  html[data-theme="light"] .progress-rail{background:rgba(0,0,0,0.05);}
+  .progress-bar{height:100%;width:0%;background:var(--red-grad);transition:width 0.08s linear;}
+  .float-controls{position:fixed;bottom:22px;left:22px;z-index:55;display:flex;flex-direction:column;gap:10px;}
+  .fctrl-btn{width:42px;height:42px;border-radius:50%;background:var(--surface);border:1px solid var(--border);color:var(--text-soft);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;box-shadow:0 10px 24px -10px rgba(0,0,0,0.5);transition:transform 0.15s ease,border-color 0.15s ease,opacity 0.2s ease;}
+  .fctrl-btn:hover{transform:translateY(-2px);border-color:var(--red-border);color:var(--red);}
+  #toTop{opacity:0;pointer-events:none;}
+  #toTop.show{opacity:1;pointer-events:auto;}
+  .page{max-width:860px;margin:0 auto;padding:46px 22px 100px;}
+  .banner{position:relative;overflow:hidden;background:linear-gradient(155deg,var(--surface) 0%,var(--bg-1) 55%,var(--surface) 100%);border:1px solid var(--border-soft);border-radius:10px;padding:0 0 34px;margin-bottom:26px;box-shadow:0 20px 50px -20px rgba(0,0,0,0.6);}
+  .term-bar{display:flex;align-items:center;gap:8px;padding:13px 18px;border-bottom:1px solid var(--border-soft);background:rgba(255,255,255,0.015);direction:ltr;}
+  .term-dot{width:11px;height:11px;border-radius:50%;display:inline-block;}
+  .term-dot.r{background:#E1362F;}.term-dot.y{background:#E8A23A;}.term-dot.g{background:#3FBF6E;}
+  .term-path{margin-inline-start:12px;font-family:var(--mono);font-size:12px;color:var(--muted);}
+  .theme-switch{margin-inline-start:auto;font-family:var(--mono);font-size:11px;color:var(--muted);background:transparent;border:1px solid var(--border);border-radius:4px;padding:4px 9px;cursor:pointer;}
+  .theme-switch:hover{color:var(--amber);border-color:var(--amber-border);}
+  .banner-body{padding:30px 34px 4px;}
+  .banner .kicker{display:inline-block;font-family:var(--mono);font-size:12.5px;letter-spacing:0.03em;color:var(--red);background:var(--red-soft);border:1px solid var(--red-border);border-radius:3px;padding:5px 12px;margin-bottom:20px;direction:ltr;}
+  .banner h1{margin:0 0 14px;font-size:28px;font-weight:800;line-height:1.5;color:var(--text);}
+  .banner .lede{color:var(--muted);font-size:15.5px;line-height:1.95;max-width:640px;margin:0 0 24px;}
+  .tags{display:flex;flex-wrap:wrap;gap:9px;}
+  .tag{font-size:12.5px;font-family:var(--mono);color:var(--amber);background:var(--amber-soft);border:1px solid var(--amber-border);border-radius:3px;padding:5px 11px;}
+  .toc{background:var(--surface);border:1px solid var(--border-soft);border-radius:8px;padding:6px 0 6px;margin-bottom:50px;overflow:hidden;}
+  .toc-title{font-family:var(--mono);font-weight:600;font-size:13px;color:var(--green);padding:14px 22px;border-bottom:1px solid var(--border-soft);direction:ltr;text-align:left;}
+  .toc-list{display:flex;flex-direction:column;}
+  .toc-item{display:flex;align-items:center;gap:14px;padding:12px 22px;color:var(--text-soft);text-decoration:none;font-size:14.5px;border-bottom:1px solid rgba(255,255,255,0.03);transition:background 0.15s ease;}
+  .toc-list .toc-item:last-child{border-bottom:none;}
+  .toc-item:hover{background:var(--red-soft);}
+  .toc-num{flex:none;font-family:var(--mono);font-size:12.5px;font-weight:600;color:#0F0F10;background:var(--red-grad);border-radius:3px;padding:3px 8px;direction:ltr;}
+  h1,h2,h3,h4{font-weight:700;}
+  h2{display:flex;align-items:center;gap:14px;font-size:21px;margin:66px 0 22px;padding-bottom:16px;border-bottom:1px solid var(--border-soft);color:var(--text);}
+  h2 .num{flex:none;font-family:var(--mono);font-size:13px;font-weight:700;color:#0F0F10;background:var(--red-grad);border-radius:5px;padding:7px 12px;direction:ltr;}
+  h2 .htext{line-height:1.5;}
+  h3{font-size:17px;margin:34px 0 14px;color:var(--red);display:flex;align-items:center;gap:9px;}
+  h3::before{content:"#";font-family:var(--mono);color:var(--amber);font-weight:700;}
+  h4{font-size:14.8px;margin:22px 0 10px;color:var(--text-soft);font-family:var(--mono);}
+  p{margin:0 0 17px;color:var(--text);}
+  strong{color:var(--text);font-weight:700;}
+  :root:not([data-theme="light"]) strong{color:#FBFBFC;}
+  a{color:var(--amber);text-decoration:none;border-bottom:1px dashed var(--amber-border);}
+  hr{border:none;height:1px;margin:50px 0;background:linear-gradient(90deg,transparent,var(--border),transparent);}
+  ul,ol{margin:0 0 18px;padding-inline-start:24px;}
+  li{margin-bottom:9px;color:var(--text);}
+  li::marker{color:var(--red);font-family:var(--mono);}
+  li>ul,li>ol{margin-top:9px;}
+  .goals-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px;margin:0 0 22px;}
+  .goal-card{display:flex;gap:10px;align-items:flex-start;background:var(--surface);border:1px solid var(--border-soft);border-radius:7px;padding:13px 15px;font-size:14px;color:var(--text-soft);}
+  .goal-card .gi{flex:none;font-family:var(--mono);font-size:11px;font-weight:700;color:var(--green);background:var(--green-soft);border:1px solid var(--green-border);border-radius:4px;width:22px;height:22px;display:flex;align-items:center;justify-content:center;}
+  blockquote{margin:24px 0;padding:17px 22px;background:var(--red-soft);border:1px solid var(--red-border);border-inline-start:3px solid var(--red);border-radius:6px;color:var(--text-soft);}
+  blockquote p{margin:0;color:inherit;line-height:1.85;}
+  blockquote p+p{margin-top:10px;}
+  blockquote strong{color:var(--text);}
+  .callout{margin:24px 0;padding:17px 22px 18px;border-radius:6px;border:1px solid var(--border-soft);border-inline-start:3px solid var(--border);background:var(--surface);}
+  .callout p{margin:0;color:var(--text-soft);line-height:1.85;}
+  .callout p+p{margin-top:10px;}
+  .callout ul{margin:6px 0 0;}
+  .callout-label{display:inline-flex;align-items:center;gap:7px;font-family:var(--mono);font-size:11.5px;font-weight:700;letter-spacing:0.02em;text-transform:uppercase;margin-bottom:10px;direction:ltr;}
+  .callout.note{border-inline-start-color:var(--blue);background:var(--blue-soft);}
+  .callout.note .callout-label{color:var(--blue);}
+  .callout.warning{border-inline-start-color:var(--red);background:var(--red-soft);}
+  .callout.warning .callout-label{color:var(--red);}
+  .callout.tip{border-inline-start-color:var(--green);background:var(--green-soft);}
+  .callout.tip .callout-label{color:var(--green);}
+  .callout.examtip{border-inline-start-color:var(--purple);background:var(--purple-soft);}
+  .callout.examtip .callout-label{color:var(--purple);}
+  .callout.case{border-inline-start-color:var(--amber);background:var(--amber-soft);}
+  .callout.case .callout-label{color:var(--amber);}
+  .callout.definition{border-inline-start-color:var(--muted);background:var(--surface-2);}
+  .callout.definition .callout-label{color:var(--text-soft);}
+  .callout.danger{border-inline-start-color:#FF5A52;background:rgba(255,90,82,0.08);}
+  .callout.danger .callout-label{color:#FF5A52;}
+  .table-wrap{overflow-x:auto;margin:22px 0;border:1px solid var(--border-soft);border-radius:8px;}
+  table{width:100%;border-collapse:collapse;font-size:14.2px;min-width:480px;}
+  thead th{background:var(--surface-2);color:var(--amber);font-weight:700;font-family:var(--mono);font-size:12.5px;text-transform:uppercase;letter-spacing:0.02em;text-align:start;padding:13px 15px;border-bottom:1px solid var(--border-soft);white-space:nowrap;}
+  tbody td{padding:12px 15px;border-bottom:1px solid var(--border-soft);color:var(--text-soft);vertical-align:top;}
+  tbody tr:last-child td{border-bottom:none;}
+  tbody tr:nth-child(even){background:rgba(127,127,127,0.03);}
+  tbody tr:hover{background:var(--red-soft);}
+  code{font-family:var(--mono);font-size:13.3px;background:var(--surface-2);border:1px solid var(--border-soft);border-radius:4px;padding:2px 6px;direction:ltr;unicode-bidi:embed;color:var(--green);}
+  .code-wrap{position:relative;overflow-x:auto;margin:22px 0;}
+  .code-tag{position:absolute;top:10px;left:14px;font-family:var(--mono);font-size:10.5px;color:var(--muted);letter-spacing:0.04em;text-transform:uppercase;z-index:2;}
+  .copy-btn{position:absolute;top:8px;right:10px;z-index:2;font-family:var(--mono);font-size:11px;color:var(--muted);background:var(--surface-2);border:1px solid var(--border-soft);border-radius:4px;padding:4px 9px;cursor:pointer;direction:ltr;}
+  .copy-btn:hover{color:var(--amber);border-color:var(--amber-border);}
+  .copy-btn.copied{color:var(--green);border-color:var(--green-border);}
+  pre{background:var(--bg-0);border:1px solid var(--border-soft);border-inline-start:3px solid var(--red);border-radius:8px;padding:30px 22px 18px;direction:ltr;text-align:left;margin:0;}
+  html[data-theme="light"] pre{background:#16181C;}
+  pre code{background:none;border:none;padding:0;color:#B9E8C9;font-size:13.2px;line-height:1.75;}
+  .diagram-card{background:var(--surface);border:1px solid var(--border-soft);border-radius:10px;padding:22px 18px 16px;margin:24px 0;}
+  .diagram-card svg{width:100%;height:auto;display:block;}
+  .diagram-caption{margin-top:10px;text-align:center;font-family:var(--mono);font-size:11.5px;color:var(--muted);}
+  .takeaways{background:var(--surface);border:1px solid var(--border-soft);border-radius:8px;padding:18px 22px 20px;margin:30px 0 10px;}
+  .takeaways-title{font-family:var(--mono);font-size:12.5px;font-weight:700;color:var(--green);margin-bottom:12px;direction:ltr;text-align:left;display:flex;align-items:center;gap:8px;}
+  .takeaways ul{margin:0;padding-inline-start:20px;}
+  .takeaways li{color:var(--text-soft);font-size:14.5px;}
+  .cheat-section h4{color:var(--amber);font-size:13px;margin:26px 0 8px;}
+  .step-track{display:flex;flex-direction:column;gap:0;margin:24px 0;}
+  .step-item{position:relative;padding:0 0 26px 0;padding-inline-start:46px;border-inline-start:2px solid var(--border-soft);}
+  .step-item:last-child{border-inline-start:2px solid transparent;padding-bottom:4px;}
+  .step-num{position:absolute;inset-inline-start:-17px;top:0;width:32px;height:32px;border-radius:50%;background:var(--red-grad);color:#0F0F10;font-family:var(--mono);font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;}
+  .step-title{font-weight:700;color:var(--text);margin-bottom:6px;font-size:15px;}
+  .step-body{color:var(--text-soft);font-size:14.5px;}
+  .step-body p{margin:0 0 10px;}
+  .step-body p:last-child{margin-bottom:0;}
+  .method-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px;margin:22px 0;}
+  .method-card{background:var(--surface);border:1px solid var(--border-soft);border-radius:8px;padding:14px 16px;}
+  .method-card .mnum{font-family:var(--mono);font-size:11px;font-weight:700;color:#0F0F10;background:var(--red-grad);border-radius:4px;padding:2px 8px;display:inline-block;margin-bottom:8px;direction:ltr;}
+  .method-card .mtitle{font-weight:700;color:var(--text);font-size:14px;margin-bottom:5px;}
+  .method-card .mdesc{color:var(--text-soft);font-size:13.3px;line-height:1.75;}
+  .footer-note{margin-top:70px;padding-top:26px;border-top:1px solid var(--border-soft);color:var(--muted);font-size:13.3px;font-family:var(--mono);text-align:center;direction:ltr;}
+  .dsvg-box{fill:var(--surface-2);stroke:var(--border-soft);stroke-width:1;}
+  .dsvg-box-r{fill:var(--red-soft);stroke:var(--red-border);stroke-width:1;}
+  .dsvg-box-g{fill:var(--green-soft);stroke:var(--green-border);stroke-width:1;}
+  .dsvg-box-b{fill:var(--blue-soft);stroke:var(--blue-border);stroke-width:1;}
+  .dsvg-box-a{fill:var(--amber-soft);stroke:var(--amber-border);stroke-width:1;}
+  .dsvg-box-p{fill:var(--purple-soft);stroke:var(--purple-border);stroke-width:1;}
+  .dsvg-line{stroke:var(--border);stroke-width:1.5;fill:none;}
+  .dsvg-arr{fill:var(--border);}
+  .dsvg-arr-r{fill:var(--red);}
+  .dsvg-txt{fill:var(--text);font-family:IBM Plex Mono,monospace;}
+  .dsvg-muted{fill:var(--muted);font-family:IBM Plex Mono,monospace;}
+  .dsvg-red{fill:var(--red);}
+  .dsvg-green{fill:var(--green);}
+  .dsvg-amber{fill:var(--amber);}
+  .dsvg-blue{fill:var(--blue);}
+  @media print{.float-controls,.progress-rail,.copy-btn,.theme-switch{display:none !important;}body{background:#fff;color:#000;}.page{max-width:100%;}}
+  @media(max-width:640px){.page{padding:28px 14px 70px;}.banner-body{padding:24px 20px 4px;}.banner h1{font-size:21px;}h2{font-size:18px;gap:10px;}.float-controls{left:12px;bottom:14px;}}
+</style>
+</head>
+<body>
+
+<div class="progress-rail"><div class="progress-bar" id="progressBar"></div></div>
+<div class="float-controls">
+  <button class="fctrl-btn" id="toTop" title="ارجع لفوق">↑</button>
+</div>
+
+<div class="page">
+
+<div class="banner">
+  <div class="term-bar">
+    <span class="term-dot r"></span><span class="term-dot y"></span><span class="term-dot g"></span>
+    <span class="term-path">root@ewptx:~/module-01$</span>
+    <button class="theme-switch" id="themeSwitch">theme: dark</button>
+  </div>
+  <div class="banner-body">
+    <span class="kicker">eWPTXv3 · INE · Module 01</span>
+    <h1>مقدمة في اختبار اختراق تطبيقات الويب المتقدم</h1>
+    <p class="lede">كيف تخطط وتدير وتنفّذ اختبار اختراق احترافي لتطبيقات الويب — من منهجيات معتمَدة عالميًا (PTES، WSTG، OWASP Top 10)، مرورًا بمرحلة ما قبل الالتزام والاستطلاع ورسم خريطة التطبيق، وصولًا لأمان الجلسات وهجمات اختطاف وتثبيت الجلسة.</p>
+    <div class="tags">
+      <span class="tag">methodology</span>
+      <span class="tag">pre-engagement</span>
+      <span class="tag">wstg</span>
+      <span class="tag">owasp-top10</span>
+      <span class="tag">reconnaissance</span>
+      <span class="tag">crawling</span>
+      <span class="tag">session-security</span>
+      <span class="tag">cookies</span>
+    </div>
+  </div>
+</div>
+
+<nav class="toc"><div class="toc-title">$ ls learning_units/</div><div class="toc-list">
+  <a class="toc-item" href="#lu1"><span class="toc-num">01</span><span>منهجية اختبار اختراق تطبيقات الويب وأهميتها</span></a>
+  <a class="toc-item" href="#lu2"><span class="toc-num">02</span><span>المراحل الـ12 لمنهجية الاختبار الكاملة</span></a>
+  <a class="toc-item" href="#lu3"><span class="toc-num">03</span><span>منهجيات معتمَدة: PTES وWSTG وOWASP Top 10</span></a>
+  <a class="toc-item" href="#lu4"><span class="toc-num">04</span><span>اختبار الأمان مقابل اختبار الاختراق</span></a>
+  <a class="toc-item" href="#lu5"><span class="toc-num">05</span><span>التخطيط للاختبار باستخدام WSTG</span></a>
+  <a class="toc-item" href="#lu6"><span class="toc-num">06</span><span>مرحلة ما قبل الالتزام (Pre-Engagement)</span></a>
+  <a class="toc-item" href="#lu7"><span class="toc-num">07</span><span>تحديد النطاق واستطلاع الموقع</span></a>
+  <a class="toc-item" href="#lu8"><span class="toc-num">08</span><span>معرّفات الجلسة والكوكيز</span></a>
+  <a class="toc-item" href="#lu9"><span class="toc-num">09</span><span>اختطاف الجلسة وتثبيت الجلسة</span></a>
+  <a class="toc-item" href="#methodology"><span class="toc-num">--</span><span>دورة الاختبار الكاملة من البداية للنهاية</span></a>
+  <a class="toc-item" href="#cheat"><span class="toc-num">--</span><span>Cheat Sheet مرجعي — الأدوات والمصادر</span></a>
+  <a class="toc-item" href="#summary"><span class="toc-num">--</span><span>الخلاصة العامة للموديول</span></a>
+</div></nav>
+
+<!-- ══════════════════════════════════ LU1 -->
+<h2 id="lu1"><span class="num">01</span><span class="htext">منهجية اختبار اختراق تطبيقات الويب وأهميتها</span></h2>
+
+<h3>تعريف اختبار اختراق تطبيقات الويب</h3>
+<p>تقييم أمني شامل هدفه تحديد الثغرات ونقاط الضعف في تطبيقات الويب، عبر محاكاة هجمات واقعية لتقييم الوضع الأمني للتطبيق وتقديم توصيات للمعالجة. استخدام منهجية واضحة أمر حيوي لأنه بيوفّر نهج منظّم ومنضبط لإجراء تقييمات أمنية شاملة.</p>
+
+<h3>ليه منهجيات اختبار الاختراق مهمة جدًا</h3>
+<div class="goals-grid">
+  <div class="goal-card"><span class="gi">1</span><span>الاتساق والتوحيد القياسي — إجراءات وأدوات وتقنيات موحَّدة عبر كل المشاريع</span></div>
+  <div class="goal-card"><span class="gi">2</span><span>تغطية شاملة — تقليل خطر إغفال ثغرات حرجة في أي مكوّن من التطبيق</span></div>
+  <div class="goal-card"><span class="gi">3</span><span>كفاءة وإدارة وقت — ترتيب أولويات المهام والتركيز على المناطق عالية الخطورة</span></div>
+  <div class="goal-card"><span class="gi">4</span><span>تحديد دقيق للثغرات — الشائعة والنادرة على حد سواء</span></div>
+  <div class="goal-card"><span class="gi">5</span><span>ترتيب أولويات المخاطر — تصنيف الثغرات حسب تأثيرها المحتمل على العمل</span></div>
+  <div class="goal-card"><span class="gi">6</span><span>تقارير وتواصل فعّال — توثيق واضح يفهمه التقنيون وغير التقنيين</span></div>
+</div>
+<div class="callout note">
+<div class="callout-label">فوائد إضافية</div>
+<p>الاعتماد على معايير الصناعة (OWASP، NIST)، الالتزام القانوني والأخلاقي عبر احترام قواعد الاشتباك والحصول على تفويض رسمي، واكتشاف الثغرات المعقدة اللي محتاجة نهج منظّم للكشف عنها بدل الاختبار العشوائي.</p>
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU2 -->
+<h2 id="lu2"><span class="num">02</span><span class="htext">المراحل الـ12 لمنهجية الاختبار الكاملة</span></h2>
+<p>رغم اختلاف المنهجيات المحدَّدة، فيه مراحل مشتركة بتتكرر في معظم منهجيات اختبار اختراق تطبيقات الويب:</p>
+
+<div class="table-wrap"><table>
+<thead><tr><th>#</th><th>المرحلة</th><th>الهدف</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>Pre-Engagement</td><td>تحديد النطاق والأهداف، الحصول على تفويض رسمي، جمع معلومات أولية عن التطبيق</td></tr>
+<tr><td>2</td><td>Information Gathering & Recon</td><td>استطلاع سلبي، تعداد Subdomains/Directories، فحص منافذ بـ Nmap، Google Dorks</td></tr>
+<tr><td>3</td><td>Threat Modeling</td><td>تحليل البنية وتدفّق البيانات، بناء نموذج سطح الهجوم، تحديد المناطق عالية الخطورة</td></tr>
+<tr><td>4</td><td>Vulnerability Scanning</td><td>فحص آلي بـ Burp Suite / OWASP ZAP، ثم تحقق يدوي من النتائج لاستبعاد False Positives</td></tr>
+<tr><td>5</td><td>Manual Testing & Exploitation</td><td>اختبار يدوي واستغلال فعلي — Input Validation، Auth Bypass، منطق العمل</td></tr>
+<tr><td>6</td><td>Authentication & Authorization</td><td>اختبار سياسات كلمات المرور، إدارة الجلسات، ضوابط الوصول</td></tr>
+<tr><td>7</td><td>Session Management Testing</td><td>منع Session Fixation وHijacking، فحص إعدادات انتهاء الجلسة</td></tr>
+<tr><td>8</td><td>Information Disclosure</td><td>فحص تسريب معلومات حساسة عبر رسائل الخطأ أو استجابات السيرفر</td></tr>
+<tr><td>9</td><td>Business Logic Testing</td><td>ثغرات منطق العمل — تصعيد صلاحيات، تلاعب في الطلبات</td></tr>
+<tr><td>10</td><td>Client-Side Testing</td><td>فحص كود HTML/JavaScript — DOM-based XSS، تخزين غير آمن من جهة العميل</td></tr>
+<tr><td>11</td><td>Reporting & Remediation</td><td>توثيق وترتيب أولوية الثغرات، تقرير مفصَّل، متابعة الإصلاح وإعادة الاختبار</td></tr>
+<tr><td>12</td><td>Post-Engagement</td><td>اجتماع ختامي لمناقشة النتائج، تدريب فريق التطوير على ممارسات الكود الآمن</td></tr>
+</tbody>
+</table></div>
+
+<div class="diagram-card">
+<svg viewBox="0 0 700 150" xmlns="http://www.w3.org/2000/svg">
+  <rect x="5" y="55" width="105" height="55" rx="7" class="dsvg-box-b"/>
+  <text x="57" y="78" text-anchor="middle" class="dsvg-blue" font-size="10.5" font-weight="700">Pre-Engagement</text>
+  <text x="57" y="95" text-anchor="middle" class="dsvg-muted" font-size="8">النطاق والتفويض</text>
+
+  <rect x="150" y="55" width="110" height="55" rx="7" class="dsvg-box-a"/>
+  <text x="205" y="78" text-anchor="middle" class="dsvg-amber" font-size="10.5" font-weight="700">Recon + Scanning</text>
+  <text x="205" y="95" text-anchor="middle" class="dsvg-muted" font-size="8">جمع واكتشاف</text>
+
+  <rect x="300" y="55" width="110" height="55" rx="7" class="dsvg-box"/>
+  <text x="355" y="78" text-anchor="middle" class="dsvg-txt" font-size="10.5" font-weight="700">Manual Exploitation</text>
+  <text x="355" y="95" text-anchor="middle" class="dsvg-muted" font-size="8">استغلال يدوي</text>
+
+  <rect x="450" y="55" width="110" height="55" rx="7" class="dsvg-box-r"/>
+  <text x="505" y="78" text-anchor="middle" class="dsvg-red" font-size="10.5" font-weight="700">Session + Logic</text>
+  <text x="505" y="95" text-anchor="middle" class="dsvg-muted" font-size="8">جلسات ومنطق عمل</text>
+
+  <rect x="600" y="55" width="95" height="55" rx="7" class="dsvg-box-g"/>
+  <text x="647" y="78" text-anchor="middle" class="dsvg-green" font-size="10.5" font-weight="700">Reporting</text>
+  <text x="647" y="95" text-anchor="middle" class="dsvg-muted" font-size="8">توثيق ومتابعة</text>
+
+  <line x1="110" y1="82" x2="150" y2="82" class="dsvg-line"/>
+  <line x1="260" y1="82" x2="300" y2="82" class="dsvg-line"/>
+  <line x1="410" y1="82" x2="450" y2="82" class="dsvg-line"/>
+  <line x1="560" y1="82" x2="600" y2="82" class="dsvg-line"/>
+</svg>
+<div class="diagram-caption">تجميع المراحل الـ12 في خمس كتل منطقية متتالية</div>
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU3 -->
+<h2 id="lu3"><span class="num">03</span><span class="htext">منهجيات معتمَدة: PTES وWSTG وOWASP Top 10</span></h2>
+
+<div class="method-grid">
+<div class="method-card"><span class="mnum">01</span><div class="mtitle">PTES</div><div class="mdesc">Penetration Testing Execution Standard — منهجية اختبار اختراق كاملة بتغطي كل جوانب التقييم الأمني بما فيها اختبار تطبيقات الويب، بنهج منظَّم من Pre-Engagement وحتى التقرير والمتابعة.</div></div>
+<div class="method-card"><span class="mnum">02</span><div class="mtitle">OWASP WSTG</div><div class="mdesc">Web Security Testing Guide — مصدر شامل من OWASP بيوفّر منهجية منظَّمة لإجراء اختبارات أمان تطبيقات الويب خطوة بخطوة.</div></div>
+<div class="method-card"><span class="mnum">03</span><div class="mtitle">OWASP Top 10</div><div class="mdesc">قائمة مُحدَّثة دوريًا لأخطر عشر مخاطر أمنية في تطبيقات الويب — دليل أساسي للمطوّرين والمختبرين لفهم وترتيب أولوية المخاطر الشائعة.</div></div>
+</div>
+
+<h3>تاريخ إصدارات OWASP Top 10</h3>
+<p>أول نسخة صدرت سنة 2003 بهدف رفع الوعي بمخاطر أمان الويب الشائعة ومساعدة المطوّرين على ترتيب أولويات الأمان — وكانت القائمة تشمل Cross-Site Scripting (XSS)، SQL Injection، ومشاكل إدارة الجلسات. كل إصدار جديد بيبني على الإصدارات السابقة لتحسين الدقة والملاءمة للمشهد الأمني المتغيّر.</p>
+<div class="callout tip">
+<div class="callout-label">ملاحظة عملية</div>
+<p>القائمة بتتحدَّث بشكل دوري لتعكس المشهد الحالي للتهديدات — دايمًا راجع آخر إصدار رسمي قبل أي تقييم جديد.</p>
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU4 -->
+<h2 id="lu4"><span class="num">04</span><span class="htext">اختبار الأمان مقابل اختبار الاختراق</span></h2>
+
+<h3>أنواع اختبار أمان تطبيقات الويب</h3>
+<div class="goals-grid">
+  <div class="goal-card"><span class="gi">1</span><span>Vulnerability Scanning — فحص آلي للثغرات المعروفة (SQLi، XSS، إعدادات غير آمنة)</span></div>
+  <div class="goal-card"><span class="gi">2</span><span>Penetration Testing — محاكاة هجمات واقعية لتقييم دفاعات التطبيق فعليًا</span></div>
+  <div class="goal-card"><span class="gi">3</span><span>Code Review & Static Analysis — فحص يدوي للكود المصدري لاكتشاف عيوب برمجية</span></div>
+  <div class="goal-card"><span class="gi">4</span><span>Authentication & Authorization Testing — تقييم فعالية آليات المصادقة وضوابط الوصول</span></div>
+  <div class="goal-card"><span class="gi">5</span><span>Input Validation & Output Encoding — منع XSS وSQLi عبر فحص معالجة المدخلات</span></div>
+  <div class="goal-card"><span class="gi">6</span><span>Session Management & API Security Testing — إدارة الجلسات وأمان واجهات الـ APIs</span></div>
+</div>
+
+<h3>اختبار الاختراق — مجموعة فرعية من اختبار الأمان</h3>
+<p>اختبار الاختراق يركّز تحديدًا على محاولة استغلال الثغرات المكتشَفة فعليًا — هجوم محاكى بيقوم بيه مختبرون محترفون (Pentesters) بنهج منضبط ومصرَّح به.</p>
+
+<div class="table-wrap"><table>
+<thead><tr><th>الجانب</th><th>اختبار الأمان (Security Testing)</th><th>اختبار الاختراق (Pentesting)</th></tr></thead>
+<tbody>
+<tr><td>الهدف</td><td>تحديد الثغرات بدون استغلالها فعليًا</td><td>التحقق من الثغرات وتقييم القدرة على الاكتشاف والاستجابة</td></tr>
+<tr><td>النطاق</td><td>أوسع — يشمل SAST وDAST وIAST وSCA</td><td>محدَّد لتحديد الثغرات واستغلالها، يدوي بالأساس</td></tr>
+<tr><td>المنهجية</td><td>تجمع بين الاختبار اليدوي والآلي</td><td>اختبار يدوي باستخدام أدوات لمحاكاة هجمات واقعية</td></tr>
+<tr><td>الاستغلال</td><td>لا يشمل استغلال الثغرات</td><td>يشمل استغلال مضبوط ومصرَّح به</td></tr>
+<tr><td>التأثير</td><td>غير تدخلي — يركّز على تحديد المشاكل</td><td>ممكن يكون تدخلي ويسبّب اضطراب للتطبيق أثناء الاختبار</td></tr>
+<tr><td>التقرير</td><td>يحدّد الثغرات ويقدّم توصيات المعالجة</td><td>يوثّق الاستغلالات الناجحة ونقاط الضعف والتوصيات</td></tr>
+</tbody>
+</table></div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU5 -->
+<h2 id="lu5"><span class="num">05</span><span class="htext">التخطيط للاختبار باستخدام WSTG</span></h2>
+
+<h3>OWASP Web Security Testing Guide</h3>
+<p>مصدر شامل بقيادة المجتمع من OWASP، بيهدف لمساعدة المختصين والمطوّرين والمؤسسات على إجراء تقييمات أمنية فعّالة عبر نهج منظّم ومنهجي — مرجع عملي وتطبيقي للتخطيط والتنفيذ والتوثيق.</p>
+
+<h3>قائمة فحص WSTG (WSTG Checklist)</h3>
+<ul>
+<li>قائمة فحص مبنية على جدول بيانات (Spreadsheet) لتتبّع حالة حالات الاختبار المكتملة والمعلَّقة</li>
+<li>مبنية على OWASP WSTG، وتشمل منهجية/إطار عمل شامل لاختبار الاختراق يقدر المختبرون يطبّقوه مباشرة</li>
+<li>اختبارات أمنية مفصّلة وتقنيات محدَّدة لأكثر أخطاء الإعداد والثغرات شيوعًا</li>
+<li>تحتوي أيضًا على OWASP Risk Assessment Calculator وقالب Summary Findings</li>
+</ul>
+<div class="callout tip">
+<div class="callout-label">ليه القائمة دي مفيدة عمليًا</div>
+<p>بتحوّل منهجية WSTG النظرية لأداة تتبّع تشغيلية يومية — كل اختبار له حالة واضحة (منجز/معلَّق)، وده بيقلّل خطر نسيان أي خطوة في التقييم.</p>
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU6 -->
+<h2 id="lu6"><span class="num">06</span><span class="htext">مرحلة ما قبل الالتزام (Pre-Engagement)</span></h2>
+<p>خطوة حاسمة بترسي الأساس لتقييم أمني ناجح ومخطَّط جيدًا — تحضيرات أولية، فهم متطلبات المشروع، والحصول على التفويضات اللازمة قبل بدء الاختبار الفعلي.</p>
+
+<h3>المستندات اللي لازم تُحدَّد مسبقًا</h3>
+<div class="goals-grid">
+  <div class="goal-card"><span class="gi">1</span><span>أهداف ونطاق الالتزام (Objectives & Scope)</span></div>
+  <div class="goal-card"><span class="gi">2</span><span>الجدول الزمني والمحطات الرئيسية (Timeline & Milestones)</span></div>
+  <div class="goal-card"><span class="gi">3</span><span>المسؤوليات والالتزامات القانونية (Liabilities)</span></div>
+  <div class="goal-card"><span class="gi">4</span><span>الإجراءات المصرَّح بها (Authorized Actions)</span></div>
+  <div class="goal-card"><span class="gi">5</span><span>التوقعات والمخرجات (Expectations & Deliverables)</span></div>
+  <div class="goal-card"><span class="gi">6</span><span>بيان العمل (Statement of Work)</span></div>
+</div>
+
+<h3>خطوات مرحلة ما قبل الالتزام</h3>
+<div class="step-track">
+<div class="step-item">
+<div class="step-num">1</div>
+<div class="step-title">فهم أهداف المشروع</div>
+<div class="step-body"><p>تحديد واضح لأهداف وغايات اختبار الاختراق، وفهم ما يسعى أصحاب المصلحة لتحقيقه من عملية الاختبار.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">2</div>
+<div class="step-title">تحديد النطاق</div>
+<div class="step-body"><p>تحديد تطبيقات الويب والروابط والوظائف المستهدَفة بالاختبار، وتوضيح حدود النطاق — أي أنظمة أو شبكات خارج النطاق.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">3</div>
+<div class="step-title">التفويض والمتطلبات القانونية</div>
+<div class="step-body"><p>الحصول على تفويض رسمي من إدارة المؤسسة أو أصحاب التطبيق، والتأكد من الالتزام بأي متطلبات قانونية أو تنظيمية.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">4</div>
+<div class="step-title">قواعد الاشتباك (RoE)</div>
+<div class="step-body"><p>وضع مجموعة قواعد واضحة تحدّد قيود وإرشادات عملية الاختبار — جدول الاختبار، ساعات العمل، قنوات التواصل، وإجراءات التصعيد.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">5</div>
+<div class="step-title">التواصل والتنسيق</div>
+<div class="step-body"><p>تأسيس قنوات تواصل واضحة مع أصحاب المصلحة الرئيسيين، والتنسيق لتقليل الاضطراب على بيئة الإنتاج أثناء الاختبار.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">6</div>
+<div class="step-title">العقود واتفاقيات عدم الإفصاح</div>
+<div class="step-body"><p>توقيع العقود واتفاقيات NDA اللازمة لحماية المعلومات الحساسة وضمان السرّية.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">7</div>
+<div class="step-title">اجتماع تحديد النطاق</div>
+<div class="step-body"><p>مناقشة أهداف الاختبار ونطاقه وأي مخاوف محدَّدة مع أصحاب المصلحة، وتوضيح التوقعات ومحاذاة الجميع مع نهج الاختبار.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">8</div>
+<div class="step-title">تجهيز الأدوات والموارد</div>
+<div class="step-body"><p>التأكد من توفّر كل الأدوار والتراخيص والموارد المطلوبة، وإعداد بيئة اختبار آمنة.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">9</div>
+<div class="step-title">تقييم وقبول المخاطر</div>
+<div class="step-body"><p>تقييم التأثير المحتمل للاختبار على التطبيق والمؤسسة، والحصول على قبول الإدارة لأي مخاطر مرتبطة.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">10</div>
+<div class="step-title">انطلاق الالتزام رسميًا</div>
+<div class="step-body"><p>تأكيد تاريخ البدء والجدول الزمني مع أصحاب المصلحة، ومشاركة قواعد الاشتباك مع فريق الاختبار.</p></div>
+</div>
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU7 -->
+<h2 id="lu7"><span class="num">07</span><span class="htext">تحديد النطاق واستطلاع الموقع</span></h2>
+
+<h3>إيه اللي بنبحث عنه</h3>
+<div class="goals-grid">
+  <div class="goal-card"><span class="gi">1</span><span>عناوين IP</span></div>
+  <div class="goal-card"><span class="gi">2</span><span>مجلدات مخفية عن محركات البحث</span></div>
+  <div class="goal-card"><span class="gi">3</span><span>أسماء وبيانات الموظفين</span></div>
+  <div class="goal-card"><span class="gi">4</span><span>عناوين بريد إلكتروني وأرقام هواتف</span></div>
+  <div class="goal-card"><span class="gi">5</span><span>عناوين فعلية</span></div>
+  <div class="goal-card"><span class="gi">6</span><span>التقنيات المستخدَمة في بناء التطبيق</span></div>
+</div>
+
+<h3>تقنيات الاستطلاع وأدواتها</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>التقنية</th><th>الغرض</th></tr></thead>
+<tbody>
+<tr><td>جمع البروفايلات وبيانات التواصل</td><td>تحديد أهداف لهندسة اجتماعية محتملة أو هجمات موجَّهة</td></tr>
+<tr><td>فحص تسريبات البيانات (Data Breaches)</td><td>اكتشاف بيانات اعتماد أو معلومات مرتبطة بالمؤسسة سبق تسريبها</td></tr>
+<tr><td>بصمة التقنيات (Tech Fingerprinting)</td><td>تحديد المكدّس البرمجي، الـ CMS، الأطر المستخدَمة، ونسخها</td></tr>
+<tr><td>Google Dorks</td><td>إيجاد معلومات وملفات ومجلدات مفهرَسة في محركات البحث</td></tr>
+<tr><td>HTTrack</td><td>نسخ هيكل الموقع بالكامل محليًا لرسم خريطة التطبيق</td></tr>
+<tr><td>Passive Crawling (Burp Suite)</td><td>بناء خريطة للتطبيق أثناء التصفّح العادي بدون إرسال طلبات إضافية</td></tr>
+<tr><td>Automated Crawling (OWASP ZAP)</td><td>زحف آلي شامل لاكتشاف صفحات ونقاط نهاية غير ظاهرة</td></tr>
+</tbody>
+</table></div>
+<div class="callout note">
+<div class="callout-label">أدوات مكمِّلة</div>
+<p>EyeWitness بيُستخدم لأخذ لقطات شاشة لمواقع الويب أثناء تحديد النطاق — طريقة سريعة لمراجعة عدد كبير من الأهداف بصريًا قبل التعمّق في كل واحد.</p>
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU8 -->
+<h2 id="lu8"><span class="num">08</span><span class="htext">معرّفات الجلسة والكوكيز</span></h2>
+
+<h3>Session IDs (معرّفات الجلسة)</h3>
+<p>رموز أو سلاسل فريدة بتُنشئها تطبيقات الويب لتحديد وتتبّع جلسات المستخدمين — أساسية للحفاظ على تواصل ذو حالة (Stateful) بين المتصفح والسيرفر. بتُستخدم لربط طلبات المستخدم ببيانات جلسته المحفوظة على السيرفر.</p>
+<div class="callout case">
+<div class="callout-label">مثال عملي</div>
+<p>أثناء اختبار اختراق على موقع تجارة إلكترونية: بعد تسجيل دخول المستخدم، السيرفر بينشئ Session ID (مثلًا "Session12345") ويربطه بجلسة المستخدم. المعرّف ده بعدين بيتبعت للمتصفح كـ Cookie.</p>
+</div>
+
+<h3>Cookies (الكوكيز)</h3>
+<p>قطع بيانات صغيرة (غالبًا نصية) بيبعتها سيرفر الويب لمتصفح المستخدم، وبيتم تخزينها محليًا. بتخدم أغراض متعددة: إدارة الجلسات، تتبّع المستخدم، والتخصيص الشخصي. في سياق إدارة الجلسات، Session Cookies بتُستخدم لتخزين الـ Session ID وتمكين السيرفر من التعرّف على جلسة المستخدم.</p>
+<div class="callout case">
+<div class="callout-label">مثال عملي</div>
+<p>أثناء اختبار اختراق، اكتشفت إن الموقع بيستخدم كوكيز لإدارة الجلسات. عند تسجيل الدخول، السيرفر بيبعت كوكي اسمه "sessionID" بقيمة "Session12345". في الطلبات التالية، المتصفح بيضمّن الكوكي ده، والسيرفر بيستخدمه عشان يربط الطلبات بجلسة المستخدم.</p>
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU9 -->
+<h2 id="lu9"><span class="num">09</span><span class="htext">اختطاف الجلسة وتثبيت الجلسة</span></h2>
+
+<div class="method-grid">
+<div class="method-card"><span class="mnum">هجوم 1</span><div class="mtitle">Session Hijacking (اختطاف الجلسة)</div><div class="mdesc">المهاجم بيستولي بشكل غير شرعي على جلسة نشطة لمستخدم على تطبيق الويب — بالوصول غير المصرَّح به لرمز أو معرّف الجلسة، وبالتالي انتحال شخصية الضحية وتنفيذ إجراءات نيابة عنه.</div></div>
+<div class="method-card"><span class="mnum">هجوم 2</span><div class="mtitle">Session Fixation (تثبيت الجلسة)</div><div class="mdesc">المهاجم بيحدّد أو يثبّت معرّف جلسة المستخدم على قيمة معروفة من اختياره هو، وبعدين بيخدع الضحية عشان يستخدم المعرّف المثبَّت ده في تسجيل الدخول — وبالتالي يمنح المهاجم وصول غير مصرَّح به لجلسة الضحية.</div></div>
+</div>
+
+<h3>Session Hijacking — طرق الحصول على التوكن</h3>
+<ul>
+<li><strong>Session Prediction:</strong> تخمين أو توقّع رمز الجلسة، خصوصًا لو كان قابل للتنبؤ أو ينقصه عشوائية كافية</li>
+<li><strong>Session Sniffing:</strong> اعتراض رمز الجلسة أثناء نقله عبر شبكة غير آمنة (Wi-Fi مفتوح مثلًا)</li>
+<li><strong>Cross-Site Scripting (XSS):</strong> استغلال ثغرة في التطبيق لحقن JavaScript خبيث في متصفح الضحية لسرقة رمز الجلسة</li>
+</ul>
+
+<h3>Session Hijacking — الانتحال والتأثير</h3>
+<p>بمجرد حصول المهاجم على رمز الجلسة، بيقدر ينتحل شخصية الضحية بتقديم الرمز ده في الطلبات — والتطبيق، من غير ما يعرف إن في اختطاف، بيعامل المهاجم كمستخدم مصادَق عليه.</p>
+<div class="callout danger">
+<div class="callout-label">التأثير المحتمل</div>
+<ul>
+<li>سرقة البيانات: الوصول لبيانات حساسة، معلومات مالية، أو مستندات سرّية</li>
+<li>الاستيلاء على الحساب: تغيير إعدادات الحساب، كلمات المرور، أو البريد الإلكتروني</li>
+<li>معاملات خبيثة: تنفيذ معاملات غير مصرَّح بها أو مشتريات</li>
+<li>تلاعب بالبيانات: تعديل أو حذف بيانات أو إعدادات الضحية</li>
+</ul>
+</div>
+
+<h3>Session Fixation — خطوات الهجوم</h3>
+<ol>
+<li>المهاجم بيحصل على رمز جلسة من التطبيق الهدف — عبر تخمين الرمز (لو قابل للتنبؤ) أو اعتراضه (لو التطبيق مش بيستخدم HTTPS)</li>
+<li>بيثبّت رمز جلسة الضحية على قيمة يتحكّم فيها هو — سواء رمز أنشأه أو رمز صالح موجود بالفعل</li>
+<li>بيستدرج الضحية لاستخدام الرمز المثبَّت في تسجيل الدخول — عبر رابط مُعدّ خصيصًا، أو هندسة اجتماعية</li>
+<li>بمجرد ما الضحية يسجّل دخوله بالرمز المثبَّت، المهاجم بيقدر يختطف الجلسة — التطبيق بيتعرّف عليه كمستخدم شرعي لأن الرمز مطابق لما هو متوقَّع</li>
+</ol>
+
+<hr />
+
+<!-- ══════════════════════════════════ METHODOLOGY -->
+<h2 id="methodology"><span class="num">--</span><span class="htext">دورة الاختبار الكاملة من البداية للنهاية</span></h2>
+<p>ربط كل الوحدات في دورة عمل واحدة متكاملة — من اللحظة اللي يتفق فيها المختبر والعميل على النطاق، وحتى تسليم التقرير النهائي ومتابعة الإصلاح.</p>
+
+<div class="step-track">
+<div class="step-item">
+<div class="step-num">1</div>
+<div class="step-title">الاتفاق والتفويض</div>
+<div class="step-body"><p>تحديد النطاق، توقيع العقود وNDA، والحصول على تفويض رسمي موثَّق قبل أي نشاط فعلي.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">2</div>
+<div class="step-title">الاستطلاع ورسم الخريطة</div>
+<div class="step-body"><p>جمع معلومات سلبية وفعّالة، تعداد Subdomains والملفات، وبناء خريطة كاملة للتطبيق عبر الزحف (Crawling).</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">3</div>
+<div class="step-title">الفحص والتحليل</div>
+<div class="step-body"><p>فحص آلي بـ Burp/ZAP، تحقّق يدوي من النتائج، وبناء نموذج تهديدات للتطبيق.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">4</div>
+<div class="step-title">الاستغلال اليدوي</div>
+<div class="step-body"><p>اختبار وإثبات الثغرات فعليًا — مصادقة، صلاحيات، منطق عمل، وأمان الجلسات.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">5</div>
+<div class="step-title">التقرير والمتابعة</div>
+<div class="step-body"><p>توثيق مفصَّل بأولويات واضحة، ودعم فريق التطوير حتى التأكد من الإصلاح الفعلي.</p></div>
+</div>
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ CHEAT SHEET -->
+<h2 id="cheat"><span class="num">--</span><span class="htext">Cheat Sheet مرجعي — الأدوات والمصادر</span></h2>
+<div class="cheat-section">
+
+<h4>أدوات الفحص والزحف</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>الأداة</th><th>الاستخدام</th></tr></thead>
+<tbody>
+<tr><td>Burp Suite</td><td>Proxy واختبار يدوي، Passive Crawling، فحص آلي للثغرات</td></tr>
+<tr><td>OWASP ZAP</td><td>فحص آلي مفتوح المصدر، Active/Passive Scanning</td></tr>
+<tr><td>Nmap</td><td>تحديد المنافذ المفتوحة والخدمات الشغّالة على السيرفر</td></tr>
+<tr><td>Google Dorks</td><td>إيجاد ملفات ومجلدات مفهرَسة في محرّكات البحث</td></tr>
+<tr><td>HTTrack</td><td>نسخ هيكل الموقع بالكامل محليًا لرسم خريطة التطبيق</td></tr>
+<tr><td>EyeWitness</td><td>لقطات شاشة سريعة لمجموعة أهداف أثناء تحديد النطاق</td></tr>
+<tr><td>Caido</td><td>أداة حديثة لتدقيق أمان الويب — بديل خفيف لـ Burp/ZAP</td></tr>
+</tbody>
+</table></div>
+
+<h4>مصادر مرجعية</h4>
+<ul>
+<li>OWASP Web Security Testing Guide (WSTG)</li>
+<li>OWASP Web Application Penetration Testing Checklist</li>
+<li>OWASP Top 10 — آخر إصدار رسمي</li>
+<li>Caido — <code>https://caido.io/</code></li>
+</ul>
+
+<h4>Quick Wins — نقطة انطلاق سريعة لأي تقييم</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>#</th><th>التحقق</th><th>الأداة/الطريقة</th><th>الهدف</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>النطاق والتفويض موثَّقين رسميًا؟</td><td>Statement of Work + RoE</td><td>غطاء قانوني كامل قبل البدء</td></tr>
+<tr><td>2</td><td>إيه التقنيات المستخدَمة في التطبيق؟</td><td>Tech Fingerprinting</td><td>توجيه جهد الاستغلال بذكاء</td></tr>
+<tr><td>3</td><td>فيه مجلدات أو ملفات مفهرَسة مكشوفة؟</td><td>Google Dorks</td><td>معلومات حساسة بدون أي تفاعل مباشر</td></tr>
+<tr><td>4</td><td>خريطة التطبيق الكاملة متاحة؟</td><td>Burp Passive Crawl + ZAP</td><td>تغطية شاملة لكل نقاط النهاية</td></tr>
+<tr><td>5</td><td>آلية إدارة الجلسة آمنة؟</td><td>فحص Cookies + Session IDs</td><td>استبعاد Hijacking/Fixation مبكرًا</td></tr>
+</tbody>
+</table></div>
+
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ SUMMARY -->
+<h2 id="summary"><span class="htext">الخلاصة العامة للموديول</span></h2>
+<p>الموديول ده أسّس لفهم منهجية اختبار اختراق تطبيقات الويب الاحترافية — من أهمية وجود منهجية واضحة ومراحلها الـ12، مرورًا بمنهجيات معتمَدة عالميًا زي PTES وWSTG، ووصولًا لمرحلة ما قبل الالتزام والاستطلاع وأمان الجلسات.</p>
+
+<div class="takeaways">
+<div class="takeaways-title">$ cat ./ewptx_module01_summary.txt</div>
+<ul>
+<li>منهجية واضحة ومنظَّمة هي أساس أي اختبار اختراق احترافي — بتضمن الاتساق والتغطية الشاملة وترتيب أولويات المخاطر</li>
+<li>الـ12 مرحلة (من Pre-Engagement حتى Post-Engagement) تغطي دورة التقييم بالكامل من التخطيط وحتى المتابعة بعد التسليم</li>
+<li>PTES وOWASP WSTG وOWASP Top 10 من أهم المنهجيات والمراجع المعتمَدة في الصناعة لتوجيه عملية الاختبار</li>
+<li>اختبار الأمان أوسع نطاقًا من اختبار الاختراق — الأخير يتضمّن استغلال فعلي ومضبوط للثغرات</li>
+<li>مرحلة ما قبل الالتزام حاسمة — بدون نطاق وتفويض وقواعد اشتباك موثَّقة، أي اختبار لاحق غير شرعي</li>
+<li>الاستطلاع الفعّال بيجمع بين أدوات سلبية (Passive Crawling) وأدوات فعّالة (Active Scanning) لبناء خريطة كاملة للتطبيق</li>
+<li>Session IDs وCookies أساس إدارة الجلسات — وفهمهما ضروري لاكتشاف ثغرات الجلسات</li>
+<li>Session Hijacking وSession Fixation هجومان مختلفان في الآلية لكن متشابهان في الأثر — الاستيلاء الكامل على جلسة المستخدم</li>
+</ul>
+</div>
+
+<blockquote>
+<p><strong>الفكرة الجوهرية للموديول:</strong> اختبار الاختراق الاحترافي مش مجرد تشغيل أدوات واستغلال ثغرات — هو عملية منضبطة تبدأ بالاتفاق والتفويض، وتمرّ بفهم عميق للتطبيق قبل أي محاولة استغلال، وتنتهي بتقرير يخدم العميل فعليًا. المنهجية هي الفرق بين اختبار عشوائي واختبار احترافي يقدر يُعاد تنفيذه بنفس الجودة في كل مرة.</p>
+</blockquote>
+
+<div class="callout examtip">
+<div class="callout-label">Professional Mindset</div>
+<p>قبل ما تفتح أي أداة فحص: اتأكد إن النطاق والتفويض موثَّقين كتابيًا، وافهم السياق التجاري للتطبيق مش بس التقني. استطلع بأقصى قدر من الصمت قبل ما تتفاعل مباشرة مع التطبيق، ووثّق كل خطوة أولًا بأول — التقرير بيُبنى أثناء الاختبار، مش بعده.</p>
+</div>
+
+<hr />
+<p><em>نهاية نوتس الموديول الأول — Intro to Advanced Web Application Penetration Testing (eWPTXv3)</em></p>
+<div class="footer-note">-- EOF: ewptx-module-01/intro-advanced-webapp-pentesting.md --</div>
+
+</div>
+
+<script>
+(function(){
+  var root=document.documentElement,btn=document.getElementById('themeSwitch');
+  function applyTheme(t){root.setAttribute('data-theme',t);btn.textContent='theme: '+t;try{localStorage.setItem('oscp-notes-theme',t);}catch(e){}}
+  var saved='dark';try{saved=localStorage.getItem('oscp-notes-theme')||'dark';}catch(e){}
+  applyTheme(saved);
+  btn.addEventListener('click',function(){applyTheme(root.getAttribute('data-theme')==='dark'?'light':'dark');});
+  var bar=document.getElementById('progressBar');
+  function onScroll(){var h=document.documentElement,s=h.scrollTop,ht=h.scrollHeight-h.clientHeight;bar.style.width=(ht>0?(s/ht*100):0)+'%';var t=document.getElementById('toTop');s>500?t.classList.add('show'):t.classList.remove('show');}
+  document.addEventListener('scroll',onScroll);onScroll();
+  document.getElementById('toTop').addEventListener('click',function(){window.scrollTo({top:0,behavior:'smooth'});});
+  document.querySelectorAll('.code-wrap').forEach(function(wrap){
+    var c=wrap.querySelector('code');if(!c)return;
+    var b=document.createElement('button');b.className='copy-btn';b.textContent='copy';
+    b.addEventListener('click',function(){if(navigator.clipboard){navigator.clipboard.writeText(c.innerText).then(function(){b.textContent='copied ✓';b.classList.add('copied');setTimeout(function(){b.textContent='copy';b.classList.remove('copied');},1500);});}});
+    wrap.appendChild(b);
+  });
+})();
+</script>
+</body>
+</html>

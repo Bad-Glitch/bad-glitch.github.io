@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CEHv13 · Module 16: Hacking Wireless Networks</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-0:#0B0B0D;--bg-1:#121214;--surface:#17171A;--surface-2:#1D1D21;
+    --border:#2A2A2F;--border-soft:#232326;
+    --text:#E6E6E9;--text-soft:#C4C4CA;--muted:#8A8A92;
+    --red:#E1362F;--red-soft:rgba(225,54,47,0.10);--red-border:rgba(225,54,47,0.35);
+    --red-grad:linear-gradient(90deg,#E1362F,#F2794A);
+    --amber:#E8A23A;--amber-soft:rgba(232,162,58,0.09);--amber-border:rgba(232,162,58,0.30);
+    --green:#3FBF6E;--green-soft:rgba(63,191,110,0.09);--green-border:rgba(63,191,110,0.30);
+    --blue:#4EA1D3;--blue-soft:rgba(78,161,211,0.09);--blue-border:rgba(78,161,211,0.30);
+    --purple:#A179E8;--purple-soft:rgba(161,121,232,0.10);--purple-border:rgba(161,121,232,0.32);
+    --mono:'IBM Plex Mono','Courier New',monospace;
+  }
+  html[data-theme="light"]{--bg-0:#F4F3F1;--bg-1:#ECEBE8;--surface:#FFFFFF;--surface-2:#F3F2EF;--border:#DEDCD6;--border-soft:#E6E4DF;--text:#1C1B19;--text-soft:#3C3A36;--muted:#726F68;}
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;direction:rtl;text-align:right;background:var(--bg-0);}
+  body{font-family:'Cairo','Segoe UI',Tahoma,sans-serif;line-height:1.95;font-size:16.5px;color:var(--text);
+    background:radial-gradient(900px 420px at 12% -8%,rgba(225,54,47,0.10),transparent 60%),radial-gradient(800px 420px at 90% 6%,rgba(232,162,58,0.06),transparent 60%),linear-gradient(180deg,var(--bg-0) 0%,var(--bg-1) 100%);
+    background-attachment:fixed;transition:background 0.2s ease,color 0.2s ease;}
+  html[data-theme="light"] body{background:radial-gradient(900px 420px at 12% -8%,rgba(225,54,47,0.06),transparent 60%),radial-gradient(800px 420px at 90% 6%,rgba(232,162,58,0.05),transparent 60%),linear-gradient(180deg,var(--bg-0) 0%,var(--bg-1) 100%);}
+  .progress-rail{position:fixed;top:0;inset-inline:0;height:3px;background:rgba(255,255,255,0.04);z-index:60;}
+  html[data-theme="light"] .progress-rail{background:rgba(0,0,0,0.05);}
+  .progress-bar{height:100%;width:0%;background:var(--red-grad);transition:width 0.08s linear;}
+  .float-controls{position:fixed;bottom:22px;left:22px;z-index:55;display:flex;flex-direction:column;gap:10px;}
+  .fctrl-btn{width:42px;height:42px;border-radius:50%;background:var(--surface);border:1px solid var(--border);color:var(--text-soft);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;box-shadow:0 10px 24px -10px rgba(0,0,0,0.5);transition:transform 0.15s ease,border-color 0.15s ease,opacity 0.2s ease;}
+  .fctrl-btn:hover{transform:translateY(-2px);border-color:var(--red-border);color:var(--red);}
+  #toTop{opacity:0;pointer-events:none;}#toTop.show{opacity:1;pointer-events:auto;}
+  .page{max-width:860px;margin:0 auto;padding:46px 22px 100px;}
+  .banner{position:relative;overflow:hidden;background:linear-gradient(155deg,var(--surface) 0%,var(--bg-1) 55%,var(--surface) 100%);border:1px solid var(--border-soft);border-radius:10px;padding:0 0 34px;margin-bottom:26px;box-shadow:0 20px 50px -20px rgba(0,0,0,0.6);}
+  .term-bar{display:flex;align-items:center;gap:8px;padding:13px 18px;border-bottom:1px solid var(--border-soft);background:rgba(255,255,255,0.015);direction:ltr;}
+  .term-dot{width:11px;height:11px;border-radius:50%;display:inline-block;}.term-dot.r{background:#E1362F;}.term-dot.y{background:#E8A23A;}.term-dot.g{background:#3FBF6E;}
+  .term-path{margin-inline-start:12px;font-family:var(--mono);font-size:12px;color:var(--muted);}
+  .theme-switch{margin-inline-start:auto;font-family:var(--mono);font-size:11px;color:var(--muted);background:transparent;border:1px solid var(--border);border-radius:4px;padding:4px 9px;cursor:pointer;}
+  .theme-switch:hover{color:var(--amber);border-color:var(--amber-border);}
+  .banner-body{padding:30px 34px 4px;}
+  .banner .kicker{display:inline-block;font-family:var(--mono);font-size:12.5px;letter-spacing:0.03em;color:var(--red);background:var(--red-soft);border:1px solid var(--red-border);border-radius:3px;padding:5px 12px;margin-bottom:20px;direction:ltr;}
+  .banner h1{margin:0 0 14px;font-size:28px;font-weight:800;line-height:1.5;color:var(--text);}
+  .banner .lede{color:var(--muted);font-size:15.5px;line-height:1.95;max-width:640px;margin:0 0 24px;}
+  .tags{display:flex;flex-wrap:wrap;gap:9px;}
+  .tag{font-size:12.5px;font-family:var(--mono);color:var(--amber);background:var(--amber-soft);border:1px solid var(--amber-border);border-radius:3px;padding:5px 11px;}
+  .toc{background:var(--surface);border:1px solid var(--border-soft);border-radius:8px;padding:6px 0 6px;margin-bottom:50px;overflow:hidden;}
+  .toc-title{font-family:var(--mono);font-weight:600;font-size:13px;color:var(--green);padding:14px 22px;border-bottom:1px solid var(--border-soft);direction:ltr;text-align:left;}
+  .toc-list{display:flex;flex-direction:column;}
+  .toc-item{display:flex;align-items:center;gap:14px;padding:12px 22px;color:var(--text-soft);text-decoration:none;font-size:14.5px;border-bottom:1px solid rgba(255,255,255,0.03);transition:background 0.15s ease;}
+  .toc-list .toc-item:last-child{border-bottom:none;}
+  .toc-item:hover{background:var(--red-soft);}
+  .toc-num{flex:none;font-family:var(--mono);font-size:12.5px;font-weight:600;color:#0F0F10;background:var(--red-grad);border-radius:3px;padding:3px 8px;direction:ltr;}
+  h1,h2,h3,h4{font-weight:700;}
+  h2{display:flex;align-items:center;gap:14px;font-size:21px;margin:66px 0 22px;padding-bottom:16px;border-bottom:1px solid var(--border-soft);color:var(--text);}
+  h2 .num{flex:none;font-family:var(--mono);font-size:13px;font-weight:700;color:#0F0F10;background:var(--red-grad);border-radius:5px;padding:7px 12px;direction:ltr;}
+  h2 .htext{line-height:1.5;}
+  h3{font-size:17px;margin:34px 0 14px;color:var(--red);display:flex;align-items:center;gap:9px;}
+  h3::before{content:"#";font-family:var(--mono);color:var(--amber);font-weight:700;}
+  h4{font-size:14.8px;margin:22px 0 10px;color:var(--text-soft);font-family:var(--mono);}
+  p{margin:0 0 17px;color:var(--text);}
+  strong{color:var(--text);font-weight:700;}:root:not([data-theme="light"]) strong{color:#FBFBFC;}
+  a{color:var(--amber);text-decoration:none;border-bottom:1px dashed var(--amber-border);}
+  hr{border:none;height:1px;margin:50px 0;background:linear-gradient(90deg,transparent,var(--border),transparent);}
+  ul,ol{margin:0 0 18px;padding-inline-start:24px;}
+  li{margin-bottom:9px;color:var(--text);}li::marker{color:var(--red);font-family:var(--mono);}li>ul,li>ol{margin-top:9px;}
+  blockquote{margin:24px 0;padding:17px 22px;background:var(--red-soft);border:1px solid var(--red-border);border-inline-start:3px solid var(--red);border-radius:6px;color:var(--text-soft);}
+  blockquote p{margin:0;color:inherit;line-height:1.85;}blockquote p+p{margin-top:10px;}blockquote strong{color:var(--text);}
+  .callout{margin:24px 0;padding:17px 22px 18px;border-radius:6px;border:1px solid var(--border-soft);border-inline-start:3px solid var(--border);background:var(--surface);}
+  .callout p{margin:0;color:var(--text-soft);line-height:1.85;}.callout p+p{margin-top:10px;}.callout ul,.callout ol{margin:6px 0 0;}
+  .callout-label{display:inline-flex;align-items:center;gap:7px;font-family:var(--mono);font-size:11.5px;font-weight:700;letter-spacing:0.02em;text-transform:uppercase;margin-bottom:10px;direction:ltr;}
+  .callout.note{border-inline-start-color:var(--blue);background:var(--blue-soft);}.callout.note .callout-label{color:var(--blue);}
+  .callout.warning{border-inline-start-color:var(--red);background:var(--red-soft);}.callout.warning .callout-label{color:var(--red);}
+  .callout.tip{border-inline-start-color:var(--green);background:var(--green-soft);}.callout.tip .callout-label{color:var(--green);}
+  .callout.examtip{border-inline-start-color:var(--purple);background:var(--purple-soft);}.callout.examtip .callout-label{color:var(--purple);}
+  .callout.case{border-inline-start-color:var(--amber);background:var(--amber-soft);}.callout.case .callout-label{color:var(--amber);}
+  .callout.definition{border-inline-start-color:var(--muted);background:var(--surface-2);}.callout.definition .callout-label{color:var(--text-soft);}
+  .callout.danger{border-inline-start-color:#FF5A52;background:rgba(255,90,82,0.08);}.callout.danger .callout-label{color:#FF5A52;}
+  .table-wrap{overflow-x:auto;margin:22px 0;border:1px solid var(--border-soft);border-radius:8px;}
+  table{width:100%;border-collapse:collapse;font-size:14.2px;min-width:480px;}
+  thead th{background:var(--surface-2);color:var(--amber);font-weight:700;font-family:var(--mono);font-size:12.5px;text-transform:uppercase;letter-spacing:0.02em;text-align:start;padding:13px 15px;border-bottom:1px solid var(--border-soft);white-space:nowrap;}
+  tbody td{padding:12px 15px;border-bottom:1px solid var(--border-soft);color:var(--text-soft);vertical-align:top;}
+  tbody tr:last-child td{border-bottom:none;}tbody tr:nth-child(even){background:rgba(127,127,127,0.03);}tbody tr:hover{background:var(--red-soft);}
+  code{font-family:var(--mono);font-size:13.3px;background:var(--surface-2);border:1px solid var(--border-soft);border-radius:4px;padding:2px 6px;direction:ltr;unicode-bidi:embed;color:var(--green);}
+  .code-wrap{position:relative;overflow-x:auto;margin:22px 0;}
+  .code-tag{position:absolute;top:10px;left:14px;font-family:var(--mono);font-size:10.5px;color:var(--muted);letter-spacing:0.04em;text-transform:uppercase;z-index:2;}
+  .copy-btn{position:absolute;top:8px;right:10px;z-index:2;font-family:var(--mono);font-size:11px;color:var(--muted);background:var(--surface-2);border:1px solid var(--border-soft);border-radius:4px;padding:4px 9px;cursor:pointer;direction:ltr;}
+  .copy-btn:hover{color:var(--amber);border-color:var(--amber-border);}.copy-btn.copied{color:var(--green);border-color:var(--green-border);}
+  pre{background:var(--bg-0);border:1px solid var(--border-soft);border-inline-start:3px solid var(--red);border-radius:8px;padding:30px 22px 18px;direction:ltr;text-align:left;margin:0;}
+  html[data-theme="light"] pre{background:#16181C;}
+  pre code{background:none;border:none;padding:0;color:#B9E8C9;font-size:13.2px;line-height:1.75;}
+  .diagram-card{background:var(--surface);border:1px solid var(--border-soft);border-radius:10px;padding:22px 18px 16px;margin:24px 0;}
+  .diagram-card svg{width:100%;height:auto;display:block;}
+  .diagram-caption{margin-top:10px;text-align:center;font-family:var(--mono);font-size:11.5px;color:var(--muted);}
+  .takeaways{background:var(--surface);border:1px solid var(--border-soft);border-radius:8px;padding:18px 22px 20px;margin:30px 0 10px;}
+  .takeaways-title{font-family:var(--mono);font-size:12.5px;font-weight:700;color:var(--green);margin-bottom:12px;direction:ltr;text-align:left;display:flex;align-items:center;gap:8px;}
+  .takeaways ul{margin:0;padding-inline-start:20px;}.takeaways li{color:var(--text-soft);font-size:14.5px;}
+  .step-track{display:flex;flex-direction:column;gap:0;margin:24px 0;}
+  .step-item{position:relative;padding:0 0 26px 0;padding-inline-start:46px;border-inline-start:2px solid var(--border-soft);}
+  .step-item:last-child{border-inline-start:2px solid transparent;padding-bottom:4px;}
+  .step-num{position:absolute;inset-inline-start:-17px;top:0;width:32px;height:32px;border-radius:50%;background:var(--red-grad);color:#0F0F10;font-family:var(--mono);font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;}
+  .step-title{font-weight:700;color:var(--text);margin-bottom:6px;font-size:15px;}
+  .step-body{color:var(--text-soft);font-size:14.5px;}.step-body p{margin:0 0 10px;}.step-body p:last-child{margin-bottom:0;}.step-body ul{margin:8px 0 0;}
+  .method-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px;margin:22px 0;}
+  .method-card{background:var(--surface);border:1px solid var(--border-soft);border-radius:8px;padding:14px 16px;}
+  .method-card .mtitle{font-weight:700;color:var(--text);font-size:14px;margin-bottom:5px;}.method-card .mdesc{color:var(--text-soft);font-size:13.3px;line-height:1.75;}
+  .cheat-section h4{color:var(--amber);font-size:13px;margin:26px 0 8px;}
+  .footer-note{margin-top:70px;padding-top:26px;border-top:1px solid var(--border-soft);color:var(--muted);font-size:13.3px;font-family:var(--mono);text-align:center;direction:ltr;}
+  @media print{.float-controls,.progress-rail,.copy-btn,.theme-switch{display:none !important;}body{background:#fff;color:#000;}.page{max-width:100%;}}
+  @media(max-width:640px){.page{padding:28px 14px 70px;}.banner-body{padding:24px 20px 4px;}.banner h1{font-size:21px;}h2{font-size:18px;gap:10px;}.float-controls{left:12px;bottom:14px;}}
+</style>
+</head>
+<body>
+<div class="progress-rail"><div class="progress-bar" id="progressBar"></div></div>
+<div class="float-controls"><button class="fctrl-btn" id="toTop" title="ارجع لفوق">↑</button></div>
+
+<div class="page">
+<div class="banner">
+  <div class="term-bar">
+    <span class="term-dot r"></span><span class="term-dot y"></span><span class="term-dot g"></span>
+    <span class="term-path">root@ceh:~/module-16$</span>
+    <button class="theme-switch" id="themeSwitch">theme: dark</button>
+  </div>
+  <div class="banner-body">
+    <span class="kicker">EC-Council · CEHv13 · Module 16</span>
+    <h1>اختراق الشبكات اللاسلكية</h1>
+    <p class="lede">من مفاهيم الشبكات اللاسلكية والهوائيات، مرورًا ببروتوكولات التشفير (WEP وWPA وWPA2 وWPA3) وثغراتها، وأنواع التهديدات اللاسلكية، ووصولاً لمنهجية الاختراق الكاملة (WarDriving وAircrack-ng وKRACK وEvil Twin وARP Poisoning وRFID Cloning واختراق WPA3)، والإجراءات المضادة.</p>
+    <div class="tags">
+      <span class="tag">wifi-hacking</span><span class="tag">wep-wpa-wpa3</span>
+      <span class="tag">aircrack-ng</span><span class="tag">krack</span>
+      <span class="tag">evil-twin</span><span class="tag">deauth-attack</span>
+      <span class="tag">arp-poisoning</span><span class="tag">rfid-cloning</span>
+    </div>
+  </div>
+</div>
+
+<nav class="toc"><div class="toc-title">$ ls learning_units/</div><div class="toc-list">
+  <a class="toc-item" href="#lu1"><span class="toc-num">01</span><span>مفاهيم الشبكات اللاسلكية والهوائيات</span></a>
+  <a class="toc-item" href="#lu2"><span class="toc-num">02</span><span>بروتوكولات التشفير — WEP وWPA وWPA2 وWPA3</span></a>
+  <a class="toc-item" href="#lu3"><span class="toc-num">03</span><span>أنواع التهديدات اللاسلكية</span></a>
+  <a class="toc-item" href="#lu4"><span class="toc-num">04</span><span>منهجية اختراق الشبكات اللاسلكية</span></a>
+  <a class="toc-item" href="#lu5"><span class="toc-num">05</span><span>الإجراءات المضادة</span></a>
+  <a class="toc-item" href="#cheat"><span class="toc-num">--</span><span>Cheat Sheet مرجعي</span></a>
+  <a class="toc-item" href="#summary"><span class="toc-num">--</span><span>الخلاصة العامة للموديول</span></a>
+</div></nav>
+
+<!-- LU1 -->
+<h2 id="lu1"><span class="num">01</span><span class="htext">مفاهيم الشبكات اللاسلكية والهوائيات</span></h2>
+
+<h3>مصطلحات الشبكات اللاسلكية</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>المصطلح</th><th>الشرح</th></tr></thead>
+<tbody>
+<tr><td>GSM</td><td>Global System for Mobile Communications — نظام عالمي لنقل بيانات الموبايل في الشبكات اللاسلكية</td></tr>
+<tr><td>Bandwidth</td><td>كمية المعلومات التي يمكن بثّها عبر الاتصال — يُقاس بـ bps (bits per second)</td></tr>
+<tr><td>Access Point (AP)</td><td>يربط الأجهزة اللاسلكية بشبكة لاسلكية/سلكية — يعمل كـ Switch أو Hub بين LAN السلكي والشبكة اللاسلكية</td></tr>
+<tr><td>BSSID</td><td>عنوان MAC الخاص بالـ AP أو المحطة الأساسية (Base Station) التي أنشأت الـ BSS</td></tr>
+<tr><td>SSID</td><td>معرّف فريد من 32 حرفًا ألفارقمية يُعطى للـ WLAN — يُميِّز الشبكة ويسمح بالاتصال بها من بين الشبكات المتاحة</td></tr>
+<tr><td>ISM Band</td><td>مجموعة ترددات للاستخدام الصناعي والعلمي والطبي الدولي</td></tr>
+<tr><td>Hotspot</td><td>أماكن تتوفّر فيها شبكات لاسلكية للاستخدام العام</td></tr>
+<tr><td>OFDM</td><td>Orthogonal Frequency-Division Multiplexing — يُقسِّم الإشارة لترددات حاملة متعامدة ويُوزِّع المعلومات على تغيّرات الطور والتردد والسعة</td></tr>
+<tr><td>MIMO-OFDM</td><td>يُحسِّن الكفاءة الطيفية لـ 4G و5G — يُقلِّل التداخل ويزيد متانة القناة</td></tr>
+<tr><td>DSSS</td><td>Direct-Sequence Spread Spectrum — يضرب إشارة البيانات الأصلية بكود ضوضاء عشوائي زائف (Pseudo-random) لحماية الإشارات من التداخل والتشويش</td></tr>
+<tr><td>FHSS</td><td>Frequency-Hopping Spread Spectrum (FH-CDMA) — يُرسِل إشارات راديو بالتبديل السريع بين قنوات ترددية كثيرة وفق خوارزمية معروفة للمُرسِل والمُستقبِل — يُقلِّل كفاءة الاعتراض غير المصرَّح</td></tr>
+</tbody>
+</table></div>
+
+
+<h3>أنواع الشبكات اللاسلكية</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>النوع</th><th>الشرح</th></tr></thead>
+<tbody>
+<tr><td>Extension to a Wired Network</td><td>إضافة APs بين الشبكة السلكية والأجهزة اللاسلكية. Software APs (SAPs) على جهاز بـ NIC لاسلكي، أو Hardware APs (HAPs) بدعم أكبر للميزات</td></tr>
+<tr><td>Multiple Access Points</td><td>شبكات بـ APs متعددة — تغطية مناطق أوسع. منطقة كل AP تتداخل مع جارتها لدعم ميزة Roaming</td></tr>
+<tr><td>LAN-to-LAN Wireless</td><td>ربط LANs عبر APs — مهمة معقّدة</td></tr>
+<tr><td>3G/4G/5G Hotspot</td><td>يُتيح وصول Wi-Fi لأجهزة متعدّدة (MP3 وأجهزة لوحية وكاميرات وغيرها)</td></tr>
+</tbody>
+</table></div>
+
+
+<h3>أنواع المصادقة Wi-Fi</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>النوع</th><th>الشرح</th></tr></thead>
+<tbody>
+<tr><td>PSK Mode (WPA-PSK / WPA2-PSK)</td><td>كلمة مرور مشتركة واحدة للمصادقة — تُدخَل يدويًا في الراوتر وكل جهاز. شائعة في المنازل والمكاتب الصغيرة لبساطتها</td></tr>
+<tr><td>Centralized Authentication (WPA/WPA2-Enterprise / 802.1X)</td><td>سيرفر مصادقة مركزي (RADIUS) يُرسِل مفاتيح المصادقة للـ AP والعميل. يُستخدَم في الشركات والبيئات الكبيرة — بيانات اعتماد فردية لكل مستخدم</td></tr>
+</tbody>
+</table></div>
+
+
+<h3>أنواع الهوائيات اللاسلكية</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>النوع</th><th>خصائصه</th><th>الاستخدام</th></tr></thead>
+<tbody>
+<tr><td>Directional Antenna</td><td>يبثّ ويستقبل من اتجاه واحد فقط — يُقلِّل التداخل</td><td>الاتصالات بعيدة المدى في اتجاه محدّد</td></tr>
+<tr><td>Omnidirectional Antenna</td><td>يُشعِّع طاقة EM في كل الاتجاهات — نمط إشعاع أفقي 360° موحَّد</td><td>أبراج البث الإذاعي — المستقبِل غير ثابت</td></tr>
+<tr><td>Parabolic Grid Antenna</td><td>شبه طبق لاقط من أسلاك ألومنيوم — يُحقِّق إرسال Wi-Fi لمسافات طويلة جدًا (حتى 10 أميال) عبر حزم راديو مُركَّزة عالية الكسب</td><td>هجمات Layer-1 DoS وMITM — إشارة أقوى = بيانات أكثر</td></tr>
+<tr><td>Dipole Antenna</td><td>موصِّل كهربائي مستقيم بنصف طول موجة — متماثل ثنائيًا ومتوازن طبيعيًا</td><td>استخدام عام واسع النطاق</td></tr>
+<tr><td>Reflector Antenna</td><td>يُركِّز طاقة EM المُشعَّعة أو المستقبَلة عند نقطة بؤرية — سطح مكافئ (Parabolic)</td><td>الاتصال مع الأقمار الصناعية — اكتساب عالٍ</td></tr>
+</tbody>
+</table></div>
+
+
+<!-- LU2 -->
+
+<hr />
+
+<h2 id="lu2"><span class="num">02</span><span class="htext">بروتوكولات التشفير — WEP وWPA وWPA2 وWPA3</span></h2>
+
+
+
+<h3>مقارنة بروتوكولات التشفير</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>البروتوكول</th><th>المعيار</th><th>خوارزمية التشفير</th><th>التكامل</th><th>الملاحظة</th></tr></thead>
+<tbody>
+<tr><td>WEP</td><td>IEEE 802.11</td><td>RC4 (XOR)</td><td>CRC-32 (ICV)</td><td>64-bit → مفتاح 40-bit، 128-bit → 104-bit، 256-bit → 232-bit</td></tr>
+<tr><td>WPA</td><td>IEEE 802.11i (أوّلي)</td><td>RC4 + TKIP</td><td>MIC 64-bit</td><td>يُعالج ضعف WEP بـ Per-packet mixing وIV موسَّع وRe-keying</td></tr>
+<tr><td>WPA2</td><td>IEEE 802.11i (كامل)</td><td>AES-CCMP</td><td>CBC-MAC</td><td>Personal (PSK) وEnterprise (EAP/RADIUS/Kerberos)</td></tr>
+<tr><td>WPA3</td><td>802.11-2018</td><td>AES-GCMP-256</td><td>HMAC-SHA-384</td><td>SAE (Dragonfly) — مقاوم لهجمات Dictionary Offline. ECDSA-384 لتبادل المفاتيح</td></tr>
+</tbody>
+</table></div>
+
+
+<h3>كيف يعمل WEP؟</h3>
+<div class="step-track">
+<div class="step-item"><div class="step-num">1</div><div class="step-title">حساب ICV</div><div class="step-body"><p>CRC-32 يحسب قيمة ICV 32-bit للبيانات وتُضاف لإطار البيانات.</p></div></div>
+<div class="step-item"><div class="step-num">2</div><div class="step-title">إنشاء WEP Seed</div><div class="step-body"><p>رقم عشوائي 24-bit (IV) يُضاف لمفتاح WEP — WEP Key + IV = WEP Seed.</p></div></div>
+<div class="step-item"><div class="step-num">3</div><div class="step-title">توليد Keystream</div><div class="step-body"><p>WEP Seed كإدخال لخوارزمية RC4 لتوليد Keystream — XOR مع البيانات + ICV لإنتاج البيانات المُشفَّرة.</p></div></div>
+<div class="step-item"><div class="step-num">4</div><div class="step-title">إرسال MAC Frame</div><div class="step-body"><p>حقل IV (IV + PAD + KID) يُضاف للنص المشفَّر لإنتاج MAC Frame.</p></div></div>
+</div>
+
+
+<h3>ثغرات WEP</h3>
+<ul>
+<li><strong>CRC-32 غير كافٍ:</strong> بالتقاط حزمتين، المهاجم يقدر يعكس Bit في الـ Stream المشفَّر ويعدّل الـ Checksum</li>
+<li><strong>IV صغير (24-bit):</strong> يُرسَل بشكل واضح (Cleartext) — AP يبثّ حزم 1500-byte بـ 11 Mbps يستنفد IV بالكامل في 5 ساعات</li>
+<li><strong>Known Plaintext Attacks:</strong> تصادم الـ IV يُتيح إعادة بناء RC4 Keystream</li>
+<li><strong>Dictionary Attacks:</strong> IV الصغير يُتيح بناء جداول فكّ التشفير — ~24 GB تُمكِّن فكّ تشفير WEP فوريًا</li>
+<li><strong>DoS Attacks:</strong> رسائل Associate وDisassociate غير مُصادَق عليها</li>
+</ul>
+
+
+<h3>ثغرات WPA</h3>
+<ul>
+<li><strong>كلمات مرور ضعيفة:</strong> WPA PSK عرضة لهجمات كسر كلمات المرور</li>
+<li><strong>انعدام Forward Secrecy:</strong> التقاط PSK واحد = فكّ تشفير كل الحزم الماضية والحالية</li>
+<li><strong>Packet Spoofing/Decryption:</strong> عملاء WPA-TKIP عرضة لهجمات Injection وDecryption و TCP Connection Hijacking</li>
+</ul>
+
+
+<h3>ثغرات WPA2</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>الثغرة</th><th>التفاصيل</th></tr></thead>
+<tbody>
+<tr><td>كلمات مرور ضعيفة</td><td>WPA2 PSK عرضة للـ Eavesdropping وDictionary وPassword Cracking</td></tr>
+<tr><td>انعدام Forward Secrecy</td><td>التقاط PSK = فكّ تشفير كل حزم الماضي والحاضر</td></tr>
+<tr><td>Hole96 (GTK)</td><td>GTK مشترك يُتيح هجمات MITM وDoS</td></tr>
+<tr><td>GTK Predictability</td><td>RNG غير آمن في WPA2 يُتيح اكتشاف GTK ← حقن حركة خبيثة وفكّ تشفير الاتصالات الجارية</td></tr>
+<tr><td>KRACK</td><td>Key Reinstallation Attack — يُتيح Sniffing وConnection Hijacking وحقن Malware وفكّ التشفير</td></tr>
+<tr><td>Wireless DoS</td><td>استغلال ميزة Replay Attack Detection بإرسال إطارات Group-addressed بـ PN كبير</td></tr>
+<tr><td>WPS PIN Recovery</td><td>تحديد WPS PIN يكشف WPA2 Key بسهولة</td></tr>
+</tbody>
+</table></div>
+
+
+<h3>ثغرات WPA3</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>الثغرة</th><th>التفاصيل</th></tr></thead>
+<tbody>
+<tr><td>Implementation Challenges</td><td>الأجهزة القديمة لا تدعم WPA3 — تحديات التوافق</td></tr>
+<tr><td>Limited Adoption</td><td>الانتشار البطيء يُحدّ من فعالية الحماية الشاملة</td></tr>
+<tr><td>Resource Intensive</td><td>خوارزميات تشفير أثقل — تؤثّر على أداء الأجهزة القديمة</td></tr>
+<tr><td>Configuration Errors</td><td>أخطاء الإعداد تُبطل مزايا WPA3 رغم تقدّمه</td></tr>
+<tr><td>Timing Attacks على SAE</td><td>تحليل وقت عمليات Dragonfly Handshake → استنتاج محتملات كلمة المرور</td></tr>
+<tr><td>Cache-based Side-channel</td><td>استخراج معلومات من أنماط وصول الـ Cache لكشف تفاصيل عمليات التشفير</td></tr>
+<tr><td>Transition Mode Weakness</td><td>Transition Mode يُبقي WPA2 مفعَّلًا — المهاجم يُجبر العميل على استخدام WPA2 الأقل أمانًا</td></tr>
+<tr><td>Hardware Requirements</td><td>يتطلّب عتادًا حديثًا — تكلفة ترقية عالية</td></tr>
+</tbody>
+</table></div>
+
+<div class="callout examtip"><div class="callout-label">WPA3 — SAE / Dragonfly Key Exchange</div><p>SAE (Simultaneous Authentication of Equals) هو البروتوكول الذي يُستبدَل به PSK في WPA3-Personal — مقاوم لهجمات Offline Dictionary وKey Recovery. لكن بعض تطبيقاته عرضة لـ Timing Attacks وCache Side-channel.</p></div>
+
+
+<!-- LU3 -->
+
+<hr />
+
+<h2 id="lu3"><span class="num">03</span><span class="htext">أنواع التهديدات اللاسلكية</span></h2>
+
+
+
+<div class="table-wrap"><table>
+<thead><tr><th>فئة التهديد</th><th>الأنواع</th></tr></thead>
+<tbody>
+<tr><td>Access Control Attacks</td><td>MAC Spoofing، AP Misconfiguration، Ad Hoc Associations، Promiscuous Client، Client Mis-association، Unauthorized Association</td></tr>
+<tr><td>Integrity Attacks</td><td>Data Frame Injection، WEP Injection، Bit-Flipping Attacks، Extensible AP Replay، Data Replay</td></tr>
+<tr><td>Confidentiality Attacks</td><td>Eavesdropping، Traffic Analysis، Cracking WEP Key، Evil Twin AP، Honeypot AP، Session Hijacking، Masquerading، MITM Attack</td></tr>
+<tr><td>Availability Attacks</td><td>AP Theft، Disassociation Attacks، EAP-Failure، DoS، De-authenticate Flood، Routing Attacks، Beacon Flood، Authenticate Flood، ARP Cache Poisoning، Power Saving Attacks، TKIP MIC Exploit</td></tr>
+<tr><td>Authentication Attacks</td><td>PSK Cracking، LEAP Cracking، VPN Login Cracking، Domain Login Cracking، KRACK، Identity Theft، Shared Key Guessing، Password Speculation، Application Login Theft</td></tr>
+</tbody>
+</table></div>
+
+
+<div class="callout note"><div class="callout-label">Inter-Chip Privilege Escalation (Wireless Co-Existence Attack)</div><p>يستغل الثغرات في رقائق الشرائح المدمجة (Combo Chips) التي تتعامل مع Bluetooth وWi-Fi معًا. المهاجم يستغل رقاقة واحدة لسرقة بيانات الرقاقة الأخرى ويتحرّك جانبيًا (Lateral Movement).</p></div>
+
+
+<!-- LU4 -->
+
+<hr />
+
+<h2 id="lu4"><span class="num">04</span><span class="htext">منهجية اختراق الشبكات اللاسلكية</span></h2>
+
+
+<p>منهجية الاختراق اللاسلكي تتكوّن من 5 خطوات:</p>
+<ul>
+<li>Wi-Fi Discovery</li>
+<li>Wireless Traffic Analysis</li>
+<li>Launch of Wireless Attacks</li>
+<li>Wi-Fi Encryption Cracking</li>
+<li>Wi-Fi Network Compromising</li>
+</ul>
+
+
+<h3>1 — Wi-Fi Discovery وFootprinting</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>التقنية</th><th>الشرح</th></tr></thead>
+<tbody>
+<tr><td>Passive Footprinting</td><td>رصد الحزم من الهواء دون الاتصال بأي AP أو حقن حزم — يكشف الأجهزة والـ APs والـ SSID</td></tr>
+<tr><td>Active Footprinting</td><td>إرسال Probe Request بالـ SSID أو بـ SSID فارغ للـ AP — معظم الـ APs ترد بـ SSID خاصّتها في Probe Response</td></tr>
+</tbody>
+</table></div>
+
+
+<h3>تقنيات Wi-Fi Chalking (اكتشاف الشبكات)</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>التقنية</th><th>الشرح</th></tr></thead>
+<tbody>
+<tr><td>WarWalking</td><td>المهاجم يمشي بجهاز Wi-Fi وأداة اكتشاف لاسلكي لرسم خرائط الشبكات المفتوحة</td></tr>
+<tr><td>WarChalking</td><td>رسم رموز في الأماكن العامة للإعلان عن شبكات Wi-Fi مفتوحة</td></tr>
+<tr><td>WarFlying</td><td>استخدام طائرات Drones للكشف عن الشبكات اللاسلكية المفتوحة</td></tr>
+<tr><td>WarDriving</td><td>القيادة بجهاز Wi-Fi وأداة اكتشاف لرسم خرائط الشبكات المفتوحة</td></tr>
+</tbody>
+</table></div>
+
+
+<h3>أدوات Wi-Fi Discovery</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>الأداة</th><th>الوصف</th></tr></thead>
+<tbody>
+<tr><td>inSSIDer</td><td>أداة تحسين Wi-Fi وفحص الأعطال — تفحص الشبكات اللاسلكية وتعرض قوّة الإشارة والقنوات. تتتبّع dBm عبر الزمن وتُصفِّي الـ APs</td></tr>
+<tr><td>Sparrow-wifi</td><td>أداة GUI شاملة لـ 2.4 GHz و5 GHz — تدمج HackRF وUbertooth وGPS وDrone GPS لاكتشاف APs وتحديد SSIDs وتحليل الطيف. تدعم CSV/JSON وGoogle Maps</td></tr>
+<tr><td>WiFiAnalyzer (Mobile)</td><td>فحص الشبكات المحيطة وقياس قوّة الإشارة وتحديد القنوات المزدحمة — رسم بياني للإشارة وتقدير المسافة للـ APs</td></tr>
+<tr><td>Wash (WPS Scanner)</td><td>اكتشاف APs التي تدعم WPS والتحقّق من حالة القفل (Locked/Unlocked). يدعم 5 GHz — يُثبَّت مع حزمة Reaver</td></tr>
+</tbody>
+</table></div>
+
+
+<h3>2 — Wireless Traffic Analysis</h3>
+<p>تمكّن من تحديد الـ SSID المُذاع، وجود APs متعددة، إمكانية استرداد الـ SSIDs، أسلوب المصادقة المستخدَم، وخوارزميات WLAN Encryption. أدوات: <strong>AirMagnet G3 Pro</strong>، <strong>Wireshark</strong>، <strong>OmniPeek</strong>، <strong>CommView for Wi-Fi</strong>.</p>
+
+<h3>اختيار Wi-Fi Card المناسب</h3>
+<ul>
+<li>تحديد المتطلّبات: Windows يستطيع الاستماع فقط — Linux يستطيع الاستماع <strong>والحقن</strong></li>
+<li>معرفة قدرات الكارت: المُصنِّع وChipset مهمّان (ليس فقط العلامة التجارية) — أدوات مثل Aircrack-ng وKisMAC تعمل مع Chipsets محدَّدة فقط</li>
+<li>التحقّق من توافق الـ Chipset مع نظام التشغيل</li>
+<li>تحديد الـ Drivers والـ Patches المطلوبة</li>
+</ul>
+
+
+<h3>3 — إطلاق هجمات الشبكة اللاسلكية</h3>
+
+<h4>Aircrack-ng Suite</h4>
+<p>مجموعة أدوات شبكية تشمل: Detector، Packet Sniffer، WEP/WPA PSK Cracker، وأداة تحليل لشبكات 802.11. تعمل على Linux وWindows.</p>
+
+<h4>الكشف عن Hidden SSIDs</h4>
+<p>تعتمد كثير من المؤسسات على إخفاء الـ SSID (Security Through Obscurity) — لكن إخفاء الـ SSID لا يزيد الأمان. الـ airodump-ng يكشف الـ SSIDs المخفية.</p>
+
+<h4>هجمات DoS اللاسلكية</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>الهجوم</th><th>الشرح</th></tr></thead>
+<tbody>
+<tr><td>Disassociation Attack</td><td>يجعل الضحية غير متاحة للأجهزة اللاسلكية الأخرى بتدمير الاتصال بين الـ AP والعميل</td></tr>
+<tr><td>De-authentication Attack</td><td>المهاجم يُغرق المحطات بـ De-authenticate أو Disassociate مزوَّرة لقطع اتصال المستخدمين عن الـ AP</td></tr>
+<tr><td>Jamming Attack</td><td>أجهزة متخصَّصة تولِّد حجمًا هائلًا من الحركة الخبيثة كـ Noise للأجهزة — تُجبرها على تعليق إرسالها حتى تهدأ الإشارة → DoS كامل</td></tr>
+</tbody>
+</table></div>
+
+
+<h4>MITM Attack عبر Wi-Fi</h4>
+<div class="step-track">
+<div class="step-item"><div class="step-num">1</div><div class="step-title">الاستطلاع</div><div class="step-body"><p>المهاجم يُسنِّف بارامترات الضحية اللاسلكية (MAC Address وESSID/BSSID وعدد القنوات).</p></div></div>
+<div class="step-item"><div class="step-num">2</div><div class="step-title">إرسال DEAUTH</div><div class="step-body"><p>المهاجم يُرسِل طلب DEAUTH للضحية بعنوان مصدر مزوَّر للـ AP الخاص بها.</p></div></div>
+<div class="step-item"><div class="step-num">3</div><div class="step-title">بحث الضحية عن AP جديد</div><div class="step-body"><p>عند استقبال الطلب، يتم قطع اتصال الضحية وتبحث عن AP صالح جديد على كل القنوات.</p></div></div>
+<div class="step-item"><div class="step-num">4</div><div class="step-title">نصب Fake AP</div><div class="step-body"><p>المهاجم ينشئ AP مزوَّرًا على قناة جديدة بنفس MAC Address (BSSID) وESSID للـ AP الأصلي — الضحية تتصل بالـ AP المزوَّر.</p></div></div>
+<div class="step-item"><div class="step-num">5</div><div class="step-title">الوصول للـ AP الأصلي</div><div class="step-body"><p>بعد ارتباط الضحية بالـ AP المزوَّر، المهاجم ينتحل هويّة الضحية للاتصال بالـ AP الأصلي.</p></div></div>
+</div>
+
+
+<h4>MAC Spoofing Attack</h4>
+<p>تغيير MAC Address لمستخدم مُصادَق لتجاوز MAC Filtering في الـ AP. يستخدم أمر <code>ifconfig</code> لضبط قيمة HEX بصيغة <code>aa:bb:cc:dd:ee:ff</code> عبر <code>sudo</code>. أدوات: <strong>Technitium MAC Address Changer</strong>، <strong>LizardSystems Change MAC Address</strong>.</p>
+
+<h4>Wireless ARP Poisoning</h4>
+<p>ARP لا يتحقّق من صحة الردود. المهاجم يُرسِل ARP Reply مزوَّر بعنوان MAC خاطئ لتسميم ARP Cache في نظام التشغيل. يؤثّر على كل المضيفين في الـ Subnet. أداة: <strong>Ettercap</strong>.</p>
+<div class="step-track">
+<div class="step-item"><div class="step-num">1</div><div class="step-title">تفعيل Unified Sniffing</div><div class="step-body"><p>Ettercap → Sniff → Unified Sniffing → اختيار الواجهة الأساسية.</p></div></div>
+<div class="step-item"><div class="step-num">2</div><div class="step-title">فحص المضيفين</div><div class="step-body"><p>Hosts → Scan for Hosts ← عرض كل المضيفين النشطين.</p></div></div>
+<div class="step-item"><div class="step-num">3</div><div class="step-title">تحديد الهدف</div><div class="step-body"><p>اختيار IP الهدف من Hosts → Hosts List ثم Targets → Current targets.</p></div></div>
+<div class="step-item"><div class="step-num">4</div><div class="step-title">تشغيل ARP Poisoning</div><div class="step-body"><p>MITM → ARP poisoning → تفعيل Sniff remote connections.</p></div></div>
+</div>
+
+
+<h4>Rogue APs وEvil Twin</h4>
+<div class="table-wrap"><table>
+<thead><tr><th></th><th>Rogue AP</th><th>Evil Twin</th></tr></thead>
+<tbody>
+<tr><td>الفكرة</td><td>AP خفي يُوفِّر وصولًا خلفيًا (Backdoor) للشبكة الهدف</td><td>AP مزوَّر ينتحل هوية AP شرعي بنفس الـ SSID</td></tr>
+<tr><td>الإعداد</td><td>يُوصَل بـ Ethernet أو Wi-Fi أو USB أو كبرنامج على Windows</td><td>يُنشَأ خارج محيط الشبكة — يُغري المستخدمين بالاتصال به</td></tr>
+<tr><td>الكشف</td><td>تعطيل SSID Broadcast (Silent Mode) وإخفاء الـ AP خلف Firewall</td><td>صعب التمييز عن Hotspot شرعي — KARMA Tool لمراقبة Probe Requests</td></tr>
+<tr><td>الأداة</td><td>MANA Toolkit (hostapd-mana.conf)</td><td>KARMA — يستمع لـ Probe Requests وينتحل أي SSID شائع</td></tr>
+</tbody>
+</table></div>
+
+
+<h4>KRACK — Key Reinstallation Attack</h4>
+<p>يستغل ثغرات في تنفيذ الـ <strong>4-Way Handshake</strong> في بروتوكول WPA2 — يُجبِر على إعادة استخدام Nonce. يعمل ضد كل الشبكات Wi-Fi المحمية الحديثة (WPA وWPA2)، ويدعم TKIP وAES-CCMP وGCMP. يؤثّر على Android وLinux وWindows وApple وOpenBSD وMediaTek.</p>
+<div class="callout danger"><div class="callout-label">أثر KRACK</div><p>يُتيح: سرقة أرقام بطاقات الائتمان وكلمات المرور والرسائل والإيميلات والصور — و Sniffing وConnection Hijacking وحقن Malware وفكّ التشفير.</p></div>
+
+
+<h4>aLTEr Attack (هجوم على LTE/4G)</h4>
+<div class="step-track">
+<div class="step-item"><div class="step-num">1</div><div class="step-title">Information Gathering</div><div class="step-body"><p>المهاجم يراقب المواقع التي يصلها المستخدم ويسجِّل تواترها (Identity Mapping وWebsite Fingerprinting) — مراقبة سلبية فقط.</p></div></div>
+<div class="step-item"><div class="step-num">2</div><div class="step-title">Attack Phase</div><div class="step-body"><p>هجوم MITM باستخدام برج وهمي يعترض ويتلاعب في البيانات بين المستخدم والبرج الحقيقي.</p></div></div>
+<div class="step-item"><div class="step-num">3</div><div class="step-title">DNS Spoofing</div><div class="step-body"><p>إعادة توجيه الضحية لموقع خبيث لتسجيل بيانات حسّاسة (اسم مستخدم وكلمة مرور)</p></div></div>
+</div>
+
+<div class="callout note"><div class="callout-label">آلية aLTEr</div><p>يعمل على أجهزة LTE تُشفِّر البيانات بـ AES-CTR (بدون حماية تكامل). المهاجم ينصب برجًا افتراضيًا وهميًا بين نقطتَي الاتصال الحقيقيتَين.</p></div>
+
+
+<h4>Wi-Jacking Attack</h4>
+<p>يحصل على بيانات Wi-Fi لعدد كبير من الشبكات بدون أي آلية كسر كلمات مرور — يعمل عندما تكون بيانات الاعتماد محفوظة في المتصفح ويصل المستخدم للراوتر عبر HTTP غير مُشفَّر.</p>
+<div class="step-track">
+<div class="step-item"><div class="step-num">1</div><div class="step-title">KARMA Attack</div><div class="step-body"><p>استخدام hostapd-wpe لإغراء الضحية بالاتصال بشبكة Wi-Fi خبيثة.</p></div></div>
+<div class="step-item"><div class="step-num">2</div><div class="step-title">حقن URL خبيث</div><div class="step-body"><p>بعد قطع المصادقة، استخدام dnsmasq وسكربتات Python لحقن URL خبيث وإجبار متصفح الضحية على تحميله.</p></div></div>
+<div class="step-item"><div class="step-num">3</div><div class="step-title">استغلال HTTP</div><div class="step-body"><p>انتظار الضحية للوصول لصفحة HTTP — الـ URL/Page Pair يُحدَّد بناءً على BSSID وESSID.</p></div></div>
+</div>
+
+
+<h4>RFID Cloning Attack</h4>
+<p>التقاط البيانات من Tag RFID شرعي ونسخها في Tag جديد بتغيير Tag ID (TID) — الشكل والبيانات قد يبقيان كما هي. النسخة المستنسخة مختلفة ويمكن كشفها.</p>
+<div class="table-wrap"><table>
+<thead><tr><th>الأداة</th><th>الشرح</th></tr></thead>
+<tbody>
+<tr><td>iCopy-X</td><td>جهاز RFID Cloning محمول مع شاشة مدمجة وأزرار — يعمل بشكل مستقل كامل (مثل Proxmark بدون جهاز خارجي)</td></tr>
+<tr><td>RFIDler</td><td>GitHub</td></tr>
+<tr><td>RFID Mifare Cloner</td><td>GitHub</td></tr>
+<tr><td>Flipper Zero</td><td>flipperzero.one — أداة متعدّدة الاستخدامات</td></tr>
+<tr><td>Boscloner Pro</td><td>boscloner.com</td></tr>
+</tbody>
+</table></div>
+
+
+<h3>4 — Wi-Fi Encryption Cracking</h3>
+
+<h4>WPA/WPA2 Cracking</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>التقنية</th><th>الشرح</th></tr></thead>
+<tbody>
+<tr><td>WPA PSK</td><td>يستخدم كلمة مرور يُعرِّفها المستخدم لبدء الـ 4-Way Handshake. لا يمكن كسر الـ Per-packet Key مباشرةً لكن يمكن Brute-force المفاتيح بهجمات Dictionary</td></tr>
+<tr><td>Offline Attack</td><td>المهاجم يكون قريبًا من الـ AP لثوانٍ لالتقاط WPA Handshake — ثم يكسره Offline. البروتوكول لا يُرسِل كلمة المرور عبر الشبكة</td></tr>
+<tr><td>De-authentication Attack</td><td>إجبار عميل متصل على قطع الاتصال ← التقاط حزمة المصادقة عند إعادة الاتصال بـ aireplay. الحزمة تحتوي PMK يمكن كسره بـ Dictionary/Brute-force</td></tr>
+<tr><td>Brute Force</td><td>Aircrack + aireplay — يستغرق ساعات أو أيامًا أو أسابيع</td></tr>
+</tbody>
+</table></div>
+
+
+<div class="code-wrap"><span class="code-tag">bash — wpa/wpa2 cracking with aircrack-ng</span><pre><code># 1. تفعيل Monitor Mode
+airmon-ng start <wireless_interface>
+# لو في خطأ: airmon-ng check kill
+
+# 2. فحص الـ APs المتاحة
+airodump-ng <wireless_interface>
+
+# 3. التقاط حزم الـ AP المستهدَف
+airodump-ng --bssid <BSSID> -c 1 -w <ESSID> <wireless_interface>
+
+# 4. (اختياري) إجبار عميل على إعادة الاتصال
+aireplay-ng --deauth 10 -a <BSSID> -c <Client_MAC> <wireless_interface>
+
+# 5. كسر الـ Handshake بـ wordlist
+aircrack-ng -w wordlist.txt capture.cap</code></pre></div>
+
+
+<h4>WPA3 Cracking — Dragonblood</h4>
+<p><strong>Dragonblood</strong> مجموعة ثغرات في معيار WPA3 تُتيح استرداد المفاتيح وتخفيض الأمان وهجمات سرقة المعلومات. أدوات: <strong>Dragonslayer</strong>، <strong>Dragonforce</strong>، <strong>Dragondrain</strong>، <strong>Dragontime</strong>.</p>
+<div class="table-wrap"><table>
+<thead><tr><th>نوع الهجوم</th><th>الشرح</th></tr></thead>
+<tbody>
+<tr><td>Downgrade — Backward Compatibility</td><td>المهاجم ينصب Rogue AP يدعم WPA2 فقط في المنطقة — يُجبر العميل على استخدام WPA2 4-Way Handshake ثم يستغل ثغرات WPA2</td></tr>
+<tr><td>Downgrade — Dragonfly Handshake</td><td>المهاجم ينتحل هوية AP ويُخبر العميل أنه لا يدعم WPA3 → العميل يرجع لـ WPA2</td></tr>
+<tr><td>Timing-based Side-channel</td><td>تحليل وقت Dragonfly Handshake لترميز كلمة المرور → استنتاج قائمة محتملات ثم Brute-force</td></tr>
+<tr><td>Cache-based Side-channel</td><td>حقن JavaScript خبيث في متصفح المستخدم → مراقبة أنماط وصول الذاكرة لاسترداد كلمة المرور</td></tr>
+</tbody>
+</table></div>
+
+
+<div class="code-wrap"><span class="code-tag">bash — wpa3 cracking with aircrack-ng + hashcat</span><pre><code># 1. تفعيل Monitor Mode
+airmon-ng start <Wireless_Interface>
+
+# 2. التقاط الـ Handshake
+airodump-ng wlan0mon
+
+# 3. De-authenticate عميل لالتقاط Handshake
+aireplay-ng --deauth 10 -a <BSSID> -c <Client_MAC> wlan0mon
+
+# 4. تحويل .cap لـ .hccapx
+hcxpcapngtool -o capture.hccapx <capture>.cap
+
+# 5. كسر بـ hashcat
+hashcat -m 22000 capture.hccapx </path/to/wordlist.txt></code></pre></div>
+
+
+<!-- LU5 -->
+
+<hr />
+
+<h2 id="lu5"><span class="num">05</span><span class="htext">الإجراءات المضادة</span></h2>
+
+
+
+<h3>الدفاع ضد WPA/WPA2/WPA3 Cracking</h3>
+<ul>
+<li>استخدام <strong>كلمات مرور قوية</strong> ومعقّدة</li>
+<li>تعطيل TKIP وترقية الأجهزة لـ WPA3</li>
+<li>تطبيق MAC Address Filtering</li>
+<li>تعطيل Remote Management</li>
+<li>تحديث Firmware الراوتر بانتظام</li>
+<li>تقليل نطاق الإشارة (Signal Range) لمنع الوصول من خارج المنطقة المسموحة</li>
+<li>مراقبة نشاط الشبكة باستمرار</li>
+<li>تفعيل WPA3-SAE وتعطيل Transition Mode</li>
+</ul>
+
+
+<h3>الدفاع ضد KRACK</h3>
+<ul>
+<li>تحديث كل الراوترات وأجهزة Wi-Fi بأحدث Security Patches فور صدورها</li>
+<li>تفعيل Auto Updates لكل الأجهزة اللاسلكية</li>
+<li>تجنّب استخدام شبكات Wi-Fi العامة</li>
+<li>استخدام <strong>VPN</strong> لتأمين المعلومات أثناء النقل</li>
+<li>الانتقال لـ WPA3 دائمًا</li>
+<li>تعطيل Fast Roaming ووضع Repeater لتحسين التخفيف</li>
+<li>استخدام EAPOL-key Replay Counter للتأكّد من أن الـ AP يتعرّف فقط على أحدث Counter Value</li>
+<li>الاستخدام الفوري لاتصال سلكي (Ethernet) أو بيانات موبايل عند اكتشاف الثغرة</li>
+<li>تعطيل بروتوكول 802.11r مؤقّتًا</li>
+<li>استخدام Network Segmentation لعزل الأجزاء الحرجة</li>
+<li>تطبيق 802.1X مع RADIUS Server Authentication</li>
+</ul>
+
+
+<h3>الدفاع ضد aLTEr Attacks</h3>
+<ul>
+<li>تشفير استعلامات DNS واستخدام DNS Resolvers موثوقة فقط</li>
+<li>حلّ استعلامات DNS عبر بروتوكول HTTPS (DoH)</li>
+<li>الوصول فقط لمواقع HTTPS</li>
+<li>استخدام أدوات مثل Zimperium لكشف التصيّد والهجمات الخبيثة</li>
+<li>استخدام معاملات HTTPS الصحيحة مثل HSTS لتجنّب إعادة التوجيه</li>
+<li>استخدام Virtual Network Tunnel مع حماية تكامل ومصادقة نقاط النهاية</li>
+<li>الترقية لشبكة 5G</li>
+<li>تطبيق eSIM Technology لمصادقة وتشفير محسَّنَين</li>
+<li>تطبيق DNSSEC لتأمين عمليات DNS Lookup</li>
+</ul>
+
+
+<!-- CHEAT -->
+
+<hr />
+
+<h2 id="cheat"><span class="htext">Cheat Sheet مرجعي</span></h2>
+
+
+<div class="cheat-section">
+
+<h4>مقارنة بروتوكولات التشفير اللاسلكي</h4>
+<div class="table-wrap"><table>
+<thead><tr><th></th><th>WEP</th><th>WPA</th><th>WPA2</th><th>WPA3</th></tr></thead>
+<tbody>
+<tr><td>التشفير</td><td>RC4 (XOR)</td><td>RC4 + TKIP</td><td>AES-CCMP</td><td>AES-GCMP-256</td></tr>
+<tr><td>التكامل</td><td>CRC-32 (ICV)</td><td>MIC 64-bit</td><td>CBC-MAC</td><td>HMAC-SHA-384</td></tr>
+<tr><td>المصادقة</td><td>Shared Key</td><td>PSK / RADIUS</td><td>PSK / EAP-RADIUS</td><td>SAE (Dragonfly) / ECDSA-384</td></tr>
+<tr><td>الثغرة الرئيسية</td><td>IV 24-bit صغير + RC4 ضعيف</td><td>TKIP Injection</td><td>KRACK + Hole96 + GTK</td><td>Dragonblood (Timing + Cache Side-channel)</td></tr>
+<tr><td>مقياس الكسر</td><td>ساعات</td><td>أيام–أسابيع</td><td>أيام–أسابيع</td><td>صعب لكن ممكن بـ Downgrade</td></tr>
+</tbody>
+</table></div>
+
+
+<h4>الهجمات اللاسلكية — مرجع سريع</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>الهجوم</th><th>الهدف</th><th>الأداة</th></tr></thead>
+<tbody>
+<tr><td>De-authentication Flood</td><td>قطع اتصال المستخدمين عن الـ AP</td><td>aireplay-ng --deauth</td></tr>
+<tr><td>MITM عبر Fake AP</td><td>اعتراض الحركة بعد De-auth</td><td>Aircrack-ng + hostapd</td></tr>
+<tr><td>MAC Spoofing</td><td>تجاوز MAC Filtering</td><td>Technitium MAC Changer</td></tr>
+<tr><td>ARP Poisoning</td><td>تسميم ARP Cache لاعتراض الحركة</td><td>Ettercap</td></tr>
+<tr><td>Rogue AP</td><td>Backdoor للشبكة</td><td>MANA Toolkit</td></tr>
+<tr><td>Evil Twin</td><td>انتحال AP شرعي لسرقة بيانات</td><td>KARMA</td></tr>
+<tr><td>KRACK</td><td>إعادة تثبيت مفاتيح WPA2</td><td>Exploitation of 4-Way Handshake</td></tr>
+<tr><td>aLTEr</td><td>MITM على LTE/4G</td><td>Virtual fake tower</td></tr>
+<tr><td>Wi-Jacking</td><td>سرقة Wi-Fi Info عبر HTTP Router</td><td>hostapd-wpe + dnsmasq</td></tr>
+<tr><td>RFID Cloning</td><td>نسخ بطاقات RFID</td><td>iCopy-X، Flipper Zero</td></tr>
+<tr><td>WPA3 Downgrade</td><td>إجبار العميل على WPA2</td><td>Dragonslayer</td></tr>
+<tr><td>Jamming</td><td>DoS بتشويش الإشارة</td><td>PCB-4510، CPB-2920</td></tr>
+</tbody>
+</table></div>
+
+
+<h4>أوامر Aircrack-ng — مرجع سريع</h4>
+<div class="code-wrap"><span class="code-tag">bash — aircrack-ng quick reference</span><pre><code>airmon-ng start <interface>          # تفعيل Monitor Mode
+airmon-ng check kill                 # إنهاء العمليات المتعارضة
+airodump-ng <interface>              # فحص الـ APs والعملاء
+airodump-ng --bssid <B> -c 1 -w <F> <if>  # التقاط حزم AP محدَّد
+aireplay-ng --deauth 10 -a <B> -c <C> <if>  # De-authenticate عميل
+aircrack-ng -w <wordlist> <capture>.cap  # كسر WPA Handshake
+hcxpcapngtool -o cap.hccapx <cap>.cap  # تحويل لـ hashcat
+hashcat -m 22000 cap.hccapx <wordlist>  # كسر WPA3</code></pre></div>
+
+
+</div>
+
+<!-- SUMMARY -->
+
+<hr />
+
+<h2 id="summary"><span class="htext">الخلاصة العامة للموديول</span></h2>
+
+
+<p>الموديول ناقش مفاهيم الشبكات اللاسلكية ومصطلحاتها (GSM وSSID وBSSID وOFDM وDSSS وFHSS) وأنواع الهوائيات وأساليب المصادقة (PSK وEnterprise/RADIUS)، ثم بروتوكولات التشفير الأربعة (WEP وWPA وWPA2 وWPA3) مع ثغرات كل منها، ثم أنواع التهديدات اللاسلكية، ومنهجية الاختراق الكاملة (Wi-Fi Discovery وAircrack-ng وDe-auth وMITM وARP Poisoning وRogue AP وEvil Twin وKRACK واLTEr وWi-Jacking وRFID Cloning وWPA3 Cracking)، وانتهى بالإجراءات المضادة.</p>
+
+<div class="takeaways">
+<div class="takeaways-title">$ cat ./module16_summary.txt</div>
+<ul>
+<li>WEP انتهى فعليًا — IV 24-bit يُستنفَد في 5 ساعات والجداول 24GB تكسره فوريًا</li>
+<li>WPA استبدل RC4+TKIP بدلًا من WEP لكن لا يزال عرضة لـ Dictionary وPacket Injection ونقص Forward Secrecy</li>
+<li>KRACK يستهدف 4-Way Handshake في WPA2 بإجبار Nonce Reuse — يؤثّر على كل الأنظمة (Android وLinux وWindows وApple)</li>
+<li>Evil Twin ينتحل SSID الـ AP الشرعي — KARMA يستمع لـ Probe Requests وينتحل أي SSID شائع تلقائيًا</li>
+<li>WPA3-SAE (Dragonfly) مقاوم لهجمات Offline Dictionary لكن بعض تطبيقاته عرضة لـ Timing وCache Side-channel Attacks (Dragonblood)</li>
+<li>الدفاع الأساسي: WPA3 + كلمات مرور قوية + VPN + تحديثات منتظمة + 802.1X مع RADIUS + تعطيل WPS</li>
+</ul>
+</div>
+
+<blockquote>
+<p><strong>اللاسلكي بطبيعته غير آمن — لأن الوسيط هو الهواء.</strong> من WarDriving لاكتشاف الشبكات، لـ De-auth لإجبار إعادة الاتصال، لالتقاط WPA Handshake وكسره Offline — المهاجم لا يحتاج وصولًا ماديًا للشبكة. الدفاع الوحيد هو التشفير القوي والمصادقة المحكمة وافتراض دائم بأن الوسط غير موثوق.</p>
+</blockquote>
+
+<div class="callout examtip"><div class="callout-label">Exam Tip</div><p>أسئلة هذا الموديول تُركِّز على: الفرق بين DSSS وFHSS وOFDM، مقارنة WEP وWPA وWPA2 وWPA3 (الخوارزمية والتكامل والثغرة)، الفرق بين Rogue AP وEvil Twin، كيف يعمل KRACK (4-Way Handshake + Nonce Reuse)، الفرق بين Disassociation وDe-authentication Attack، وDragonblood في WPA3 (Downgrade + Side-channel).</p></div>
+
+
+<hr />
+<p><em>نهاية نوتس الموديول السادس عشر — Hacking Wireless Networks</em></p>
+<div class="footer-note">-- EOF: module-16/wireless-networks.md --</div>
+</div>
+
+<script>
+(function(){
+  var root=document.documentElement,btn=document.getElementById('themeSwitch');
+  function applyTheme(t){root.setAttribute('data-theme',t);btn.textContent='theme: '+t;try{localStorage.setItem('oscp-notes-theme',t);}catch(e){}}
+  var saved='dark';try{saved=localStorage.getItem('oscp-notes-theme')||'dark';}catch(e){}
+  applyTheme(saved);
+  btn.addEventListener('click',function(){applyTheme(root.getAttribute('data-theme')==='dark'?'light':'dark');});
+  var bar=document.getElementById('progressBar');
+  function onScroll(){var h=document.documentElement,s=h.scrollTop,ht=h.scrollHeight-h.clientHeight;bar.style.width=(ht>0?(s/ht*100):0)+'%';var t=document.getElementById('toTop');s>500?t.classList.add('show'):t.classList.remove('show');}
+  document.addEventListener('scroll',onScroll);onScroll();
+  document.getElementById('toTop').addEventListener('click',function(){window.scrollTo({top:0,behavior:'smooth'});});
+  document.querySelectorAll('.code-wrap').forEach(function(wrap){
+    var c=wrap.querySelector('code');if(!c)return;
+    var b=document.createElement('button');b.className='copy-btn';b.textContent='copy';
+    b.addEventListener('click',function(){if(navigator.clipboard){navigator.clipboard.writeText(c.innerText).then(function(){b.textContent='copied ✓';b.classList.add('copied');setTimeout(function(){b.textContent='copy';b.classList.remove('copied');},1500);});}});
+    wrap.appendChild(b);
+  });
+})();
+</script>
+</body>
+</html>

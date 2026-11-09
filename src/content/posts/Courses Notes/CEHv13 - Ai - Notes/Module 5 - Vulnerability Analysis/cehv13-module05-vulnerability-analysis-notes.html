@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CEHv13 · Module 05: تحليل الثغرات (Vulnerability Analysis)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-0:#0B0B0D;--bg-1:#121214;--surface:#17171A;--surface-2:#1D1D21;
+    --border:#2A2A2F;--border-soft:#232326;
+    --text:#E6E6E9;--text-soft:#C4C4CA;--muted:#8A8A92;
+    --red:#E1362F;--red-soft:rgba(225,54,47,0.10);--red-border:rgba(225,54,47,0.35);
+    --red-grad:linear-gradient(90deg,#E1362F,#F2794A);
+    --amber:#E8A23A;--amber-soft:rgba(232,162,58,0.09);--amber-border:rgba(232,162,58,0.30);
+    --green:#3FBF6E;--green-soft:rgba(63,191,110,0.09);--green-border:rgba(63,191,110,0.30);
+    --blue:#4EA1D3;--blue-soft:rgba(78,161,211,0.09);--blue-border:rgba(78,161,211,0.30);
+    --purple:#A179E8;--purple-soft:rgba(161,121,232,0.10);--purple-border:rgba(161,121,232,0.32);
+    --mono:'IBM Plex Mono','Courier New',monospace;
+  }
+  html[data-theme="light"]{
+    --bg-0:#F4F3F1;--bg-1:#ECEBE8;--surface:#FFFFFF;--surface-2:#F3F2EF;
+    --border:#DEDCD6;--border-soft:#E6E4DF;--text:#1C1B19;--text-soft:#3C3A36;--muted:#726F68;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;direction:rtl;text-align:right;background:var(--bg-0);}
+  body{font-family:'Cairo','Segoe UI',Tahoma,sans-serif;line-height:1.95;font-size:16.5px;color:var(--text);
+    background:radial-gradient(900px 420px at 12% -8%,rgba(225,54,47,0.10),transparent 60%),
+               radial-gradient(800px 420px at 90% 6%,rgba(232,162,58,0.06),transparent 60%),
+               linear-gradient(180deg,var(--bg-0) 0%,var(--bg-1) 100%);
+    background-attachment:fixed;transition:background 0.2s ease,color 0.2s ease;}
+  html[data-theme="light"] body{background:radial-gradient(900px 420px at 12% -8%,rgba(225,54,47,0.06),transparent 60%),radial-gradient(800px 420px at 90% 6%,rgba(232,162,58,0.05),transparent 60%),linear-gradient(180deg,var(--bg-0) 0%,var(--bg-1) 100%);}
+  .progress-rail{position:fixed;top:0;inset-inline:0;height:3px;background:rgba(255,255,255,0.04);z-index:60;}
+  html[data-theme="light"] .progress-rail{background:rgba(0,0,0,0.05);}
+  .progress-bar{height:100%;width:0%;background:var(--red-grad);transition:width 0.08s linear;}
+  .float-controls{position:fixed;bottom:22px;left:22px;z-index:55;display:flex;flex-direction:column;gap:10px;}
+  .fctrl-btn{width:42px;height:42px;border-radius:50%;background:var(--surface);border:1px solid var(--border);color:var(--text-soft);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;box-shadow:0 10px 24px -10px rgba(0,0,0,0.5);transition:transform 0.15s ease,border-color 0.15s ease,opacity 0.2s ease;}
+  .fctrl-btn:hover{transform:translateY(-2px);border-color:var(--red-border);color:var(--red);}
+  #toTop{opacity:0;pointer-events:none;}
+  #toTop.show{opacity:1;pointer-events:auto;}
+  .page{max-width:860px;margin:0 auto;padding:46px 22px 100px;}
+  .banner{position:relative;overflow:hidden;background:linear-gradient(155deg,var(--surface) 0%,var(--bg-1) 55%,var(--surface) 100%);border:1px solid var(--border-soft);border-radius:10px;padding:0 0 34px;margin-bottom:26px;box-shadow:0 20px 50px -20px rgba(0,0,0,0.6);}
+  .term-bar{display:flex;align-items:center;gap:8px;padding:13px 18px;border-bottom:1px solid var(--border-soft);background:rgba(255,255,255,0.015);direction:ltr;}
+  .term-dot{width:11px;height:11px;border-radius:50%;display:inline-block;}
+  .term-dot.r{background:#E1362F;}.term-dot.y{background:#E8A23A;}.term-dot.g{background:#3FBF6E;}
+  .term-path{margin-inline-start:12px;font-family:var(--mono);font-size:12px;color:var(--muted);}
+  .theme-switch{margin-inline-start:auto;font-family:var(--mono);font-size:11px;color:var(--muted);background:transparent;border:1px solid var(--border);border-radius:4px;padding:4px 9px;cursor:pointer;}
+  .theme-switch:hover{color:var(--amber);border-color:var(--amber-border);}
+  .banner-body{padding:30px 34px 4px;}
+  .banner .kicker{display:inline-block;font-family:var(--mono);font-size:12.5px;letter-spacing:0.03em;color:var(--red);background:var(--red-soft);border:1px solid var(--red-border);border-radius:3px;padding:5px 12px;margin-bottom:20px;direction:ltr;}
+  .banner h1{margin:0 0 14px;font-size:28px;font-weight:800;line-height:1.5;color:var(--text);}
+  .banner .lede{color:var(--muted);font-size:15.5px;line-height:1.95;max-width:640px;margin:0 0 24px;}
+  .tags{display:flex;flex-wrap:wrap;gap:9px;}
+  .tag{font-size:12.5px;font-family:var(--mono);color:var(--amber);background:var(--amber-soft);border:1px solid var(--amber-border);border-radius:3px;padding:5px 11px;}
+  .toc{background:var(--surface);border:1px solid var(--border-soft);border-radius:8px;padding:6px 0 6px;margin-bottom:50px;overflow:hidden;}
+  .toc-title{font-family:var(--mono);font-weight:600;font-size:13px;color:var(--green);padding:14px 22px;border-bottom:1px solid var(--border-soft);direction:ltr;text-align:left;}
+  .toc-list{display:flex;flex-direction:column;}
+  .toc-item{display:flex;align-items:center;gap:14px;padding:12px 22px;color:var(--text-soft);text-decoration:none;font-size:14.5px;border-bottom:1px solid rgba(255,255,255,0.03);transition:background 0.15s ease;}
+  .toc-list .toc-item:last-child{border-bottom:none;}
+  .toc-item:hover{background:var(--red-soft);}
+  .toc-num{flex:none;font-family:var(--mono);font-size:12.5px;font-weight:600;color:#0F0F10;background:var(--red-grad);border-radius:3px;padding:3px 8px;direction:ltr;}
+  h1,h2,h3,h4{font-weight:700;}
+  h2{display:flex;align-items:center;gap:14px;font-size:21px;margin:66px 0 22px;padding-bottom:16px;border-bottom:1px solid var(--border-soft);color:var(--text);}
+  h2 .num{flex:none;font-family:var(--mono);font-size:13px;font-weight:700;color:#0F0F10;background:var(--red-grad);border-radius:5px;padding:7px 12px;direction:ltr;}
+  h2 .htext{line-height:1.5;}
+  h3{font-size:17px;margin:34px 0 14px;color:var(--red);display:flex;align-items:center;gap:9px;}
+  h3::before{content:"#";font-family:var(--mono);color:var(--amber);font-weight:700;}
+  h4{font-size:14.8px;margin:22px 0 10px;color:var(--text-soft);font-family:var(--mono);}
+  p{margin:0 0 17px;color:var(--text);}
+  strong{color:var(--text);font-weight:700;}
+  :root:not([data-theme="light"]) strong{color:#FBFBFC;}
+  a{color:var(--amber);text-decoration:none;border-bottom:1px dashed var(--amber-border);}
+  hr{border:none;height:1px;margin:50px 0;background:linear-gradient(90deg,transparent,var(--border),transparent);}
+  ul,ol{margin:0 0 18px;padding-inline-start:24px;}
+  li{margin-bottom:9px;color:var(--text);}
+  li::marker{color:var(--red);font-family:var(--mono);}
+  li>ul,li>ol{margin-top:9px;}
+  .info-strip{display:flex;flex-wrap:wrap;align-items:center;gap:10px 28px;background:var(--surface);border:1px solid var(--border-soft);border-radius:8px;padding:16px 20px;margin:0 0 26px;font-size:13.8px;color:var(--text-soft);}
+  .info-strip .ii{display:flex;flex-direction:column;gap:3px;}
+  .info-strip .ii span:first-child{font-family:var(--mono);font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:0.04em;}
+  .info-strip .ii span:last-child{color:var(--text);font-weight:600;}
+  .goals-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px;margin:0 0 22px;}
+  .goal-card{display:flex;gap:10px;align-items:flex-start;background:var(--surface);border:1px solid var(--border-soft);border-radius:7px;padding:13px 15px;font-size:14px;color:var(--text-soft);}
+  .goal-card .gi{flex:none;font-family:var(--mono);font-size:11px;font-weight:700;color:var(--green);background:var(--green-soft);border:1px solid var(--green-border);border-radius:4px;width:22px;height:22px;display:flex;align-items:center;justify-content:center;}
+  blockquote{margin:24px 0;padding:17px 22px;background:var(--red-soft);border:1px solid var(--red-border);border-inline-start:3px solid var(--red);border-radius:6px;color:var(--text-soft);}
+  blockquote p{margin:0;color:inherit;line-height:1.85;}
+  blockquote p+p{margin-top:10px;}
+  blockquote strong{color:var(--text);}
+  .callout{margin:24px 0;padding:17px 22px 18px;border-radius:6px;border:1px solid var(--border-soft);border-inline-start:3px solid var(--border);background:var(--surface);}
+  .callout p{margin:0;color:var(--text-soft);line-height:1.85;}
+  .callout p+p{margin-top:10px;}
+  .callout ul,.callout ol{margin:6px 0 0;}
+  .callout-label{display:inline-flex;align-items:center;gap:7px;font-family:var(--mono);font-size:11.5px;font-weight:700;letter-spacing:0.02em;text-transform:uppercase;margin-bottom:10px;direction:ltr;}
+  .callout.note{border-inline-start-color:var(--blue);background:var(--blue-soft);}
+  .callout.note .callout-label{color:var(--blue);}
+  .callout.warning{border-inline-start-color:var(--red);background:var(--red-soft);}
+  .callout.warning .callout-label{color:var(--red);}
+  .callout.tip{border-inline-start-color:var(--green);background:var(--green-soft);}
+  .callout.tip .callout-label{color:var(--green);}
+  .callout.examtip{border-inline-start-color:var(--purple);background:var(--purple-soft);}
+  .callout.examtip .callout-label{color:var(--purple);}
+  .callout.case{border-inline-start-color:var(--amber);background:var(--amber-soft);}
+  .callout.case .callout-label{color:var(--amber);}
+  .callout.definition{border-inline-start-color:var(--muted);background:var(--surface-2);}
+  .callout.definition .callout-label{color:var(--text-soft);}
+  .callout.danger{border-inline-start-color:#FF5A52;background:rgba(255,90,82,0.08);}
+  .callout.danger .callout-label{color:#FF5A52;}
+  .table-wrap{overflow-x:auto;margin:22px 0;border:1px solid var(--border-soft);border-radius:8px;}
+  table{width:100%;border-collapse:collapse;font-size:14.2px;min-width:480px;}
+  thead th{background:var(--surface-2);color:var(--amber);font-weight:700;font-family:var(--mono);font-size:12.5px;text-transform:uppercase;letter-spacing:0.02em;text-align:start;padding:13px 15px;border-bottom:1px solid var(--border-soft);white-space:nowrap;}
+  tbody td{padding:12px 15px;border-bottom:1px solid var(--border-soft);color:var(--text-soft);vertical-align:top;}
+  tbody tr:last-child td{border-bottom:none;}
+  tbody tr:nth-child(even){background:rgba(127,127,127,0.03);}
+  tbody tr:hover{background:var(--red-soft);}
+  code{font-family:var(--mono);font-size:13.3px;background:var(--surface-2);border:1px solid var(--border-soft);border-radius:4px;padding:2px 6px;direction:ltr;unicode-bidi:embed;color:var(--green);}
+  .code-wrap{position:relative;overflow-x:auto;margin:22px 0;}
+  .code-tag{position:absolute;top:10px;left:14px;font-family:var(--mono);font-size:10.5px;color:var(--muted);letter-spacing:0.04em;text-transform:uppercase;z-index:2;}
+  .copy-btn{position:absolute;top:8px;right:10px;z-index:2;font-family:var(--mono);font-size:11px;color:var(--muted);background:var(--surface-2);border:1px solid var(--border-soft);border-radius:4px;padding:4px 9px;cursor:pointer;direction:ltr;}
+  .copy-btn:hover{color:var(--amber);border-color:var(--amber-border);}
+  .copy-btn.copied{color:var(--green);border-color:var(--green-border);}
+  pre{background:var(--bg-0);border:1px solid var(--border-soft);border-inline-start:3px solid var(--red);border-radius:8px;padding:30px 22px 18px;direction:ltr;text-align:left;margin:0;}
+  html[data-theme="light"] pre{background:#16181C;}
+  pre code{background:none;border:none;padding:0;color:#B9E8C9;font-size:13.2px;line-height:1.75;}
+  .diagram-card{background:var(--surface);border:1px solid var(--border-soft);border-radius:10px;padding:22px 18px 16px;margin:24px 0;}
+  .diagram-card svg{width:100%;height:auto;display:block;}
+  .diagram-caption{margin-top:10px;text-align:center;font-family:var(--mono);font-size:11.5px;color:var(--muted);}
+  .takeaways{background:var(--surface);border:1px solid var(--border-soft);border-radius:8px;padding:18px 22px 20px;margin:30px 0 10px;}
+  .takeaways-title{font-family:var(--mono);font-size:12.5px;font-weight:700;color:var(--green);margin-bottom:12px;direction:ltr;text-align:left;display:flex;align-items:center;gap:8px;}
+  .takeaways ul{margin:0;padding-inline-start:20px;}
+  .takeaways li{color:var(--text-soft);font-size:14.5px;}
+  .cheat-section h4{color:var(--amber);font-size:13px;margin:26px 0 8px;}
+  .step-track{display:flex;flex-direction:column;gap:0;margin:24px 0;}
+  .step-item{position:relative;padding:0 0 26px 0;padding-inline-start:46px;border-inline-start:2px solid var(--border-soft);}
+  .step-item:last-child{border-inline-start:2px solid transparent;padding-bottom:4px;}
+  .step-num{position:absolute;inset-inline-start:-17px;top:0;width:32px;height:32px;border-radius:50%;background:var(--red-grad);color:#0F0F10;font-family:var(--mono);font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;}
+  .step-title{font-weight:700;color:var(--text);margin-bottom:6px;font-size:15px;}
+  .step-body{color:var(--text-soft);font-size:14.5px;}
+  .step-body p{margin:0 0 10px;}
+  .step-body p:last-child{margin-bottom:0;}
+  .step-body ul,.step-body ol{margin:8px 0 0;}
+  .method-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px;margin:22px 0;}
+  .method-card{background:var(--surface);border:1px solid var(--border-soft);border-radius:8px;padding:14px 16px;}
+  .method-card .mnum{font-family:var(--mono);font-size:11px;font-weight:700;color:#0F0F10;background:var(--red-grad);border-radius:4px;padding:2px 8px;display:inline-block;margin-bottom:8px;direction:ltr;}
+  .method-card .mtitle{font-weight:700;color:var(--text);font-size:14px;margin-bottom:5px;}
+  .method-card .mdesc{color:var(--text-soft);font-size:13.3px;line-height:1.75;}
+  .footer-note{margin-top:70px;padding-top:26px;border-top:1px solid var(--border-soft);color:var(--muted);font-size:13.3px;font-family:var(--mono);text-align:center;direction:ltr;}
+  @media print{.float-controls,.progress-rail,.copy-btn,.theme-switch{display:none !important;}body{background:#fff;color:#000;}.page{max-width:100%;}}
+  @media(max-width:640px){.page{padding:28px 14px 70px;}.banner-body{padding:24px 20px 4px;}.banner h1{font-size:21px;}h2{font-size:18px;gap:10px;}.float-controls{left:12px;bottom:14px;}.info-strip{flex-direction:column;align-items:flex-start;gap:12px;}}
+</style>
+</head>
+<body>
+
+<div class="progress-rail"><div class="progress-bar" id="progressBar"></div></div>
+<div class="float-controls">
+  <button class="fctrl-btn" id="toTop" title="ارجع لفوق">↑</button>
+</div>
+
+<div class="page">
+
+<div class="banner">
+  <div class="term-bar">
+    <span class="term-dot r"></span><span class="term-dot y"></span><span class="term-dot g"></span>
+    <span class="term-path">root@ceh:~/module-05$</span>
+    <button class="theme-switch" id="themeSwitch">theme: dark</button>
+  </div>
+  <div class="banner-body">
+    <span class="kicker">EC-Council · CEHv13 · Module 05</span>
+    <h1>تحليل الثغرات (Vulnerability Analysis)</h1>
+    <p class="lede">من تصنيف الثغرات وأنظمة تسجيلها (CVSS، CVE، NVD)، مرورًا بدورة إدارة الثغرات الكاملة وأبحاثها وأنواع الفحص المختلفة، ووصولاً لأدوات التقييم الحديثة — بما فيها المعتمدة على الذكاء الاصطناعي — وكيفية تحليل تقرير التقييم النهائي.</p>
+    <div class="tags">
+      <span class="tag">vulnerability-assessment</span>
+      <span class="tag">cvss</span>
+      <span class="tag">cve</span>
+      <span class="tag">nvd</span>
+      <span class="tag">vulnerability-scanning</span>
+      <span class="tag">vulnerability-management</span>
+      <span class="tag">pentest-tools</span>
+    </div>
+  </div>
+</div>
+
+<nav class="toc"><div class="toc-title">$ ls learning_units/</div><div class="toc-list">
+  <a class="toc-item" href="#lu1"><span class="toc-num">01</span><span>مفاهيم تقييم الثغرات وتصنيفها</span></a>
+  <a class="toc-item" href="#lu2"><span class="toc-num">02</span><span>أنظمة تسجيل الثغرات وقواعد بياناتها</span></a>
+  <a class="toc-item" href="#lu3"><span class="toc-num">03</span><span>دورة حياة إدارة الثغرات</span></a>
+  <a class="toc-item" href="#lu4"><span class="toc-num">04</span><span>أبحاث الثغرات (Vulnerability Research)</span></a>
+  <a class="toc-item" href="#lu5"><span class="toc-num">05</span><span>فحص الثغرات وتحليلها</span></a>
+  <a class="toc-item" href="#lu6"><span class="toc-num">06</span><span>مناهج وأدوات تقييم الثغرات</span></a>
+  <a class="toc-item" href="#lu7"><span class="toc-num">07</span><span>تحليل تقارير تقييم الثغرات</span></a>
+  <a class="toc-item" href="#methodology"><span class="toc-num">--</span><span>منهجية عملية لتقييم ثغرات متكامل</span></a>
+  <a class="toc-item" href="#cheat"><span class="toc-num">--</span><span>Cheat Sheet مرجعي</span></a>
+  <a class="toc-item" href="#summary"><span class="toc-num">--</span><span>الخلاصة العامة للموديول</span></a>
+</div></nav>
+
+<!-- ══════════════════════════════════ LU1 -->
+<h2 id="lu1"><span class="num">01</span><span class="htext">مفاهيم تقييم الثغرات وتصنيفها</span></h2>
+
+<p>المؤسسات بتعتمد بشكل كبير على تقنية المعلومات لحماية بيانات حيوية مرتبطة بالمالية والبحث والتطوير والموارد البشرية والشؤون القانونية والأمنية. تقييم الثغرات (Vulnerability Assessment) بيفحص الشبكات بحثًا عن نقاط ضعف أمنية معروفة، والمهاجمون بيستخدموا تحليل الثغرات لاكتشاف ثغرات في شبكة المؤسسة المستهدَفة وبنيتها التحتية وأنظمتها الطرفية — والثغرات المكتشَفة بتُستخدَم لاستغلال الشبكة المستهدَفة بشكل أعمق.</p>
+
+<div class="goals-grid">
+  <div class="goal-card"><span class="gi">1</span><span>تأمين الشبكة بيتطلّب إدارة التصحيحات (Patch Management)، تثبيت برامج حماية مناسبة، فحص الإعدادات، وحل المشكلات المعروفة في تطبيقات الطرف الثالث</span></div>
+  <div class="goal-card"><span class="gi">2</span><span>تقييم الثغرات بيلعب دورًا أساسيًا في حماية موارد وبنية المؤسسة من التهديدات الداخلية والخارجية</span></div>
+  <div class="goal-card"><span class="gi">3</span><span>الموديول ده بيغطّي: مفاهيم التقييم، أنظمة التسجيل، قواعد البيانات، دورة الإدارة، المناهج والأدوات، وتحليل التقارير النهائية</span></div>
+</div>
+
+<h3>الإعدادات الخاطئة والضعيفة (Misconfigurations)</h3>
+<p>الإعدادات الخاطئة أو الضعيفة نوع شائع جدًا من الثغرات وبيؤدي لمخاطر أمنية كبيرة — بتحدث لما الأنظمة أو التطبيقات أو الأجهزة متضبوطة بشكل غير صحيح، وده بيسهّل على المهاجمين اختراق الشبكة والوصول غير المصرَّح به. الإعدادات الخاطئة ممكن تحصل قصدًا أو من غير قصد، وبتأثّر على سيرفرات الويب ومنصّات التطبيقات وقواعد البيانات والشبكات.</p>
+
+<h4>إعدادات الشبكة الخاطئة</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>النوع</th><th>الوصف</th></tr></thead>
+<tbody>
+<tr><td>Insecure Protocols</td><td>بروتوكولات بتنقل البيانات بصيغة Plaintext بدون تشفير — بتسبّب مشاكل مصادقة وسلامة بيانات، لأن المهاجم يقدر يستغلّ النقل الغير مشفَّر ويعبث بالبيانات أثناء انتقالها</td></tr>
+<tr><td>Open Ports and Services</td><td>تواصل المستخدمين مع التطبيقات بيتم عبر أرقام بورتات TCP/UDP — بورتات مفتوحة وخدمات غير ضرورية شغّالة بتوسّع سطح الهجوم</td></tr>
+<tr><td>Errors</td><td>الإعداد الخاطئ للتطبيقات أو الخدمات ممكن يولّد تقارير أخطاء مفصَّلة أثناء تحميل الصفحات — وده بيدّي المهاجمين معلومات تفصيلية عن ثغرات التطبيق وأخطاء البرمجة</td></tr>
+<tr><td>Weak Encryption</td><td>تشفير ضعيف بيسمح للمهاجم بتنفيذ هجمات Man-in-the-Middle، التنصّت على الحركة، تعديل البيانات، وانتحال صفة الخدمة الشرعية</td></tr>
+</tbody>
+</table></div>
+
+<h4>إعدادات المضيف الخاطئة</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>النوع</th><th>الوصف</th></tr></thead>
+<tbody>
+<tr><td>Open Permissions</td><td>منح صلاحيات غير ضرورية لمستخدم أو مجموعة للوصول لتطبيقات أو ملفات ممكن يؤدي لتسريب بيانات أو إفساد وظائف النظام — ومهاجم يقدر يستغلّ حسابات غير ضرورية للتصعيد وتنفيذ أوامر على نظام التشغيل</td></tr>
+<tr><td>Unsecured Root Accounts</td><td>استخدام بيانات اعتماد إدارية افتراضية من المُصنِّع بدون تغييرها، وغياب سياسة كلمات مرور قوية، بيسمح للمهاجم بتخمين بيانات الاعتماد عبر تقنيات Brute-Force</td></tr>
+</tbody>
+</table></div>
+
+<h3>عيوب التطبيقات (Application Flaws)</h3>
+<p>عيوب في التطبيقات بيستغلّها المهاجمون — التطبيقات لازم تُؤمَّن عبر التحقق من المستخدم والتفويض، والتطبيقات المعيبة بتعرّض المؤسسة لمخاطر زي العبث بالبيانات والوصول غير المصرَّح به لمخازن الإعدادات.</p>
+<div class="table-wrap"><table>
+<thead><tr><th>العيب</th><th>الوصف</th></tr></thead>
+<tbody>
+<tr><td>Buffer Overflows</td><td>ثغرة شائعة ناتجة عن أخطاء برمجية — الكتابة خارج الحجم المخصَّص للـ Buffer بسبب نقص فحص الحدود، وبيؤدي لتوقّف النظام أو سلوك غير مستقر أو سيطرة المهاجم على النظام</td></tr>
+<tr><td>Memory Leaks</td><td>استهلاك ذاكرة غير مقصود بيحدث لما المبرمج يفشل في تحرير كتلة ذاكرة مُخصَّصة بعد انتهاء الحاجة لها</td></tr>
+<tr><td>Resource Exhaustion</td><td>إرسال طلبات موارد متعدّدة من مواقع مختلفة لاستغلال أخطاء البرامج — بيعلّق النظام أو يسبّب انهياره، شبيه بهجوم DoS</td></tr>
+<tr><td>Integer Overflows</td><td>عملية حسابية بتنتج قيمة أكبر من الحد الأقصى اللي ممكن تخزينه مساحة الذاكرة المخصَّصة — ممكن يؤدي لـ Buffer Overflow وتنفيذ كود عشوائي أو خبيث</td></tr>
+<tr><td>Null Pointer/Object Dereference</td><td>مؤشّر مش مخصَّص لأي كائن صالح — تفعيله المتعمَّد من المهاجم ممكن يُستخدَم لتجاوز منطق الأمان أو كشف تفاصيل تصحيح أخطاء مفيدة لهجمات لاحقة</td></tr>
+<tr><td>DLL Injection</td><td>تطبيق بيشغّل كود طرف ثالث أو غير موثوق بيحمّل DLL — المهاجم يقدر يحقن DLL خبيث في العملية الجارية. تحميل DLL بدون تحديد المسار الكامل بيسمح بوضع DLL خبيث يُنفَّذ بدل الشرعي</td></tr>
+<tr><td>Race Conditions (TOC/TOU)</td><td>خطأ بيحدث لما نظام بيعتمد على تسلسل وتوقيت تنفيذ العمليات، وبيُجبَر على تنفيذ عمليات متعددة في نفس الوقت — TOC/TOU بالتحديد هو الفجوة الزمنية بين فحص حالة مورد واستخدام نتيجة الفحص</td></tr>
+<tr><td>Improper Input Handling</td><td>فشل التحقق من بيانات الإدخال (Validation، Filtering، Sanitization) بيفتح الباب لثغرات زي SQL Injection وXSS وBuffer Overflow</td></tr>
+<tr><td>Improper Error Handling</td><td>كشف معلومات مفصَّلة عن الأخطاء (Database Dumps، Stack Traces) بيساعد المهاجم على تحليل النظام ومهاجمته — ومن أخطرها Fail-Open: منح الوصول بعد فشل النظام أو رفضه</td></tr>
+<tr><td>Code Signing Weakness</td><td>شهادة توقيع رقمي غير صالحة أو منتهية أو من جهة غير مصرَّح بها — إدارة ضعيفة للمفاتيح الخاصة بتسمح للمهاجم بسرقتها وتضمين كود خبيث موقَّع بشكل زائف كشرعي</td></tr>
+</tbody>
+</table></div>
+
+<h3>ثغرات البنية التحتية والتشغيل</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>النوع</th><th>الوصف</th></tr></thead>
+<tbody>
+<tr><td>Unpatched Servers</td><td>سيرفرات غير مُحدَّثة ومُهيَّأة بشكل خاطئ بتعرّض سلامة البيانات للخطر — بتصبح نقطة دخول أو محور للمهاجمين، وممكن تؤدي لتسريب بيانات خاصة وخسارة مالية</td></tr>
+<tr><td>Unpatched Firmware</td><td>بيسمح للمهاجم بالدخول لشبكة المؤسسة وسرقة معلومات حرجة، حقن كود خبيث، إصابة التحديثات الشرعية، حذف بيانات، أو التحكّم في العتاد عن بُعد</td></tr>
+<tr><td>Design Flaws</td><td>عيوب منطقية في وظيفة النظام — تشفير غير صحيح أو تحقّق ضعيف من البيانات — بيستغلّها المهاجمون لتجاوز آليات الكشف والوصول لنظام آمن</td></tr>
+<tr><td>Operating System Flaws</td><td>ثغرات نظام التشغيل بتفتح الباب لأحصنة طروادة والديدان والفيروسات — تؤدي لفقدان معلومات حساسة والسيطرة على عمليات الحاسوب</td></tr>
+<tr><td>Default Passwords</td><td>كلمات مرور افتراضية من المصنّع لم يتم تغييرها بتعرّض الأجهزة لهجمات Brute-Force وDictionary</td></tr>
+<tr><td>Zero-Day Vulnerabilities</td><td>ثغرات مكشوفة لكن لم تُصحَّح بعد — يستغلّها المهاجمون قبل اعتراف المطوّرين أو المحلّلين الأمنيين بها وإصدار تصحيح</td></tr>
+<tr><td>Legacy Platform Vulnerabilities</td><td>أكواد أو منصّات قديمة غالبًا مش مدعومة بتصحيحات — الحل الأنسب عزلها عن الشبكة بدل محاولة إصلاحها</td></tr>
+<tr><td>System Sprawl / Undocumented Assets</td><td>زيادة عدد اتصالات الأنظمة أو السيرفرات بدون توثيق أو فهم لصيانتها — بتصبح عرضة للهجوم وتكلفة الصيانة بترتفع</td></tr>
+<tr><td>Improper Certificate and Key Management</td><td>إدارة سيّئة للمفاتيح والشهادات بتسمح بهجمات تكسير كلمات المرور وتسريب البيانات — المفاتيح الخاصة لازم تُخزَّن بصيغة مشفَّرة في بيئة آمنة محمية</td></tr>
+</tbody>
+</table></div>
+
+<h3>مخاطر الطرف الثالث (Third-Party Risks)</h3>
+<p>الطرف الثالث ممكن يبقى تهديد إضافي للمؤسسات — خدمات أو منتجات الطرف الثالث ممكن يكون ليها وصول لأنظمة وتطبيقات مميَّزة، وده يعرّض البيانات المالية وبيانات العملاء والموظفين وعمليات سلسلة التوريد للخطر.</p>
+<div class="table-wrap"><table>
+<thead><tr><th>نوع المخاطرة</th><th>الوصف</th></tr></thead>
+<tbody>
+<tr><td>System Integration</td><td>مُكامِلو الأنظمة بيشتغلوا من داخل الشركة — وبالتالي يقدروا يتجاوزوا الـ Firewalls وحلول الأمان بسهولة ويزرعوا برمجيات خبيثة في الشبكة</td></tr>
+<tr><td>Lack of Vendor Support</td><td>اعتماد المؤسسة على بائعين لإدارة أمان الأنظمة — نقص خبرتهم في التعامل مع الأنظمة المعقَّدة بيفتح نوافذ لهجمات سيبرانية جديدة</td></tr>
+<tr><td>Supply-Chain Risks</td><td>معظم أجهزة وأنظمة الشبكة بتُشترى من طرف ثالث — سوء الصيانة أو الإعداد عبر سلسلة التوريد بيشكّل مخاطر أمنية، وأحيانًا بيكون فيها برمجيات خبيثة مزروعة مسبقًا</td></tr>
+<tr><td>Outsourced Code Development</td><td>التعاقد مع أطراف خارجية لتطوير المنتجات يتطلّب بيئة آمنة للتطوير وضوابط أمان على مكان تخزين الكود لمنع سرقته</td></tr>
+<tr><td>Data Storage</td><td>تخزين بيانات ضخمة في مساحات طرف ثالث (سحابة) بيتطلّب فحص دوري وضوابط أمان صارمة ونقل مشفَّر عبر قناة آمنة</td></tr>
+</tbody>
+</table></div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU2 -->
+<h2 id="lu2"><span class="num">02</span><span class="htext">أنظمة تسجيل الثغرات وقواعد بياناتها</span></h2>
+
+<p>مع تزايد خطورة الهجمات السيبرانية، بقى بحث الثغرات أمر حرج لأنه بيساعد في تقليل فرصة وقوع الهجمات — وبيوفّر وعيًا بالتقنيات المتقدّمة لاكتشاف العيوب أو الثغرات اللي ممكن يستغلّها المهاجمون.</p>
+
+<h3>Common Vulnerability Scoring System (CVSS)</h3>
+<p>معيار منشور (المصدر: first.org) بيوفّر إطار عمل مفتوح للتواصل بخصائص وتأثيرات ثغرات تقنية المعلومات. النموذج الكمّي للنظام بيضمن قياسًا دقيقًا وقابلًا للتكرار، مع تمكين المستخدمين من رؤية خصائص الثغرة الأساسية اللي استُخدِمت لتوليد الدرجة — وده بيخلّي CVSS نظام قياس معياري مناسب للصناعات والمؤسسات والحكومات.</p>
+<div class="table-wrap"><table>
+<thead><tr><th>مجموعة المقاييس</th><th>الوصف</th></tr></thead>
+<tbody>
+<tr><td>Base</td><td>الخصائص الجوهرية للثغرة الثابتة عبر الزمن وعبر بيئات المستخدمين المختلفة — وتشمل مقاييس Exploitability (سهولة الاستغلال والوسيلة التقنية) وImpact (النتيجة المباشرة للاستغلال الناجح)</td></tr>
+<tr><td>Threat</td><td>خصائص متعلّقة بالتهديد ممكن تتغيّر بمرور الوقت، لكن مش بالضرورة عبر بيئات المستخدمين المختلفة</td></tr>
+<tr><td>Environmental</td><td>خصائص خاصة ومناسبة لبيئة مستهلك معيّن تحديدًا</td></tr>
+<tr><td>Supplemental</td><td>مقاييس بتوفّر سياق إضافي، وتصف وتقيس خصائص خارجية أخرى للثغرة</td></tr>
+</tbody>
+</table></div>
+
+<h3>Common Vulnerabilities and Exposures (CVE)</h3>
+<p>قائمة أو قاموس معرّفات موحَّدة للثغرات الشائعة في البرمجيات، متاحة للعامة ومجانية الاستخدام (المصدر: cve.mitre.org). معرّفات CVE ("CVE IDs") بتتحدّد من جهات ترقيم CVE (CNAs) حول العالم، وبتضمن ثقة متبادلة عند مناقشة أو مشاركة معلومات عن ثغرة فريدة في برمجية أو Firmware.</p>
+<ul>
+<li>معرّف واحد لكل ثغرة أو تعرُّض</li>
+<li>وصف موحَّد واحد لكل ثغرة</li>
+<li>قاموس — مش قاعدة بيانات</li>
+<li>طريقة تخلّي قواعد البيانات والأدوات المتفرّقة "تتكلّم" نفس اللغة</li>
+<li>أساس للتوافقية وتغطية أمنية أفضل</li>
+<li>أساس للتقييم بين الخدمات والأدوات وقواعد البيانات</li>
+</ul>
+
+<h3>National Vulnerability Database (NVD)</h3>
+<p>مستودع حكومي أمريكي لبيانات إدارة الثغرات القائمة على المعايير (المصدر: nvd.nist.gov)، بيستخدم بروتوكول Security Content Automation Protocol (SCAP). البيانات دي بتمكّن أتمتة إدارة الثغرات والقياس الأمني والامتثال. NVD بيحتوي على قواعد بيانات لمراجع قوائم الفحص الأمنية، العيوب البرمجية المرتبطة بالأمان، الإعدادات الخاطئة، أسماء المنتجات، ومقاييس التأثير.</p>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU3 -->
+<h2 id="lu3"><span class="num">03</span><span class="htext">دورة حياة إدارة الثغرات</span></h2>
+
+<p>دورة حياة إدارة الثغرات عملية أساسية بتساعد على اكتشاف ومعالجة نقاط الضعف الأمنية قبل ما يتم استغلالها. بتشمل تحديد الوضعية الأمنية وسياسات المؤسسة، إنشاء قائمة جرد كاملة للأنظمة، فحص وتقييم البيئة للثغرات والتعرُّضات، واتخاذ إجراءات لمعالجة الثغرات المكتشَفة.</p>
+
+<div class="step-track">
+<div class="step-item">
+<div class="step-num">1</div>
+<div class="step-title">مرحلة ما قبل التقييم (Pre-Assessment)</div>
+<div class="step-body">
+<p>مرحلة تحضيرية — تحديد السياسات والمعايير، توضيح نطاق التقييم، تصميم إجراءات حماية المعلومات، وتحديد وترتيب أولوية الأصول الحرجة لإنشاء خط أساس (Baseline) جيّد.</p>
+<ol>
+<li>فهم العمليات التجارية للمؤسسة</li>
+<li>تحديد التطبيقات والبيانات والخدمات الداعمة للعمليات، ومراجعة الكود</li>
+<li>تحديد البرمجيات والتعريفات والإعدادات الأساسية المعتمدة لكل نظام</li>
+<li>إنشاء جرد لكل الأصول وترتيب أولويتها</li>
+<li>فهم بنية الشبكة ورسم خريطة للبنية التحتية</li>
+<li>تحديد الضوابط الموجودة بالفعل</li>
+<li>فهم تطبيق السياسات والامتثال للمعايير</li>
+<li>تحديد نطاق التقييم</li>
+<li>إنشاء إجراءات حماية معلومات تدعم التخطيط والجدولة والتنسيق</li>
+</ol>
+</div>
+</div>
+<div class="step-item">
+<div class="step-num">2</div>
+<div class="step-title">مرحلة تقييم الثغرات (Vulnerability Assessment)</div>
+<div class="step-body">
+<p>المرحلة الأكثر أهمية — تحديد الثغرات في البنية التحتية للمؤسسة بما فيها نظام التشغيل وتطبيقات وسيرفرات الويب، وتحديد فئة وخطورة كل ثغرة لتقليل مستوى المخاطرة.</p>
+<ol>
+<li>فحص وتقييم الأمان الفيزيائي</li>
+<li>التحقق من الإعدادات الخاطئة والأخطاء البشرية</li>
+<li>تشغيل فحوصات الثغرات باستخدام الأدوات</li>
+<li>اختيار نوع الفحص حسب متطلّبات المؤسسة أو الامتثال</li>
+<li>تحديد وترتيب أولوية الثغرات</li>
+<li>تحديد النتائج الإيجابية الكاذبة والسلبية الكاذبة (False Positives/Negatives)</li>
+<li>تطبيق سياق الأعمال والتقنية على نتائج الفحص</li>
+<li>إجراء جمع معلومات OSINT للتحقق من صحة الثغرات</li>
+<li>إنشاء تقرير فحص الثغرات</li>
+</ol>
+</div>
+</div>
+<div class="step-item">
+<div class="step-num">3</div>
+<div class="step-title">مرحلة ما بعد التقييم (Post-Assessment)</div>
+<div class="step-body"><p>تُعرَف أيضًا بمرحلة التوصيات — بتتم بعد تقييم المخاطر وبناءً عليه. تشمل: إنشاء قائمة أولوية للتوصيات بناءً على تحليل الأثر، تطوير خطة عمل لتنفيذ المعالجة المقترَحة، تدريب الموظفين، وتوثيق الدروس المستفادة لتحسين العملية مستقبلًا.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">4</div>
+<div class="step-title">تقييم المخاطر (Risk Assessment)</div>
+<div class="step-body"><p>تحديد وتوصيف وتصنيف المخاطر مع تقنيات التحكّم فيها أو تقليل أثرها. يشمل: تصنيف المخاطر حسب الترتيب (حرج، عالي، متوسط، منخفض)، تقييم مستوى الأثر، وتحديد مستوى التهديد والمخاطرة.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">5</div>
+<div class="step-title">المعالجة (Remediation)</div>
+<div class="step-body"><p>تطبيق الإصلاحات على الأنظمة الضعيفة لتخفيف أثر وخطورة الثغرات — تشمل تقييم الثغرات وتحديد المخاطر وتصميم استجابات مناسبة. المعالجة لازم تكون محدَّدة وقابلة للقياس وواقعية ومرتبطة بإطار زمني.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">6</div>
+<div class="step-title">التحقق (Verification)</div>
+<div class="step-body"><p>فريق الأمان بيعيد فحص الأنظمة للتأكد من اكتمال المعالجة المطلوبة وتطبيق الإصلاحات على الأصول المتأثّرة. يشمل: إعادة الفحص للتأكد من فعالية الإصلاح، إجراء تحليل ديناميكي، ومراجعة سطح الهجوم.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">7</div>
+<div class="step-title">المراقبة المستمرة (Monitoring)</div>
+<div class="step-body"><p>المراقبة المنتظمة أساسية للحفاظ على أمان النظام — بتكشف التهديدات المحتملة والثغرات الجديدة باستخدام أدوات زي IDS/IPS وSIEM والـ Firewalls، وتطبّق مراقبة أمنية مستمرة لمواجهة التهديدات المتطوّرة باستمرار.</p></div>
+</div>
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU4 -->
+<h2 id="lu4"><span class="num">04</span><span class="htext">أبحاث الثغرات (Vulnerability Research)</span></h2>
+
+<p>بحث الثغرات بيعني استخدام موارد وأدوات ومنصّات متنوّعة أونلاين لتحديد وتحليل ومشاركة معلومات عن الثغرات الأمنية.</p>
+<h3>ليه الإدمن محتاج بحث الثغرات</h3>
+<ul>
+<li>جمع معلومات عن اتجاهات الأمان والتهديدات المكتشَفة حديثًا وسطوح ومتجهات الهجوم</li>
+<li>إيجاد نقاط ضعف في نظام التشغيل والتطبيقات وتنبيه مدير الشبكة قبل وقوع هجوم</li>
+<li>فهم المعلومات اللي بتساعد في منع المشاكل الأمنية</li>
+<li>معرفة كيفية التعافي من هجوم على الشبكة</li>
+<li>ترتيب أولوية وتطبيق التصحيحات والتحديثات الأمنية بفعالية، لتقليل المخاطر قبل استغلالها</li>
+<li>الالتزام بأفضل ممارسات الصناعة الأمنية — ضمان إن الأنظمة ليست فقط متوافقة، بل مؤمَّنة وفق أعلى المعايير</li>
+<li>إجراء تقييمات مخاطر دقيقة — تحديد وترتيب أولوية التهديدات الأكثر خطورة</li>
+</ul>
+
+<h3>مصادر أبحاث الثغرات</h3>
+<p>Microsoft Security Response Center (MSRC) بيحقّق في كل تقارير الثغرات الأمنية المتعلّقة بمنتجات وخدمات Microsoft، وبيوفّر معلومات كجزء من جهد مستمر لمساعدة متخصّصي الأمان على إدارة المخاطر. من المصادر الأخرى المعروفة: Packet Storm، Dark Reading، Trend Micro، Security Magazine، PenTestMagazine، SC Magazine، Exploit Database، Help Net Security، وHackerStorm.</p>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU5 -->
+<h2 id="lu5"><span class="num">05</span><span class="htext">فحص الثغرات وتحليلها</span></h2>
+
+<p>فحص الثغرات (Vulnerability Scanning) بيحلّل البروتوكولات والخدمات والإعدادات لاكتشاف الثغرات وعيوب التصميم اللي ممكن تعرّض نظام التشغيل وتطبيقاته للاستغلال أو الهجوم أو سوء الاستخدام. تحليل الثغرات (Vulnerability Analysis) هو العملية المنهجية لتحديد وتقييم وترتيب أولوية نقاط الضعف الأمنية في الأنظمة والشبكات والتطبيقات أو البروتوكولات — وبتُصنَّف الثغرات حسب مستوى الخطورة (منخفض، متوسط، عالي) ونطاق الاستغلال (محلي أو بعيد).</p>
+
+<h3>ما الذي تكشفه ماسحات الثغرات</h3>
+<ul>
+<li>إصدار نظام التشغيل الشغّال على الأجهزة</li>
+<li>بورتات IP وTCP/UDP المفتوحة والمستمعة</li>
+<li>التطبيقات المثبَّتة على الأجهزة</li>
+<li>الحسابات بكلمات مرور ضعيفة</li>
+<li>الملفات والمجلّدات بصلاحيات ضعيفة</li>
+<li>الخدمات والتطبيقات الافتراضية اللي ممكن تحتاج إزالة</li>
+<li>أخطاء في إعدادات أمان التطبيقات الشائعة</li>
+<li>أجهزة معرَّضة لثغرات معروفة أو مُعلَن عنها علنًا</li>
+<li>معلومات برمجيات وصلت لنهاية الدعم (EOL/EOS)</li>
+<li>تصحيحات وإصلاحات عاجلة ناقصة</li>
+<li>إعدادات شبكة ضعيفة وبورتات مُهيَّأة بشكل خاطئ أو خطيرة</li>
+<li>التحقق من جرد كل الأجهزة على الشبكة</li>
+</ul>
+
+<h3>أسلوبا الفحص: Active مقابل Passive</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>الأسلوب</th><th>الوصف</th></tr></thead>
+<tbody>
+<tr><td>Active Scanning</td><td>المهاجم بيتفاعل مباشرةً مع الشبكة المستهدَفة لإيجاد الثغرات — بيحاكي هجومًا فعليًا عبر إرسال Probes وطلبات مُصمَّمة خصيصًا للمضيف المستهدَف</td></tr>
+<tr><td>Passive Scanning</td><td>المهاجم بيحاول إيجاد الثغرات بدون تفاعل مباشر مع الشبكة — بيحدّد الثغرات من خلال معلومات تتكشف أثناء التواصل العادي (مثلًا تخمين نظام التشغيل من مراقبة إنشاء وإنهاء اتصال TCP). بيوفّر معلومات عن نقاط الضعف لكن من غير مسار مباشر لمواجهة الهجمات</td></tr>
+</tbody>
+</table></div>
+
+<div class="callout warning">
+<div class="callout-label">قيود فحص الثغرات</div>
+<ul>
+<li>برمجيات الفحص محدودة في قدرتها على كشف الثغرات في لحظة زمنية معيّنة، ولازم تُحدَّث باستمرار مع اكتشاف ثغرات جديدة</li>
+<li>فحص الثغرات مش بيقيس قوة الضوابط الأمنية الفعلية</li>
+<li>الحكم البشري ضروري لتحليل نتائج الفحص وتحديد False Positives وFalse Negatives</li>
+<li>أدوات الفحص ليست محصَّنة ضد عيوب هندسية قد تفوّت ثغرات خطيرة</li>
+<li>أدوات الفحص بتركّز بشكل ضيّق ومش بتغطّي متجهات زي الهندسة الاجتماعية</li>
+<li>تقارير التقييم مش دايمًا سهلة الفهم أو التقييم لعوامل الخطورة والاستجابة الأولية</li>
+</ul>
+</div>
+
+<h3>أنواع فحص الثغرات</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>النوع</th><th>الوصف</th></tr></thead>
+<tbody>
+<tr><td>External Scanning</td><td>يفحص الشبكة من منظور المهاجم لتحديد الثغرات المتاحة من العالم الخارجي — بيقدّر تهديد الهجمات من خارج المؤسسة ومستوى أمان الشبكة الخارجية والـ Firewall</td></tr>
+<tr><td>Internal Scanning</td><td>فحص دقيق للشبكة الداخلية لإيجاد الثغرات — يشمل فحص إعدادات الراوتر، قواعد الـ Firewall، أحصنة طروادة، مستوى التصحيحات، وآليات مشاركة الملفات (NFS، SMB/CIFS)</td></tr>
+<tr><td>Host-based Scanning</td><td>فحص على مستوى الإعدادات لتحديد إعدادات النظام ومجلّدات المستخدمين وأنظمة الملفات وإعدادات الـ Registry وتقييم احتمالية الاختراق</td></tr>
+<tr><td>Network-based Scanning</td><td>يحدّد الهجمات الأمنية المحتملة على نظام المؤسسة — يكتشف موارد الشبكة ويرسم خريطة البورتات والخدمات، ويقيّم ثغرات زي التصحيحات الناقصة والمصادقة الضعيفة</td></tr>
+<tr><td>Application Scanning</td><td>يركّز على تطبيقات الويب التبادلية وتطبيقات Client-Server التقليدية والأنظمة الهجينة — يختبر بنية سيرفر الويب لأي إعداد خاطئ أو محتوى قديم أو ثغرات معروفة</td></tr>
+<tr><td>Database Scanning</td><td>يختبر قواعد البيانات (MySQL، MSSQL، Oracle، PostgreSQL) لوجود إعدادات خاطئة أو ثغرات معروفة، وتحديد تعرُّض البيانات أو ثغرات من نوع الحقن</td></tr>
+<tr><td>Wireless Network Scanning</td><td>يحدّد الثغرات في الشبكات اللاسلكية للمؤسسة — يختبر الشبكات ويكتشف الشبكات المارقة (Rogue Networks) المحتملة داخل محيط المؤسسة</td></tr>
+<tr><td>Distributed Scanning</td><td>للمؤسسات ذات الأصول الموزَّعة على مواقع مختلفة — فحص متزامن للأصول الموزَّعة باستخدام تقنيات تزامن مناسبة</td></tr>
+<tr><td>Automated Scanning</td><td>استخدام أدوات زي Nessus وQualys وGFI LanGuard لتحديد وتقييم وتقرير الثغرات بشكل منهجي بدون تدخّل يدوي</td></tr>
+<tr><td>Cloud-based Scanning</td><td>تقييم الأمان العام للبنية التحتية السحابية وفق أفضل ممارسات مزوّد الخدمة — يحدّد ثغرات البنية السحابية ويخفّفها عبر ضوابط الوصول</td></tr>
+<tr><td>Mobile Application Scanning</td><td>يهدف لحماية خصوصية البيانات عبر تطبيقات الموبايل والـ APIs — يفحص الكود المصدري وضوابط الأمان الداخلية للتطبيق</td></tr>
+<tr><td>Physical Security Vulnerability Scanning</td><td>فحص شامل للأصول الفيزيائية لتحديد الثغرات المرتبطة بها بشكل استباقي، وتطوير استراتيجيات تخفيف قوية</td></tr>
+<tr><td>IoT Device Vulnerability Scanning</td><td>يوفّر رؤية لنقاط الضعف عبر أجهزة وأنظمة إنترنت الأشياء المتصلة بالإنترنت — يقيّم العتاد والبرمجيات وبروتوكولات الاتصال وتبادل البيانات</td></tr>
+</tbody>
+</table></div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU6 -->
+<h2 id="lu6"><span class="num">06</span><span class="htext">مناهج وأدوات تقييم الثغرات</span></h2>
+
+<h3>مناهج تقييم الثغرات الأربعة</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>المنهج</th><th>الوصف</th></tr></thead>
+<tbody>
+<tr><td>Product-Based Solutions</td><td>تُثبَّت داخل شبكة المؤسسة الداخلية — إما في مساحة خاصة أو في الجزء المتاح عبر الإنترنت من الشبكة؛ لو مثبَّتة خلف الـ Firewall، ممكن متكتشفش هجمات خارجية دايمًا</td></tr>
+<tr><td>Service-Based Solutions</td><td>تُقدَّم من أطراف ثالثة زي شركات التدقيق أو الاستشارات الأمنية — بعضها مُستضاف داخل الشبكة وبعضها خارجها؛ العيب إن المهاجمين يقدروا يفحصوا الشبكة من الإنترنت/الشبكة الخارجية</td></tr>
+<tr><td>Tree-Based Assessment</td><td>المدقّق بيختار استراتيجية مختلفة لكل جهاز أو مكوّن — مثلًا Scanner مختلف لسيرفرات Windows عن سيرفرات Linux؛ يعتمد على معلومة بداية من الإدمن ثم يفحص باستمرار بدون دمج معلومات جديدة أثناء الفحص</td></tr>
+<tr><td>Inference-Based Assessment</td><td>الفحص بيبدأ ببناء جرد للبروتوكولات الموجودة على الجهاز، ثم يحدّد البورتات المرتبطة بالخدمات (بريد، ويب، قاعدة بيانات)، وبعدها يختار ويُنفّذ فقط الاختبارات ذات الصلة بكل خدمة مكتشَفة</td></tr>
+</tbody>
+</table></div>
+
+<h3>أدوات الموقع وفحص البيانات</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>النوع</th><th>الوصف</th></tr></thead>
+<tbody>
+<tr><td>Network-Based Scanner</td><td>يتفاعل فقط مع الجهاز الفعلي اللي موجود عليه، ويقدّم التقرير لنفس الجهاز بعد الفحص</td></tr>
+<tr><td>Agent-Based Scanner</td><td>موجود على جهاز واحد لكن يقدر يفحص عدة أجهزة على نفس الشبكة</td></tr>
+<tr><td>Proxy Scanner</td><td>ماسحات شبكية تقدر تفحص الشبكات من أي جهاز عليها</td></tr>
+<tr><td>Cluster Scanner</td><td>شبيه بـ Proxy Scanner، لكن بيقدر ينفّذ فحصين أو أكثر في نفس الوقت على أجهزة مختلفة بالشبكة</td></tr>
+</tbody>
+</table></div>
+
+<h3>أدوات تقييم الثغرات الشائعة</h3>
+<div class="method-grid">
+<div class="method-card"><div class="mtitle">Nessus Essentials</div><div class="mdesc">حل تقييم لتحديد الثغرات ومشاكل الإعدادات والبرمجيات الخبيثة — يدعم أنظمة تشغيل، أجهزة شبكة، Hypervisors، قواعد بيانات، أجهزة لوحية/هواتف، سيرفرات ويب، وبنية تحتية حرجة. من مميّزاته: اكتشاف أصول عالي السرعة، تقييم ثغرات، كشف برمجيات خبيثة وBotnets، وفحص المنصّات الافتراضية والسحابية.</div></div>
+<div class="method-card"><div class="mtitle">OpenVAS</div><div class="mdesc">إطار عمل من عدة خدمات وأدوات بيقدّم حل شامل وقوي لفحص وإدارة الثغرات — جزء من حل Greenbone Network التجاري، وتطويراته متاحة للمجتمع مفتوح المصدر منذ 2009.</div></div>
+<div class="method-card"><div class="mtitle">Nikto</div><div class="mdesc">ماسح سيرفرات ويب مفتوح المصدر (GPL) — بيجري اختبارات شاملة ضد سيرفرات الويب، بما فيها أكثر من 6700 ملف أو برنامج محتمل الخطورة، وفحص إصدارات قديمة لأكثر من 1250 سيرفر، ومشاكل خاصة بإصدارات أكثر من 270 سيرفر.</div></div>
+</div>
+<p>أدوات إضافية شائعة في الصناعة: InsightVM، Acunetix Web Vulnerability Scanner، Nexpose، Sniper، Tripwire IP360، SAINT Security Suite، BeSECURE، Core Impact Pro، Intruder، ManageEngine Vulnerability Manager Plus، Astra Pentest، Skybox، وMaxPatrol.</p>
+
+<h3>أدوات تقييم الثغرات المعتمدة على الذكاء الاصطناعي</h3>
+<div class="method-grid">
+<div class="method-card"><div class="mtitle">Equixly</div><div class="mdesc">أداة متقدّمة بالذكاء الاصطناعي مخصَّصة لتقييم الثغرات مع تركيز على تأمين الـ APIs — تستخدم خوارزميات تعلّم آلي لفحص وتحديد الثغرات، مع تحليل تهديدات آلي ومراقبة أمنية لحظية.</div></div>
+<div class="method-card"><div class="mtitle">SmartScanner</div><div class="mdesc">ماسح ثغرات آلي بالذكاء الاصطناعي مصمَّم لتعزيز أمان المواقع — يستخدم خوارزميات تعلّم آلي متقدّمة لمراقبة المواقع باستمرار بحثًا عن ثغرات وتهديدات محتملة.</div></div>
+<div class="method-card"><div class="mtitle">CodeDefender</div><div class="mdesc">يساعد المؤسسات على الكشف التلقائي وترتيب الأولوية وإصلاح ثغرات الأمان في قواعد الكود — ويدمج أدوات أمان موجودة لتقديم حل متكامل لإدارة الثغرات.</div></div>
+<div class="method-card"><div class="mtitle">Corgea</div><div class="mdesc">منصّة بالذكاء الاصطناعي بتولّد وتنشر إصلاحات أمنية تلقائيًا للثغرات المكتشَفة في كود البرمجيات — باستخدام نماذج تعلّم آلي لتحليل بيانات الثغرة وكتابة تصحيحات كود آمنة.</div></div>
+<div class="method-card"><div class="mtitle">Fluxguard</div><div class="mdesc">يستخدم خوارزميات ذكاء اصطناعي لفحص واكتشاف الثغرات عبر بنى تحتية تقنية متنوّعة (شبكات، تطبيقات، أنظمة) — ويجري تحليلًا سلوكيًا لحركة الشبكة وتفاعلات النظام لرصد سلوك شاذّ.</div></div>
+</div>
+
+<div class="callout note">
+<div class="callout-label">ملاحظة اتجاه حديث</div>
+<p>المهاجمون بدأوا يستفيدوا من أدوات الذكاء الاصطناعي لأتمتة وتسريع مهام فحص الثغرات — مثلًا توجيه مساعد ذكاء اصطناعي بتعليمات بلغة طبيعية لتشغيل أداة فحص معروفة (مثل Nikto أو Skipfish) ضد هدف محدَّد وعرض النتائج. الأدوات نفسها مش جديدة، لكن سهولة تشغيلها عبر أوامر نصّية بسيطة بتقلّل الحاجز التقني أمام مستخدمين أقل خبرة.</p>
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU7 -->
+<h2 id="lu7"><span class="num">07</span><span class="htext">تحليل تقارير تقييم الثغرات</span></h2>
+
+<p>في عملية تقييم الثغرات، بعد اكتمال كل المراحل، فريق الأمان بيراجع النتائج ويعالج المعلومات لإعداد التقرير النهائي. في المرحلة دي، الفريق بيحاول الإفصاح عن أي ثغرات مكتشَفة، توثيق أي اختلافات ونتائج، وتضمين كل ده في التقرير النهائي مع خطوات المعالجة لتخفيف المخاطر المكتشَفة.</p>
+
+<h3>محتويات تقرير تقييم الثغرات</h3>
+<p>تقرير تقييم الثغرات لازم يتضمّن، على الأقل، النقاط التالية:</p>
+<ul>
+<li>اسم الثغرة ومعرّف CVE المقابل لها</li>
+<li>تاريخ الاكتشاف</li>
+<li>الدرجة بناءً على قواعد بيانات CVE</li>
+<li>وصف تفصيلي للثغرة</li>
+<li>أثر الثغرة</li>
+<li>تفاصيل الأنظمة المتأثّرة</li>
+<li>إثبات مفهوم (Proof of Concept) للثغرة على النظام، إن أمكن</li>
+<li>تفاصيل العملية المطلوبة لتصحيح الثغرة — بما يشمل معلومات التصحيحات، إصلاحات الإعدادات، والبورتات المطلوب حجبها</li>
+</ul>
+
+<hr />
+
+<!-- ══════════════════════════════════ METHODOLOGY -->
+<h2 id="methodology"><span class="htext">منهجية عملية لتقييم ثغرات متكامل</span></h2>
+
+<div class="step-track">
+<div class="step-item">
+<div class="step-num">1</div>
+<div class="step-title">تحديد النطاق والأصول</div>
+<div class="step-body"><p>بناء جرد كامل للأنظمة والتطبيقات المستهدَفة، وتحديد أولوية الأصول الحرجة قبل أي فحص فعلي.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">2</div>
+<div class="step-title">اختيار نوع الفحص المناسب</div>
+<div class="step-body"><p>خارجي أم داخلي؟ شبكة أم تطبيق أم قاعدة بيانات؟ الاختيار بيعتمد على طبيعة الهدف ومتطلّبات الامتثال المطلوبة.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">3</div>
+<div class="step-title">تنفيذ الفحص بالأدوات المناسبة</div>
+<div class="step-body"><p>استخدام أدوات زي Nessus أو OpenVAS أو Nikto حسب نوع الهدف، مع الجمع بين الفحص الآلي والتحقق اليدوي عند الحاجة.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">4</div>
+<div class="step-title">تصفية النتائج والتحقق منها</div>
+<div class="step-body"><p>استبعاد False Positives، تأكيد الثغرات الحقيقية (False Negatives تحديدًا بتحتاج تحقق يدوي إضافي)، وترتيب الأولوية حسب درجة CVSS والأثر الفعلي على العمل.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">5</div>
+<div class="step-title">ربط النتائج بسياق الأعمال</div>
+<div class="step-body"><p>تطبيق سياق تقني وتجاري على كل ثغرة — مش كل ثغرة بدرجة CVSS عالية لها نفس الأثر الفعلي على كل مؤسسة.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">6</div>
+<div class="step-title">إعداد التقرير والمعالجة</div>
+<div class="step-body"><p>توثيق كل ثغرة بمعرّف CVE ووصف وأثر وPoC وخطوات معالجة محدَّدة، ثم متابعة التحقق (Verification) بعد التطبيق.</p></div>
+</div>
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ CHEAT SHEET -->
+<h2 id="cheat"><span class="htext">Cheat Sheet مرجعي</span></h2>
+<div class="cheat-section">
+
+<h4>أنظمة وقواعد بيانات الثغرات</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>النظام</th><th>الوظيفة الأساسية</th><th>المصدر</th></tr></thead>
+<tbody>
+<tr><td>CVSS</td><td>تسجيل خطورة الثغرة رقميًا عبر 4 مجموعات مقاييس (Base/Threat/Environmental/Supplemental)</td><td>first.org</td></tr>
+<tr><td>CVE</td><td>قاموس معرّفات موحَّدة للثغرات</td><td>cve.mitre.org</td></tr>
+<tr><td>NVD</td><td>مستودع حكومي أمريكي لبيانات إدارة الثغرات القائمة على SCAP</td><td>nvd.nist.gov</td></tr>
+<tr><td>CWE</td><td>تصنيف لأنماط الضعف البرمجي الشائعة (Common Weakness Enumeration)</td><td>cwe.mitre.org</td></tr>
+</tbody>
+</table></div>
+
+<h4>مرجع سريع للأدوات حسب الاستخدام</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>الهدف</th><th>الأداة الأنسب</th></tr></thead>
+<tbody>
+<tr><td>فحص شامل متعدّد المنصّات</td><td>Nessus Essentials، OpenVAS</td></tr>
+<tr><td>فحص سيرفرات الويب تحديدًا</td><td>Nikto</td></tr>
+<tr><td>فحص تطبيقات ويب (Web Vulnerability)</td><td>Acunetix</td></tr>
+<tr><td>إدارة ثغرات على نطاق المؤسسة</td><td>InsightVM / Nexpose، Tripwire IP360، Skybox</td></tr>
+<tr><td>فحص بمساعدة ذكاء اصطناعي (API)</td><td>Equixly</td></tr>
+</tbody>
+</table></div>
+
+<h4>Active مقابل Passive — مقارنة سريعة</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>المعيار</th><th>Active Scanning</th><th>Passive Scanning</th></tr></thead>
+<tbody>
+<tr><td>التفاعل مع الهدف</td><td>مباشر (Probes وطلبات مُصمَّمة)</td><td>غير مباشر (مراقبة فقط)</td></tr>
+<tr><td>الدقة</td><td>أعلى — نتائج مؤكَّدة</td><td>أقل تأكيدًا — استنتاجية</td></tr>
+<tr><td>احتمالية الاكتشاف من الهدف</td><td>أعلى</td><td>أقل بكثير</td></tr>
+</tbody>
+</table></div>
+
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ SUMMARY -->
+<h2 id="summary"><span class="htext">الخلاصة العامة للموديول</span></h2>
+<p>الموديول ده ناقش أنواع مختلفة من الثغرات، نظام تسجيل CVSS، وقواعد بيانات الثغرات. كمان غطّى دورة حياة إدارة الثغرات وأبحاثها، بالإضافة لفحص الثغرات وتحليلها وأنواع تقنيات الفحص المختلفة. وصف مناهج تقييم الثغرات المتنوّعة بخصائصها، وأدوات التقييم المستخدَمة لفحص مضيف أو تطبيق، مع معايير وأفضل ممارسات اختيار الأداة المناسبة. وانتهى بنقاش مفصَّل حول كيفية تحليل تقرير تقييم الثغرات وكيف بيكشف المخاطر المرصودة بعد فحص الشبكة.</p>
+
+<div class="takeaways">
+<div class="takeaways-title">$ cat ./module05_summary.txt</div>
+<ul>
+<li>الثغرات بتُصنَّف لفئات واسعة: إعدادات خاطئة (شبكة ومضيف)، عيوب تطبيقات، ثغرات بنية تحتية وتشغيل، ومخاطر طرف ثالث — كل فئة لها نمط استغلال مختلف</li>
+<li>CVSS بيقيس خطورة الثغرة عبر 4 مجموعات مقاييس، وCVE قاموس معرّفات موحَّد، وNVD مستودع بيانات حكومي قائم على SCAP — الثلاثة مكمّلين لبعض مش بدائل</li>
+<li>دورة إدارة الثغرات سبع مراحل متكاملة — من ما قبل التقييم للمراقبة المستمرة — وتجاهل أي مرحلة بيضعف فعالية العملية ككل</li>
+<li>بحث الثغرات عملية مستمرة بتعتمد على مصادر متعدّدة (MSRC، Exploit-DB، وغيرها) لمواكبة التهديدات المكتشَفة حديثًا</li>
+<li>الفحص الآلي له حدود واضحة — الحكم البشري ضروري دايمًا لتصفية False Positives/Negatives وربط النتائج بسياق الأعمال الفعلي</li>
+<li>اختيار منهج التقييم (Product-Based، Service-Based، Tree-Based، Inference-Based) ونوع الفحص (داخلي/خارجي/تطبيق/سحابة/IoT وغيرها) بيعتمد على طبيعة الهدف ومتطلّبات المؤسسة</li>
+<li>تقرير تقييم الثغرات الجيّد لازم يربط كل ثغرة بمعرّف CVE، درجة خطورة، أثر فعلي، وخطوات معالجة محدَّدة وقابلة للتنفيذ</li>
+</ul>
+</div>
+
+<blockquote>
+<p><strong>تقييم الثغرات مش حدث يحصل مرة واحدة</strong> — هو دورة مستمرة بتتكرّر مع كل تغيير في البنية التحتية أو اكتشاف ثغرة جديدة. الأداة الآلية بتوفّر السرعة والتغطية، لكن القيمة الحقيقية بتيجي من الحكم البشري في تصفية النتائج وربطها بسياق المؤسسة الفعلي — وده بالظبط الفرق بين تقرير فحص طويل ما حدش هيقراه، وتقرير تقييم يقدر يوجّه قرارات أمنية حقيقية.</p>
+</blockquote>
+
+<div class="callout examtip">
+<div class="callout-label">Exam Tip</div>
+<p>أسئلة الامتحان غالبًا بتركّز على الفرق بين CVSS وCVE وNVD (إطار تسجيل مقابل قاموس معرّفات مقابل مستودع بيانات)، الفرق بين Active وPassive Scanning، والفرق بين مناهج التقييم الأربعة (خصوصًا Tree-Based وInference-Based). راجع كمان أنواع الفحص المختلفة (External/Internal/Host-based/Network-based) لأنها بتتكرّر بصيغ أسئلة سيناريو.</p>
+</div>
+
+<hr />
+<p><em>نهاية نوتس الموديول الخامس — Vulnerability Analysis</em></p>
+<div class="footer-note">-- EOF: module-05/vulnerability-analysis.md --</div>
+
+</div>
+
+<script>
+(function(){
+  var root=document.documentElement,btn=document.getElementById('themeSwitch');
+  function applyTheme(t){root.setAttribute('data-theme',t);btn.textContent='theme: '+t;try{localStorage.setItem('oscp-notes-theme',t);}catch(e){}}
+  var saved='dark';try{saved=localStorage.getItem('oscp-notes-theme')||'dark';}catch(e){}
+  applyTheme(saved);
+  btn.addEventListener('click',function(){applyTheme(root.getAttribute('data-theme')==='dark'?'light':'dark');});
+  var bar=document.getElementById('progressBar');
+  function onScroll(){var h=document.documentElement,s=h.scrollTop,ht=h.scrollHeight-h.clientHeight;bar.style.width=(ht>0?(s/ht*100):0)+'%';var t=document.getElementById('toTop');s>500?t.classList.add('show'):t.classList.remove('show');}
+  document.addEventListener('scroll',onScroll);onScroll();
+  document.getElementById('toTop').addEventListener('click',function(){window.scrollTo({top:0,behavior:'smooth'});});
+  document.querySelectorAll('.code-wrap').forEach(function(wrap){
+    var c=wrap.querySelector('code');if(!c)return;
+    var b=document.createElement('button');b.className='copy-btn';b.textContent='copy';
+    b.addEventListener('click',function(){if(navigator.clipboard){navigator.clipboard.writeText(c.innerText).then(function(){b.textContent='copied ✓';b.classList.add('copied');setTimeout(function(){b.textContent='copy';b.classList.remove('copied');},1500);});}});
+    wrap.appendChild(b);
+  });
+})();
+</script>
+</body>
+</html>

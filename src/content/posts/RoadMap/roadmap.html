@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Roadmap - Bad Glitch</title>
+<script>try{var d=document.documentElement,th=localStorage.getItem('rm-theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light'),lg=localStorage.getItem('rm-lang')||((navigator.language||'').indexOf('ar')==0?'ar':'en');d.dataset.theme=th;d.lang=lg;d.dir=lg=='ar'?'rtl':'ltr'}catch(e){}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@600;800&family=Hanken+Grotesk:wght@400;500;700&family=Readex+Pro:wght@400;500;600&family=IBM+Plex+Sans+Arabic:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+/* Design tokens. Three print inks (magenta, cyan, yellow) plus the two colors they make when overprinted (violet = magenta + cyan, green = cyan + yellow). To match another site, change only the values in these two blocks. */
+:root{--bg:#eceff5;--fg:#0e1320;--card:#fff;--soft:#eceff5;--ln:#0e1320;--sd:#0e1320;--frbg:#c9f5e6;--mag:#ff3d81;--cy:#00c2ff;--ye:#ffd60a;--vi:#6b4dff;--gr:#00c896;--fd:#0e1320;--fdo:#fff;--c:#0e1320;--on:#fff;color-scheme:light}
+:root[data-theme=dark]{--bg:#0c0f18;--fg:#e8ebf4;--card:#141927;--soft:#1b2132;--ln:#8d96b5;--sd:#04060b;--frbg:#123a30;--fd:#e8ebf4;--fdo:#0c0f18;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.6 'Hanken Grotesk',system-ui,sans-serif}
+html[lang=ar] body{font-family:'IBM Plex Sans Arabic','Hanken Grotesk',system-ui,sans-serif;line-height:1.85}
+html[lang=ar] h1,html[lang=ar] h2,html[lang=ar] h3,html[lang=ar] .dc b,html[lang=ar] .nb{font-family:'Readex Pro','IBM Plex Sans Arabic',sans-serif}
+.w{max-width:1080px;margin:0 auto;padding:0 20px 64px}
+h1,h2,h3{font-family:'Unbounded','Hanken Grotesk',system-ui,sans-serif;line-height:1.2;margin:0}
+.top{display:flex;flex-wrap:wrap;align-items:center;gap:14px 28px;padding:20px 0}
+.brand{display:flex;align-items:center;gap:12px;color:var(--fg);text-decoration:none}
+.mk{width:36px;height:36px;display:block;flex:none}
+.wm,html[lang=ar] .wm{font-family:'Unbounded',sans-serif;font-weight:800;font-size:1.05rem;text-shadow:1.5px 1.5px 0 var(--cy),-1.5px -1.5px 0 var(--mag)}
+.tn{display:flex;flex-wrap:wrap;gap:6px 22px;margin-inline-end:auto}
+.tn a{color:var(--fg);font-weight:700;text-decoration:none;padding:2px 0}
+.tn a:hover,.tn a[aria-current]{text-decoration:underline;text-decoration-thickness:3px;text-underline-offset:6px;text-decoration-color:var(--mag)}
+.tg{font:inherit;font-size:.88rem;font-weight:700;background:var(--card);color:var(--fg);border:2px solid var(--ln);border-radius:999px;padding:4px 14px;cursor:pointer}
+.tg:hover{background:var(--fg);color:var(--bg)}
+h1{font-weight:800;font-size:clamp(2.1rem,6.4vw,4.4rem);margin:28px 0 16px;max-width:14em;text-shadow:3px 3px 0 var(--cy),-3px -3px 0 var(--mag);animation:settle 1.1s steps(6) both}
+html[lang=ar] h1{font-weight:600;line-height:1.35}
+@keyframes settle{from{text-shadow:14px 6px 0 var(--cy),-14px -6px 0 var(--mag)}}
+@media (prefers-reduced-motion:reduce){h1{animation:none}}
+.lead{max-width:38em;font-size:1.1rem;margin:0 0 40px}
+h2{font-size:1.15rem;font-weight:600;margin:44px 0 16px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:20px}
+.dc{background:var(--c);color:var(--on);border:2px solid var(--ln);border-radius:4px;box-shadow:5px 5px 0 var(--sd);padding:18px;text-align:start;font:inherit;cursor:pointer;min-height:130px;display:flex;flex-direction:column;justify-content:space-between;transition:transform .12s,box-shadow .12s}
+.dc b{font-family:'Unbounded',sans-serif;font-weight:600;font-size:1.05rem;line-height:1.3}
+.dc span{font-size:.9rem;opacity:.92}
+.dc[aria-pressed=true]{transform:translate(5px,5px);box-shadow:0 0 0 var(--sd)}
+button:focus-visible,a:focus-visible,input:focus-visible{outline:3px solid var(--cy);outline-offset:3px}
+.line{display:flex;flex-wrap:wrap;gap:12px}
+.tc{display:flex;align-items:center;gap:10px;background:var(--card);border:2px solid var(--ln);border-radius:999px;padding:8px 16px;font:inherit;font-weight:700;cursor:pointer;color:var(--fg)}
+.tc i{width:12px;height:12px;border-radius:50%;background:var(--c);border:2px solid var(--ln)}
+.tc small{font-weight:500;opacity:.7}
+.tc[aria-pressed=true]{background:var(--fg);color:var(--bg)}
+.panel{background:var(--card);border:2px solid var(--ln);border-radius:4px;box-shadow:8px 8px 0 var(--c);padding:clamp(18px,4vw,36px);margin-top:36px}
+.panel h2{font-size:clamp(1.5rem,4vw,2.2rem);margin:0 0 10px}
+.panel>p{max-width:42em;margin:0 0 14px}
+.need{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-weight:700;margin-bottom:18px}
+.need button{font:inherit;font-weight:700;background:var(--soft);color:var(--fg);border:2px solid var(--ln);border-radius:999px;padding:2px 12px;cursor:pointer}
+.bar{height:12px;border:2px solid var(--ln);border-radius:2px;background:var(--soft);overflow:hidden;max-width:360px}
+.bar i{display:block;height:100%;background:var(--c);width:0;transition:width .25s}
+.pt{font-size:.9rem;margin:6px 0 0}
+.st{display:grid;grid-template-columns:44px 1fr;gap:18px;margin-top:34px}
+.st>div:first-child{display:flex;flex-direction:column;align-items:center}
+.nb{width:40px;height:40px;border-radius:50%;background:var(--fg);color:var(--bg);display:grid;place-items:center;font-family:'Unbounded',sans-serif;font-weight:600}
+.st>div:first-child::after{content:"";flex:1;width:2px;background:var(--fg);margin-top:6px}
+.st:last-child>div:first-child::after{display:none}
+.st h3{font-size:1.1rem;font-weight:600;margin:6px 0 12px}
+.ck{display:flex;gap:10px;align-items:flex-start;padding:5px 0;cursor:pointer}
+.ck input{width:20px;height:20px;margin-top:3px;accent-color:var(--c);flex:none}
+.ck input:checked+span{text-decoration:line-through;opacity:.55}
+.flt{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+.f{font:inherit;font-size:.88rem;font-weight:700;background:var(--card);border:2px solid var(--ln);border-radius:999px;padding:3px 12px;cursor:pointer;color:var(--fg)}
+.f[aria-pressed=true]{background:var(--c);color:var(--on);border-color:var(--c)}
+.rg{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px}
+.rc{display:block;background:var(--soft);border:2px solid var(--ln);border-radius:4px;padding:14px;color:var(--fg);text-decoration:none}
+a.rc:hover{background:var(--card);box-shadow:4px 4px 0 var(--ln)}
+.rc b{display:block;margin-bottom:8px}
+.b{display:inline-block;font-size:.78rem;font-weight:700;padding:1px 8px;border:1.5px solid var(--ln);border-radius:3px;margin:0 0 6px 6px;background:var(--card);color:var(--fg)}
+html[dir=rtl] .b{margin:0 0 6px 6px}
+.b.rec{background:var(--ye);color:#0e1320;border-color:#0e1320}
+.b.my{background:var(--c);color:var(--on)}
+.b.fr{background:var(--frbg)}
+.rc.soon{border-style:dashed;opacity:.8}
+.cert{list-style:none;padding:0;margin:0;display:flex;flex-wrap:wrap;gap:8px 0}
+.cert li{display:flex;align-items:center}
+.cert li+li::before{content:"\203A";font-size:1.6rem;font-weight:700;margin:0 12px}
+html[dir=rtl] .cert li+li::before{content:"\2039"}
+.cert div{border:2px solid var(--ln);border-radius:4px;padding:8px 14px;background:var(--soft)}
+.cert small{display:block}
+.none{opacity:.75;font-size:.92rem;margin:0 0 8px}
+.by{margin-top:72px;background:#0e1320;color:#eceff5;border:2px solid #0e1320;border-radius:4px;padding:clamp(22px,5vw,44px);box-shadow:8px 8px 0 var(--mag),16px 16px 0 var(--cy)}
+:root[data-theme=dark] .by{border-color:#2a3150}
+.by h2{margin:0 0 10px;font-size:clamp(1.3rem,3.5vw,1.9rem)}
+.by p{margin:0 0 22px;max-width:36em}
+.by div{display:flex;flex-wrap:wrap;gap:16px}
+.lk{display:inline-block;padding:12px 22px;font-weight:700;color:#0e1320;text-decoration:none;border:2px solid #eceff5;border-radius:4px;box-shadow:4px 4px 0 #eceff5;transition:transform .12s,box-shadow .12s}
+.lk:hover{transform:translate(4px,4px);box-shadow:0 0 0 #eceff5}
+.lk.yt{background:var(--mag)}.lk.li{background:var(--cy)}
+footer{margin-top:40px;font-size:.9rem;opacity:.8}
+</style>
+</head>
+<body>
+<div class="w">
+<div class="top">
+<a class="brand" href="/"><svg class="mk" viewBox="0 0 200 200" aria-hidden="true"><defs><path id="gp" d="M145.87 67.88A56 56 0 1 0 156 100H102"/>
+<clipPath id="o"><rect width="200" height="62"/><rect y="74" width="200" height="50"/><rect y="132" width="200" height="68"/></clipPath>
+<clipPath id="b1"><rect y="62" width="200" height="12"/></clipPath><clipPath id="b2"><rect y="124" width="200" height="8"/></clipPath>
+<g id="gl" fill="none" stroke-width="24"><use href="#gp" clip-path="url(#o)"/><use href="#gp" clip-path="url(#b1)" transform="translate(12 0)"/><use href="#gp" clip-path="url(#b2)" transform="translate(-10 0)"/></g></defs>
+<rect x="2" y="2" width="196" height="196" rx="30" fill="#ffffff" stroke="#0e1320" stroke-width="4"/>
+<use href="#gl" stroke="#ff3d81" transform="translate(-5 -4)"/>
+<use href="#gl" stroke="#00c2ff" transform="translate(5 4)"/>
+<use href="#gl" stroke="#0e1320"/>
+<rect x="150" y="30" width="14" height="14" fill="#ffd60a"/><rect x="170" y="46" width="8" height="8" fill="#ffd60a"/></svg><span class="wm">Bad Glitch</span></a>
+<nav class="tn"><a href="/" data-i="home">Home</a><a href="/archive/" data-i="arch">Archive</a><a href="/about/" data-i="about">About</a><a href="#" aria-current="page" data-i="road">Roadmap</a></nav>
+<button class="tg" id="lg" type="button"></button><button class="tg" id="th" type="button"></button>
+</div>
+<h1 data-i="h1">Pick a path. Know what to study.</h1>
+<p class="lead" data-i="lead"></p>
+<h2 data-i="h1t">1. Choose a field</h2>
+<div class="grid" id="dom"></div>
+<div id="trk"></div>
+<div id="det"></div>
+<section class="by"><h2 data-i="by"></h2><p data-i="byp"></p><div><a class="lk yt" href="https://www.youtube.com/@HackTheLogic0" target="_blank" rel="noopener" data-i="yt"></a><a class="lk li" href="https://www.linkedin.com/in/badglitch/" target="_blank" rel="noopener" data-i="li"></a></div></section>
+<footer data-i="foot"></footer>
+</div>
+<script>
+const BL='https://bad-glitch.github.io';
+const D=[
+{id:'fd',n:'Foundations',s:'Start here. Every path builds on this.',c:'var(--fd)',o:'var(--fdo)'},
+{id:'of',n:'Offensive Security',s:'Break into systems the way attackers do.',c:'var(--mag)',o:'#0e1320'},
+{id:'df',n:'Defensive Security',s:'Detect, investigate and respond.',c:'var(--cy)',o:'#0e1320'},
+{id:'ai',n:'AI Security',s:'Attack and protect AI systems.',c:'var(--vi)',o:'#fff'},
+{id:'ns',n:'Network Security',s:'Build and harden the infrastructure.',c:'var(--ye)',o:'#0e1320'},
+{id:'gr',n:'GRC',s:'Risk, compliance and security design.',c:'var(--gr)',o:'#0e1320'}];
+const AD={fd:['الأساسيات','ابدأ من هنا، فكل المسارات تُبنى عليه.'],of:['الأمن الهجومي','اخترق الأنظمة كما يفعل المهاجمون.'],df:['الأمن الدفاعي','اكتشف الهجمات وحقق فيها واستجب لها.'],ai:['أمن الذكاء الاصطناعي','هاجم أنظمة الذكاء الاصطناعي واحمِها.'],ns:['أمن الشبكات','ابنِ البنية التحتية وقوِّها.'],gr:['الحوكمة والمخاطر والامتثال','إدارة المخاطر وتصميم الأمان.']};
+const AT={fnd:['الأساسيات','القاعدة المشتركة: الشبكات وأنظمة التشغيل والبرمجة النصية ومفاهيم الأمن.'],
+npt:['اختبار اختراق الشبكات','اكتشف الثغرات واستغلها وارفع الصلاحيات داخل الشبكات. جوهر مسار OSCP.'],
+web:['أمن تطبيقات الويب','اكتشف ثغرات تطبيقات الويب وواجهات API واستغلها.'],
+ad:['اختبار اختراق Active Directory','هاجم نطاقات Windows وتحرّك داخلها.'],
+mob:['اختبار اختراق تطبيقات الموبايل','اختبر تطبيقات Android وiOS: التخزين وحركة البيانات وسلوك التشغيل.'],
+red:['Red Team','حاكِ المهاجمين الحقيقيين من البداية للنهاية بتخفٍّ وهدف واضح.'],
+soc:['محلل SOC','راقب التنبيهات وصنّفها وصعّدها بصفتك خط الدفاع الأول.'],
+dfir:['التحقيق الجنائي والاستجابة (DFIR)','حقق في الأنظمة المخترقة واعرف ما حدث بالضبط.'],
+thd:['صيد التهديدات وهندسة الكشف','اصطد التهديدات الخفية واكتب قواعد كشف تلتقطها.'],
+air:['Red Teaming للذكاء الاصطناعي','هاجم النماذج اللغوية والوكلاء: حقن الأوامر وإساءة استخدام الأدوات وتسريب البيانات.'],
+ais:['تأمين الذكاء الاصطناعي وSOC','انشر الذكاء الاصطناعي بأمان واستخدمه داخل عمليات الأمن.'],
+nse:['هندسة أمن الشبكات','صمّم الشبكات الآمنة وشغّلها.'],
+hrd:['تحصين الأنظمة','قلّل سطح الهجوم على Linux وWindows.'],
+grc:['الحوكمة وإدارة المخاطر','أدر المخاطر والضوابط والامتثال.'],
+arc:['هندسة الأمن','صمّم أنظمة تبقى آمنة مع نموّها.']};
+// r: name|url|type|price|level(B/I/A)|rec   x: cert|note   o: label|path (my notes)
+const T=[
+{id:'fnd',d:'fd',n:'Foundations',s:'The shared base: networks, operating systems, scripting and core security ideas.',p:[],
+c:['TCP/IP, OSI model, DNS and HTTP','Subnetting and routing basics','Linux command line and permissions','Windows basics: users, services, registry','Bash and Python scripting','CIA triad, threats and basic cryptography'],
+l:['Finish TryHackMe Pre Security','Clear OverTheWire Bandit','Build a VM home lab'],
+r:['Network+ (Netriders Academy)|netriders.academy/courses/network/|Course||B|mine','Linux+ (Netriders Academy)|netriders.academy/courses/linux/|Course||B|mine','Security+ SY0-701 (Netriders Academy)|netriders.academy/courses/security-new/|Course||B|mine','TryHackMe Pre Security|tryhackme.com/path/outline/presecurity|Lab|Freemium|B|rec','Professor Messer Network+|professormesser.com|Course|Free|B','Linux Journey|linuxjourney.com|Course|Free|B','OverTheWire Bandit|overthewire.org/wargames/bandit/|Lab|Free|B'],
+x:['Network+|Networking baseline','Security+|Entry-level security baseline'],
+o:['Security+ study notes|/posts/courses-notes/security---notes/security--notes/','Network+ labs|/posts/labs/networkplus---labs/network-/','Linux+ labs|/posts/labs/linuxplus---labs/linux-/','Security+ labs|/posts/labs/security-plus---labs/security/']},
+{id:'npt',d:'of',n:'Network Pentest',s:'Enumerate, exploit and escalate across networks. The core of the OSCP path.',p:['fnd'],
+c:['Recon and enumeration','Nmap and service fingerprinting','Attacking SMB, FTP and SSH','Password attacks','Linux and Windows privilege escalation','Pivoting and tunneling','Writing a pentest report'],
+l:['TryHackMe Jr Penetration Tester','HTB Starting Point and easy boxes','OSCP-style lab roadmap'],
+r:['eJPT v2 Penetration Testing Student (Netriders Academy)|netriders.academy/all-courses/penetration-testing-student-v2/|Course||B|mine','OSCP Prep Course (Netriders Academy)|netriders.academy/all-courses/oscp-prep/|Course||I|mine','CEH v13 Prep Course (Netriders Academy)|netriders.academy/all-courses/cehv13-prep/|Course||B|mine','TryHackMe Jr Penetration Tester|tryhackme.com/path/outline/jrpenetrationtester|Lab|Freemium|B|rec','Hack The Box|hackthebox.com|Lab|Freemium|I','HackTricks|book.hacktricks.xyz|Tools|Free|I','GTFOBins|gtfobins.github.io|Tools|Free|I','IppSec videos|ippsec.rocks|Video|Free|I'],
+x:['eJPT|First practical exam','PNPT|Full engagement with a report','OSCP|The industry standard'],
+o:['OSCP+ course notes|/courses/oscp/','CEH v13 course notes|/courses/cehv13/','eJPTv2 study notes|/posts/courses-notes/ejptv2---notes/ejpt-notes/','OSCP+ prep labs|/posts/labs/oscp---labs/oscp/','CEH v13 free labs|/posts/labs/cehv13---labs/ceh/','eJPT v2 labs|/posts/labs/ejptv2---labs/ejptv2/','eCPPT v3 labs|/posts/labs/ecpptv3---labs/ecppt/','Privilege escalation notes|/archive/category/Privilege%20Escalation/']},
+{id:'web',d:'of',n:'Web Application Security',s:'Find and exploit flaws in web apps and APIs.',p:['fnd'],
+c:['HTTP and the browser security model','OWASP Top 10','SQLi, XSS, CSRF and SSRF','Authentication and access control flaws','SSTI, XXE and deserialization','API and GraphQL testing','Burp Suite workflow'],
+l:['PortSwigger Web Security Academy labs','OWASP Juice Shop','Timed Burp-only practice labs'],
+r:['eWPTX Prep Course (Netriders Academy)|netriders.academy/all-courses/ewptx-prep/|Course||A|mine','PortSwigger Web Security Academy|portswigger.net/web-security|Course|Free|B|rec','OWASP Top 10|owasp.org/www-project-top-ten/|Docs|Free|B','OWASP Testing Guide|owasp.org/www-project-web-security-testing-guide/|Docs|Free|I','PayloadsAllTheThings|github.com/swisskyrepo/PayloadsAllTheThings|Tools|Free|I'],
+x:['BSCP|Burp Suite Certified Practitioner','eWPTX|Advanced web pentest','OSWE|White-box web exploitation'],
+o:['eWPTXv3 course notes|/courses/ewptxv3/','eWPTv2 study notes|/posts/courses-notes/ewptv2---notes/ewptv2-notes/','eWPTX v3 labs|/posts/labs/ewptxv3---labs/ewptxv3---labs/','eWAPT v2 labs|/posts/labs/ewptv2---labs/ewptv2/','Server-side notes|/archive/category/Web%20Server-Side/','Client-side notes|/archive/category/Web%20Client-Side/']},
+{id:'ad',d:'of',n:'Active Directory Pentest',s:'Attack and move through Windows domains.',p:['npt'],
+c:['LDAP, Kerberos and NTLM basics','AD enumeration with BloodHound','Kerberoasting and AS-REP roasting','Credential dumping and lateral movement','ACL abuse and delegation attacks','AD CS abuse and persistence'],
+l:['TryHackMe AD rooms','Build a GOAD home lab','HTB Pro-style AD boxes'],
+r:['The Hacker Recipes|thehacker.recipes|Docs|Free|I|rec','BloodHound docs|bloodhound.specterops.io|Docs|Free|I','HackTricks AD|book.hacktricks.xyz|Tools|Free|I','Altered Security CRTP|alteredsecurity.com|Course|Paid|I'],
+x:['CRTP|Foundational AD attacks','CRTE|Advanced AD and forests'],
+o:['eCPPT v3 labs|/posts/labs/ecpptv3---labs/ecppt/','Active Directory notes|/archive/category/Active%20Directory/']},
+{id:'mob',d:'of',n:'Mobile App Pentest',s:'Test Android and iOS apps, storage, traffic and runtime behavior.',p:['web'],
+c:['Android app components and iOS security model','Static analysis of APK and IPA files','Traffic interception','Hooking with Frida and Objection','Insecure storage and IPC','SSL pinning bypass'],
+l:['DIVA and InsecureBankv2','OWASP MASTG crackmes','Set up a rooted emulator'],
+r:['OWASP MASTG|mas.owasp.org|Docs|Free|I|rec','Frida|frida.re|Docs|Free|I','Objection|github.com/sensepost/objection|Tools|Free|I','INE eMAPT|ine.com|Course|Paid|I'],
+x:['eMAPT|Mobile pentest practical'],o:[]},
+{id:'red',d:'of',n:'Red Team',s:'Simulate real adversaries end to end, with stealth and a clear objective.',p:['npt','ad'],
+c:['Threat emulation planning and OPSEC','C2 frameworks','Initial access and phishing','AV and EDR evasion','Lateral movement and persistence','MITRE ATT&CK mapping','Reporting and purple teaming'],
+l:['HTB Pro Labs','Build your own C2 lab','Emulate a published APT chain'],
+r:['MITRE ATT&CK|attack.mitre.org|Docs|Free|I|rec','Zero-Point Security CRTO|zeropointsecurity.co.uk|Course|Paid|A','HTB Pro Labs|hackthebox.com|Lab|Paid|A'],
+x:['CRTO|Red team operations','OSEP|Evasion and advanced attacks'],
+o:['Iranian APT TTP evolution|/posts/daily---posts/iranian_apt_ttp_evolution_2009-2026/']},
+{id:'soc',d:'df',n:'SOC Analyst',s:'Monitor, triage and escalate alerts as the first line of defense.',p:['fnd'],
+c:['Log sources and Windows event IDs','SIEM concepts and querying','Alert triage and escalation','Phishing analysis','Network traffic analysis','Incident response lifecycle'],
+l:['TryHackMe SOC Level 1','LetsDefend alert queue','CyberDefenders challenges'],
+r:['CySA+ CS0-003 (Netriders Academy)|netriders.academy/courses/cysa-new/|Course||I|mine','CyberOps Associate 200-201 (Netriders Academy)|netriders.academy/courses/cyberops-associate/|Course||B|mine','TryHackMe SOC Level 1|tryhackme.com/path/outline/soclevel1|Lab|Freemium|B|rec','LetsDefend|letsdefend.io|Lab|Freemium|B','CyberDefenders|cyberdefenders.org|Lab|Freemium|I','Splunk training|splunk.com/en_us/training.html|Course|Free|B'],
+x:['Security+|Baseline','CySA+|Analyst skills','BTL1|Practical blue team'],
+o:['CySA+ study notes|/posts/courses-notes/cysa-003---notes/cysa-plus-notes/','CySA+ labs roadmap|/posts/labs/comptia--sysaplus---labs/cysa-plus-labs/','SOC tag|/archive/tag/SOC/']},
+{id:'dfir',d:'df',n:'DFIR',s:'Investigate compromised systems and recover what happened.',p:['soc'],
+c:['Disk and memory acquisition','Windows artifacts','Timeline analysis','Memory forensics with Volatility','Network forensics','Malware triage','Evidence handling and reporting'],
+l:['CyberDefenders forensics labs','Analyze public memory images','Build a case timeline'],
+r:['13Cubed|youtube.com/@13cubed|Video|Free|I|rec','SANS DFIR posters|sans.org/posters/|Docs|Free|I','Volatility|volatilityfoundation.org|Tools|Free|I','Eric Zimmerman tools|ericzimmerman.github.io|Tools|Free|I'],
+x:['eCDFP|Digital forensics','eCIR|Incident response'],
+o:['eCIR study notes|/posts/courses-notes/ecirv3---notes/ecirv3---notes/','eCDFP labs|/posts/labs/ecdfp---labs/ecdfp/','DFIR tag|/archive/tag/DFIR/']},
+{id:'thd',d:'df',n:'Threat Hunting and Detection',s:'Hunt for hidden threats and write detections that catch them.',p:['soc'],
+c:['Hypothesis-driven hunting','Sysmon and Windows telemetry','Sigma, YARA and Suricata rules','Detection tuning','ATT&CK coverage mapping','Splunk and Elastic queries'],
+l:['Run Atomic Red Team tests','Hunt in Splunk BOTS data','Write and test 10 Sigma rules'],
+r:['Sigma rules|github.com/SigmaHQ/sigma|Tools|Free|I|rec','Atomic Red Team|atomicredteam.io|Tools|Free|I','Splunk BOTS|github.com/splunk/botsv3|Lab|Free|I','Sysmon docs|learn.microsoft.com/sysinternals/downloads/sysmon|Docs|Free|I'],
+x:['eCTHP|Threat hunting professional'],
+o:['eCTHPv3 threat hunting notes|/posts/courses-notes/ecthpv3---notes/threat-hunting-notes/','eCTHP v2 labs roadmap|/posts/labs/ecthp---labs/ecthp/','Threat hunting tag|/archive/tag/Threat%20Hunting/']},
+{id:'air',d:'ai',n:'AI Red Teaming',s:'Attack LLMs and agents: prompt injection, tool abuse and data leaks.',p:['web'],
+c:['How LLMs work','Prompt injection and jailbreaks','Tool and agent abuse','RAG and data leakage','OWASP Top 10 for LLMs','MITRE ATLAS'],
+l:['Beat Gandalf levels','Scan a model with garak','Attack a local LLM agent'],
+r:['OWASP Top 10 for LLM Apps|genai.owasp.org|Docs|Free|B|rec','MITRE ATLAS|atlas.mitre.org|Docs|Free|I','Gandalf|gandalf.lakera.ai|Lab|Free|B','PortSwigger LLM attacks|portswigger.net/web-security/llm-attacks|Lab|Free|I'],
+x:['eAIS|AI security'],
+o:['eAIS course notes|/courses/eais/','eAIS course labs|/posts/labs/eais---labs/eais/','AI Security notes|/archive/tag/AI%20Security/']},
+{id:'ais',d:'ai',n:'Secure AI and SOC',s:'Deploy AI safely and use it inside security operations.',p:['soc'],
+c:['AI risk and governance','Secure LLM deployment','AI-assisted alert triage','Guardrails and validation','Monitoring AI systems'],
+l:['Build an alert-triage assistant','Test your guardrails'],
+r:['NIST AI RMF|nist.gov/itl/ai-risk-management-framework|Docs|Free|B|rec','Google SAIF|safety.google/cybersecurity-advancements/saif/|Docs|Free|B','OWASP Top 10 for LLM Apps|genai.owasp.org|Docs|Free|B'],
+x:['eAIS|AI security'],
+o:['eAIS course notes|/courses/eais/','eAIS course labs|/posts/labs/eais---labs/eais/','AI in SOC operations|/posts/courses-notes/eais---notes/7---ai-in-soc-operations/eais/','Secure operational use of AI|/posts/courses-notes/eais---notes/6---secure-operational-use-of-ai-in-it-and-security/eais/']},
+{id:'nse',d:'ns',n:'Network Security Engineering',s:'Design and run secure networks.',p:['fnd'],
+c:['Firewalls and segmentation','IDS and IPS','VPN and remote access','PKI and secure protocols','Wireless security','Network monitoring'],
+l:['Build a pfSense lab','Deploy Suricata','Analyze traffic in Wireshark'],
+r:['Network+ (Netriders Academy)|netriders.academy/courses/network/|Course||B|mine','Security+ SY0-701 (Netriders Academy)|netriders.academy/courses/security-new/|Course||B|mine','CCNP Security SCOR 350-701 (Netriders Academy)|netriders.academy/courses/scor/|Course||I|mine','Professor Messer Security+|professormesser.com|Course|Free|B|rec','pfSense docs|docs.netgate.com|Docs|Free|I','Suricata docs|docs.suricata.io|Docs|Free|I','Wireshark docs|wireshark.org/docs/|Docs|Free|B'],
+x:['Network+|Baseline','Security+|Security baseline','CCNA|Cisco routing and switching'],
+o:['Security+ study notes|/posts/courses-notes/security---notes/security--notes/','Network+ labs|/posts/labs/networkplus---labs/network-/','Security+ labs|/posts/labs/security-plus---labs/security/']},
+{id:'hrd',d:'ns',n:'System Hardening',s:'Reduce attack surface on Linux and Windows.',p:['fnd'],
+c:['CIS Benchmarks','Linux hardening: SSH, sudo, auditd','Windows GPO and LAPS','Patch and vulnerability management','Configuration baselines','Logging and auditing'],
+l:['Audit a VM with Lynis','Apply a CIS profile on Windows','Scan with OpenVAS'],
+r:['Linux+ (Netriders Academy)|netriders.academy/courses/linux/|Course||B|mine','CIS Benchmarks|cisecurity.org/cis-benchmarks|Docs|Free|I|rec','Lynis|cisofy.com/lynis/|Tools|Free|I','Microsoft security baselines|learn.microsoft.com/windows/security/|Docs|Free|I'],
+x:['Linux+|Linux administration','Security+|Security baseline'],
+o:['Linux+ labs|/posts/labs/linuxplus---labs/linux-/']},
+{id:'grc',d:'gr',n:'GRC and Risk',s:'Manage risk, controls and compliance.',p:['fnd'],
+c:['Risk assessment and treatment','ISO 27001 and NIST CSF','Policies, standards and controls','Audit and compliance','Third-party risk','Business continuity'],
+l:['Run a mock risk assessment','Map controls to NIST CSF','Write an incident response policy'],
+r:['Security+ SY0-701 (Netriders Academy)|netriders.academy/courses/security-new/|Course||B|mine','NIST Cybersecurity Framework|nist.gov/cyberframework|Docs|Free|B|rec','ISO 27001 overview|iso.org/standard/27001|Docs|Paid|I','CISA training|cisa.gov/resources-tools/training|Course|Free|B'],
+x:['Security+|Baseline','CISA|Audit','CISSP|Management and design'],
+o:['Security+ study notes|/posts/courses-notes/security---notes/security--notes/','Risk management tag|/archive/tag/Risk%20Management/']},
+{id:'arc',d:'gr',n:'Security Architecture',s:'Design systems that stay secure as they grow.',p:['grc'],
+c:['Defense in depth and zero trust','Threat modeling with STRIDE','Secure design patterns','Identity and access architecture','Reference architectures'],
+l:['Threat-model a web app','Design a segmented network','Draft a zero trust blueprint'],
+r:['OWASP Threat Modeling|owasp.org/www-community/Threat_Modeling|Docs|Free|I|rec','NIST SP 800-207 Zero Trust|csrc.nist.gov/pubs/sp/800/207/final|Docs|Free|A','Threat Modeling Manifesto|threatmodelingmanifesto.org|Docs|Free|B'],
+x:['CISSP|Management and design','CCSP|Cloud security'],
+o:['Security architecture tag|/archive/tag/Security%20Architecture/']}];
+const LV={B:'Beginner',I:'Intermediate',A:'Advanced'};
+const FT=['All','Free','Arabic','Course','Lab','Docs','Video','Tools','My notes'];
+const UI={en:{home:'Home',arch:'Archive',about:'About',road:'Roadmap',
+h1:'Pick a path. Know what to study.',
+lead:'Choose a field, then a specialization. You get the topics to learn, the labs to practice on, the best resources, and the certifications that fit, plus my own notes where I have them.',
+h1t:'1. Choose a field',h2t:'2. Choose a specialization',need:'Learn first:',
+s1:'Core knowledge',s2:'Hands-on practice',s3:'Resources',s4:'Certifications',
+All:'All',Free:'Free',Arabic:'Arabic',Course:'Course',Lab:'Lab',Docs:'Docs',Video:'Video',Tools:'Tools','My notes':'My notes',
+Beginner:'Beginner',Intermediate:'Intermediate',Advanced:'Advanced',Paid:'Paid',Freemium:'Freemium',
+rec:'Recommended',none:'Nothing matches this filter.',soonT:'My notes',soon:'Coming soon for this track.',note:'',
+by:'Built by Amr Abdel Hamide',
+byp:'Red Teamer with OSCP, CRTP, eWPTXv3 and eCPPTv3. The notes and labs on this page are mine. New walkthroughs go up on the channel, and you can ask me about your path on LinkedIn.',
+yt:'Watch on YouTube',li:'Connect on LinkedIn',
+foot:'Your checkmarks are saved in this browser only. Resources marked Recommended are the best single pick for that path.',
+lang:'العربية',dark:'Dark mode',light:'Light mode'},
+ar:{home:'الرئيسية',arch:'الأرشيف',about:'عني',road:'خارطة الطريق',
+h1:'اختر مسارك. واعرف ماذا تدرس.',
+lead:'اختر مجالاً ثم تخصصاً. ستجد المواضيع التي تتعلمها، والمعامل التي تتدرب عليها، وأفضل المصادر، والشهادات المناسبة، إضافةً إلى ملاحظاتي الشخصية حيثما توفرت.',
+h1t:'1. اختر المجال',h2t:'2. اختر التخصص',need:'ابدأ أولاً بـ:',
+s1:'المعرفة الأساسية',s2:'التطبيق العملي',s3:'المصادر',s4:'الشهادات',
+All:'الكل',Free:'مجاني',Arabic:'بالعربية',Course:'كورس',Lab:'لاب',Docs:'توثيق',Video:'فيديو',Tools:'أدوات','My notes':'ملاحظاتي',
+Beginner:'مبتدئ',Intermediate:'متوسط',Advanced:'متقدم',Paid:'مدفوع',Freemium:'مجاني جزئياً',
+rec:'موصى به',none:'لا توجد نتائج لهذا الفلتر.',soonT:'ملاحظاتي',soon:'قريباً لهذا المسار.',
+note:'المواضيع التقنية مكتوبة بالإنجليزية لتطابق مصطلحات الشهادات والمصادر.',
+by:'من إعداد عمرو عبد الحميد',
+byp:'Red Teamer حاصل على OSCP وCRTP وeWPTXv3 وeCPPTv3. الملاحظات والمعامل في هذه الصفحة من إعدادي. أنشر شروحات جديدة على القناة، ويمكنك سؤالي عن مسارك على لينكدإن.',
+yt:'شاهد على يوتيوب',li:'تواصل على لينكدإن',
+foot:'علامات التقدم محفوظة في هذا المتصفح فقط. المصادر الموصى بها هي الاختيار الأفضل لكل مسار.',
+lang:'English',dark:'الوضع الداكن',light:'الوضع الفاتح'}};
+const root=document.documentElement;
+let lang=root.lang==='ar'?'ar':'en';
+const st={d:null,f:'All'};
+const $=s=>document.querySelector(s);
+const t=k=>UI[lang][k]!==undefined?UI[lang][k]:k;
+const ar=()=>lang==='ar';
+const ld=id=>{try{return JSON.parse(localStorage.getItem('rm:'+id))||{}}catch(e){return{}}};
+const sv=(id,o)=>{try{localStorage.setItem('rm:'+id,JSON.stringify(o))}catch(e){}};
+const dm=id=>D.find(x=>x.id===id);
+const dn=d=>ar()?AD[d.id][0]:d.n,ds=d=>ar()?AD[d.id][1]:d.s;
+const tn=x=>ar()?AT[x.id][0]:x.n,ts=x=>ar()?AT[x.id][1]:x.s;
+const cnt=n=>ar()?(n===1?'مسار واحد':n===2?'مساران':n+' مسارات'):n+(n>1?' tracks':' track');
+const pct=x=>{const s=ld(x.id),n=x.c.length+x.l.length;return n?Math.round(Object.values(s).filter(Boolean).length/n*100):0};
+const sty=d=>`style="--c:${d.c};--on:${d.o}"`;
+function R(){
+  const tk=T.find(x=>x.id===location.hash.slice(1));
+  if(tk)st.d=tk.d;
+  $('#dom').innerHTML=D.map(d=>{const n=T.filter(x=>x.d===d.id).length;return`<button class="dc" ${sty(d)} data-d="${d.id}" aria-pressed="${st.d===d.id}"><b>${dn(d)}</b><span>${ds(d)}<br>${cnt(n)}</span></button>`}).join('');
+  const d=dm(st.d);
+  $('#trk').innerHTML=d?`<h2>${t('h2t')}</h2><div class="line">${T.filter(x=>x.d===d.id).map(x=>`<button class="tc" ${sty(d)} data-t="${x.id}" aria-pressed="${!!tk&&tk.id===x.id}"><i></i>${tn(x)}<small>${pct(x)}%</small></button>`).join('')}</div>`:'';
+  if(!tk){$('#det').innerHTML='';return}
+  const s=ld(tk.id),dd=dm(tk.d),p=pct(tk);
+  const ck=(a,k)=>a.map((x,i)=>`<label class="ck"><input type="checkbox" data-ck="${k+i}" ${s[k+i]?'checked':''}><span>${x}</span></label>`).join('');
+  const cards=[...tk.o.map(x=>{const[a,b]=x.split('|');return[a,BL+b,'My notes','Free','','my']}),...tk.r.map(x=>{const a=x.split('|');a[1]='https://'+a[1];return a})];
+  const vis=cards.filter(c=>st.f==='All'||(st.f==='Free'?c[3]==='Free':st.f==='Arabic'?c[5]==='mine':c[2]===st.f));
+  const rc=vis.map(c=>`<a class="rc" href="${c[1]}" target="_blank" rel="noopener"><b>${c[0]}</b>${c[5]==='my'?`<span class="b my">${t('My notes')}</span>`:`<span class="b">${t(c[2])}</span>`}${c[3]?`<span class="b ${c[3]==='Free'?'fr':''}">${t(c[3])}</span>`:''}${c[5]==='mine'?`<span class="b my">Netriders</span><span class="b">${t('Arabic')}</span>`:''}${c[4]?`<span class="b">${t(LV[c[4]])}</span>`:''}${c[5]==='rec'?`<span class="b rec">${t('rec')}</span>`:''}</a>`).join('')+(tk.o.length?'':`<div class="rc soon"><b>${t('soonT')}</b>${t('soon')}</div>`);
+  $('#det').innerHTML=`<div class="panel" ${sty(dd)}><h2>${tn(tk)}</h2><p>${ts(tk)}</p>
+  ${tk.p.length?`<div class="need">${t('need')} ${tk.p.map(x=>`<button data-t="${x}">${tn(T.find(y=>y.id===x))}</button>`).join('')}</div>`:''}
+  <div class="bar"><i style="width:${p}%"></i></div><p class="pt">${ar()?'اكتمل '+p+'% من المواضيع والمعامل':p+'% of topics and labs done'}</p>
+  <div class="st"><div><span class="nb">1</span></div><div><h3>${t('s1')}</h3>${t('note')?`<p class="none">${t('note')}</p>`:''}${ck(tk.c,'c')}</div></div>
+  <div class="st"><div><span class="nb">2</span></div><div><h3>${t('s2')}</h3>${ck(tk.l,'l')}</div></div>
+  <div class="st"><div><span class="nb">3</span></div><div><h3>${t('s3')}</h3><div class="flt">${FT.map(f=>`<button class="f" data-f="${f}" aria-pressed="${st.f===f}">${t(f)}</button>`).join('')}</div><div class="rg">${rc||`<p class="none">${t('none')}</p>`}</div></div></div>
+  <div class="st"><div><span class="nb">4</span></div><div><h3>${t('s4')}</h3><ol class="cert">${tk.x.map(x=>{const[a,b]=x.split('|');return`<li><div><b>${a}</b><small>${b}</small></div></li>`}).join('')}</ol></div></div></div>`;
+}
+function applyLang(){
+  root.lang=lang;root.dir=ar()?'rtl':'ltr';
+  document.querySelectorAll('[data-i]').forEach(e=>{e.textContent=t(e.dataset.i)});
+  $('#lg').textContent=t('lang');
+  $('#th').textContent=root.dataset.theme==='dark'?t('light'):t('dark');
+  try{localStorage.setItem('rm-lang',lang)}catch(e){}
+  R();
+}
+document.addEventListener('click',e=>{
+  if(e.target.closest('#lg')){lang=ar()?'en':'ar';applyLang();return}
+  if(e.target.closest('#th')){const n=root.dataset.theme==='dark'?'light':'dark';root.dataset.theme=n;try{localStorage.setItem('rm-theme',n)}catch(x){}$('#th').textContent=n==='dark'?t('light'):t('dark');return}
+  const b=e.target.closest('[data-d],[data-t],[data-f]');if(!b)return;
+  if(b.dataset.d){st.d=b.dataset.d;history.replaceState(null,'',location.pathname);R()}
+  else if(b.dataset.t){location.hash=b.dataset.t;$('#det').scrollIntoView({behavior:'smooth'})}
+  else{st.f=b.dataset.f;R()}
+});
+document.addEventListener('change',e=>{
+  const k=e.target.dataset.ck;if(!k)return;
+  const id=location.hash.slice(1),s=ld(id);s[k]=e.target.checked;sv(id,s);
+  const x=T.find(y=>y.id===id),p=pct(x);
+  $('.bar i').style.width=p+'%';$('.pt').textContent=ar()?'اكتمل '+p+'% من المواضيع والمعامل':p+'% of topics and labs done';
+  const c=document.querySelector(`[data-t="${id}"] small`);if(c)c.textContent=p+'%';
+});
+addEventListener('hashchange',R);applyLang();
+</script>
+</body>
+</html>

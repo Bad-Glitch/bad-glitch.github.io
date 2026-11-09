@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CEHv13 · Module 02: الاستطلاع وجمع المعلومات</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-0:#0B0B0D;--bg-1:#121214;--surface:#17171A;--surface-2:#1D1D21;
+    --border:#2A2A2F;--border-soft:#232326;
+    --text:#E6E6E9;--text-soft:#C4C4CA;--muted:#8A8A92;
+    --red:#E1362F;--red-soft:rgba(225,54,47,0.10);--red-border:rgba(225,54,47,0.35);
+    --red-grad:linear-gradient(90deg,#E1362F,#F2794A);
+    --amber:#E8A23A;--amber-soft:rgba(232,162,58,0.09);--amber-border:rgba(232,162,58,0.30);
+    --green:#3FBF6E;--green-soft:rgba(63,191,110,0.09);--green-border:rgba(63,191,110,0.30);
+    --blue:#4EA1D3;--blue-soft:rgba(78,161,211,0.09);--blue-border:rgba(78,161,211,0.30);
+    --purple:#A179E8;--purple-soft:rgba(161,121,232,0.10);--purple-border:rgba(161,121,232,0.32);
+    --mono:'IBM Plex Mono','Courier New',monospace;
+  }
+  html[data-theme="light"]{
+    --bg-0:#F4F3F1;--bg-1:#ECEBE8;--surface:#FFFFFF;--surface-2:#F3F2EF;
+    --border:#DEDCD6;--border-soft:#E6E4DF;--text:#1C1B19;--text-soft:#3C3A36;--muted:#726F68;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;direction:rtl;text-align:right;background:var(--bg-0);}
+  body{font-family:'Cairo','Segoe UI',Tahoma,sans-serif;line-height:1.95;font-size:16.5px;color:var(--text);
+    background:radial-gradient(900px 420px at 12% -8%,rgba(225,54,47,0.10),transparent 60%),
+               radial-gradient(800px 420px at 90% 6%,rgba(232,162,58,0.06),transparent 60%),
+               linear-gradient(180deg,var(--bg-0) 0%,var(--bg-1) 100%);
+    background-attachment:fixed;transition:background 0.2s ease,color 0.2s ease;}
+  html[data-theme="light"] body{background:radial-gradient(900px 420px at 12% -8%,rgba(225,54,47,0.06),transparent 60%),radial-gradient(800px 420px at 90% 6%,rgba(232,162,58,0.05),transparent 60%),linear-gradient(180deg,var(--bg-0) 0%,var(--bg-1) 100%);}
+  .progress-rail{position:fixed;top:0;inset-inline:0;height:3px;background:rgba(255,255,255,0.04);z-index:60;}
+  html[data-theme="light"] .progress-rail{background:rgba(0,0,0,0.05);}
+  .progress-bar{height:100%;width:0%;background:var(--red-grad);transition:width 0.08s linear;}
+  .float-controls{position:fixed;bottom:22px;left:22px;z-index:55;display:flex;flex-direction:column;gap:10px;}
+  .fctrl-btn{width:42px;height:42px;border-radius:50%;background:var(--surface);border:1px solid var(--border);color:var(--text-soft);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;box-shadow:0 10px 24px -10px rgba(0,0,0,0.5);transition:transform 0.15s ease,border-color 0.15s ease,opacity 0.2s ease;}
+  .fctrl-btn:hover{transform:translateY(-2px);border-color:var(--red-border);color:var(--red);}
+  #toTop{opacity:0;pointer-events:none;}
+  #toTop.show{opacity:1;pointer-events:auto;}
+  .page{max-width:860px;margin:0 auto;padding:46px 22px 100px;}
+  .banner{position:relative;overflow:hidden;background:linear-gradient(155deg,var(--surface) 0%,var(--bg-1) 55%,var(--surface) 100%);border:1px solid var(--border-soft);border-radius:10px;padding:0 0 34px;margin-bottom:26px;box-shadow:0 20px 50px -20px rgba(0,0,0,0.6);}
+  .term-bar{display:flex;align-items:center;gap:8px;padding:13px 18px;border-bottom:1px solid var(--border-soft);background:rgba(255,255,255,0.015);direction:ltr;}
+  .term-dot{width:11px;height:11px;border-radius:50%;display:inline-block;}
+  .term-dot.r{background:#E1362F;}.term-dot.y{background:#E8A23A;}.term-dot.g{background:#3FBF6E;}
+  .term-path{margin-inline-start:12px;font-family:var(--mono);font-size:12px;color:var(--muted);}
+  .theme-switch{margin-inline-start:auto;font-family:var(--mono);font-size:11px;color:var(--muted);background:transparent;border:1px solid var(--border);border-radius:4px;padding:4px 9px;cursor:pointer;}
+  .theme-switch:hover{color:var(--amber);border-color:var(--amber-border);}
+  .banner-body{padding:30px 34px 4px;}
+  .banner .kicker{display:inline-block;font-family:var(--mono);font-size:12.5px;letter-spacing:0.03em;color:var(--red);background:var(--red-soft);border:1px solid var(--red-border);border-radius:3px;padding:5px 12px;margin-bottom:20px;direction:ltr;}
+  .banner h1{margin:0 0 14px;font-size:28px;font-weight:800;line-height:1.5;color:var(--text);}
+  .banner .lede{color:var(--muted);font-size:15.5px;line-height:1.95;max-width:640px;margin:0 0 24px;}
+  .tags{display:flex;flex-wrap:wrap;gap:9px;}
+  .tag{font-size:12.5px;font-family:var(--mono);color:var(--amber);background:var(--amber-soft);border:1px solid var(--amber-border);border-radius:3px;padding:5px 11px;}
+  .toc{background:var(--surface);border:1px solid var(--border-soft);border-radius:8px;padding:6px 0 6px;margin-bottom:50px;overflow:hidden;}
+  .toc-title{font-family:var(--mono);font-weight:600;font-size:13px;color:var(--green);padding:14px 22px;border-bottom:1px solid var(--border-soft);direction:ltr;text-align:left;}
+  .toc-list{display:flex;flex-direction:column;}
+  .toc-item{display:flex;align-items:center;gap:14px;padding:12px 22px;color:var(--text-soft);text-decoration:none;font-size:14.5px;border-bottom:1px solid rgba(255,255,255,0.03);transition:background 0.15s ease;}
+  .toc-list .toc-item:last-child{border-bottom:none;}
+  .toc-item:hover{background:var(--red-soft);}
+  .toc-num{flex:none;font-family:var(--mono);font-size:12.5px;font-weight:600;color:#0F0F10;background:var(--red-grad);border-radius:3px;padding:3px 8px;direction:ltr;}
+  h1,h2,h3,h4{font-weight:700;}
+  h2{display:flex;align-items:center;gap:14px;font-size:21px;margin:66px 0 22px;padding-bottom:16px;border-bottom:1px solid var(--border-soft);color:var(--text);}
+  h2 .num{flex:none;font-family:var(--mono);font-size:13px;font-weight:700;color:#0F0F10;background:var(--red-grad);border-radius:5px;padding:7px 12px;direction:ltr;}
+  h2 .htext{line-height:1.5;}
+  h3{font-size:17px;margin:34px 0 14px;color:var(--red);display:flex;align-items:center;gap:9px;}
+  h3::before{content:"#";font-family:var(--mono);color:var(--amber);font-weight:700;}
+  h4{font-size:14.8px;margin:22px 0 10px;color:var(--text-soft);font-family:var(--mono);}
+  p{margin:0 0 17px;color:var(--text);}
+  strong{color:var(--text);font-weight:700;}
+  :root:not([data-theme="light"]) strong{color:#FBFBFC;}
+  a{color:var(--amber);text-decoration:none;border-bottom:1px dashed var(--amber-border);}
+  hr{border:none;height:1px;margin:50px 0;background:linear-gradient(90deg,transparent,var(--border),transparent);}
+  ul,ol{margin:0 0 18px;padding-inline-start:24px;}
+  li{margin-bottom:9px;color:var(--text);}
+  li::marker{color:var(--red);font-family:var(--mono);}
+  li>ul,li>ol{margin-top:9px;}
+  .goals-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px;margin:0 0 22px;}
+  .goal-card{display:flex;gap:10px;align-items:flex-start;background:var(--surface);border:1px solid var(--border-soft);border-radius:7px;padding:13px 15px;font-size:14px;color:var(--text-soft);}
+  .goal-card .gi{flex:none;font-family:var(--mono);font-size:11px;font-weight:700;color:var(--green);background:var(--green-soft);border:1px solid var(--green-border);border-radius:4px;width:22px;height:22px;display:flex;align-items:center;justify-content:center;}
+  blockquote{margin:24px 0;padding:17px 22px;background:var(--red-soft);border:1px solid var(--red-border);border-inline-start:3px solid var(--red);border-radius:6px;color:var(--text-soft);}
+  blockquote p{margin:0;color:inherit;line-height:1.85;}
+  blockquote p+p{margin-top:10px;}
+  blockquote strong{color:var(--text);}
+  .callout{margin:24px 0;padding:17px 22px 18px;border-radius:6px;border:1px solid var(--border-soft);border-inline-start:3px solid var(--border);background:var(--surface);}
+  .callout p{margin:0;color:var(--text-soft);line-height:1.85;}
+  .callout p+p{margin-top:10px;}
+  .callout ul{margin:6px 0 0;}
+  .callout-label{display:inline-flex;align-items:center;gap:7px;font-family:var(--mono);font-size:11.5px;font-weight:700;letter-spacing:0.02em;text-transform:uppercase;margin-bottom:10px;direction:ltr;}
+  .callout.note{border-inline-start-color:var(--blue);background:var(--blue-soft);}
+  .callout.note .callout-label{color:var(--blue);}
+  .callout.warning{border-inline-start-color:var(--red);background:var(--red-soft);}
+  .callout.warning .callout-label{color:var(--red);}
+  .callout.tip{border-inline-start-color:var(--green);background:var(--green-soft);}
+  .callout.tip .callout-label{color:var(--green);}
+  .callout.examtip{border-inline-start-color:var(--purple);background:var(--purple-soft);}
+  .callout.examtip .callout-label{color:var(--purple);}
+  .callout.case{border-inline-start-color:var(--amber);background:var(--amber-soft);}
+  .callout.case .callout-label{color:var(--amber);}
+  .callout.definition{border-inline-start-color:var(--muted);background:var(--surface-2);}
+  .callout.definition .callout-label{color:var(--text-soft);}
+  .callout.danger{border-inline-start-color:#FF5A52;background:rgba(255,90,82,0.08);}
+  .callout.danger .callout-label{color:#FF5A52;}
+  .table-wrap{overflow-x:auto;margin:22px 0;border:1px solid var(--border-soft);border-radius:8px;}
+  table{width:100%;border-collapse:collapse;font-size:14.2px;min-width:480px;}
+  thead th{background:var(--surface-2);color:var(--amber);font-weight:700;font-family:var(--mono);font-size:12.5px;text-transform:uppercase;letter-spacing:0.02em;text-align:start;padding:13px 15px;border-bottom:1px solid var(--border-soft);white-space:nowrap;}
+  tbody td{padding:12px 15px;border-bottom:1px solid var(--border-soft);color:var(--text-soft);vertical-align:top;}
+  tbody tr:last-child td{border-bottom:none;}
+  tbody tr:nth-child(even){background:rgba(127,127,127,0.03);}
+  tbody tr:hover{background:var(--red-soft);}
+  code{font-family:var(--mono);font-size:13.3px;background:var(--surface-2);border:1px solid var(--border-soft);border-radius:4px;padding:2px 6px;direction:ltr;unicode-bidi:embed;color:var(--green);}
+  .code-wrap{position:relative;overflow-x:auto;margin:22px 0;}
+  .code-tag{position:absolute;top:10px;left:14px;font-family:var(--mono);font-size:10.5px;color:var(--muted);letter-spacing:0.04em;text-transform:uppercase;z-index:2;}
+  .copy-btn{position:absolute;top:8px;right:10px;z-index:2;font-family:var(--mono);font-size:11px;color:var(--muted);background:var(--surface-2);border:1px solid var(--border-soft);border-radius:4px;padding:4px 9px;cursor:pointer;direction:ltr;}
+  .copy-btn:hover{color:var(--amber);border-color:var(--amber-border);}
+  .copy-btn.copied{color:var(--green);border-color:var(--green-border);}
+  pre{background:var(--bg-0);border:1px solid var(--border-soft);border-inline-start:3px solid var(--red);border-radius:8px;padding:30px 22px 18px;direction:ltr;text-align:left;margin:0;}
+  html[data-theme="light"] pre{background:#16181C;}
+  pre code{background:none;border:none;padding:0;color:#B9E8C9;font-size:13.2px;line-height:1.75;}
+  .diagram-card{background:var(--surface);border:1px solid var(--border-soft);border-radius:10px;padding:22px 18px 16px;margin:24px 0;}
+  .diagram-card svg{width:100%;height:auto;display:block;}
+  .diagram-caption{margin-top:10px;text-align:center;font-family:var(--mono);font-size:11.5px;color:var(--muted);}
+  .takeaways{background:var(--surface);border:1px solid var(--border-soft);border-radius:8px;padding:18px 22px 20px;margin:30px 0 10px;}
+  .takeaways-title{font-family:var(--mono);font-size:12.5px;font-weight:700;color:var(--green);margin-bottom:12px;direction:ltr;text-align:left;display:flex;align-items:center;gap:8px;}
+  .takeaways ul{margin:0;padding-inline-start:20px;}
+  .takeaways li{color:var(--text-soft);font-size:14.5px;}
+  .cheat-section h4{color:var(--amber);font-size:13px;margin:26px 0 8px;}
+  .step-track{display:flex;flex-direction:column;gap:0;margin:24px 0;}
+  .step-item{position:relative;padding:0 0 26px 0;padding-inline-start:46px;border-inline-start:2px solid var(--border-soft);}
+  .step-item:last-child{border-inline-start:2px solid transparent;padding-bottom:4px;}
+  .step-num{position:absolute;inset-inline-start:-17px;top:0;width:32px;height:32px;border-radius:50%;background:var(--red-grad);color:#0F0F10;font-family:var(--mono);font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;}
+  .step-title{font-weight:700;color:var(--text);margin-bottom:6px;font-size:15px;}
+  .step-body{color:var(--text-soft);font-size:14.5px;}
+  .step-body p{margin:0 0 10px;}
+  .step-body p:last-child{margin-bottom:0;}
+  .method-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px;margin:22px 0;}
+  .method-card{background:var(--surface);border:1px solid var(--border-soft);border-radius:8px;padding:14px 16px;}
+  .method-card .mnum{font-family:var(--mono);font-size:11px;font-weight:700;color:#0F0F10;background:var(--red-grad);border-radius:4px;padding:2px 8px;display:inline-block;margin-bottom:8px;direction:ltr;}
+  .method-card .mtitle{font-weight:700;color:var(--text);font-size:14px;margin-bottom:5px;}
+  .method-card .mdesc{color:var(--text-soft);font-size:13.3px;line-height:1.75;}
+  .footer-note{margin-top:70px;padding-top:26px;border-top:1px solid var(--border-soft);color:var(--muted);font-size:13.3px;font-family:var(--mono);text-align:center;direction:ltr;}
+  .dsvg-box{fill:var(--surface-2);stroke:var(--border-soft);stroke-width:1;}
+  .dsvg-box-r{fill:var(--red-soft);stroke:var(--red-border);stroke-width:1;}
+  .dsvg-box-g{fill:var(--green-soft);stroke:var(--green-border);stroke-width:1;}
+  .dsvg-box-b{fill:var(--blue-soft);stroke:var(--blue-border);stroke-width:1;}
+  .dsvg-box-a{fill:var(--amber-soft);stroke:var(--amber-border);stroke-width:1;}
+  .dsvg-box-p{fill:var(--purple-soft);stroke:var(--purple-border);stroke-width:1;}
+  .dsvg-line{stroke:var(--border);stroke-width:1.5;fill:none;}
+  .dsvg-arr{fill:var(--border);}
+  .dsvg-arr-r{fill:var(--red);}
+  .dsvg-txt{fill:var(--text);font-family:IBM Plex Mono,monospace;}
+  .dsvg-muted{fill:var(--muted);font-family:IBM Plex Mono,monospace;}
+  .dsvg-red{fill:var(--red);}
+  .dsvg-green{fill:var(--green);}
+  .dsvg-amber{fill:var(--amber);}
+  .dsvg-blue{fill:var(--blue);}
+  @media print{.float-controls,.progress-rail,.copy-btn,.theme-switch{display:none !important;}body{background:#fff;color:#000;}.page{max-width:100%;}}
+  @media(max-width:640px){.page{padding:28px 14px 70px;}.banner-body{padding:24px 20px 4px;}.banner h1{font-size:21px;}h2{font-size:18px;gap:10px;}.float-controls{left:12px;bottom:14px;}}
+</style>
+</head>
+<body>
+
+<div class="progress-rail"><div class="progress-bar" id="progressBar"></div></div>
+<div class="float-controls">
+  <button class="fctrl-btn" id="toTop" title="ارجع لفوق">↑</button>
+</div>
+
+<div class="page">
+
+<div class="banner">
+  <div class="term-bar">
+    <span class="term-dot r"></span><span class="term-dot y"></span><span class="term-dot g"></span>
+    <span class="term-path">root@cehv13:~/module-02$</span>
+    <button class="theme-switch" id="themeSwitch">theme: dark</button>
+  </div>
+  <div class="banner-body">
+    <span class="kicker">CEHv13 · EC-Council · Module 02</span>
+    <h1>الاستطلاع وجمع المعلومات (Footprinting and Reconnaissance)</h1>
+    <p class="lede">المرحلة التحضيرية الأولى لأي هجوم — من استطلاع محركات البحث وGoogle Hacking، مرورًا بـ Whois وDNS والشبكة والبريد الإلكتروني والهندسة الاجتماعية، ووصولًا لأدوات OSINT الآلية والمدعومة بالذكاء الاصطناعي وإجراءات المواجهة.</p>
+    <div class="tags">
+      <span class="tag">footprinting</span>
+      <span class="tag">osint</span>
+      <span class="tag">google-hacking</span>
+      <span class="tag">whois</span>
+      <span class="tag">dns-recon</span>
+      <span class="tag">social-engineering</span>
+      <span class="tag">dark-web</span>
+      <span class="tag">ai-osint</span>
+    </div>
+  </div>
+</div>
+
+<nav class="toc"><div class="toc-title">$ ls learning_units/</div><div class="toc-list">
+  <a class="toc-item" href="#lu1"><span class="toc-num">01</span><span>مفاهيم الاستطلاع الأساسية</span></a>
+  <a class="toc-item" href="#lu2"><span class="toc-num">02</span><span>أهداف وتهديدات الاستطلاع</span></a>
+  <a class="toc-item" href="#lu3"><span class="toc-num">03</span><span>الاستطلاع عبر محركات البحث وGoogle Hacking</span></a>
+  <a class="toc-item" href="#lu4"><span class="toc-num">04</span><span>النطاقات والنطاقات الفرعية وأرشيف الويب</span></a>
+  <a class="toc-item" href="#lu5"><span class="toc-num">05</span><span>استطلاع الأشخاص والوظائف والويب المظلم</span></a>
+  <a class="toc-item" href="#lu6"><span class="toc-num">06</span><span>تحديد نظام التشغيل والاستخبارات التنافسية</span></a>
+  <a class="toc-item" href="#lu7"><span class="toc-num">07</span><span>الاستطلاع عبر مواقع التواصل الاجتماعي</span></a>
+  <a class="toc-item" href="#lu8"><span class="toc-num">08</span><span>استطلاع Whois</span></a>
+  <a class="toc-item" href="#lu9"><span class="toc-num">09</span><span>استطلاع DNS</span></a>
+  <a class="toc-item" href="#lu10"><span class="toc-num">10</span><span>استطلاع الشبكة والبريد الإلكتروني</span></a>
+  <a class="toc-item" href="#lu11"><span class="toc-num">11</span><span>الاستطلاع عبر الهندسة الاجتماعية</span></a>
+  <a class="toc-item" href="#lu12"><span class="toc-num">12</span><span>أدوات الاستطلاع الآلية</span></a>
+  <a class="toc-item" href="#lu13"><span class="toc-num">13</span><span>أدوات OSINT المدعومة بالذكاء الاصطناعي</span></a>
+  <a class="toc-item" href="#lu14"><span class="toc-num">14</span><span>إجراءات مواجهة الاستطلاع</span></a>
+  <a class="toc-item" href="#cheat"><span class="toc-num">--</span><span>Cheat Sheet مرجعي</span></a>
+  <a class="toc-item" href="#summary"><span class="toc-num">--</span><span>الخلاصة العامة للموديول</span></a>
+</div></nav>
+
+<!-- ══════════════════════════════════ LU1 -->
+<h2 id="lu1"><span class="num">01</span><span class="htext">مفاهيم الاستطلاع الأساسية</span></h2>
+<p>الاستطلاع (Reconnaissance أو Footprinting) هي المرحلة التحضيرية اللي المهاجم بيحاول فيها يجمع أكبر قدر من المعلومات عن هدف التقييم قبل إطلاق الهجوم — بتوفّر مخطَّط أمني كامل للمؤسسة، ولازم تُنفَّذ بطريقة منهجية.</p>
+
+<h3>نوعا الاستطلاع</h3>
+<div class="method-grid">
+<div class="method-card"><span class="mnum">سلبي</span><div class="mtitle">Passive Reconnaissance</div><div class="mdesc">جمع معلومات بدون تفاعل مباشر مع الهدف — جمع OSINT، قواعد بيانات خاصة وخدمات مدفوعة، تبادل الاستخبارات مع مؤسسات شريكة أو مجموعات صناعية.</div></div>
+<div class="method-card"><span class="mnum">فعّال</span><div class="mtitle">Active Reconnaissance</div><div class="mdesc">جمع معلومات بتفاعل مباشر مع الهدف — استجواب DNS، هندسة اجتماعية، فحص الشبكة/المنافذ، تعداد المستخدمين والخدمات.</div></div>
+</div>
+
+<h3>المعلومات المُستهدَفة في الاستطلاع</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>الفئة</th><th>تشمل</th></tr></thead>
+<tbody>
+<tr><td>Organization Information</td><td>بيانات الموظفين، عناوين وأرقام هواتف، تفاصيل الفروع، شركاء المؤسسة، روابط لمواقع تانية مرتبطة، خلفية المؤسسة، تقنيات الويب، أخبار وبيانات صحفية، مستندات قانونية، براءات اختراع وعلامات تجارية</td></tr>
+<tr><td>Network Information</td><td>النطاق والنطاقات الفرعية، كتل الشبكة، طوبولوجيا الشبكة والراوترات والجدران النارية الموثوقة، عناوين IP الوصولة، سجلات Whois، سجلات DNS</td></tr>
+<tr><td>System Information</td><td>نظام تشغيل سيرفر الويب، موقع سيرفرات الويب، عناوين بريد إلكتروني عامة، أسماء مستخدمين وكلمات مرور</td></tr>
+</tbody>
+</table></div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU2 -->
+<h2 id="lu2"><span class="num">02</span><span class="htext">أهداف وتهديدات الاستطلاع</span></h2>
+<p>لبناء استراتيجية اختراق، المهاجمون لازم يجمعوا معلومات عن شبكة المؤسسة الهدف، وبعدين يستخدموا المعلومة دي لتحديد أسهل طريقة لاختراق المحيط الأمني. منهجية الاستطلاع بتسهّل جمع المعلومات وبتلعب دور حيوي في عملية الاختراق بأكملها.</p>
+
+<h3>تهديدات الاستطلاع</h3>
+<div class="goals-grid">
+  <div class="goal-card"><span class="gi">1</span><span><strong>Social Engineering</strong> — جمع معلومات من موظفين راضين غافلين عن نيّة المهاجم، بدون أي اختراق تقني</span></div>
+  <div class="goal-card"><span class="gi">2</span><span><strong>System and Network Attacks</strong> — استخدام معلومات إعداد النظام ونظام التشغيل لإيجاد واستغلال ثغرات والسيطرة الكاملة</span></div>
+  <div class="goal-card"><span class="gi">3</span><span><strong>Information Leakage</strong> — وقوع معلومات حساسة بيد المهاجمين يُمكّنهم من شنّ هجوم أو استغلالها لمنفعة مالية</span></div>
+  <div class="goal-card"><span class="gi">4</span><span><strong>Privacy Loss</strong> — وصول للأنظمة والشبكات وتصعيد صلاحيات لمستوى أدمن، يؤدي لفقدان خصوصية المؤسسة وأفرادها</span></div>
+  <div class="goal-card"><span class="gi">5</span><span><strong>Corporate Espionage</strong> — منافسون بيحصلوا على بيانات حساسة عبر الاستطلاع لإطلاق منتجات مشابهة أو تقويض موقف الهدف السوقي</span></div>
+  <div class="goal-card"><span class="gi">6</span><span><strong>Business Loss</strong> — خسائر بمليارات الدولارات سنويًا للشركات الإلكترونية والمالية بسبب هجمات خبيثة</span></div>
+</div>
+
+<h3>منهجية الاستطلاع</h3>
+<p>إجراء لجمع معلومات عن مؤسسة هدف من كل المصادر المتاحة — روابط، مواقع، تفاصيل تأسيس، عدد الموظفين، نطاق أسماء النطاقات، معلومات تواصل، مواقع تواصل اجتماعي، قواعد بيانات Whois. المهاجمون بيجمعوا المعلومة دي من مصادر متاحة للعموم زي محركات البحث ومواقع التواصل الاجتماعي.</p>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU3 -->
+<h2 id="lu3"><span class="num">03</span><span class="htext">الاستطلاع عبر محركات البحث وGoogle Hacking</span></h2>
+<p>محركات البحث مصدر رئيسي للمعلومات الحرجة عن مؤسسة هدف — بتستخدم Crawlers لفحص المواقع النشطة باستمرار وإضافة النتائج لفهرس ضخم. الاستعلام بيرجّع SERPs بتشمل صفحات وفيديوهات وصور وملفات مرتَّبة حسب الصلة — بتكشف منصّات تقنية وبيانات موظفين وصفحات دخول وبوابات إنترانت.</p>
+
+<h3>Google Hacking</h3>
+<p>استخدام معاملات بحث Google متقدّمة لبناء استعلامات معقَّدة لاستخراج معلومات حساسة أو مخفية تساعد المهاجمين في إيجاد أهداف عرضة. مثال: <code>intitle:intranet inurl:intranet +intext:"human resources"</code> لإيجاد معلومات حساسة عن مؤسسة وموظفيها.</p>
+
+<h3>فئات قاعدة بيانات Google Hacking (GHDB)</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>الفئة</th><th>الفئة</th></tr></thead>
+<tbody>
+<tr><td>Footholds</td><td>Sensitive Directories</td></tr>
+<tr><td>Vulnerable Files</td><td>Error Messages</td></tr>
+<tr><td>Files Containing Passwords</td><td>Network or Vulnerability Data</td></tr>
+<tr><td>Various Online Devices</td><td>Files Containing Usernames</td></tr>
+<tr><td>Web Server Detection</td><td>Vulnerable Servers</td></tr>
+<tr><td>Files Containing Juicy Info</td><td>Sensitive Online Shopping Info</td></tr>
+<tr><td>Pages Containing Login Portals</td><td>Advisories and Vulnerabilities</td></tr>
+</tbody>
+</table></div>
+<div class="callout warning">
+<div class="callout-label">كيف يستغل المهاجمون GHDB</div>
+<p>الاستطلاع (جمع معلومات عن endpoints مكشوفة)، استغلال سوء الإعداد (الوصول غير المصرَّح به عبر سيرفرات/خدمات مُعدَّة بشكل خاطئ)، إيجاد أنظمة عرضة (برمجيات قديمة)، حصاد بيانات اعتماد (أسماء مستخدمين/كلمات مرور للـ Credential Stuffing)، وتحديد منافذ وخدمات مفتوحة (رسم خريطة لنقاط دخول محتملة).</p>
+</div>
+
+<h3>الاستطلاع عبر Shodan وGoogle Hacking مدعوم بالذكاء الاصطناعي</h3>
+<p>Shodan محرّك بحث لاكتشاف أجهزة وشبكات بها ثغرات — فحص عن VoIP وVPN بيكشف معلومات ذات صلة. المهاجمون يقدروا يستخدموا أدوات AI زي ShellGPT بـ Prompt مثل: <em>"Use filetype search operator to obtain pdf files on the target website ... and store the result in recon1.txt"</em> — أو ChatGPT بـ Prompt مثل: <em>"Use inurl search operator to obtain the Fortinet VPN login pages"</em> لأتمتة مهام الاستطلاع المتقدّمة.</p>
+
+<h3>تقنيات أخرى عبر محركات البحث</h3>
+<ul>
+<li><strong>Advanced/Image/Reverse Image Search:</strong> لمواقع غنية بالمعلومات، البحث العادي مش كافي — محتاج شروط بحث معقَّدة ومترابطة</li>
+<li><strong>Meta Search Engines:</strong> بتستخدم محركات بحث تانية (Google، Bing، إلخ) لتوليد نتائجها الخاصة بسرعة — مالهاش فهرس خاص بيها</li>
+<li><strong>FTP Search Engines:</strong> للبحث عن ملفات على سيرفرات FTP — كتير من الصناعات والجامعات بتستخدمها لتخزين أرشيفات ملفات كبيرة</li>
+</ul>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU4 -->
+<h2 id="lu4"><span class="num">04</span><span class="htext">النطاقات والنطاقات الفرعية وأرشيف الويب</span></h2>
+<p>النطاقات العليا (TLDs) والفرعية (Sub-domains) بتوفّر معلومات مفيدة للمهاجم. الموقع العام متاح لأي حد، لكن النطاقات الفرعية متاحة لعدد قليل بس — غالبًا بتُستخدَم لاختبار تقنيات جديدة قبل النشر، وده بيخلّيها في مرحلة اختبار وغير آمنة وعرضة للاستغلال.</p>
+
+<h3>أدوات اكتشاف النطاقات الفرعية</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>الأداة</th><th>الوظيفة</th></tr></thead>
+<tbody>
+<tr><td>Netcraft</td><td>خدمات أمان إنترنت، تحليل حصة سوق سيرفرات الويب وأنظمة التشغيل وشهادات SSL — بيكشف كل النطاقات الفرعية المرتبطة بالنطاق الهدف</td></tr>
+<tr><td>DNSdumpster</td><td>أداة بحث نطاقات لاكتشاف مضيفين مرتبطين بنطاق — نطاقات فرعية، عناوين IP، سيرفرات DNS مستخدَمة</td></tr>
+<tr><td>Pentest-Tools Find Subdomains</td><td>اكتشاف نطاقات فرعية وعناوين IP، معلومات شبكة، سيرفرات HTTP، نظام تشغيل، تقنية، منصّة ويب، عناوين الصفحات</td></tr>
+</tbody>
+</table></div>
+<div class="callout note">
+<div class="callout-label">اكتشاف النطاقات بالذكاء الاصطناعي</div>
+<p>المهاجمون يقدروا يستخدموا ChatGPT بـ Prompts زي: <em>"Discover all the subdomains of 'google.com' using dig command"</em> أو <em>"Use Sublist3r to gather a list of subdomains of the target organization"</em> لأتمتة اكتشاف النطاقات الفرعية.</p>
+</div>
+
+<h3>استخراج معلومات الموقع من archive.org</h3>
+<p>Internet Archive Wayback Machine بيستكشف نسخ أرشيفية من المواقع — يسمح للمهاجم يجمع معلومات عن صفحات مؤسسة من لحظة إنشائها، حتى لو اتشالت من الموقع الأصلي (صفحات، ملفات صوت/فيديو، صور، نصوص، برامج). أداة Photon بتُستخدَم لاسترجاع روابط مؤرشَفة:</p>
+<div class="code-wrap"><span class="code-tag">photon — archive.org retrieval</span><pre><code>photon.py -u &lt;URL of the Target Website&gt; -l 3 -t 200 --wayback</code></pre></div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU5 -->
+<h2 id="lu5"><span class="num">05</span><span class="htext">استطلاع الأشخاص والوظائف والويب المظلم</span></h2>
+
+<h3>خدمات بحث الأشخاص</h3>
+<p>مواقع السجلات العامة بتساعد في إيجاد عناوين بريد إلكتروني وأرقام هواتف وعناوين سكن. مثال: <strong>Spokeo</strong> بيوفّر أرقام هواتف، عناوين بريد، تاريخ عناوين، عمر، تاريخ ميلاد، أفراد عائلة، بروفايلات سوشيال ميديا، وسجلات محاكم.</p>
+
+<h3>الاستطلاع عبر مواقع الوظائف</h3>
+<p>صفحات التوظيف غالبًا بتكشف معلومات أجهزة وبرمجيات وشبكة (جدار ناري، نوع سيرفر داخلي، نظام تشغيل، أجهزة شبكة، Hypervisors، VMs) — معلومات قيّمة عن البنية التحتية للمؤسسة.</p>
+
+<h3>طبقات الويب الثلاث</h3>
+<div class="method-grid">
+<div class="method-card"><span class="mnum">Surface Web</span><div class="mtitle">الطبقة الخارجية</div><div class="mdesc">يمكن الوصول إليها بمتصفحات عادية (Chrome، Firefox، Opera) — Crawlers محركات البحث بتفهرسها.</div></div>
+<div class="method-card"><span class="mnum">Deep Web</span><div class="mtitle">طبقة مخفية وغير مفهرَسة</div><div class="mdesc">لا يمكن الوصول إليها بمتصفحات أو محركات بحث تقليدية — حجمها هائل، تشمل قواعد بيانات حكومية رسمية. تُستخدَم لأغراض قانونية وغير قانونية — يمكن الوصول إليها عبر Tor Browser.</div></div>
+<div class="method-card"><span class="mnum">Dark Web</span><div class="mtitle">طبقة أعمق من Deep Web</div><div class="mdesc">تتيح التصفّح بدون تتبّع — يمكن الوصول إليها بس عبر أدوات أو متصفحات Darknet متخصّصة (Tor Browser، ExoneraTor). المهاجمون بيستخدموها بشكل أساسي للاستطلاع وإطلاق الهجمات.</div></div>
+</div>
+
+<h3>Tor Browser والبحث المتقدّم في الويب المظلم</h3>
+<p>يعمل كـ VPN افتراضي، بيمرّر عنوان IP الشبكة عبر عدة سيرفرات قبل التفاعل مع الويب — يُستخدَم للوصول لمحتوى مخفي ومواقع غير مفهرَسة وقواعد بيانات مشفَّرة. عبر معاملات بحث متقدّمة، المهاجم يقدر يحدّد بحثه:</p>
+<div class="table-wrap"><table>
+<thead><tr><th>النوع</th><th>مثال معامل البحث</th></tr></thead>
+<tbody>
+<tr><td>بروفايلات شخصية</td><td><code>"John Doe" site:facebook.com OR site:linkedin.com</code></td></tr>
+<tr><td>منشورات علمية</td><td><code>"John Doe" site:scholar.google.com</code></td></tr>
+<tr><td>سجلات محاكم</td><td><code>"John Doe" court records</code></td></tr>
+<tr><td>أدلّة أعضاء</td><td><code>"John Doe" site:example.com "employee directory"</code></td></tr>
+<tr><td>سجلات طبية</td><td><code>"John Doe" medical records</code></td></tr>
+<tr><td>سجلات موقع</td><td><code>"John Doe" location history</code></td></tr>
+</tbody>
+</table></div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU6 -->
+<h2 id="lu6"><span class="num">06</span><span class="htext">تحديد نظام التشغيل والاستخبارات التنافسية</span></h2>
+
+<h3>أدوات تحديد نظام التشغيل (OS Fingerprinting)</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>الأداة</th><th>الوظيفة</th></tr></thead>
+<tbody>
+<tr><td>Netcraft</td><td>تحديد كل المواقع المرتبطة بالنطاق الهدف مع نظام التشغيل الشغّال على كل موقع</td></tr>
+<tr><td>Shodan</td><td>محرّك بحث حاسوبي للأجهزة المتصلة (راوترات، سيرفرات، IoT) — يكشف المكان والمستخدم</td></tr>
+<tr><td>Censys</td><td>مراقبة البنية التحتية واكتشاف أصول مجهولة — رؤية كاملة لكل سيرفر وجهاز معرَّض للإنترنت</td></tr>
+</tbody>
+</table></div>
+
+<h3>جمع الاستخبارات التنافسية (Competitive Intelligence)</h3>
+<p>تحديد وجمع وتحليل والتحقّق من واستخدام معلومات عن المنافسين من مصادر زي الإنترنت — بطريقة أخلاقية وقانونية بدل السرّية. بتساعد في تحديد: إيه اللي المنافسون بيعملوه، إزاي بيموضعوا منتجاتهم، وإيه رأي العملاء في نقاط قوّتهم وضعفهم.</p>
+<ul>
+<li><strong>النهج المباشر:</strong> المصدر الأساسي لجمع الاستخبارات التنافسية</li>
+<li><strong>النهج غير المباشر:</strong> مواقع الشركة وإعلانات التوظيف، خيوط الدعم والمراجعات، محركات بحث وقواعد بيانات، منشورات سوشيال ميديا، بيانات صحفية وتقارير سنوية</li>
+</ul>
+
+<h3>مواقع موارد معلومات حسب الغرض</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>الغرض</th><th>المواقع</th></tr></thead>
+<tbody>
+<tr><td>تاريخ وتأسيس الشركة</td><td>EDGAR (SEC)، D&B Hoovers، LexisNexis، Business Wire، Factiva</td></tr>
+<tr><td>خطط الشركة المستقبلية</td><td>MarketWatch، Euromonitor، Experian، The Search Monitor، USPTO (براءات/علامات تجارية)</td></tr>
+<tr><td>آراء الخبراء عن الشركة</td><td>SEMRush، ABI/INFORM Global، SimilarWeb، SERanking، Mention</td></tr>
+</tbody>
+</table></div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU7 -->
+<h2 id="lu7"><span class="num">07</span><span class="htext">الاستطلاع عبر مواقع التواصل الاجتماعي</span></h2>
+<p>يختلف عن الاستطلاع بالهندسة الاجتماعية: في الهندسة الاجتماعية المهاجم بيخدع الناس للكشف عن معلومات، بينما استطلاع مواقع التواصل بيجمع معلومات متاحة بالفعل على المواقع دي.</p>
+
+<h3>LinkedIn وtheHarvester</h3>
+<p>LinkedIn موقع للمحترفين فيه اسم، منصب، اسم مؤسسة، موقع حالي، مؤهلات تعليمية — معلومات تساعد في الهندسة الاجتماعية. <strong>theHarvester</strong> أداة Open Source Intelligence تُستخدَم في مراحل مبكرة من اختبار الاختراق لتحديد المشهد الخارجي للتهديدات، وتُستخدَم لتعداد موظفي شركة هدف ومناصبهم على LinkedIn.</p>
+
+<h3>حصاد قوائم البريد الإلكتروني</h3>
+<p>أدوات زي theHarvester وEmail Spider بتجمع عناوين بريد موظفين متاحة علنًا عبر محركات بحث (Google، Bing، Yahoo) — تُستخدَم لهجمات هندسة اجتماعية وBrute Force. مثال Prompt بالذكاء الاصطناعي: <em>"Use theHarvester to gather email accounts associated with 'microsoft.com', limiting results to 200, and leveraging 'baidu' as a data source"</em>.</p>
+
+<h3>أدوات تحليل الحضور على السوشيال ميديا</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>الأداة</th><th>الوظيفة</th></tr></thead>
+<tbody>
+<tr><td>BuzzSumo</td><td>إيجاد المحتوى الأكثر مشاركة لموضوع أو كاتب أو نطاق عبر Twitter، Facebook، LinkedIn، وPinterest</td></tr>
+<tr><td>Sherlock</td><td>البحث عن اسم مستخدم هدف عبر عدد ضخم من مواقع التواصل، مع الروابط الكاملة</td></tr>
+<tr><td>Social Searcher</td><td>بحث لحظي في محتوى الشبكات الاجتماعية مع تحليلات عميقة — تتبّع بروفايلات ومنشورات ومعلومات شخصية</td></tr>
+</tbody>
+</table></div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU8 -->
+<h2 id="lu8"><span class="num">08</span><span class="htext">استطلاع Whois</span></h2>
+<p>Whois بروتوكول استعلام واستجابة للاستفسار عن قواعد بيانات بتخزّن المستخدمين المسجَّلين أو أصحاب مورد إنترنت (نطاق، كتلة IP، نظام مستقل) — بيستمع على المنفذ 43 (TCP). السجلات الإقليمية للإنترنت (RIRs) بتحتفظ بقواعد بيانات Whois اللي فيها المعلومات الشخصية لأصحاب النطاقات.</p>
+
+<h3>نماذج بيانات Whois الثلاثة</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>النموذج</th><th>الوصف</th></tr></thead>
+<tbody>
+<tr><td>Thick Whois (موزَّع)</td><td>يخزّن معلومات Whois الكاملة من كل المسجِّلين لمجموعة بيانات معيّنة</td></tr>
+<tr><td>Thin Whois (مركزي)</td><td>يخزّن بس اسم سيرفر Whois الخاص بمسجِّل النطاق، واللي بدوره فيه التفاصيل الكاملة</td></tr>
+<tr><td>Decentralized Whois</td><td>يخزّن معلومات Whois الكاملة وله كيانات مستقلة متعدّدة لإدارة قاعدة البيانات</td></tr>
+</tbody>
+</table></div>
+
+<h3>معلومات تحديد الموقع عبر IP (IP Geolocation)</h3>
+<p>بتكشف الدولة، المنطقة/الولاية، المدينة، خط العرض والطول، الرمز البريدي، المنطقة الزمنية، سرعة الاتصال، مزوّد خدمة الإنترنت (ISP)، اسم النطاق، رمز الدولة الدولي، رمز المنطقة، محطة الطقس، شركة الاتصال المحمول، والارتفاع. أداة <strong>IP2Location</strong> تُستخدَم لتحديد كل هذه التفاصيل الجغرافية.</p>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU9 -->
+<h2 id="lu9"><span class="num">09</span><span class="htext">استطلاع DNS</span></h2>
+<p>بعد جمع سجلات Whois، المرحلة التالية هي استطلاع نظام أسماء النطاقات (DNS) — بيجمع معلومات عن سيرفرات DNS وسجلاتها وأنواع السيرفرات المستخدَمة، مما يساعد المهاجمين في تحديد المضيفين المتصلين بالشبكة الهدف.</p>
+
+<h3>أدوات استجواب DNS</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>الأداة</th><th>الوظيفة</th></tr></thead>
+<tbody>
+<tr><td>SecurityTrails</td><td>أداة تعداد DNS متقدّمة، بتبني خريطة DNS للنطاق الهدف وتعدّد سجلات حالية وتاريخية (A، AAAA، NS، MX، SOA، TXT) وتكتشف نطاقات فرعية بـ Brute-force</td></tr>
+<tr><td>Fierce</td><td>أداة استطلاع DNS لمسح وجمع معلومات حرجة عن النطاق الهدف — تعداد نطاقات فرعية وتحديد مساحات IP غير متصلة</td></tr>
+</tbody>
+</table></div>
+<div class="callout note">
+<div class="callout-label">استطلاع DNS بالذكاء الاصطناعي</div>
+<p>مثال Prompt: <em>"Install and use DNSRecon to perform DNS enumeration on the target domain www.certifiedhacker.com"</em> — بيؤتمت عملية البحث العكسي والتعداد.</p>
+</div>
+
+<h3>البحث العكسي في DNS (Reverse DNS Lookup)</h3>
+<p>بحث DNS العادي بيحوّل اسم نطاق لعنوان IP — البحث العكسي بيحوّل عنوان IP لاسم نطاق، عبر تحديد سجل PTR. أداة <strong>Reverse Lookup</strong> (mxtoolbox.com) بتنفّذ البحث العكسي بأخذ عنوان IP وتحديد سجل PTR المرتبط به.</p>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU10 -->
+<h2 id="lu10"><span class="num">10</span><span class="htext">استطلاع الشبكة والبريد الإلكتروني</span></h2>
+
+<h3>Traceroute</h3>
+<p>تحديد مسار المضيف الهدف ضروري لاختبار هجمات Man-in-the-Middle. Traceroute بيستخدم بروتوكول ICMP وحقل Time to Live (TTL) لتحديد المسار وعدد الراوترات ووقت الرحلة.</p>
+<div class="table-wrap"><table>
+<thead><tr><th>النوع</th><th>الأمر</th><th>الملاحظة</th></tr></thead>
+<tbody>
+<tr><td>ICMP Traceroute</td><td><code>tracert &lt;IP/domain&gt;</code></td><td>الافتراضي في Windows</td></tr>
+<tr><td>TCP Traceroute</td><td><code>sudo tcptraceroute &lt;domain&gt;</code></td><td>مفيد لما ICMP محجوب من الأجهزة</td></tr>
+<tr><td>UDP Traceroute</td><td><code>traceroute &lt;domain&gt;</code></td><td>الافتراضي في Linux، يستخدم UDP</td></tr>
+</tbody>
+</table></div>
+
+<h3>أدوات Traceroute وموقعها الجغرافي</h3>
+<p><strong>NetScanTools Pro</strong> بيتتبّع مسار الحزم مع تحديد دولة كل عنوان IPv4 في كل Hop. <strong>PingPlotter</strong> بيجمع بيانات Traceroute عبر ICMP/UDP/TCP ويعرضها كرسوم بيانية مقروءة لتحديد اختناقات النطاق الترددي أو مشاكل الأجهزة.</p>
+
+<h3>تتبّع اتصالات البريد الإلكتروني</h3>
+<p>مراقبة رسائل بريد مستخدم محدَّد عبر سجلات موقَّعة زمنيًا بتكشف وقت وتاريخ الاستلام والفتح. أدوات التتبّع بتجمع عنوان IP المستلم، الموقع الجغرافي، وقت الاستلام والقراءة، مدة القراءة، نوع البروكسي، ونظام التشغيل والمتصفح.</p>
+
+<h3>معلومات رأس البريد الإلكتروني (Email Header)</h3>
+<p>يحتوي تفاصيل المرسل، معلومات التوجيه، نظام العنونة، التاريخ، الموضوع، والمستلم — بيساعد في تتبّع مسار البريد قبل وصوله. يشمل: سيرفر بريد المرسل، تاريخ ووقت الاستلام، نظام مصادقة المرسل، رقم فريد للرسالة، اسم المرسل الكامل، وعنوان IP المرسل.</p>
+<p><strong>أدوات تتبّع البريد:</strong> IP2LOCATION's Email Header Tracer، MxToolbox، eMailTrackerPro، Holehe، DNS Checker Email Header Analyzer، Social Catfish — بتسمح بتتبّع مسار البريد من موقع المهاجم للسيرفر الهدف عبر عناوين IP في الرأس.</p>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU11 -->
+<h2 id="lu11"><span class="num">11</span><span class="htext">الاستطلاع عبر الهندسة الاجتماعية</span></h2>
+<p>الهندسة الاجتماعية عملية غير تقنية بيضلّل فيها المهاجم شخص عشان يكشف معلومات سرّية بدون قصد — الهدف غافل تمامًا إن حد بيسرق معلوماته.</p>
+
+<div class="method-grid">
+<div class="method-card"><span class="mnum">01</span><div class="mtitle">Eavesdropping</div><div class="mdesc">اعتراض تواصل بأي شكل (صوت، فيديو، نص) بدون موافقة الأطراف — بما فيها قراءة رسائل سرّية من وسائط زي المراسلة الفورية أو الفاكس.</div></div>
+<div class="method-card"><span class="mnum">02</span><div class="mtitle">Shoulder Surfing</div><div class="mdesc">المهاجم بيقف خلف الضحية ويراقب سرًا نشاطه على الحاسوب — ضغطات المفاتيح أثناء إدخال أسماء مستخدمين وكلمات مرور. فعّال جدًا في الأماكن المزدحمة.</div></div>
+<div class="method-card"><span class="mnum">03</span><div class="mtitle">Dumpster Diving</div><div class="mdesc">يُعرف أيضًا بـ Trashing — المهاجم بيفتّش في صناديق القمامة عن معلومات حيوية زي فواتير هاتف ومعلومات تواصل ومعلومات مالية وتشغيلية.</div></div>
+<div class="method-card"><span class="mnum">04</span><div class="mtitle">Impersonation</div><div class="mdesc">انتحال شخصية موثوقة (موظف دعم فني، زميل عمل) للحصول على معلومات حساسة مباشرة من الضحية.</div></div>
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU12 -->
+<h2 id="lu12"><span class="num">12</span><span class="htext">أدوات الاستطلاع الآلية</span></h2>
+<div class="table-wrap"><table>
+<thead><tr><th>الأداة</th><th>الوظيفة</th></tr></thead>
+<tbody>
+<tr><td>Maltego</td><td>تحديد العلاقات والروابط الواقعية بين أشخاص، مجموعات، مؤسسات، مواقع، بنية تحتية، ومستندات</td></tr>
+<tr><td>Recon-ng</td><td>إطار استطلاع ويب بموديولات مستقلة وتفاعل قاعدة بيانات لإجراء استطلاع Open Source قائم على الويب</td></tr>
+<tr><td>FOCA</td><td>إيجاد Metadata ومعلومات مخفية في مستندات (Office، PDF) — Web Search، DNS Search، IP Resolution، PTR Scanning</td></tr>
+<tr><td>subfinder</td><td>اكتشاف نطاقات فرعية صالحة عبر مصادر سلبية — يدعم مخرجات JSON وملفات وstdout</td></tr>
+<tr><td>OSINT Framework</td><td>إطار جمع استخبارات مفتوح المصدر — واجهة ويب بشجرة أدوات OSINT مرتَّبة حسب الفئة</td></tr>
+<tr><td>Recon-Dog</td><td>أداة شاملة لكل احتياجات جمع المعلومات الأساسية — Censys، NS lookup، Port scan، Detect CMS، Whois lookup، Detect honeypot</td></tr>
+<tr><td>BillCipher</td><td>جمع معلومات لموقع أو IP — DNS lookup، Whois lookup، Port scanning، Zone transfer، Host finder، Reverse IP lookup</td></tr>
+</tbody>
+</table></div>
+<p><strong>أدوات إضافية:</strong> Sudomy، theHarvester، whatweb، Raccoon، Orb، Web Check، OSINT.SH.</p>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU13 -->
+<h2 id="lu13"><span class="num">13</span><span class="htext">أدوات OSINT المدعومة بالذكاء الاصطناعي</span></h2>
+<p>الذكاء الاصطناعي ثوّر OSINT عبر تعزيز قدرات التحقيق بجمع وتحليل وتنبّؤ متقدّم — بيؤتمت معالجة البيانات ويستخرج رؤى ذات صلة أسرع من الطرق التقليدية.</p>
+
+<h3>قدرات AI في OSINT</h3>
+<ul>
+<li><strong>Web Scraping:</strong> استخدام بيانات أونلاين من سوشيال ميديا ومنتديات وDeep Web — نماذج التعلّم الآلي بتؤتمت استخراج تعليقات ومعلومات محدَّدة</li>
+<li><strong>Pattern Recognition:</strong> تحديد كيانات (أسماء، تفاصيل شركات، عناوين، بريد، هواتف) داخل مجموعات بيانات ضخمة وتحليل العلاقات بينها</li>
+<li><strong>Content Summarization:</strong> تلخيص كميات ضخمة من البيانات بخوارزميات NLP — مثلًا استخراج أسماء شركات من مئات صفحات PDF</li>
+<li><strong>Sentiment Analysis:</strong> تفسير المشاعر البشرية عبر تحليل النصوص — مفيد لفهم رأي عام أو توقّع سلوك المستهلك</li>
+</ul>
+
+<h3>أدوات OSINT رئيسية مدعومة بـ AI</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>الأداة</th><th>الوظيفة</th></tr></thead>
+<tbody>
+<tr><td>Taranis AI</td><td>تحسين جمع المعلومات والتحليل الظرفي عبر NLP — يحوّل مقالات غير مهيكلة لتقارير منظَّمة وملفات PDF</td></tr>
+<tr><td>OSS Insight</td><td>تحليل أكثر من 5 مليار حدث GitHub — استعلامات بلغة طبيعية (GPT-Powered) لتحليل مستودعات وأنشطة مطوّرين بدون مهارات SQL متقدّمة</td></tr>
+<tr><td>DorkGPT</td><td>توليد وتحسين استعلامات Google Dorking باستخدام نماذج GPT لكشف معلومات حساسة وصفحات مخفية</td></tr>
+<tr><td>DorkGenius</td><td>أتمتة Google Dorking وتوليد استعلامات بحث متقدّمة لإيجاد ملفات ومجلدات مخفية وثغرات أمنية</td></tr>
+<tr><td>Google Word Sniper</td><td>تحسين استعلامات البحث لنتائج Google أكثر فعالية — تحديد كلمات مفتاحية مستهدَفة ومحتوى مخفي</td></tr>
+<tr><td>Cylect.io</td><td>دمج عدة قواعد بيانات في واجهة واحدة سهلة الاستخدام لتحقيقات OSINT فعّالة وموثوقة</td></tr>
+<tr><td>Bardeen.ai</td><td>أتمتة جمع وتحليل البيانات من مصادر أونلاين متعدّدة — تسريع دقة وسرعة أنشطة OSINT</td></tr>
+<tr><td>DarkGPT</td><td>مساعد AI بـ GPT-4-200K للاستعلام عن قواعد بيانات مسرَّبة — بحث مستهدَف ضمن مصادر بيانات مخترَقة</td></tr>
+</tbody>
+</table></div>
+
+<h3>إنشاء سكريبتات Python مخصَّصة لأتمتة الاستطلاع بالذكاء الاصطناعي</h3>
+<p>المهاجمون يقدروا يستخدموا AI لتطوير سكريبتات مخصَّصة تنفّذ سلسلة أوامر استطلاع — مثال Prompt: <em>"Develop a Python script which will accept the domain name www.microsoft.com as input and execute a series of website footprinting commands, including DNS lookups, WHOIS records retrieval, email enumeration, and more"</em>.</p>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU14 -->
+<h2 id="lu14"><span class="num">14</span><span class="htext">إجراءات مواجهة الاستطلاع</span></h2>
+<p>الإجراءات أو الأفعال المُتَّخذة لمنع أو معادلة تسريب المعلومات اللي بيسهّلها الاستطلاع.</p>
+<ul>
+<li>تقييد وصول الموظفين لمواقع التواصل الاجتماعي من شبكة المؤسسة</li>
+<li>إعداد سيرفرات الويب لتجنّب تسريب المعلومات</li>
+<li>تثقيف الموظفين على استخدام أسماء مستعارة في المدوّنات والمجموعات والمنتديات</li>
+<li>عدم الكشف عن معلومات حرجة في البيانات الصحفية والتقارير السنوية وكتالوجات المنتجات</li>
+<li>تقليل كمية المعلومات المنشورة على الموقع أو الإنترنت</li>
+<li>استخدام تقنيات الاستطلاع لاكتشاف وإزالة أي معلومات حساسة متاحة علنًا</li>
+<li>منع محركات البحث من تخزين صفحة ويب في الـ Cache، واستخدام خدمات تسجيل مجهولة</li>
+</ul>
+
+<hr />
+
+<!-- ══════════════════════════════════ CHEAT SHEET -->
+<h2 id="cheat"><span class="num">--</span><span class="htext">Cheat Sheet مرجعي</span></h2>
+<div class="cheat-section">
+
+<h4>أدوات الاستطلاع حسب الفئة</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>الفئة</th><th>الأدوات</th></tr></thead>
+<tbody>
+<tr><td>نطاقات فرعية</td><td>Netcraft، DNSdumpster، Pentest-Tools، subfinder، Sudomy</td></tr>
+<tr><td>Whois / IP Geolocation</td><td>Whois Lookup، IP2Location</td></tr>
+<tr><td>DNS</td><td>SecurityTrails، Fierce، DNSRecon، zdns</td></tr>
+<tr><td>تحديد نظام التشغيل / أجهزة متصلة</td><td>Netcraft، Shodan، Censys</td></tr>
+<tr><td>تتبّع البريد الإلكتروني</td><td>eMailTrackerPro، MxToolbox، IP2Location Email Header Tracer، Holehe</td></tr>
+<tr><td>سوشيال ميديا</td><td>theHarvester، Sherlock، Social Searcher، BuzzSumo</td></tr>
+<tr><td>Traceroute</td><td>NetScanTools Pro، PingPlotter، Traceroute NG، tracert</td></tr>
+<tr><td>استطلاع شامل / Metadata</td><td>Maltego، Recon-ng، FOCA، OSINT Framework، Recon-Dog، BillCipher</td></tr>
+</tbody>
+</table></div>
+
+<h4>أمثلة معاملات Google Dorking</h4>
+<div class="code-wrap"><span class="code-tag">google dorking examples</span><pre><code>intitle:intranet inurl:intranet +intext:"human resources"
+filetype:pdf site:target.com
+inurl:"/remote/login" intitle:"Fortinet"
+site:pastebin.com "target.com" password
+</code></pre></div>
+
+<h4>أوامر Traceroute السريعة</h4>
+<div class="code-wrap"><span class="code-tag">traceroute quick reference</span><pre><code>tracert <target>                 # Windows (ICMP)
+sudo tcptraceroute <target>       # Linux (TCP)
+traceroute <target>               # Linux (UDP)
+</code></pre></div>
+
+<h4>Quick Wins — مراجعة سريعة قبل الامتحان</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>#</th><th>السؤال</th><th>الإجابة السريعة</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>الفرق بين Passive وActive Footprinting؟</td><td>Passive بدون تفاعل مباشر (OSINT) — Active بتفاعل مباشر (DNS interrogation، scanning)</td></tr>
+<tr><td>2</td><td>كام طبقة للويب؟</td><td>Surface Web، Deep Web، Dark Web</td></tr>
+<tr><td>3</td><td>كام نموذج بيانات Whois؟</td><td>Thick (موزَّع)، Thin (مركزي)، Decentralized</td></tr>
+<tr><td>4</td><td>منفذ بروتوكول Whois؟</td><td>TCP 43</td></tr>
+<tr><td>5</td><td>إيه الفرق بين Social Engineering وSocial Networking Footprinting؟</td><td>الأول بيخدع الناس مباشرة — الثاني بيجمع معلومات متاحة بالفعل على المنصّات</td></tr>
+</tbody>
+</table></div>
+
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ SUMMARY -->
+<h2 id="summary"><span class="htext">الخلاصة العامة للموديول</span></h2>
+<p>الموديول ده غطّى مفاهيم الاستطلاع وأهدافه، وتقنيات شاملة لجمع المعلومات عبر محركات البحث وخدمات البحث على الإنترنت ومواقع التواصل الاجتماعي، واستطلاع Whois وDNS والشبكة والبريد الإلكتروني، والاستطلاع عبر الهندسة الاجتماعية، ووصولًا لأدوات الاستطلاع الآلية والمدعومة بالذكاء الاصطناعي وإجراءات المواجهة.</p>
+
+<div class="takeaways">
+<div class="takeaways-title">$ cat ./cehv13_module02_summary.txt</div>
+<ul>
+<li>الاستطلاع مرحلة تحضيرية حاسمة — المعلومة اللي بتُجمَع هنا بتحدّد كل خطوات الهجوم اللاحقة</li>
+<li>الاستطلاع السلبي أصعب في الاكتشاف لعدم وجود تفاعل مباشر مع الهدف، بعكس الاستطلاع الفعّال</li>
+<li>محركات البحث وGoogle Hacking Database من أقوى أدوات جمع المعلومات العامة — بدون أي تفاعل مباشر مع الهدف</li>
+<li>النطاقات الفرعية أضعف أمنيًا من الموقع الرئيسي غالبًا — لأنها بتُستخدَم للاختبار قبل النشر الرسمي</li>
+<li>الويب المظلم (Dark Web) طبقة متخصّصة للاستطلاع والهجمات المتقدّمة، يحتاج أدوات مخصَّصة زي Tor Browser</li>
+<li>Whois وDNS Footprinting بيكشفوا بنية الشبكة الداخلية قبل أي تفاعل فعلي مع أنظمة الهدف</li>
+<li>الهندسة الاجتماعية تقنية غير تقنية بالكامل — بتستغل الثقة البشرية مش ثغرات تقنية</li>
+<li>الذكاء الاصطناعي حوّل الاستطلاع من عملية يدوية بطيئة لعملية آلية سريعة وقابلة للتوسّع بشكل كبير</li>
+<li>كل معلومة تُجمَع أثناء الاستطلاع هي سلاح — إجراءات المواجهة الأساسية هي تقليل ما يُنشَر علنًا من الأساس</li>
+</ul>
+</div>
+
+<blockquote>
+<p><strong>الفكرة الجوهرية للموديول:</strong> الاستطلاع مش خطوة ثانوية قبل الهجوم الحقيقي — هو الهجوم نفسه في مرحلته الأولى. كل معلومة صغيرة (اسم موظف، نطاق فرعي منسي، رأس بريد إلكتروني) ممكن تكون نقطة الانطلاق لاختراق كامل. المختبر الأخلاقي اللي بيتقن الاستطلاع بيقدر يتوقّع مسار المهاجم بالضبط قبل ما يحصل.</p>
+</blockquote>
+
+<div class="callout examtip">
+<div class="callout-label">Professional Mindset</div>
+<p>ابدأ دايمًا بالمصادر السلبية الأقل أثرًا (OSINT، محركات البحث، Whois، DNS) قبل أي تفاعل فعّال مع الهدف — ده بيقلّل أثرك المكتشَف ويبني صورة كاملة قبل ما تلمس النظام فعليًا. وثّق كل مصدر معلومة بدقة، لأن تقرير الاستطلاع الجيد هو الأساس اللي بيُبنى عليه باقي الاختبار بالكامل.</p>
+</div>
+
+<hr />
+<p><em>نهاية نوتس الموديول الثاني — Footprinting and Reconnaissance (CEHv13)</em></p>
+<div class="footer-note">-- EOF: cehv13-module-02/footprinting-and-reconnaissance.md --</div>
+
+</div>
+
+<script>
+(function(){
+  var root=document.documentElement,btn=document.getElementById('themeSwitch');
+  function applyTheme(t){root.setAttribute('data-theme',t);btn.textContent='theme: '+t;try{localStorage.setItem('oscp-notes-theme',t);}catch(e){}}
+  var saved='dark';try{saved=localStorage.getItem('oscp-notes-theme')||'dark';}catch(e){}
+  applyTheme(saved);
+  btn.addEventListener('click',function(){applyTheme(root.getAttribute('data-theme')==='dark'?'light':'dark');});
+  var bar=document.getElementById('progressBar');
+  function onScroll(){var h=document.documentElement,s=h.scrollTop,ht=h.scrollHeight-h.clientHeight;bar.style.width=(ht>0?(s/ht*100):0)+'%';var t=document.getElementById('toTop');s>500?t.classList.add('show'):t.classList.remove('show');}
+  document.addEventListener('scroll',onScroll);onScroll();
+  document.getElementById('toTop').addEventListener('click',function(){window.scrollTo({top:0,behavior:'smooth'});});
+  document.querySelectorAll('.code-wrap').forEach(function(wrap){
+    var c=wrap.querySelector('code');if(!c)return;
+    var b=document.createElement('button');b.className='copy-btn';b.textContent='copy';
+    b.addEventListener('click',function(){if(navigator.clipboard){navigator.clipboard.writeText(c.innerText).then(function(){b.textContent='copied ✓';b.classList.add('copied');setTimeout(function(){b.textContent='copy';b.classList.remove('copied');},1500);});}});
+    wrap.appendChild(b);
+  });
+})();
+</script>
+</body>
+</html>

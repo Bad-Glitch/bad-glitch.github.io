@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CEHv13 · Module 20: Cryptography</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-0:#0B0B0D;--bg-1:#121214;--surface:#17171A;--surface-2:#1D1D21;
+    --border:#2A2A2F;--border-soft:#232326;
+    --text:#E6E6E9;--text-soft:#C4C4CA;--muted:#8A8A92;
+    --red:#E1362F;--red-soft:rgba(225,54,47,0.10);--red-border:rgba(225,54,47,0.35);
+    --red-grad:linear-gradient(90deg,#E1362F,#F2794A);
+    --amber:#E8A23A;--amber-soft:rgba(232,162,58,0.09);--amber-border:rgba(232,162,58,0.30);
+    --green:#3FBF6E;--green-soft:rgba(63,191,110,0.09);--green-border:rgba(63,191,110,0.30);
+    --blue:#4EA1D3;--blue-soft:rgba(78,161,211,0.09);--blue-border:rgba(78,161,211,0.30);
+    --purple:#A179E8;--purple-soft:rgba(161,121,232,0.10);--purple-border:rgba(161,121,232,0.32);
+    --mono:'IBM Plex Mono','Courier New',monospace;
+  }
+  html[data-theme="light"]{--bg-0:#F4F3F1;--bg-1:#ECEBE8;--surface:#FFFFFF;--surface-2:#F3F2EF;--border:#DEDCD6;--border-soft:#E6E4DF;--text:#1C1B19;--text-soft:#3C3A36;--muted:#726F68;}
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;direction:rtl;text-align:right;background:var(--bg-0);}
+  body{font-family:'Cairo','Segoe UI',Tahoma,sans-serif;line-height:1.95;font-size:16.5px;color:var(--text);
+    background:radial-gradient(900px 420px at 12% -8%,rgba(225,54,47,0.10),transparent 60%),radial-gradient(800px 420px at 90% 6%,rgba(232,162,58,0.06),transparent 60%),linear-gradient(180deg,var(--bg-0) 0%,var(--bg-1) 100%);
+    background-attachment:fixed;transition:background 0.2s ease,color 0.2s ease;}
+  html[data-theme="light"] body{background:radial-gradient(900px 420px at 12% -8%,rgba(225,54,47,0.06),transparent 60%),radial-gradient(800px 420px at 90% 6%,rgba(232,162,58,0.05),transparent 60%),linear-gradient(180deg,var(--bg-0) 0%,var(--bg-1) 100%);}
+  .progress-rail{position:fixed;top:0;inset-inline:0;height:3px;background:rgba(255,255,255,0.04);z-index:60;}
+  html[data-theme="light"] .progress-rail{background:rgba(0,0,0,0.05);}
+  .progress-bar{height:100%;width:0%;background:var(--red-grad);transition:width 0.08s linear;}
+  .float-controls{position:fixed;bottom:22px;left:22px;z-index:55;display:flex;flex-direction:column;gap:10px;}
+  .fctrl-btn{width:42px;height:42px;border-radius:50%;background:var(--surface);border:1px solid var(--border);color:var(--text-soft);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;box-shadow:0 10px 24px -10px rgba(0,0,0,0.5);transition:transform 0.15s ease,border-color 0.15s ease,opacity 0.2s ease;}
+  .fctrl-btn:hover{transform:translateY(-2px);border-color:var(--red-border);color:var(--red);}
+  #toTop{opacity:0;pointer-events:none;}#toTop.show{opacity:1;pointer-events:auto;}
+  .page{max-width:860px;margin:0 auto;padding:46px 22px 100px;}
+  .banner{position:relative;overflow:hidden;background:linear-gradient(155deg,var(--surface) 0%,var(--bg-1) 55%,var(--surface) 100%);border:1px solid var(--border-soft);border-radius:10px;padding:0 0 34px;margin-bottom:26px;box-shadow:0 20px 50px -20px rgba(0,0,0,0.6);}
+  .term-bar{display:flex;align-items:center;gap:8px;padding:13px 18px;border-bottom:1px solid var(--border-soft);background:rgba(255,255,255,0.015);direction:ltr;}
+  .term-dot{width:11px;height:11px;border-radius:50%;display:inline-block;}.term-dot.r{background:#E1362F;}.term-dot.y{background:#E8A23A;}.term-dot.g{background:#3FBF6E;}
+  .term-path{margin-inline-start:12px;font-family:var(--mono);font-size:12px;color:var(--muted);}
+  .theme-switch{margin-inline-start:auto;font-family:var(--mono);font-size:11px;color:var(--muted);background:transparent;border:1px solid var(--border);border-radius:4px;padding:4px 9px;cursor:pointer;}
+  .theme-switch:hover{color:var(--amber);border-color:var(--amber-border);}
+  .banner-body{padding:30px 34px 4px;}
+  .banner .kicker{display:inline-block;font-family:var(--mono);font-size:12.5px;letter-spacing:0.03em;color:var(--red);background:var(--red-soft);border:1px solid var(--red-border);border-radius:3px;padding:5px 12px;margin-bottom:20px;direction:ltr;}
+  .banner h1{margin:0 0 14px;font-size:28px;font-weight:800;line-height:1.5;color:var(--text);}
+  .banner .lede{color:var(--muted);font-size:15.5px;line-height:1.95;max-width:640px;margin:0 0 24px;}
+  .tags{display:flex;flex-wrap:wrap;gap:9px;}
+  .tag{font-size:12.5px;font-family:var(--mono);color:var(--amber);background:var(--amber-soft);border:1px solid var(--amber-border);border-radius:3px;padding:5px 11px;}
+  .toc{background:var(--surface);border:1px solid var(--border-soft);border-radius:8px;padding:6px 0 6px;margin-bottom:50px;overflow:hidden;}
+  .toc-title{font-family:var(--mono);font-weight:600;font-size:13px;color:var(--green);padding:14px 22px;border-bottom:1px solid var(--border-soft);direction:ltr;text-align:left;}
+  .toc-list{display:flex;flex-direction:column;}
+  .toc-item{display:flex;align-items:center;gap:14px;padding:12px 22px;color:var(--text-soft);text-decoration:none;font-size:14.5px;border-bottom:1px solid rgba(255,255,255,0.03);transition:background 0.15s ease;}
+  .toc-list .toc-item:last-child{border-bottom:none;}
+  .toc-item:hover{background:var(--red-soft);}
+  .toc-num{flex:none;font-family:var(--mono);font-size:12.5px;font-weight:600;color:#0F0F10;background:var(--red-grad);border-radius:3px;padding:3px 8px;direction:ltr;}
+  h1,h2,h3,h4{font-weight:700;}
+  h2{display:flex;align-items:center;gap:14px;font-size:21px;margin:66px 0 22px;padding-bottom:16px;border-bottom:1px solid var(--border-soft);color:var(--text);}
+  h2 .num{flex:none;font-family:var(--mono);font-size:13px;font-weight:700;color:#0F0F10;background:var(--red-grad);border-radius:5px;padding:7px 12px;direction:ltr;}
+  h2 .htext{line-height:1.5;}
+  h3{font-size:17px;margin:34px 0 14px;color:var(--red);display:flex;align-items:center;gap:9px;}
+  h3::before{content:"#";font-family:var(--mono);color:var(--amber);font-weight:700;}
+  h4{font-size:14.8px;margin:22px 0 10px;color:var(--text-soft);font-family:var(--mono);}
+  p{margin:0 0 17px;color:var(--text);}
+  strong{color:var(--text);font-weight:700;}:root:not([data-theme="light"]) strong{color:#FBFBFC;}
+  a{color:var(--amber);text-decoration:none;border-bottom:1px dashed var(--amber-border);}
+  hr{border:none;height:1px;margin:50px 0;background:linear-gradient(90deg,transparent,var(--border),transparent);}
+  ul,ol{margin:0 0 18px;padding-inline-start:24px;}
+  li{margin-bottom:9px;color:var(--text);}li::marker{color:var(--red);font-family:var(--mono);}li>ul,li>ol{margin-top:9px;}
+  blockquote{margin:24px 0;padding:17px 22px;background:var(--red-soft);border:1px solid var(--red-border);border-inline-start:3px solid var(--red);border-radius:6px;color:var(--text-soft);}
+  blockquote p{margin:0;color:inherit;line-height:1.85;}blockquote p+p{margin-top:10px;}blockquote strong{color:var(--text);}
+  .callout{margin:24px 0;padding:17px 22px 18px;border-radius:6px;border:1px solid var(--border-soft);border-inline-start:3px solid var(--border);background:var(--surface);}
+  .callout p{margin:0;color:var(--text-soft);line-height:1.85;}.callout p+p{margin-top:10px;}.callout ul,.callout ol{margin:6px 0 0;}
+  .callout-label{display:inline-flex;align-items:center;gap:7px;font-family:var(--mono);font-size:11.5px;font-weight:700;letter-spacing:0.02em;text-transform:uppercase;margin-bottom:10px;direction:ltr;}
+  .callout.note{border-inline-start-color:var(--blue);background:var(--blue-soft);}.callout.note .callout-label{color:var(--blue);}
+  .callout.warning{border-inline-start-color:var(--red);background:var(--red-soft);}.callout.warning .callout-label{color:var(--red);}
+  .callout.tip{border-inline-start-color:var(--green);background:var(--green-soft);}.callout.tip .callout-label{color:var(--green);}
+  .callout.examtip{border-inline-start-color:var(--purple);background:var(--purple-soft);}.callout.examtip .callout-label{color:var(--purple);}
+  .callout.case{border-inline-start-color:var(--amber);background:var(--amber-soft);}.callout.case .callout-label{color:var(--amber);}
+  .callout.definition{border-inline-start-color:var(--muted);background:var(--surface-2);}.callout.definition .callout-label{color:var(--text-soft);}
+  .callout.danger{border-inline-start-color:#FF5A52;background:rgba(255,90,82,0.08);}.callout.danger .callout-label{color:#FF5A52;}
+  .table-wrap{overflow-x:auto;margin:22px 0;border:1px solid var(--border-soft);border-radius:8px;}
+  table{width:100%;border-collapse:collapse;font-size:14.2px;min-width:480px;}
+  thead th{background:var(--surface-2);color:var(--amber);font-weight:700;font-family:var(--mono);font-size:12.5px;text-transform:uppercase;letter-spacing:0.02em;text-align:start;padding:13px 15px;border-bottom:1px solid var(--border-soft);white-space:nowrap;}
+  tbody td{padding:12px 15px;border-bottom:1px solid var(--border-soft);color:var(--text-soft);vertical-align:top;}
+  tbody tr:last-child td{border-bottom:none;}tbody tr:nth-child(even){background:rgba(127,127,127,0.03);}tbody tr:hover{background:var(--red-soft);}
+  code{font-family:var(--mono);font-size:13.3px;background:var(--surface-2);border:1px solid var(--border-soft);border-radius:4px;padding:2px 6px;direction:ltr;unicode-bidi:embed;color:var(--green);}
+  .code-wrap{position:relative;overflow-x:auto;margin:22px 0;}
+  .code-tag{position:absolute;top:10px;left:14px;font-family:var(--mono);font-size:10.5px;color:var(--muted);letter-spacing:0.04em;text-transform:uppercase;z-index:2;}
+  .copy-btn{position:absolute;top:8px;right:10px;z-index:2;font-family:var(--mono);font-size:11px;color:var(--muted);background:var(--surface-2);border:1px solid var(--border-soft);border-radius:4px;padding:4px 9px;cursor:pointer;direction:ltr;}
+  .copy-btn:hover{color:var(--amber);border-color:var(--amber-border);}.copy-btn.copied{color:var(--green);border-color:var(--green-border);}
+  pre{background:var(--bg-0);border:1px solid var(--border-soft);border-inline-start:3px solid var(--red);border-radius:8px;padding:30px 22px 18px;direction:ltr;text-align:left;margin:0;}
+  html[data-theme="light"] pre{background:#16181C;}
+  pre code{background:none;border:none;padding:0;color:#B9E8C9;font-size:13.2px;line-height:1.75;}
+  .diagram-card{background:var(--surface);border:1px solid var(--border-soft);border-radius:10px;padding:22px 18px 16px;margin:24px 0;}
+  .diagram-card svg{width:100%;height:auto;display:block;}
+  .diagram-caption{margin-top:10px;text-align:center;font-family:var(--mono);font-size:11.5px;color:var(--muted);}
+  .takeaways{background:var(--surface);border:1px solid var(--border-soft);border-radius:8px;padding:18px 22px 20px;margin:30px 0 10px;}
+  .takeaways-title{font-family:var(--mono);font-size:12.5px;font-weight:700;color:var(--green);margin-bottom:12px;direction:ltr;text-align:left;display:flex;align-items:center;gap:8px;}
+  .takeaways ul{margin:0;padding-inline-start:20px;}.takeaways li{color:var(--text-soft);font-size:14.5px;}
+  .step-track{display:flex;flex-direction:column;gap:0;margin:24px 0;}
+  .step-item{position:relative;padding:0 0 26px 0;padding-inline-start:46px;border-inline-start:2px solid var(--border-soft);}
+  .step-item:last-child{border-inline-start:2px solid transparent;padding-bottom:4px;}
+  .step-num{position:absolute;inset-inline-start:-17px;top:0;width:32px;height:32px;border-radius:50%;background:var(--red-grad);color:#0F0F10;font-family:var(--mono);font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;}
+  .step-title{font-weight:700;color:var(--text);margin-bottom:6px;font-size:15px;}
+  .step-body{color:var(--text-soft);font-size:14.5px;}.step-body p{margin:0 0 10px;}.step-body p:last-child{margin-bottom:0;}.step-body ul{margin:8px 0 0;}
+  .method-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px;margin:22px 0;}
+  .method-card{background:var(--surface);border:1px solid var(--border-soft);border-radius:8px;padding:14px 16px;}
+  .method-card .mtitle{font-weight:700;color:var(--text);font-size:14px;margin-bottom:5px;}.method-card .mdesc{color:var(--text-soft);font-size:13.3px;line-height:1.75;}
+  .cheat-section h4{color:var(--amber);font-size:13px;margin:26px 0 8px;}
+  .footer-note{margin-top:70px;padding-top:26px;border-top:1px solid var(--border-soft);color:var(--muted);font-size:13.3px;font-family:var(--mono);text-align:center;direction:ltr;}
+  @media print{.float-controls,.progress-rail,.copy-btn,.theme-switch{display:none !important;}body{background:#fff;color:#000;}.page{max-width:100%;}}
+  @media(max-width:640px){.page{padding:28px 14px 70px;}.banner-body{padding:24px 20px 4px;}.banner h1{font-size:21px;}h2{font-size:18px;gap:10px;}.float-controls{left:12px;bottom:14px;}}
+</style>
+</head>
+<body>
+<div class="progress-rail"><div class="progress-bar" id="progressBar"></div></div>
+<div class="float-controls"><button class="fctrl-btn" id="toTop" title="ارجع لفوق">↑</button></div>
+
+<div class="page">
+<div class="banner">
+  <div class="term-bar">
+    <span class="term-dot r"></span><span class="term-dot y"></span><span class="term-dot g"></span>
+    <span class="term-path">root@ceh:~/module-20$</span>
+    <button class="theme-switch" id="themeSwitch">theme: dark</button>
+  </div>
+  <div class="banner-body">
+    <span class="kicker">EC-Council · CEHv13 · Module 20</span>
+    <h1>Cryptography</h1>
+    <p class="lede">من مفاهيم التشفير وأهدافه (CIA + Nonrepudiation)، مرورًا بخوارزميات Symmetric (DES وAES وBlowfish) وAsymmetric (RSA وECC وDiffie-Hellman) وHash Functions (SHA وMD5 وHMAC) وأوضاع Block Cipher، وتطبيقات PKI وPGP وBlockchain، ووصولاً لهجمات Cryptanalysis (15+ هجوم) وهجمات Quantum Computing (8 أنواع) وهجمات Blockchain، والإجراءات المضادة.</p>
+    <div class="tags">
+      <span class="tag">cryptography</span><span class="tag">symmetric-asymmetric</span>
+      <span class="tag">rsa-ecc-aes</span><span class="tag">hash-functions</span>
+      <span class="tag">pki-pgp-ssl</span><span class="tag">blockchain</span>
+      <span class="tag">cryptanalysis</span><span class="tag">quantum-attacks</span>
+    </div>
+  </div>
+</div>
+
+<nav class="toc"><div class="toc-title">$ ls learning_units/</div><div class="toc-list">
+  <a class="toc-item" href="#lu1"><span class="toc-num">01</span><span>مفاهيم Cryptography وخوارزميات التشفير</span></a>
+  <a class="toc-item" href="#lu2"><span class="toc-num">02</span><span>تطبيقات Cryptography — PKI وPGP وBlockchain</span></a>
+  <a class="toc-item" href="#lu3"><span class="toc-num">03</span><span>Cryptanalysis — طرق التحليل وهجمات التشفير</span></a>
+  <a class="toc-item" href="#lu4"><span class="toc-num">04</span><span>هجمات Quantum Computing وهجمات Blockchain</span></a>
+  <a class="toc-item" href="#lu5"><span class="toc-num">05</span><span>الإجراءات المضادة</span></a>
+  <a class="toc-item" href="#cheat"><span class="toc-num">--</span><span>Cheat Sheet مرجعي</span></a>
+  <a class="toc-item" href="#summary"><span class="toc-num">--</span><span>الخلاصة العامة للموديول</span></a>
+</div></nav>
+
+<!-- LU1 -->
+<h2 id="lu1"><span class="num">01</span><span class="htext">مفاهيم Cryptography وخوارزميات التشفير</span></h2>
+
+<h3>أهداف Cryptography (CIA + N)</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>الهدف</th><th>الشرح</th></tr></thead>
+<tbody>
+<tr><td>Confidentiality</td><td>ضمان أن المعلومات لا يصل إليها إلا المصرَّح لهم</td></tr>
+<tr><td>Integrity</td><td>موثوقية البيانات — منع التغييرات غير الشرعية وغير المصرَّح بها</td></tr>
+<tr><td>Authentication</td><td>ضمان أصالة الاتصال أو الوثيقة أو البيانات</td></tr>
+<tr><td>Nonrepudiation</td><td>ضمان عدم قدرة المُرسِل على إنكار إرسال الرسالة، وعدم قدرة المستقبِل على إنكار استقبالها</td></tr>
+</tbody>
+</table></div>
+
+
+<h3>أنواع Cryptography</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>النوع</th><th>الشرح</th><th>الميزة</th><th>العيب</th></tr></thead>
+<tbody>
+<tr><td>Symmetric (Secret-key)</td><td>مفتاح واحد للتشفير وفكّ التشفير — الطرفان يمتلكان نفس المفتاح</td><td>سريع وكفوء — مناسب للكميات الكبيرة من البيانات</td><td>مشكلة توزيع المفتاح — لا يُحقِّق Nonrepudiation</td></tr>
+<tr><td>Asymmetric (Public-key)</td><td>زوج مفاتيح: عام (Public) وخاص (Private) — يحلّ مشكلة إدارة المفاتيح</td><td>Nonrepudiation وتوزيع آمن للمفاتيح</td><td>أبطأ من Symmetric بكثير</td></tr>
+</tbody>
+</table></div>
+
+
+<h3>خوارزميات Symmetric Encryption</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>الخوارزمية</th><th>نوعها</th><th>حجم المفتاح</th><th>حجم الكتلة</th><th>ملاحظات</th></tr></thead>
+<tbody>
+<tr><td>DES</td><td>Block Cipher</td><td>56-bit (64-bit مع parity)</td><td>64-bit</td><td>معيار تشفير قديم — ضعيف الآن. يستخدم DEA و56-bit key على 64-bit Blocks</td></tr>
+<tr><td>3DES</td><td>Block Cipher</td><td>168-bit (3×56)</td><td>64-bit</td><td>DES×3 بثلاثة مفاتيح (K1 وK2 وK3): Encrypt-K1 → Decrypt-K2 → Encrypt-K3. الخيار الأول (3 مفاتيح مختلفة) هو الأكثر أمانًا</td></tr>
+<tr><td>AES</td><td>Block Cipher</td><td>128/192/256-bit</td><td>128-bit</td><td>معيار NIST الحالي — يُستخدَم لتأمين البيانات الحكومية والمالية وشبكات الاتصالات. يُشغِّل دورات Round بحسب طول المفتاح</td></tr>
+<tr><td>RC4</td><td>Stream Cipher</td><td>1–2048-bit</td><td>Byte-oriented</td><td>Variable Key-size مع عمليات Byte-oriented — يعمل بسرعة في البرمجيات. يستخدم في SSL ولكن به ثغرات معروفة الآن</td></tr>
+<tr><td>RC5</td><td>Block Cipher</td><td>0–2040-bit</td><td>32/64/128-bit</td><td>سريع ومرن — Variable Block Size وKey Size وRounds (0-255). مُصمَّم من Ronald Rivest</td></tr>
+<tr><td>RC6</td><td>Block Cipher</td><td>متغيّر</td><td>128-bit</td><td>مشتقّ من RC5 — يستخدم Integer Multiplication و4 رجستر 4-bit بدلًا من 2 رجستر في RC5</td></tr>
+<tr><td>Blowfish</td><td>Block Cipher</td><td>32–448-bit</td><td>64-bit</td><td>بديل سريع لـ DES وIDEA — يُستخدَم في أدوات حماية كلمات المرور ومواقع e-Commerce</td></tr>
+<tr><td>Twofish</td><td>Block Cipher</td><td>≤256-bit</td><td>128-bit</td><td>Feistel Cipher من Bruce Schneier — مرن للـ CPU والعتاد والشبكات. كان مرشّحًا لـ AES لكن لم يُختَر</td></tr>
+<tr><td>Threefish</td><td>Block Cipher</td><td>256/512/1024-bit</td><td>مساوٍ للمفتاح</td><td>جزء من خوارزمية Skein — ARX فقط (Addition-Rotation-XOR) بدون S-boxes لمنع Cache Timing Attacks</td></tr>
+<tr><td>Serpent</td><td>Block Cipher</td><td>128/192/256-bit</td><td>128-bit</td><td>32 جولة — كان الأآمن بين مرشّحي AES لكن أبطأ منه</td></tr>
+<tr><td>TEA</td><td>Block Cipher</td><td>128-bit</td><td>64-bit</td><td>Feistel بـ 64 جولة — بسيط التنفيذ. مُقدَّم عام 1994 من Wheeler وNeedham</td></tr>
+<tr><td>CAST-128 (CAST5)</td><td>Block Cipher</td><td>40–128-bit</td><td>64-bit</td><td>Feistel 12-16 جولة — المُشفِّر الافتراضي في GPG وPGP</td></tr>
+<tr><td>GOST (Magma)</td><td>Block Cipher</td><td>256-bit</td><td>64-bit</td><td>معيار روسي حكومي — Feistel 32 جولة مع S-box سري</td></tr>
+<tr><td>Camellia</td><td>Block Cipher</td><td>128/192/256-bit</td><td>128-bit</td><td>18 جولة (128-bit) أو 24 جولة (256-bit) — Feistel مع FL-function كل 6 جولات وKey Whitening</td></tr>
+</tbody>
+</table></div>
+
+
+<h3>خوارزميات Asymmetric Encryption</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>الخوارزمية</th><th>الشرح</th></tr></thead>
+<tbody>
+<tr><td>DSA (Digital Signature Algorithm)</td><td>FIPS للتوقيعات الرقمية — ينشئ توقيعًا رقميًا 320-bit بأمان 512-1024-bit. Private Key للتوقيع، Public Key للتحقّق. أقل احتمالية للتزوير من التوقيع الخطّي</td></tr>
+<tr><td>RSA</td><td>نظام تشفير بالمفتاح العام — يستخدم حساب المعيار (Modular Arithmetic) وعددَين أوليَّين كبيرَين. معيار De-facto للتشفير والتوثيق على الإنترنت. يُستخدَم في Windows وApple وSun وNovell وبطاقات Ethernet الذكية والهواتف الآمنة</td></tr>
+<tr><td>Diffie-Hellman</td><td>بروتوكول تشفير يُتيح لطرفَين إنشاء مفتاح مشترك عبر قناة غير آمنة — نُشِر عام 1976 من Whitfield Diffie وMartin Hellman</td></tr>
+<tr><td>ECC</td><td>نظام تشفير بالمفتاح العام يستخدم المنحنيات الإهليلجية لتوليد مفاتيح أقصر وأسرع وأكثر أمانًا من RSA — مقترَح كبديل لـ RSA لتقليل حجم المفتاح</td></tr>
+<tr><td>YAK</td><td>بروتوكول Authenticated Key Exchange (AKE) — مشتقّ من HMQV مع Zero-Knowledge Proofs (ZKP). يوفّر Private Key Security وFull Forward Secrecy وSession Key Security</td></tr>
+</tbody>
+</table></div>
+
+
+<h3>دوال Hash (Message Digest)</h3>
+<p>تحسب تمثيلًا فريدًا ثابت الحجم (128-256 bit) لأي كتلة من المعلومات. تغيير أي bit في الإدخال يُعطي 50% احتمال تغيّر كل bit في الإخراج. تُسمّى One-way لأن عكس العملية شبه مستحيل. لا تشارك في التشفير وفكّ التشفير مباشرةً.</p>
+<div class="table-wrap"><table>
+<thead><tr><th>Hash Function</th><th>حجم الإخراج</th><th>ملاحظات</th></tr></thead>
+<tbody>
+<tr><td>MD5</td><td>128-bit</td><td>سريع لكن عُثِر على Collisions — لا يُوصَى به للأمان الحرج</td></tr>
+<tr><td>SHA-1</td><td>160-bit</td><td>طوّره NIST — أبطأ قليلًا من MD5 لكن أكثر أمانًا. عُثِر على Collisions نظريًا</td></tr>
+<tr><td>SHA-2 (SHA-256/512)</td><td>256 أو 512-bit</td><td>NIST FIPS PUB 180 — Secure Hash Standard (SHS). الأكثر استخدامًا حاليًا</td></tr>
+<tr><td>SHA-3</td><td>متغيّر</td><td>مختلف بنيويًا عن SHA-2 — بُني على Keccak Algorithm</td></tr>
+<tr><td>RIPEMD-160</td><td>160-bit</td><td>160/128/256/320-bit variants — طوّره Dobbertin وBosselaers وPreneel. لا يتبع معايير أمنية قياسية محدَّدة</td></tr>
+<tr><td>HMAC</td><td>مساوٍ للـ Hash المُضمَّن</td><td>Hash-based MAC يستخدم مفتاحًا تشفيريًا مع Hash Function (SHA-1 أو MD5). مرحلتان: Inner Hash ثم Outer Hash</td></tr>
+<tr><td>GOST Hash</td><td>256-bit</td><td>معيار روسي GOST R 34.11-94 — كتل 256-bit مع Padding للمساواة</td></tr>
+</tbody>
+</table></div>
+
+
+<h3>Multilayer Hashing</h3>
+<p>تقنية تطبّق Hash Function عدّة مرّات على الإدخال أو الإخراج السابق — تُعزِّز الأمان وتُنشئ هياكل Hash أكثر تعقيدًا. الخطوات: Initial Hashing ← Subsequent Hashing ← Final Hash Value. أداة: <strong>CyberChef</strong>.</p>
+
+<h3>أوضاع عمل Block Cipher</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>الوضع</th><th>الشرح</th></tr></thead>
+<tbody>
+<tr><td>ECB (Electronic Code Book)</td><td>أبسط وضع — يُقسِّم النص إلى كتل ويشفِّر كل كتلة باستقلالية بنفس المفتاح. ضعيف: نفس Plaintext ينتج نفس Ciphertext</td></tr>
+<tr><td>CBC (Cipher Block Chaining)</td><td>تحسين لـ ECB — كل كتلة تُخضَع لـ XOR مع Ciphertext الكتلة السابقة قبل التشفير. الكتلة الأولى تستخدم Initialization Vector (IV)</td></tr>
+<tr><td>CFB (Cipher Feedback)</td><td>الـ Ciphertext السابق يُستخدَم كـ Feedback للخوارزمية — IV في Shift Register ← XOR مع Plaintext</td></tr>
+<tr><td>Counter Mode</td><td>يستخدم Counter Value كإدخال للخوارزمية مع المفتاح ← XOR مع كتلة Plaintext. يسمح بالمعالجة المتوازية</td></tr>
+</tbody>
+</table></div>
+
+
+<h3>Authenticated Encryption (AE) Modes</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>الوضع</th><th>الشرح</th></tr></thead>
+<tbody>
+<tr><td>Encrypt-then-MAC (EtM)</td><td>تشفير أولًا ← إنشاء MAC للـ Ciphertext ← إرسالهما معًا. الأعلى أمانًا بين أوضاع AE</td></tr>
+<tr><td>Encrypt-and-MAC (E&M)</td><td>إنشاء MAC للـ Plaintext + تشفير Plaintext ← إرسال Ciphertext وMAC معًا</td></tr>
+<tr><td>MAC-then-Encrypt (MtE)</td><td>إنشاء MAC للـ Plaintext ← دمجه مع Plaintext ← تشفير المجموع. الـ Ciphertext يحتوي MAC مشفَّرًا</td></tr>
+<tr><td>AEAD</td><td>إضافة Associated Data للـ Ciphertext — يُتيح رأس الرسالة غير مشفَّر للتحقّق من المصدر، والـ Payload مشفَّر للسرية. يمنع Chosen Ciphertext Attacks</td></tr>
+</tbody>
+</table></div>
+
+
+<h3>Hardware-Based Encryption</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>الجهاز</th><th>الشرح</th></tr></thead>
+<tbody>
+<tr><td>TPM (Trusted Platform Module)</td><td>رقاقة Crypto-processor في اللوحة الأم — تخزين آمن للمفاتيح، Full Disk Encryption، تخزين كلمات المرور، حماية الترخيص، التحقّق من سلامة المنصّة</td></tr>
+<tr><td>HSM (Hardware Security Module)</td><td>جهاز أمان خارجي إضافي للـ Crypto-processing — إدارة وتوليد وتخزين مفاتيح تشفيرية. يُوفِّر تشفيرًا مُحسَّنًا لمفاتيح Symmetric أطول من 256-bit. High-performance HSMs عبر TCP/IP</td></tr>
+<tr><td>USB Encryption</td><td>تشفير داخلي على أجهزة USB — حماية ضد توزيع Malware عبر USB ومنع تسرّب البيانات</td></tr>
+<tr><td>Hard Drive Encryption</td><td>تشفير كل البيانات المخزَّنة على القرص — يستخدم TPM أو HSM (لا يدعم Keyboard أو Fingerprint)</td></tr>
+</tbody>
+</table></div>
+
+<div class="callout note"><div class="callout-label">Quantum Cryptography</div><p>تشفير مبني على ميكانيكا الكم (QKD). البيانات مُشفَّرة بفوتونات ذات خاصية دوران تتغيّر أثناء مرورها عبر الفلاتر. المهاجمون لا يستطيعون التلاعب في البيانات لأن الفوتونات تُنقَل عبر فلاتر عشوائية.</p></div>
+
+
+<!-- LU2 -->
+
+<hr />
+
+<h2 id="lu2"><span class="num">02</span><span class="htext">تطبيقات Cryptography — PKI وPGP وBlockchain</span></h2>
+
+
+
+<h3>Public Key Infrastructure (PKI)</h3>
+<p>مجموعة من العتاد والبرمجيات والسياسات والإجراءات اللازمة لإنشاء وإدارة وتوزيع واستخدام وتخزين وإبطال الشهادات الرقمية.</p>
+<div class="table-wrap"><table>
+<thead><tr><th>المكوّن</th><th>الشرح</th></tr></thead>
+<tbody>
+<tr><td>Certificate Authority (CA)</td><td>كيانات موثوقة تُصدِر الشهادات الرقمية — تُؤكِّد امتلاك صاحب الشهادة للمفتاح العام. أمثلة: Comodo وIdenTrust</td></tr>
+<tr><td>Signed Certificate</td><td>شهادة من CA موثوق — تحتوي: اسم الحامل وRSerial Number وتواريخ الصلاحية ونسخة المفتاح العام وتوقيع CA الرقمي</td></tr>
+<tr><td>Self-Signed Certificate</td><td>مستخدم يُنشئ شهادته الخاصة (Adobe Acrobat أو Java keytool أو Apple Keychain) — التحقّق يرجع للمستخدم نفسه وليس CA</td></tr>
+</tbody>
+</table></div>
+
+
+<h3>Digital Signatures</h3>
+<p>تستخدم Asymmetric Cryptography لمحاكاة خصائص أمان التوقيع في الشكل الرقمي. يُمكن تعزيز أمانها بتشفير الإيميل الموقَّع. RSA هو أول تقنية تُولِّد توقيعات رقمية.</p>
+<div class="table-wrap"><table>
+<thead><tr><th>عملية DSA</th><th>الشرح</th></tr></thead>
+<tbody>
+<tr><td>Signature Generation</td><td>Private Key يُحدِّد هوية الموقِّع ← يُولِّد توقيعًا 320-bit</td></tr>
+<tr><td>Signature Verification</td><td>Public Key يتحقّق من صحة التوقيع الرقمي</td></tr>
+</tbody>
+</table></div>
+
+
+<h3>SSL وTLS</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>البروتوكول</th><th>الشرح</th></tr></thead>
+<tbody>
+<tr><td>SSL (Secure Sockets Layer)</td><td>بروتوكول طبقة تطبيق من Netscape لتأمين نقل الرسائل عبر الإنترنت — يستخدم RSA لتشفير البيانات</td></tr>
+<tr><td>TLS (Transport Layer Security)</td><td>بروتوكول لإنشاء اتصال آمن بين العميل والسيرفر مع ضمان الخصوصية والتكامل. TLS Handshake: مصادقة متبادلة + اختيار خوارزمية + تبادل Symmetric Key. TLS Record: اتصالات مُؤمَّنة بـ DES وغيره</td></tr>
+</tbody>
+</table></div>
+
+
+<h3>Pretty Good Privacy (PGP)</h3>
+<p>بروتوكول لتشفير/فكّ تشفير البيانات مع مصادقة وخصوصية — يُستخدَم لضغط البيانات والتوقيع الرقمي وتشفير الرسائل والملفات والإيميلات.</p>
+<div class="table-wrap"><table>
+<thead><tr><th>العملية</th><th>الآلية</th></tr></thead>
+<tbody>
+<tr><td>PGP Encryption</td><td>1. ضغط البيانات (يُقلِّل الأنماط التي تُستغَل في Cryptanalysis). 2. توليد Random Key مؤقّت. 3. تشفير Plaintext بالـ Random Key (IDEA). 4. تشفير الـ Random Key بالمفتاح العام للمستقبِل (RSA). 5. إرسال Ciphertext + Random Key المشفَّر معًا</td></tr>
+<tr><td>PGP Decryption</td><td>1. فكّ تشفير الـ Random Key بالمفتاح الخاص (RSA). 2. فكّ تشفير Ciphertext بالـ Random Key المُستردّ</td></tr>
+</tbody>
+</table></div>
+
+<div class="callout definition"><div class="callout-label">مكوّنات PGP</div><p>RSA لنقل المفاتيح وIDEA لتشفير الرسائل الضخمة. RSA لحساب التوقيعات الرقمية. MD5 لحساب Message Digests.</p></div>
+
+
+<h3>GPG (GNU Privacy Guard)</h3>
+<p>بديل مجاني لـ PGP يُنفِّذ معيار OpenPGP. Hybrid Encryption: Symmetric للسرعة + Asymmetric لتبادل المفاتيح. يدعم: إدارة المفاتيح، التوقيع وفكّ التشفير، Detached Signatures، رفع المفاتيح لـ Key Servers.</p>
+
+<h3>Web of Trust (WoT)</h3>
+<p>نموذج ثقة في PGP وOpenPGP وGnuPG — كل شخص في الشبكة يعمل كـ CA ويُوقِّع على بيانات هوية الأشخاص الذين يثق بهم. كل مستخدم لديه Ring من المفاتيح العامة للتشفير.</p>
+
+<h3>Blockchain</h3>
+<p>نوع من Distributed Ledger Technology (DLT) يُسجِّل ويُخزِّن تاريخ المعاملات في كتل مرتبطة تشفيريًا ببعضها. البيانات مقاومة للتعديل.</p>
+<div class="table-wrap"><table>
+<thead><tr><th>نوع Blockchain</th><th>الشرح</th><th>مثال</th></tr></thead>
+<tbody>
+<tr><td>Public (Public Ledger)</td><td>لا سلطة مركزية — شبكة لا مركزية مفتوحة للجميع — لا يمكن تعديل البيانات بعد التحقّق</td><td>Bitcoin وEthereum</td></tr>
+<tr><td>Private (Private Ledger)</td><td>سلطة مركزية تُقرِّر من يشارك — فقط المشاركون في المعاملة يعلمون بها</td><td>Hyperledger وRipple (XRP)</td></tr>
+<tr><td>Federated / Consortium</td><td>لامركزية جزئية — مجموعة أفراد أو مؤسسات تُنشئ وتُدير شبكات منفصلة — سريعة وقابلة للتوسّع</td><td>EWF (Energy) وR3 (Banks)</td></tr>
+<tr><td>Hybrid</td><td>مزيج من Public وPrivate — بيانات مختارة متاحة للعموم والباقي سرّي</td><td>IBM Food Trust</td></tr>
+</tbody>
+</table></div>
+
+
+<!-- LU3 -->
+
+<hr />
+
+<h2 id="lu3"><span class="num">03</span><span class="htext">Cryptanalysis — طرق التحليل وهجمات التشفير</span></h2>
+
+
+
+<h3>طرق Cryptanalysis</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>الطريقة</th><th>الشرح</th></tr></thead>
+<tbody>
+<tr><td>Linear Cryptanalysis</td><td>إيجاد تقريبات خطية لعمل Block Cipher — Known Plaintext Attack يستخدم تقريبًا خطيًا لوصف سلوك الـ Cipher. ابتكرها Mitsuru Matsui</td></tr>
+<tr><td>Differential Cryptanalysis</td><td>دراسة الفروق في الإدخال وتأثيرها على الفروق في الإخراج — يعمل مع Chosen Plaintext وKnown Plaintext. ابتكره Eli Biham وAdi Shamir</td></tr>
+<tr><td>Integral Cryptanalysis</td><td>مفيد ضد Block Ciphers المبنية على Substitution-Permutation Networks — امتداد لـ Differential Cryptanalysis. ابتكره Lars Knudsen</td></tr>
+<tr><td>Quantum Cryptanalysis</td><td>اختراق الخوارزميات التشفيرية بـ Quantum Computer — Shor Algorithm لـ RSA وECDH وGrover Algorithm لـ AES وHash Functions</td></tr>
+</tbody>
+</table></div>
+
+
+<h3>هجمات Cryptography</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>الهجوم</th><th>الشرح</th><th>المعرفة المطلوبة</th></tr></thead>
+<tbody>
+<tr><td>Ciphertext-only Attack</td><td>المهاجم لديه فقط مجموعة من الـ Ciphertexts — يُحلِّلها لإيجاد أنماط تُلمِح للمفتاح. الأصعب والأقل فعالية</td><td>Ciphertexts فقط</td></tr>
+<tr><td>Known-plaintext Attack</td><td>المهاجم يعلم بعض كتل Plaintext مع Ciphertext المقابل والخوارزمية — يستنتج المفتاح. مثال لـ Linear Cryptanalysis</td><td>Plaintext + Ciphertext (محدود)</td></tr>
+<tr><td>Chosen-plaintext Attack</td><td>المهاجم يختار Plaintexts ويحصل على Ciphertexts المقابلة — يستنتج المفتاح</td><td>وصول لجهاز التشفير</td></tr>
+<tr><td>Adaptive Chosen-plaintext</td><td>كـ Chosen-plaintext لكن المهاجم يُعدِّل استعلاماته بناءً على نتائج سابقة</td><td>وصول تفاعلي لجهاز التشفير</td></tr>
+<tr><td>Chosen-ciphertext Attack</td><td>المهاجم يختار Ciphertexts ويحصل على Plaintexts المقابلة لاستخراج المفتاح</td><td>وصول لقناة الاتصال</td></tr>
+<tr><td>Related-Key Attack</td><td>المهاجم يحصل على Ciphertexts مشفَّرة بمفتاحَين مختلفَين ذوَي علاقة رياضية (مثل مفاتيح Wi-Fi المشتقّة من بعضها)</td><td>Ciphertexts بمفتاحَين مترابطَين</td></tr>
+<tr><td>Dictionary Attack</td><td>المهاجم يبني قاموسًا من Plaintexts وCiphertexts المقابلة مسبقًا — يُستخدَم لكسر المفاتيح وكلمات المرور</td><td>قاموس مُسبَق البناء</td></tr>
+<tr><td>Timing Attack</td><td>قياس الوقت الدقيق لتنفيذ عمليات Modular Exponentiation — يستنتج Plaintext من أوقات التنفيذ المتفاوتة</td><td>وقت التنفيذ</td></tr>
+<tr><td>Man-in-the-Middle Attack (Crypto)</td><td>اعتراض الاتصال + التفاوض على باراميترات التشفير + فكّ تشفير المحتوى. يُنفَّذ على أنظمة تبادل المفاتيح العامة</td><td>اعتراض قناة الاتصال</td></tr>
+<tr><td>Side-Channel Attack</td><td>مراقبة العوامل البيئية الفيزيائية: استهلاك الطاقة والمجال الكهرومغناطيسي والإضاءة والتوقيت والصوت</td><td>إشارات جانبية فيزيائية</td></tr>
+<tr><td>Hash Collision Attack</td><td>إيجاد رسالتَين مختلفتَين تنتجان نفس Hash Output — يُتيح تزوير التوقيع الرقمي. SHA-1 عرضة لهذا الهجوم</td><td>—</td></tr>
+<tr><td>Rainbow Table Attack</td><td>جدول مُحسَّب مسبقًا لكل كلمات المرور المحتملة وقيم Hash المقابلة — يستخدم Time-memory Trade-off لعكس Hash Functions</td><td>جدول مُسبَق البناء</td></tr>
+<tr><td>Brute-Force Attack</td><td>تجربة كل التوليفات الممكنة للمفتاح حتى إيجاد الصحيح — مضمون الجدوى لكن يستغرق وقتًا طويلًا بحسب طول المفتاح</td><td>—</td></tr>
+<tr><td>Meet-in-the-Middle Attack</td><td>يُشفِّر من طرف ويفكّ التشفير من الطرف الآخر ← يلتقيان في المنتصف — أفضل هجوم على الخوارزميات المتعدّدة المفاتيح (مثل 3DES). يستخدم Time-Space Trade-off ومبدأ Birthday Paradox</td><td>—</td></tr>
+<tr><td>Padding Oracle Attack</td><td>استغلال التحقّق من Padding في رسائل مُشفَّرة لفكّ الـ Ciphertext — خاصةً على خوارزميات CBC. يُسمّى Vaudenay Attack</td><td>وصول لـ Padding Oracle</td></tr>
+<tr><td>DUHK Attack</td><td>Don't Use Hard-coded Keys — استغلال ANSI X9.31 RNG مع Seed Key مضمَّن في الكود لفكّ تشفير بيانات VPN</td><td>—</td></tr>
+<tr><td>DROWN Attack</td><td>Cross-protocol Weakness — يُهاجِم سيرفرات تدعم SSLv2 و TLS. فكّ تشفير TLS Connections باستخدام SSLv2 Probes بنفس المفتاح الخاص. جزء من MITM Online</td><td>—</td></tr>
+</tbody>
+</table></div>
+
+
+<h3>Code Breaking Methodologies</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>الأسلوب</th><th>الشرح</th></tr></thead>
+<tbody>
+<tr><td>Brute Force</td><td>تجربة كل التوليفات الممكنة للمفاتيح حتى إيجاد الصحيح</td></tr>
+<tr><td>Frequency Analysis</td><td>دراسة تكرار الحروف أو المجموعات في الـ Ciphertext — تعمل على مبدأ أن أحرفًا بعينها تظهر بتواترات معروفة في كل لغة</td></tr>
+<tr><td>Trickery and Deceit</td><td>الهندسة الاجتماعية لاستخراج مفاتيح التشفير — تتطلّب مهارات رياضية وتشفيرية عالية</td></tr>
+<tr><td>One-Time Pad</td><td>يُعتبَر غير قابل للكسر حتى مع موارد لا محدودة — الاستثناء الوحيد في عالم التشفير</td></tr>
+</tbody>
+</table></div>
+
+
+<!-- LU4 -->
+
+<hr />
+
+<h2 id="lu4"><span class="num">04</span><span class="htext">هجمات Quantum Computing وهجمات Blockchain</span></h2>
+
+
+
+<h3>مخاطر Quantum Computing على التشفير</h3>
+<ul>
+<li><strong>Breaking Classical Cryptographic Systems:</strong> Shor Algorithm يكسر RSA وECDH — Grover Algorithm يُضعِف AES والـ Hash Functions</li>
+<li><strong>Data Harvesting for Future Decryption (Harvest-Now, Decrypt-Later):</strong> جمع بيانات مُشفَّرة الآن لفكّ تشفيرها مستقبلًا بـ Quantum Computer</li>
+<li><strong>Decrypting Secure Communications:</strong> SSL/TLS وVPNs تعتمد على Public-key Cryptography المعرّضة للهجوم الكمّي</li>
+<li><strong>Quantum-enhanced Eavesdropping:</strong> أجهزة استشعار كمّية تعترض الاتصالات المشفَّرة بدقة غير مسبوقة</li>
+<li><strong>Undermining Blockchain Security:</strong> استخراج Private Keys من Public Keys وكسر الـ Hash وDigital Signatures</li>
+</ul>
+
+
+<h3>هجمات Quantum Computing (8 أنواع)</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>الهجوم</th><th>الشرح</th></tr></thead>
+<tbody>
+<tr><td>1. Quantum Cryptanalysis Attack</td><td>استخدام Shor وGrover Algorithms لكسر التشفير الكلاسيكي وتزوير التوقيعات الرقمية</td></tr>
+<tr><td>2. Quantum Side-Channel Attack</td><td>استغلال تسرّب معلومات من التنفيذ الفيزيائي لأنظمة التشفير الكمّي — تحليل Quantum Noise والتوقيت واستهلاك الطاقة</td></tr>
+<tr><td>3. Classical-to-Quantum Transition Attack</td><td>استغلال ثغرات فترة الانتقال من التشفير الكلاسيكي للكمّي — أنظمة Hybrid قد تُظهِر ضعفًا أو مشاكل Interoperability</td></tr>
+<tr><td>4. Harvest-Now, Decrypt-Later Attack</td><td>اعتراض وتخزين بيانات مُشفَّرة الآن لفكّ تشفيرها مستقبلًا حين تصبح Quantum Computers قادرة على كسر التشفير الحالي</td></tr>
+<tr><td>5. Quantum Trojan Horse Attack</td><td>تضمين أجهزة أو مكوّنات Quantum خبيثة في نظام التشفير الكمّي لجمع ونقل معلومات حسّاسة للمهاجم خفيةً</td></tr>
+<tr><td>6. Quantum Supply Chain Attack</td><td>استهداف سلسلة توريد العتاد والبرمجيات الكمّية — تلاعب في المكوّنات أو Firmware لزرع Backdoors أو دوائر Quantum خبيثة</td></tr>
+<tr><td>7. Quantum-Computer Sabotage Attack</td><td>إجراءات فيزيائية أو إلكترونية لتعطيل أو تدمير أجهزة Quantum Computer — إتلاف العتاد لتعطيل التطبيقات والبحث الحرج</td></tr>
+<tr><td>8. Fault-Injection Attack on Quantum Hardware</td><td>زرع أخطاء عمدية في نظام Quantum بالتلاعب في البيئة (درجة الحرارة والمجال الكهرومغناطيسي) — تغيير الحالات الكمّية للكشف عن معلومات حسّاسة</td></tr>
+</tbody>
+</table></div>
+
+
+<h3>هجمات Blockchain</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>الهجوم</th><th>الشرح</th></tr></thead>
+<tbody>
+<tr><td>51% Attack (Majority Attack)</td><td>المهاجم يسيطر على أكثر من 50% من القدرة الحسابية (Hash Rate) أو Staking Power — Double-spending وDoS وعكس المعاملات</td></tr>
+<tr><td>Finney Attack</td><td>استغلال التأخير الزمني بين بثّ المعاملة وتأكيدها لعكسها قبل التأكيد — Double-spending للحصول على بضائع مجانًا</td></tr>
+<tr><td>Eclipse Attack</td><td>عزل عقدة هدف عن بقية الشبكة بإحاطتها بعقد خبيثة تُتحكّم في رؤيتها للـ Blockchain — تعطيل التعاملات وتقسيم قوة التعدين</td></tr>
+<tr><td>Race Attack</td><td>Double-spending يستغل تأخير تأكيد المعاملة — لا يحتاج Pre-mined Blocks (عكس Finney) بل يعتمد على سرعة البثّ وكمون الشبكة</td></tr>
+<tr><td>DeFi Sandwich Attack</td><td>استغلال آلية ترتيب التنفيذ في DEXs لتلاعب بسعر Token — المهاجم يضع معاملة أمام وخلف معاملة الضحية لإجبارها على شراء بسعر مُضخَّم أو بيع بسعر منخفض</td></tr>
+</tbody>
+</table></div>
+
+
+<!-- LU5 -->
+
+<hr />
+
+<h2 id="lu5"><span class="num">05</span><span class="htext">الإجراءات المضادة</span></h2>
+
+
+
+<h3>الدفاع ضد هجمات Cryptography</h3>
+<ul>
+<li>منح وصول مفاتيح التشفير للتطبيق أو المستخدم مباشرةً</li>
+<li>نشر IDS لمراقبة تبادل ووصول المفاتيح</li>
+<li>تشفير المفاتيح بـ Passphrases عند تخزينها على القرص</li>
+<li>عدم وضع المفاتيح في الكود المصدري أو الثنائيات</li>
+<li>عدم السماح بنقل المفاتيح الخاصة لتوقيع الشهادات</li>
+<li>استخدام مفاتيح 256-bit للخوارزميات Symmetric في التعاملات الكبيرة</li>
+<li>تطبيق Message Authentication للتشفير Symmetric-key</li>
+<li>تصميم تطبيقات وبروتوكولات تتجنّب علاقات المفاتيح البسيطة (KDF)</li>
+<li>الترقية لأحدث معايير الأمان</li>
+<li>استخدام Key Schedules قوية لتخفيف Related Key Attacks</li>
+<li>استخدام HSMs لتعزيز أمان المفاتيح التشفيرية</li>
+<li>عدم استخدام مفتاح تشفير واحد لأغراض متعدّدة</li>
+<li>استخدام أنظمة Cryptosystems متكرّرة (Redundant)</li>
+<li>تطبيق Key Rotation دوري</li>
+<li>استخدام التوقيعات الرقمية للرسائل والوثائق الهامة والتحقّق منها</li>
+<li>استخدام Hardware-based RNGs لتوليد مفاتيح وNonces وIVs</li>
+</ul>
+
+
+<h3>الدفاع ضد هجمات Blockchain</h3>
+<ul>
+<li>تطبيق Decentralized Identifiers (DIDs) للتحقّق من الهوية</li>
+<li>استخدام Zero-Knowledge Proofs للتحقّق من المعاملات بدون كشف معلومات حسّاسة</li>
+<li>تخزين المفاتيح التشفيرية في HSMs</li>
+<li>استخدام Multi-signature Wallets تتطلّب مفاتيح متعدّدة للتفويض</li>
+<li>تطبيق أنظمة مراقبة Real-time أو Machine Learning لاكتشاف أنماط معاملات غير طبيعية (Double-spending)</li>
+<li>دمج Proof-of-Work مع Proof-of-Stake لتخفيف مخاطر استهلاك الطاقة</li>
+<li>تطبيق حماية DDoS متقدّمة لشبكات Blockchain</li>
+</ul>
+
+
+<h3>الدفاع ضد هجمات Quantum Computing</h3>
+<ul>
+<li>استخدام خوارزميات Quantum-resistant (Lattice-based، Hash-based، Code-based)</li>
+<li>تطبيق Quantum Key Distribution (QKD)</li>
+<li>دمج التشفير الكلاسيكي مع Quantum-resistant Algorithms خلال فترة الانتقال</li>
+<li>استخدام مفاتيح أكبر للتشفير Symmetric لمواجهة الضعف الكمّي</li>
+<li>Key Rotation دوري لتقليل فترة التعرّض</li>
+<li>حماية ضد Side-channel Attacks (Power Analysis والـ EM Emissions)</li>
+</ul>
+
+<!-- CHEAT -->
+
+<hr />
+
+<h2 id="cheat"><span class="htext">Cheat Sheet مرجعي</span></h2>
+
+
+<div class="cheat-section">
+
+<h4>مقارنة خوارزميات Symmetric — مرجع سريع</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>الخوارزمية</th><th>المفتاح</th><th>الكتلة</th><th>الاستخدام الحالي</th></tr></thead>
+<tbody>
+<tr><td>DES</td><td>56-bit</td><td>64-bit</td><td>منتهي الصلاحية — ضعيف</td></tr>
+<tr><td>3DES</td><td>168-bit</td><td>64-bit</td><td>مؤقّت — يُستبدَل تدريجيًا</td></tr>
+<tr><td>AES</td><td>128/192/256-bit</td><td>128-bit</td><td>المعيار الحالي — الأوسع استخدامًا</td></tr>
+<tr><td>Blowfish</td><td>32-448-bit</td><td>64-bit</td><td>كلمات المرور وe-Commerce</td></tr>
+<tr><td>Twofish</td><td>≤256-bit</td><td>128-bit</td><td>بديل سريع — مرن</td></tr>
+<tr><td>RC4</td><td>1-2048-bit</td><td>Stream</td><td>SSL القديم — يُجتنَب</td></tr>
+<tr><td>CAST-128</td><td>40-128-bit</td><td>64-bit</td><td>GPG وPGP افتراضيًا</td></tr>
+</tbody>
+</table></div>
+
+
+<h4>مقارنة Hash Functions — مرجع سريع</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>الدالة</th><th>الإخراج</th><th>الوضع الحالي</th></tr></thead>
+<tbody>
+<tr><td>MD5</td><td>128-bit</td><td>ضعيف — Collisions موجودة</td></tr>
+<tr><td>SHA-1</td><td>160-bit</td><td>ضعيف — Collisions نظرية</td></tr>
+<tr><td>SHA-256</td><td>256-bit</td><td>آمن — المعيار الحالي</td></tr>
+<tr><td>SHA-3</td><td>متغيّر</td><td>آمن — بنية مختلفة عن SHA-2</td></tr>
+<tr><td>HMAC-SHA256</td><td>256-bit</td><td>معيار للـ MAC</td></tr>
+<tr><td>RIPEMD-160</td><td>160-bit</td><td>مستخدَم في Bitcoin</td></tr>
+</tbody>
+</table></div>
+
+
+<h4>هجمات Cryptanalysis — مرجع سريع</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>الهجوم</th><th>ما يحتاجه المهاجم</th><th>الأثر</th></tr></thead>
+<tbody>
+<tr><td>Ciphertext-only</td><td>Ciphertexts فقط</td><td>Break جزئي</td></tr>
+<tr><td>Known-plaintext</td><td>Plaintext + Ciphertext محدود</td><td>استنتاج المفتاح</td></tr>
+<tr><td>Chosen-plaintext</td><td>وصول لجهاز تشفير</td><td>استنتاج مفتاح قوي</td></tr>
+<tr><td>Rainbow Table</td><td>جدول مُحسَّب مسبقًا</td><td>عكس Hash سريع</td></tr>
+<tr><td>Meet-in-the-Middle</td><td>—</td><td>كسر Multi-key Encryption</td></tr>
+<tr><td>Timing Attack</td><td>وقت التنفيذ</td><td>استخراج Plaintext</td></tr>
+<tr><td>DROWN</td><td>SSLv2 مُفعَّل</td><td>فكّ TLS Connections</td></tr>
+<tr><td>51% Attack</td><td>51% Hash Rate</td><td>Double-spending في Blockchain</td></tr>
+</tbody>
+</table></div>
+
+
+<h4>PGP مقابل GPG</h4>
+<div class="table-wrap"><table>
+<thead><tr><th></th><th>PGP</th><th>GPG</th></tr></thead>
+<tbody>
+<tr><td>النوع</td><td>بروتوكول مُرخَّص</td><td>تطبيق مجاني لـ OpenPGP</td></tr>
+<tr><td>التشفير</td><td>RSA + IDEA</td><td>Hybrid (Symmetric + Asymmetric)</td></tr>
+<tr><td>Hash</td><td>MD5</td><td>متعدّد</td></tr>
+<tr><td>المفاتيح</td><td>Public/Private Key Rings</td><td>إدارة متقدّمة للمفاتيح</td></tr>
+</tbody>
+</table></div>
+
+
+</div>
+
+<!-- SUMMARY -->
+
+<hr />
+
+<h2 id="summary"><span class="htext">الخلاصة العامة للموديول</span></h2>
+
+
+<p>الموديول الأخير ناقش أهداف Cryptography (CIA + Nonrepudiation)، وأنواع التشفير (Symmetric وAsymmetric)، وخوارزميات Symmetric الرئيسية (DES و3DES وAES وRC4 وRC5 وRC6 وBlowfish وTwofish وThreefish وSerpent وTEA وCAST-128 وGOST وCamellia)، وخوارزميات Asymmetric (DSA وRSA وDiffie-Hellman وECC وYAK)، ودوال Hash (MD5 وSHA وRIPEMD-160 وHMAC وGOST)، وأوضاع Block Cipher (ECB وCBC وCFB وCounter) وAuthenticated Encryption (EtM وE&M وMtE وAEAD)، وتطبيقات Cryptography (PKI وDigital Signatures وSSL/TLS وPGP وGPG وBlockchain)، و15+ هجوم Cryptanalysis، و8 هجمات Quantum Computing، و5 هجمات Blockchain، والإجراءات المضادة.</p>
+
+<div class="takeaways">
+<div class="takeaways-title">$ cat ./module20_summary.txt</div>
+<ul>
+<li>Symmetric سريع لكن يُعاني مشكلة توزيع المفتاح — Asymmetric يحلّ المشكلة لكن أبطأ — PGP يجمع الاثنَين</li>
+<li>3DES = DES Encrypt (K1) → DES Decrypt (K2) → DES Encrypt (K3) — الخيار الأول (3 مفاتيح مختلفة) هو الأكثر أمانًا</li>
+<li>AES هو المعيار الحالي — 128-bit Block مع مفتاح 128/192/256-bit وعدد دورات يتغيّر بحسب المفتاح</li>
+<li>CBC أكثر أمانًا من ECB لأن كل كتلة تعتمد على الكتلة السابقة — لكن لا يسمح بالمعالجة المتوازية</li>
+<li>EtM (Encrypt-then-MAC) هو الأكثر أمانًا بين أوضاع Authenticated Encryption</li>
+<li>Harvest-Now, Decrypt-Later هو أخطر تهديد كمّي على المدى الطويل — يستهدف البيانات المُشفَّرة اليوم</li>
+<li>51% Attack الأكثر شيوعًا في Blockchain — السيطرة على نصف القدرة الحسابية = التحكّم في الشبكة</li>
+</ul>
+</div>
+
+<blockquote>
+<p><strong>Cryptography ليست جدارًا حصينًا أبديًا — هي سباق دائم.</strong> DES حُلَّ في ساعات، SHA-1 تعرّض لـ Collision، RSA سيُكسَر بـ Quantum Computers. الأمان الحقيقي يكمن في فهم هذا السباق: ترقية الخوارزميات وتدوير المفاتيح والانتقال للخوارزميات المقاومة للكمّ قبل أن تصبح Quantum Computers سلاحًا فعليًا.</p>
+</blockquote>
+
+<div class="callout examtip"><div class="callout-label">Exam Tip</div><p>أسئلة هذا الموديول تُركِّز على: مقارنة Symmetric وAsymmetric، خوارزميات AES وDES و3DES وRSA وECC ومفاتيحها، أوضاع Block Cipher (ECB وCBC وCFB وCounter)، الفرق بين EtM وE&M وMtE، كيفية عمل PGP (Compress → Random Key → Encrypt IDEA → Encrypt RSA)، الفرق بين هجمات Cryptanalysis (Ciphertext-only وChosen-plaintext وRainbow Table)، وهجمات Blockchain (51% وFinney وEclipse وRace وSandwich).</p></div>
+
+
+<hr />
+<p><em>نهاية نوتس الموديول العشرين — Cryptography</em></p>
+<div class="footer-note">-- EOF: module-20/cryptography.md --</div>
+</div>
+
+<script>
+(function(){
+  var root=document.documentElement,btn=document.getElementById('themeSwitch');
+  function applyTheme(t){root.setAttribute('data-theme',t);btn.textContent='theme: '+t;try{localStorage.setItem('oscp-notes-theme',t);}catch(e){}}
+  var saved='dark';try{saved=localStorage.getItem('oscp-notes-theme')||'dark';}catch(e){}
+  applyTheme(saved);
+  btn.addEventListener('click',function(){applyTheme(root.getAttribute('data-theme')==='dark'?'light':'dark');});
+  var bar=document.getElementById('progressBar');
+  function onScroll(){var h=document.documentElement,s=h.scrollTop,ht=h.scrollHeight-h.clientHeight;bar.style.width=(ht>0?(s/ht*100):0)+'%';var t=document.getElementById('toTop');s>500?t.classList.add('show'):t.classList.remove('show');}
+  document.addEventListener('scroll',onScroll);onScroll();
+  document.getElementById('toTop').addEventListener('click',function(){window.scrollTo({top:0,behavior:'smooth'});});
+  document.querySelectorAll('.code-wrap').forEach(function(wrap){
+    var c=wrap.querySelector('code');if(!c)return;
+    var b=document.createElement('button');b.className='copy-btn';b.textContent='copy';
+    b.addEventListener('click',function(){if(navigator.clipboard){navigator.clipboard.writeText(c.innerText).then(function(){b.textContent='copied ✓';b.classList.add('copied');setTimeout(function(){b.textContent='copy';b.classList.remove('copied');},1500);});}});
+    wrap.appendChild(b);
+  });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CEHv13 · Module 07: تهديدات البرمجيات الخبيثة (Malware Threats)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-0:#0B0B0D;--bg-1:#121214;--surface:#17171A;--surface-2:#1D1D21;
+    --border:#2A2A2F;--border-soft:#232326;
+    --text:#E6E6E9;--text-soft:#C4C4CA;--muted:#8A8A92;
+    --red:#E1362F;--red-soft:rgba(225,54,47,0.10);--red-border:rgba(225,54,47,0.35);
+    --red-grad:linear-gradient(90deg,#E1362F,#F2794A);
+    --amber:#E8A23A;--amber-soft:rgba(232,162,58,0.09);--amber-border:rgba(232,162,58,0.30);
+    --green:#3FBF6E;--green-soft:rgba(63,191,110,0.09);--green-border:rgba(63,191,110,0.30);
+    --blue:#4EA1D3;--blue-soft:rgba(78,161,211,0.09);--blue-border:rgba(78,161,211,0.30);
+    --purple:#A179E8;--purple-soft:rgba(161,121,232,0.10);--purple-border:rgba(161,121,232,0.32);
+    --mono:'IBM Plex Mono','Courier New',monospace;
+  }
+  html[data-theme="light"]{
+    --bg-0:#F4F3F1;--bg-1:#ECEBE8;--surface:#FFFFFF;--surface-2:#F3F2EF;
+    --border:#DEDCD6;--border-soft:#E6E4DF;--text:#1C1B19;--text-soft:#3C3A36;--muted:#726F68;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;direction:rtl;text-align:right;background:var(--bg-0);}
+  body{font-family:'Cairo','Segoe UI',Tahoma,sans-serif;line-height:1.95;font-size:16.5px;color:var(--text);
+    background:radial-gradient(900px 420px at 12% -8%,rgba(225,54,47,0.10),transparent 60%),
+               radial-gradient(800px 420px at 90% 6%,rgba(232,162,58,0.06),transparent 60%),
+               linear-gradient(180deg,var(--bg-0) 0%,var(--bg-1) 100%);
+    background-attachment:fixed;transition:background 0.2s ease,color 0.2s ease;}
+  html[data-theme="light"] body{background:radial-gradient(900px 420px at 12% -8%,rgba(225,54,47,0.06),transparent 60%),radial-gradient(800px 420px at 90% 6%,rgba(232,162,58,0.05),transparent 60%),linear-gradient(180deg,var(--bg-0) 0%,var(--bg-1) 100%);}
+  .progress-rail{position:fixed;top:0;inset-inline:0;height:3px;background:rgba(255,255,255,0.04);z-index:60;}
+  html[data-theme="light"] .progress-rail{background:rgba(0,0,0,0.05);}
+  .progress-bar{height:100%;width:0%;background:var(--red-grad);transition:width 0.08s linear;}
+  .float-controls{position:fixed;bottom:22px;left:22px;z-index:55;display:flex;flex-direction:column;gap:10px;}
+  .fctrl-btn{width:42px;height:42px;border-radius:50%;background:var(--surface);border:1px solid var(--border);color:var(--text-soft);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;box-shadow:0 10px 24px -10px rgba(0,0,0,0.5);transition:transform 0.15s ease,border-color 0.15s ease,opacity 0.2s ease;}
+  .fctrl-btn:hover{transform:translateY(-2px);border-color:var(--red-border);color:var(--red);}
+  #toTop{opacity:0;pointer-events:none;}#toTop.show{opacity:1;pointer-events:auto;}
+  .page{max-width:860px;margin:0 auto;padding:46px 22px 100px;}
+  .banner{position:relative;overflow:hidden;background:linear-gradient(155deg,var(--surface) 0%,var(--bg-1) 55%,var(--surface) 100%);border:1px solid var(--border-soft);border-radius:10px;padding:0 0 34px;margin-bottom:26px;box-shadow:0 20px 50px -20px rgba(0,0,0,0.6);}
+  .term-bar{display:flex;align-items:center;gap:8px;padding:13px 18px;border-bottom:1px solid var(--border-soft);background:rgba(255,255,255,0.015);direction:ltr;}
+  .term-dot{width:11px;height:11px;border-radius:50%;display:inline-block;}
+  .term-dot.r{background:#E1362F;}.term-dot.y{background:#E8A23A;}.term-dot.g{background:#3FBF6E;}
+  .term-path{margin-inline-start:12px;font-family:var(--mono);font-size:12px;color:var(--muted);}
+  .theme-switch{margin-inline-start:auto;font-family:var(--mono);font-size:11px;color:var(--muted);background:transparent;border:1px solid var(--border);border-radius:4px;padding:4px 9px;cursor:pointer;}
+  .theme-switch:hover{color:var(--amber);border-color:var(--amber-border);}
+  .banner-body{padding:30px 34px 4px;}
+  .banner .kicker{display:inline-block;font-family:var(--mono);font-size:12.5px;letter-spacing:0.03em;color:var(--red);background:var(--red-soft);border:1px solid var(--red-border);border-radius:3px;padding:5px 12px;margin-bottom:20px;direction:ltr;}
+  .banner h1{margin:0 0 14px;font-size:28px;font-weight:800;line-height:1.5;color:var(--text);}
+  .banner .lede{color:var(--muted);font-size:15.5px;line-height:1.95;max-width:640px;margin:0 0 24px;}
+  .tags{display:flex;flex-wrap:wrap;gap:9px;}
+  .tag{font-size:12.5px;font-family:var(--mono);color:var(--amber);background:var(--amber-soft);border:1px solid var(--amber-border);border-radius:3px;padding:5px 11px;}
+  .toc{background:var(--surface);border:1px solid var(--border-soft);border-radius:8px;padding:6px 0 6px;margin-bottom:50px;overflow:hidden;}
+  .toc-title{font-family:var(--mono);font-weight:600;font-size:13px;color:var(--green);padding:14px 22px;border-bottom:1px solid var(--border-soft);direction:ltr;text-align:left;}
+  .toc-list{display:flex;flex-direction:column;}
+  .toc-item{display:flex;align-items:center;gap:14px;padding:12px 22px;color:var(--text-soft);text-decoration:none;font-size:14.5px;border-bottom:1px solid rgba(255,255,255,0.03);transition:background 0.15s ease;}
+  .toc-list .toc-item:last-child{border-bottom:none;}
+  .toc-item:hover{background:var(--red-soft);}
+  .toc-num{flex:none;font-family:var(--mono);font-size:12.5px;font-weight:600;color:#0F0F10;background:var(--red-grad);border-radius:3px;padding:3px 8px;direction:ltr;}
+  h1,h2,h3,h4{font-weight:700;}
+  h2{display:flex;align-items:center;gap:14px;font-size:21px;margin:66px 0 22px;padding-bottom:16px;border-bottom:1px solid var(--border-soft);color:var(--text);}
+  h2 .num{flex:none;font-family:var(--mono);font-size:13px;font-weight:700;color:#0F0F10;background:var(--red-grad);border-radius:5px;padding:7px 12px;direction:ltr;}
+  h2 .htext{line-height:1.5;}
+  h3{font-size:17px;margin:34px 0 14px;color:var(--red);display:flex;align-items:center;gap:9px;}
+  h3::before{content:"#";font-family:var(--mono);color:var(--amber);font-weight:700;}
+  h4{font-size:14.8px;margin:22px 0 10px;color:var(--text-soft);font-family:var(--mono);}
+  p{margin:0 0 17px;color:var(--text);}
+  strong{color:var(--text);font-weight:700;}
+  :root:not([data-theme="light"]) strong{color:#FBFBFC;}
+  a{color:var(--amber);text-decoration:none;border-bottom:1px dashed var(--amber-border);}
+  hr{border:none;height:1px;margin:50px 0;background:linear-gradient(90deg,transparent,var(--border),transparent);}
+  ul,ol{margin:0 0 18px;padding-inline-start:24px;}
+  li{margin-bottom:9px;color:var(--text);}
+  li::marker{color:var(--red);font-family:var(--mono);}
+  li>ul,li>ol{margin-top:9px;}
+  blockquote{margin:24px 0;padding:17px 22px;background:var(--red-soft);border:1px solid var(--red-border);border-inline-start:3px solid var(--red);border-radius:6px;color:var(--text-soft);}
+  blockquote p{margin:0;color:inherit;line-height:1.85;}blockquote p+p{margin-top:10px;}blockquote strong{color:var(--text);}
+  .callout{margin:24px 0;padding:17px 22px 18px;border-radius:6px;border:1px solid var(--border-soft);border-inline-start:3px solid var(--border);background:var(--surface);}
+  .callout p{margin:0;color:var(--text-soft);line-height:1.85;}.callout p+p{margin-top:10px;}.callout ul,.callout ol{margin:6px 0 0;}
+  .callout-label{display:inline-flex;align-items:center;gap:7px;font-family:var(--mono);font-size:11.5px;font-weight:700;letter-spacing:0.02em;text-transform:uppercase;margin-bottom:10px;direction:ltr;}
+  .callout.note{border-inline-start-color:var(--blue);background:var(--blue-soft);}.callout.note .callout-label{color:var(--blue);}
+  .callout.warning{border-inline-start-color:var(--red);background:var(--red-soft);}.callout.warning .callout-label{color:var(--red);}
+  .callout.tip{border-inline-start-color:var(--green);background:var(--green-soft);}.callout.tip .callout-label{color:var(--green);}
+  .callout.examtip{border-inline-start-color:var(--purple);background:var(--purple-soft);}.callout.examtip .callout-label{color:var(--purple);}
+  .callout.case{border-inline-start-color:var(--amber);background:var(--amber-soft);}.callout.case .callout-label{color:var(--amber);}
+  .callout.definition{border-inline-start-color:var(--muted);background:var(--surface-2);}.callout.definition .callout-label{color:var(--text-soft);}
+  .callout.danger{border-inline-start-color:#FF5A52;background:rgba(255,90,82,0.08);}.callout.danger .callout-label{color:#FF5A52;}
+  .table-wrap{overflow-x:auto;margin:22px 0;border:1px solid var(--border-soft);border-radius:8px;}
+  table{width:100%;border-collapse:collapse;font-size:14.2px;min-width:480px;}
+  thead th{background:var(--surface-2);color:var(--amber);font-weight:700;font-family:var(--mono);font-size:12.5px;text-transform:uppercase;letter-spacing:0.02em;text-align:start;padding:13px 15px;border-bottom:1px solid var(--border-soft);white-space:nowrap;}
+  tbody td{padding:12px 15px;border-bottom:1px solid var(--border-soft);color:var(--text-soft);vertical-align:top;}
+  tbody tr:last-child td{border-bottom:none;}tbody tr:nth-child(even){background:rgba(127,127,127,0.03);}tbody tr:hover{background:var(--red-soft);}
+  code{font-family:var(--mono);font-size:13.3px;background:var(--surface-2);border:1px solid var(--border-soft);border-radius:4px;padding:2px 6px;direction:ltr;unicode-bidi:embed;color:var(--green);}
+  .code-wrap{position:relative;overflow-x:auto;margin:22px 0;}
+  .code-tag{position:absolute;top:10px;left:14px;font-family:var(--mono);font-size:10.5px;color:var(--muted);letter-spacing:0.04em;text-transform:uppercase;z-index:2;}
+  .copy-btn{position:absolute;top:8px;right:10px;z-index:2;font-family:var(--mono);font-size:11px;color:var(--muted);background:var(--surface-2);border:1px solid var(--border-soft);border-radius:4px;padding:4px 9px;cursor:pointer;direction:ltr;}
+  .copy-btn:hover{color:var(--amber);border-color:var(--amber-border);}.copy-btn.copied{color:var(--green);border-color:var(--green-border);}
+  pre{background:var(--bg-0);border:1px solid var(--border-soft);border-inline-start:3px solid var(--red);border-radius:8px;padding:30px 22px 18px;direction:ltr;text-align:left;margin:0;}
+  html[data-theme="light"] pre{background:#16181C;}
+  pre code{background:none;border:none;padding:0;color:#B9E8C9;font-size:13.2px;line-height:1.75;}
+  .takeaways{background:var(--surface);border:1px solid var(--border-soft);border-radius:8px;padding:18px 22px 20px;margin:30px 0 10px;}
+  .takeaways-title{font-family:var(--mono);font-size:12.5px;font-weight:700;color:var(--green);margin-bottom:12px;direction:ltr;text-align:left;display:flex;align-items:center;gap:8px;}
+  .takeaways ul{margin:0;padding-inline-start:20px;}.takeaways li{color:var(--text-soft);font-size:14.5px;}
+  .step-track{display:flex;flex-direction:column;gap:0;margin:24px 0;}
+  .step-item{position:relative;padding:0 0 26px 0;padding-inline-start:46px;border-inline-start:2px solid var(--border-soft);}
+  .step-item:last-child{border-inline-start:2px solid transparent;padding-bottom:4px;}
+  .step-num{position:absolute;inset-inline-start:-17px;top:0;width:32px;height:32px;border-radius:50%;background:var(--red-grad);color:#0F0F10;font-family:var(--mono);font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;}
+  .step-title{font-weight:700;color:var(--text);margin-bottom:6px;font-size:15px;}
+  .step-body{color:var(--text-soft);font-size:14.5px;}.step-body p{margin:0 0 10px;}.step-body p:last-child{margin-bottom:0;}.step-body ul,.step-body ol{margin:8px 0 0;}
+  .method-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px;margin:22px 0;}
+  .method-card{background:var(--surface);border:1px solid var(--border-soft);border-radius:8px;padding:14px 16px;}
+  .method-card .mnum{font-family:var(--mono);font-size:11px;font-weight:700;color:#0F0F10;background:var(--red-grad);border-radius:4px;padding:2px 8px;display:inline-block;margin-bottom:8px;direction:ltr;}
+  .method-card .mtitle{font-weight:700;color:var(--text);font-size:14px;margin-bottom:5px;}.method-card .mdesc{color:var(--text-soft);font-size:13.3px;line-height:1.75;}
+  .goals-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px;margin:0 0 22px;}
+  .goal-card{display:flex;gap:10px;align-items:flex-start;background:var(--surface);border:1px solid var(--border-soft);border-radius:7px;padding:13px 15px;font-size:14px;color:var(--text-soft);}
+  .goal-card .gi{flex:none;font-family:var(--mono);font-size:11px;font-weight:700;color:var(--green);background:var(--green-soft);border:1px solid var(--green-border);border-radius:4px;width:22px;height:22px;display:flex;align-items:center;justify-content:center;}
+  .cheat-section h4{color:var(--amber);font-size:13px;margin:26px 0 8px;}
+  .footer-note{margin-top:70px;padding-top:26px;border-top:1px solid var(--border-soft);color:var(--muted);font-size:13.3px;font-family:var(--mono);text-align:center;direction:ltr;}
+  @media print{.float-controls,.progress-rail,.copy-btn,.theme-switch{display:none !important;}body{background:#fff;color:#000;}.page{max-width:100%;}}
+  @media(max-width:640px){.page{padding:28px 14px 70px;}.banner-body{padding:24px 20px 4px;}.banner h1{font-size:21px;}h2{font-size:18px;gap:10px;}.float-controls{left:12px;bottom:14px;}}
+</style>
+</head>
+<body>
+<div class="progress-rail"><div class="progress-bar" id="progressBar"></div></div>
+<div class="float-controls"><button class="fctrl-btn" id="toTop" title="ارجع لفوق">↑</button></div>
+
+<div class="page">
+<div class="banner">
+  <div class="term-bar">
+    <span class="term-dot r"></span><span class="term-dot y"></span><span class="term-dot g"></span>
+    <span class="term-path">root@ceh:~/module-07$</span>
+    <button class="theme-switch" id="themeSwitch">theme: dark</button>
+  </div>
+  <div class="banner-body">
+    <span class="kicker">EC-Council · CEHv13 · Module 07</span>
+    <h1>تهديدات البرمجيات الخبيثة (Malware Threats)</h1>
+    <p class="lede">من مفاهيم البرمجيات الخبيثة والتهديدات المستمرة المتقدّمة (APT) إلى أنواع أحصنة طروادة والفيروسات والديدان، مرورًا بالبرمجيات الغير ملفية والمعتمدة على الذكاء الاصطناعي، ووصولاً لتقنيات التحليل الثابت والديناميكي وإجراءات المكافحة.</p>
+    <div class="tags">
+      <span class="tag">trojans</span><span class="tag">viruses</span><span class="tag">worms</span>
+      <span class="tag">ransomware</span><span class="tag">apt</span><span class="tag">fileless-malware</span>
+      <span class="tag">ai-malware</span><span class="tag">static-analysis</span><span class="tag">dynamic-analysis</span>
+    </div>
+  </div>
+</div>
+
+<nav class="toc"><div class="toc-title">$ ls learning_units/</div><div class="toc-list">
+  <a class="toc-item" href="#lu1"><span class="toc-num">01</span><span>مفاهيم البرمجيات الخبيثة والـ APT</span></a>
+  <a class="toc-item" href="#lu2"><span class="toc-num">02</span><span>أحصنة طروادة (Trojans) — الأنواع والعمل</span></a>
+  <a class="toc-item" href="#lu3"><span class="toc-num">03</span><span>الفيروسات والديدان والـ Ransomware</span></a>
+  <a class="toc-item" href="#lu4"><span class="toc-num">04</span><span>البرمجيات الخبيثة الغير ملفية (Fileless Malware)</span></a>
+  <a class="toc-item" href="#lu5"><span class="toc-num">05</span><span>البرمجيات الخبيثة المعتمدة على الذكاء الاصطناعي</span></a>
+  <a class="toc-item" href="#lu6"><span class="toc-num">06</span><span>تحليل البرمجيات الخبيثة — Static وDynamic Analysis</span></a>
+  <a class="toc-item" href="#lu7"><span class="toc-num">07</span><span>الإجراءات المضادة للبرمجيات الخبيثة</span></a>
+  <a class="toc-item" href="#methodology"><span class="toc-num">--</span><span>منهجية تحليل البرمجيات الخبيثة خطوة بخطوة</span></a>
+  <a class="toc-item" href="#cheat"><span class="toc-num">--</span><span>Cheat Sheet مرجعي</span></a>
+  <a class="toc-item" href="#summary"><span class="toc-num">--</span><span>الخلاصة العامة للموديول</span></a>
+</div></nav>
+
+<!-- ══════════════════════════════════ LU1 -->
+<h2 id="lu1"><span class="num">01</span><span class="htext">مفاهيم البرمجيات الخبيثة والـ APT</span></h2>
+
+<h3>تعريف البرمجيات الخبيثة</h3>
+<p>البرمجيات الخبيثة (Malware) هي برمجيات تُتلف أو تُعطّل أنظمة الحاسوب، وتمنح منشئها سيطرة جزئية أو كاملة عليها لأغراض خبيثة كالسرقة أو الاحتيال. تشمل: الفيروسات، الديدان، أحصنة طروادة، Rootkits، Backdoors، Botnets، Ransomware، Spyware، Adware، Scareware، Keyloggers، وغيرها.</p>
+
+<h3>طرق دخول البرمجيات الخبيثة للنظام</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>المدخل</th><th>الوصف</th></tr></thead>
+<tbody>
+<tr><td>تطبيقات المراسلة الفورية</td><td>استقبال ملفات عبر Messenger وWhatsApp وLinkedIn — مرسِل الملف ممكن يكون مهاجم اخترق حساب شخص معروف</td></tr>
+<tr><td>وسائط الـ USB وأجهزة التخزين المحمولة</td><td>وصول فيزيائي للجهاز — نسخ برنامج حصان طروادة من USB للقرص الصلب</td></tr>
+<tr><td>ثغرات المتصفح والبريد الإلكتروني</td><td>متصفحات أو برامج بريد قديمة — الزيارة لموقع خبيث قد تُصيب الجهاز تلقائيًا بدون أي تحميل</td></tr>
+<tr><td>إدارة التصحيحات غير الآمنة</td><td>برمجيات غير مُحدَّثة — يستغلّها المهاجمون لحقن برمجيات خبيثة تتلف بيانات الشركة وتسرق بيانات اعتمادها</td></tr>
+<tr><td>مواقع غير موثوقة وبرمجيات مجانية</td><td>تنزيل أدوات من مواقع "underground" — ممكن يكون وسيلة لهجوم حصان طروادة</td></tr>
+<tr><td>مرفقات البريد الإلكتروني</td><td>الأكثر شيوعًا — المرفق ممكن يكون مستند أو ملف صوتي أو فيديو أو فاتورة أو رسالة عرض وظيفة</td></tr>
+<tr><td>شبكات Bluetooth والـ Wi-Fi المفتوحة</td><td>أجهزة وبرمجيات مثبّتة على مستوى الراوتر لالتقاط حركة المرور وتفاصيل الحسابات</td></tr>
+<tr><td>تثبيت بواسطة برمجية خبيثة أخرى</td><td>البرمجيات ذات الـ C&C بتُعيد الاتصال بسيرفر المهاجم عبر بروتوكولات التصفح الشائعة وتستقبل أوامر لتثبيت برمجيات إضافية</td></tr>
+</tbody>
+</table></div>
+
+<h3>تقنيات توزيع البرمجيات الخبيثة على الويب</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>التقنية</th><th>الوصف</th></tr></thead>
+<tbody>
+<tr><td>Black Hat SEO</td><td>تكتيكات SEO عدوانية (Keyword Stuffing، Doorway Pages) لرفع تصنيف صفحات البرمجيات الخبيثة</td></tr>
+<tr><td>Social Engineered Click-jacking</td><td>حقن برمجيات خبيثة في مواقع تبدو شرعية لخداع المستخدمين للنقر عليها</td></tr>
+<tr><td>Spear-phishing Sites</td><td>محاكاة مؤسسات شرعية (بنوك) لسرقة كلمات المرور وبيانات البطاقات</td></tr>
+<tr><td>Malvertising</td><td>تضمين إعلانات محمَّلة ببرمجيات خبيثة في قنوات إعلانات أونلاين شرعية</td></tr>
+<tr><td>Compromised Legitimate Websites</td><td>مواقع مخترَقة — المستخدم يثبّت البرمجية الخبيثة دون علمه بمجرد الزيارة</td></tr>
+<tr><td>Drive-by Downloads</td><td>تحميل تلقائي غير مقصود عبر استغلال ثغرات المتصفح بمجرد زيارة موقع</td></tr>
+<tr><td>Spam Emails</td><td>الأسلوب الأكثر شيوعًا حاليًا — مرفق خبيث أو كود مضمَّن في جسم البريد نفسه</td></tr>
+<tr><td>RTF Injection</td><td>حقن Macros خبيثة في ملفات RTF مُستضافة على سيرفرات المهاجم — يُحمَّل القالب تلقائيًا عند فتح المستند متجاوزًا أنظمة الأمان</td></tr>
+</tbody>
+</table></div>
+
+<h3>مكوّنات البرمجيات الخبيثة</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>المكوّن</th><th>الوصف</th></tr></thead>
+<tbody>
+<tr><td>Crypter</td><td>برنامج يُخفي وجود البرمجية الخبيثة ويحميها من التحليل العكسي لتجاوز مضادات الفيروسات</td></tr>
+<tr><td>Downloader</td><td>نوع من أحصنة طروادة يُحمِّل برمجيات أو ملفات خبيثة إضافية من الإنترنت — عادةً يُثبَّت أول ما يحصل المهاجم على وصول</td></tr>
+<tr><td>Dropper</td><td>ناقل سري للبرمجيات الخبيثة — يُخفي ملفاتها ويُنفَّذ عبر تثبيتها، بإمكانه نقل وتنفيذ كود خبيث دون كشف مضادات الفيروسات</td></tr>
+<tr><td>Exploit</td><td>الجزء المحتوي على كود أو تسلسل أوامر يستغلّ ثغرة في نظام رقمي — محلي أو بعيد</td></tr>
+<tr><td>Injector</td><td>يحقن Exploits أو كودًا خبيثًا في عمليات جارية ضعيفة ويُعدِّل طريقة التنفيذ للإخفاء</td></tr>
+<tr><td>Obfuscator</td><td>يُخفي الكود الخبيث بتقنيات متنوّعة لصعوبة كشفه من آليات الأمان</td></tr>
+<tr><td>Packer</td><td>يضغط ملف البرمجية الخبيثة لتحويل الكود والبيانات لصيغة غير مقروءة</td></tr>
+<tr><td>Payload</td><td>الجزء الذي ينفّذ النشاط الخبيث الفعلي — حذف ملفات، فتح منافذ، تدهور الأداء</td></tr>
+<tr><td>Malicious Code</td><td>قطعة الكود المحدِّدة للوظيفة الأساسية للبرمجية الخبيثة</td></tr>
+</tbody>
+</table></div>
+
+<h3>التطبيقات غير المرغوب فيها (PUAs)</h3>
+<p>التطبيقات غير المرغوب فيها (PUAs/PUPs) — تُعرف أيضًا كـ Grayware/Junkware — تطبيقات ضارّة محتملة قد تشكّل مخاطر جدية لأمان وخصوصية البيانات.</p>
+<div class="table-wrap"><table>
+<thead><tr><th>النوع</th><th>الوصف</th></tr></thead>
+<tbody>
+<tr><td>Adware</td><td>يعرض إعلانات غير مرغوب فيها ونوافذ منبثقة لخدمات أونلاين — ممكن يستدرج الضحايا للنقر على روابط خبيثة</td></tr>
+<tr><td>Torrent</td><td>تطبيقات التورنت قد تُجبر المستخدم على تحميل برامج غير مرغوبة ذات خصائص مشاركة ملفات Peer-to-Peer</td></tr>
+<tr><td>Marketing</td><td>تراقب الأنشطة الأونلاين وترسل تفاصيل المتصفح والاهتمامات لأصحاب تطبيقات طرف ثالث لأغراض تسويقية</td></tr>
+<tr><td>Cryptomining</td><td>يستغلّ موارد الضحية المالية والشخصية للتعدين الرقمي لعملات مشفّرة كالبيتكوين</td></tr>
+<tr><td>Dialers</td><td>برامج تُثبَّت تلقائيًا في النظام لإجراء مكالمات لجهات اتصال عديدة دون موافقة المستخدم — تُسبّب فواتير هاتف ضخمة</td></tr>
+</tbody>
+</table></div>
+
+<h3>التهديدات المستمرة المتقدّمة (APT)</h3>
+<div class="callout definition">
+<div class="callout-label">تعريف</div>
+<p>APT هي نوع من هجمات الشبكة التي يحصل فيها المهاجم على وصول غير مصرَّح به للشبكة المستهدَفة ويبقى فيها غير مكتشَف لفترة طويلة. "Advanced" تعني استخدام تقنيات لاستغلال ثغرات النظام، "Persistent" تعني نظام C&C خارجي يستخرج البيانات ويراقب شبكة الضحية باستمرار، "Threat" تعني التنسيق البشري في التنفيذ.</p>
+</div>
+<p>APT attacks تستخدم كود خبيث محكم مع مزيج من عدة Zero-Day Exploits للوصول للشبكة المستهدَفة — تتضمّن تقنيات منسَّقة ومخطَّطة يمحو فيها المهاجمون أدلّة نشاطاتهم الخبيثة بعد تحقيق أهدافهم.</p>
+
+<h3>دورة حياة APT</h3>
+<div class="step-track">
+<div class="step-item"><div class="step-num">1</div><div class="step-title">الإعداد (Preparation)</div><div class="step-body"><p>تحديد الهدف، إجراء بحث مكثَّف، تجميع فريق، بناء أو اقتناء أدوات، اختبار التحايل على الكشف.</p></div></div>
+<div class="step-item"><div class="step-num">2</div><div class="step-title">الاختراق الأولي (Initial Intrusion)</div><div class="step-body"><p>Spear-phishing emails أو استغلال ثغرات سيرفرات متاحة علنًا — الروابط الخبيثة بتوجّه الهدف لمواقع تستغلّ متصفحه وبرامجه.</p></div></div>
+<div class="step-item"><div class="step-num">3</div><div class="step-title">التوسّع (Expansion)</div><div class="step-body"><p>توسيع الوصول للشبكة المستهدَفة والحصول على بيانات اعتماد، تصعيد الصلاحيات للحصول على وصول إداري لأنظمة إضافية في الشبكة.</p></div></div>
+<div class="step-item"><div class="step-num">4</div><div class="step-title">الاستمرارية (Persistence)</div><div class="step-body"><p>الحفاظ على الوصول للنظام المستهدَف من التحايل على أجهزة أمان الـ Endpoints حتى انتهاء الفائدة من البيانات.</p></div></div>
+<div class="step-item"><div class="step-num">5</div><div class="step-title">البحث والتسريب (Search and Exfiltration)</div><div class="step-body"><p>تحقيق الهدف النهائي من استغلال الشبكة — الوصول لمورد قيّم أو استخدامه لمكسب مالي، مع استهداف بيانات أو مستندات محدَّدة.</p></div></div>
+<div class="step-item"><div class="step-num">6</div><div class="step-title">التنظيف (Cleanup)</div><div class="step-body"><p>إجراءات لمنع الكشف وإزالة أدلّة الاختراق — التهرّب من الكشف، محو أدلّة التسلّل، وأحيانًا التلاعب ببيانات البيئة المستهدَفة لتضليل المحلّلين الأمنيين.</p></div></div>
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU2 -->
+<h2 id="lu2"><span class="num">02</span><span class="htext">أحصنة طروادة (Trojans) — الأنواع والعمل</span></h2>
+
+<h3>ماهية حصان طروادة</h3>
+<p>بالقياس من أسطورة الحصان الخشبي الإغريقي — حصان طروادة بيعمل بنفس مستوى صلاحيات الضحية. لو عند الضحية صلاحيات حذف ملفات ونقل معلومات وتعديل ملفات وتثبيت برامج، فالحصان بعد إصابته للنظام هيمتلك نفس الصلاحيات دي. وبإمكانه محاولة استغلال ثغرات لرفع مستوى الوصول أعلى من المستخدم الذي يشغّله.</p>
+
+<h3>استخدامات المهاجمين لأحصنة طروادة</h3>
+<ul>
+<li>حذف أو استبدال ملفات نظام التشغيل الحرجة</li>
+<li>توليد حركة مرور مزيَّفة لتنفيذ هجمات DoS</li>
+<li>تسجيل لقطات الشاشة والصوت والفيديو من جهاز الضحية</li>
+<li>إنشاء Backdoors للحصول على وصول بعيد</li>
+<li>تعطيل الـ Firewalls ومضادات الفيروسات</li>
+<li>استخدام جهاز الضحية كـ Botnet لتنفيذ هجمات DDoS</li>
+<li>استخدامه كـ Proxy Server مجهول للهجوم على أنظمة أخرى</li>
+</ul>
+
+<h3>أنواع أحصنة طروادة</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>النوع</th><th>الوصف</th></tr></thead>
+<tbody>
+<tr><td>Remote Access Trojans (RATs)</td><td>يمنح المهاجم تحكّمًا كاملًا في نظام الضحية — وصول بعيد للملفات والمحادثات والبيانات المحاسبية. يعمل كسيرفر يستمع على بورت غير متاح عادةً للمهاجمين عبر الإنترنت. مثال: njRAT — تسجيل لوحة المفاتيح، وصول للكاميرا، سرقة بيانات اعتماد المتصفحات</td></tr>
+<tr><td>Backdoor Trojans</td><td>يتجاوز آليات المصادقة القياسية والـ IDS والـ Firewalls دون كشف. يُثبَّت دون علم المستخدم. مثال: TinyTurla-NG (تشغيله مجموعة Turla الروسية) — يستخدم مواقع WordPress مخترَقة كـ C2</td></tr>
+<tr><td>Botnet Trojans</td><td>يُصيب عددًا كبيرًا من الأجهزة لإنشاء شبكة Bots تتحكّم فيها عبر مركز C&C. أمثلة: RDDoS، Horabot، Qakbot، Ramnit، ZeroBot، XorDdos</td></tr>
+<tr><td>Rootkit Trojans</td><td>يستهدف الـ Root أو نظام التشغيل ويوفّر تحكّمًا كاملًا — لا يُكشَف عبر مراقبة الخدمات أو قوائم المهام. يتكوّن من Blended Threat: Dropper + Loader + Rootkit</td></tr>
+<tr><td>E-Banking Trojans</td><td>يعترض بيانات حساب الضحية قبل تشفيرها — TAN Grabber، HTML Injection، Form Grabber، Covert Credential Grabber. مثال: CHAVECLOAK — يجمّد الشاشة ويلتقط ضغطات المفاتيح وينشئ نوافذ خداعية</td></tr>
+<tr><td>Point-of-Sale Trojans</td><td>يستهدف أجهزة POS لسرقة بيانات بطاقات الائتمان (TRACK1 و TRACK2). مثال: PrilexPOS — ينتج EMV Cryptograms لتنفيذ معاملات وهمية متجاوزًا أنظمة Anti-Fraud</td></tr>
+<tr><td>Defacement Trojans</td><td>يتلف أو يُغيّر محتوى قواعد البيانات بالكامل — وعند استهداف المواقع يُغيّر HTML مما يُحدث خسائر كبيرة للأعمال الرقمية</td></tr>
+<tr><td>Service Protocol Trojans</td><td>يستغلّ بروتوكولات خدمة ضعيفة — VNC Trojans (Vultur، Dridex، Gozi يستخدمون HVNC)، HTTP/HTTPS Trojans يتجاوزون الـ Firewalls عبر بورت 80</td></tr>
+<tr><td>Mobile Trojans</td><td>يستهدف الهواتف المحمولة — سرقة بيانات اعتماد البنوك والشبكات الاجتماعية، تشفير البيانات، قفل الجهاز. مثال: Chameleon (Android) — يستغلّ Accessibility Service لتنفيذ هجمات DTO وATO</td></tr>
+<tr><td>IoT Trojans</td><td>يستهدف أجهزة IoT ويستغلّ Botnet لمهاجمة أجهزة خارج الشبكة. مثال: OpenSSH Trojan — استغلّ OpenSSH المعدَّل لتثبيت كود تعدين عملات مشفّرة</td></tr>
+<tr><td>Security Software Disabler Trojans</td><td>يوقف عمل الـ Firewalls وIDS بتعطيلها أو إنهاء عملياتها — يُعدّ بوابة دخول تُمهّد لمستويات هجوم أعلى</td></tr>
+<tr><td>Destructive Trojans</td><td>يحذف ملفات ومجلّدات ومداخل Registry ومحرّكات محلية وشبكية عشوائيًا — ممكن يُفضي لفشل نظام التشغيل. مكتوب كـ Batch Files بسيطة بأوامر DEL أو DELTREE أو FORMAT</td></tr>
+<tr><td>Command Shell Trojans</td><td>يوفّر تحكّمًا بعيدًا في Command Shell على جهاز الضحية. أمثلة: Netcat، DNS Messenger، GCat</td></tr>
+</tbody>
+</table></div>
+
+<h3>طرق نشر أحصنة طروادة وإصابة الأنظمة</h3>
+<div class="method-grid">
+<div class="method-card"><div class="mtitle">Wrapper</div><div class="mdesc">ربط حصان طروادة بتطبيق شرعي (.EXE) — عند تشغيل التطبيق يُثبَّت الحصان في الخلفية ثم يعمل التطبيق الأصلي في المقدّمة. أدوات: petite.exe لضغط أي ملف ثنائي.</div></div>
+<div class="method-card"><div class="mtitle">Crypter</div><div class="mdesc">يُشفِّر الكود الثنائي الأصلي للـ .exe لإخفاء الفيروسات والـ RATs عن مضادات الفيروسات.</div></div>
+<div class="method-card"><div class="mtitle">Exploit Kits</div><div class="mdesc">أدوات كاملة لاستغلال ثغرات أمنية في برمجيات شائعة (Adobe Reader، Flash) — تأتي بـ Exploit Code جاهز وواجهة إحصائية لتتبّع الإصابات. أمثلة: Lord، RIG، Magnitude، Angler، Nuclear.</div></div>
+<div class="method-card"><div class="mtitle">Droppers &amp; Downloaders</div><div class="mdesc">Dropper يحمل ويُثبّت البرمجية مباشرةً في الذاكرة. Downloader يُحمِّلها من الإنترنت بعد ذلك — الثاني ممكن يتجاوز الفحص لأنه لا يحمل البرمجية في الملف.</div></div>
+</div>
+
+<h3>تقنيات التحايل على مضادات الفيروسات</h3>
+<ol>
+<li>تقسيم ملف حصان طروادة لأجزاء متعدّدة وضغطها في ملف واحد</li>
+<li>كتابة حصان طروادة من الصفر وتضمينه في تطبيق (مضادات الفيروسات لا تعرف التوقيعات الجديدة)</li>
+<li>تغيير محتوى الحصان باستخدام محرر Hex</li>
+<li>تغيير الـ Checksum وتشفير الملف</li>
+<li>تجنّب Trojans المحمَّلة من الويب (سهل كشفها)</li>
+</ol>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU3 -->
+<h2 id="lu3"><span class="num">03</span><span class="htext">الفيروسات والديدان والـ Ransomware</span></h2>
+
+<h3>الفيروسات (Viruses)</h3>
+<p>الفيروس هو برنامج ذاتي التكرار يُنتج كوده بإلحاق نسخ من نفسه بكود تنفيذي آخر، ويعمل دون علم المستخدم أو موافقته. مثل الفيروس البيولوجي، هو مُعدٍ ويُلوِّث ملفات أخرى — لكنه يحتاج مساعدة بشرية لإصابة أجهزة خارجية.</p>
+
+<h3>علامات الإصابة بالفيروسات</h3>
+<ul>
+<li>تباطؤ الحاسوب أو تجمّده المتكرّر، ظهور شاشة زرقاء (BSOD)</li>
+<li>تنبيهات مستمرة من مضاد الفيروسات، تغيّر تسمية محرك الأقراص</li>
+<li>اختفاء ملفات ومجلّدات، نشاط مشبوه على القرص الصلب</li>
+<li>نقص مساحة التخزين، إعلانات غير متوقَّعة، خروج غير متوقَّع من الجلسة</li>
+<li>ملفات بأكثر من امتداد (.exe.vbs)، صناديق حوار ومنافظ مُشوَّهة</li>
+</ul>
+
+<h3>أنواع الفيروسات (18 نوع)</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>النوع</th><th>الوصف المختصر</th></tr></thead>
+<tbody>
+<tr><td>System / Boot Sector Virus</td><td>يُصيب Master Boot Record أو Boot Sector الخاص بالقرص</td></tr>
+<tr><td>File Virus</td><td>يُلحق نفسه بالملفات التنفيذية (.exe, .com)</td></tr>
+<tr><td>Multipartite Virus</td><td>يُصيب كلًّا من Boot Sector والملفات في آنٍ واحد</td></tr>
+<tr><td>Macro Virus</td><td>يُصيب Macros في مستندات Office ويُطلَق عند فتحها</td></tr>
+<tr><td>Cluster Virus</td><td>يُصيب جدول FAT ويجعل جميع البرامج تُشير إليه</td></tr>
+<tr><td>Stealth / Tunneling Virus</td><td>يُخفي وجوده بالتلاعب في استدعاءات نظام التشغيل</td></tr>
+<tr><td>Encryption Virus</td><td>يُشفِّر نفسه لتجاوز الكشف بالتوقيع</td></tr>
+<tr><td>Sparse Infector Virus</td><td>يُصيب أحيانًا فقط لتقليل احتمال الكشف</td></tr>
+<tr><td>Polymorphic Virus</td><td>يُغيّر شكله مع كل نسخ مع إبقاء وظيفته — يُولِّد توقيعات مختلفة في كل مرة</td></tr>
+<tr><td>Metamorphic Virus</td><td>يُعيد كتابة كوده كاملًا مع كل نسخ</td></tr>
+<tr><td>Overwriting / Cavity Virus</td><td>يكتب فوق الكود الأصلي للملف المُصاب</td></tr>
+<tr><td>Companion / Camouflage Virus</td><td>يُنشئ ملفًا مصاحبًا بنفس الاسم لكن بامتداد مختلف</td></tr>
+<tr><td>Shell Virus</td><td>يُحوِّل نفسه لـ Shell حول البرنامج الأصلي</td></tr>
+<tr><td>FAT Virus</td><td>يُصيب جدول File Allocation Table</td></tr>
+<tr><td>Logic Bomb Virus</td><td>ينشّط نفسه عند تحقّق شرط زمني أو حدث معيّن</td></tr>
+<tr><td>Web Scripting Virus</td><td>يُصيب صفحات الويب ويُنفَّذ في متصفح الزائر</td></tr>
+<tr><td>Email Virus</td><td>ينتشر عبر مرفقات البريد الإلكتروني</td></tr>
+</tbody>
+</table></div>
+
+<h3>Virus Hoaxes والـ Fake Antivirus</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>الأسلوب</th><th>الوصف</th></tr></thead>
+<tbody>
+<tr><td>Virus Hoaxes</td><td>إنذارات كاذبة بشأن فيروسات غير موجودة — تنتشر بسرعة وبعضها يحتوي مرفقات فيروسية فعلية. مثال: Google Critical Security Alert Scam — تنبيه مزيَّف بأنشطة حساب يخدع المستخدم للنقر</td></tr>
+<tr><td>Fake Antivirus</td><td>برمجيات احتيال مبنية على برمجيات خبيثة تُشبه مضادات الفيروسات الحقيقية — تظهر في إعلانات ونتائج محركات البحث لتخدع المستخدمين بتثبيتها</td></tr>
+</tbody>
+</table></div>
+
+<h3>Ransomware</h3>
+<p>Ransomware هو نوع من البرمجيات الخبيثة يُقيِّد الوصول للحاسوب المُصاب أو الملفات الحرجة، ويطلب دفع فدية أونلاين لإزالة القيود. ممكن يُشفِّر الملفات أو يقفل النظام ويعرض رسائل تنتحل صفة شركات أو جهات قانونية.</p>
+<div class="callout warning">
+<div class="callout-label">مثال بارز</div>
+<p><strong>Mallox Ransomware</strong> يستهدف Windows عبر سيرفرات MS-SQL الضعيفة — يُشفِّر الملفات ويُلحق امتداد ".mallox" ويُنشئ ملف فدية "RECOVERY INFORMATION.txt". أُطلق في يونيو 2021 وله أكثر من 600 متغيّر حتى الآن في عائلة STOP/Djvu.</p>
+</div>
+<p>عائلات Ransomware الشائعة: Phobos، LockBitBlack، DarkSideRaaS، Conti، Cerber، NETWALKER، Maze، RansomEXX.</p>
+
+<h3>الديدان (Computer Worms)</h3>
+<p>ديدان الحاسوب هي برامج خبيثة مستقلّة تتكرّر وتُنفَّذ وتنتشر عبر اتصالات الشبكة بشكل مستقل ودون تدخّل بشري. معظمها مُصمَّمة للتكرار والانتشار بحيث تستنزف موارد الحوسبة المتاحة، مما يجعل سيرفرات الشبكة والويب والأجهزة تزدحم وتتوقّف عن الاستجابة. المهاجمون يستخدمون Payloads الديدان لتثبيت Backdoors تحوّل الأجهزة لـ Zombies وتُنشئ Botnet.</p>
+<div class="step-track">
+<div class="step-item"><div class="step-num">1</div><div class="step-title">إنشاء الدودة</div><div class="step-body"><p>استخدام أدوات زي Internet Worm Maker Thing أو Batch Worm Generator مع Packers وCrypters كـ BitCrypter للتشفير وتجنّب الكشف.</p></div></div>
+<div class="step-item"><div class="step-num">2</div><div class="step-title">النشر الأولي</div><div class="step-body"><p>عبر رسائل Phishing أو مواقع خبيثة أو مشاركات شبكية أو USB مُصابة.</p></div></div>
+<div class="step-item"><div class="step-num">3</div><div class="step-title">الإصابة وتنفيذ الـ Payload</div><div class="step-body"><p>عند نقر المستخدم على رابط Phishing أو تحميل ملف — تُنفَّذ الدودة باستخدام كود Exploit وسكربت آلي.</p></div></div>
+<div class="step-item"><div class="step-num">4</div><div class="step-title">فحص الأجهزة الأخرى</div><div class="step-body"><p>من خلال الجهاز المُصاب، الدودة تفحص أجهزة ضعيفة أخرى على الشبكة بطريقة تلقائية — فحص بورتات مفتوحة أو ثغرات معروفة.</p></div></div>
+<div class="step-item"><div class="step-num">5</div><div class="step-title">النسخ والانتشار</div><div class="step-body"><p>تنسخ نفسها للأجهزة الضعيفة المكتشَفة وتُكمل دورة الإصابة.</p></div></div>
+<div class="step-item"><div class="step-num">6</div><div class="step-title">الاستمرارية وتسريب البيانات</div><div class="step-body"><p>تُثبِّت Backdoors أو تُعدِّل إعدادات النظام للبقاء نشطةً وتُسرِّب البيانات باستمرار من الأجهزة المُصابة.</p></div></div>
+</div>
+<p>أمثلة على ديدان حديثة: SSH-Snake، Raspberry Robin، P2PInfect.</p>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU4 -->
+<h2 id="lu4"><span class="num">04</span><span class="htext">البرمجيات الخبيثة الغير ملفية (Fileless Malware)</span></h2>
+
+<h3>تعريف Fileless Malware</h3>
+<p>البرمجيات الخبيثة الغير ملفية (Non-Malware) تُصيب برمجيات شرعية وتطبيقات وبروتوكولات قائمة في النظام دون ترك ملفات على القرص. تقيم عادةً في ذاكرة RAM وتحقن كود خبيث في عمليات جارية كـ Microsoft Word وFlash وPowerShell وWMI وJavaScript. صعوبة كشفها الأساسية أنها لا تُخزَّن على القرص، مما يجعل فحص التوقيعات التقليدية عديم الفائدة.</p>
+
+<h3>طرق إطلاق Fileless Malware</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>الأسلوب</th><th>الوصف</th></tr></thead>
+<tbody>
+<tr><td>Document Exploits</td><td>وثائق بـ Macros خبيثة (VBA/JavaScript) تُطلق عبر رسائل Phishing — الماكرو يستغلّ PowerShell لتشغيل Payload إضافي بدون أثر على القرص</td></tr>
+<tr><td>In-Memory Exploits</td><td>حقن Payload مباشرةً في ذاكرة RAM تستهدف عمليات شرعية — استغلال APIs أو أدوات إدارة Windows (WMI، PSExec، PowerShell)</td></tr>
+<tr><td>Script-based Injection</td><td>سكربتات بـ Binaries وShellcode مُخفَّفة ومُجمَّعة لتجنّب إنشاء ملفات على القرص — تُنفَّذ مباشرةً من الذاكرة عبر PowerShell. أمثلة: KOVET، POWMET، FAREIT</td></tr>
+<tr><td>System Admin Tools Exploitation</td><td>استغلال Certutil وWMIC وRegsvr32 وRunddl32 لتشغيل DLLs خبيثة وتثبيت نسخ معدَّلة من أدوات Pen Testing</td></tr>
+<tr><td>Phishing</td><td>روابط Spam تُوجَّه لمواقع تُحمِّل Flash وتُطلق الاستغلال — تفحص ثغرات PowerShell وWMI وJava plugins وتُحمِّل Payload وتُسرِّب بيانات الذاكرة</td></tr>
+<tr><td>Windows Registry</td><td>تعديل ExecutionPolicy لـ "unrestricted" أو "bypass" لتسهيل تنفيذ سكربتات خبيثة — استغلال Kovter عبر تعديل mshta.exe في الـ Registry</td></tr>
+<tr><td>Reflective DLL Injection</td><td>تحميل DLL في ذاكرة عملية جارية بدون كتابتها على القرص — تجنّب الكشف عبر الفحص القائم على القرص</td></tr>
+</tbody>
+</table></div>
+
+<h3>تصنيف Fileless Malware حسب النشاط على القرص</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>النوع</th><th>الوصف</th></tr></thead>
+<tbody>
+<tr><td>Type 1: لا نشاط على القرص</td><td>لا يكتب ملفات أبدًا — مثال: حزم خبيثة تستغلّ ثغرة تُثبِّت Backdoor في ذاكرة Kernel، أو كود في Firmware الجهاز (أصعب نوع في الكشف)</td></tr>
+<tr><td>Type 2: نشاط غير مباشر على القرص</td><td>يستخدم ملفات للتواجد Fileless — مثال: حقن أمر PowerShell خبيث في WMI Repository لإعداد Filter يُنفَّذ دوريًا</td></tr>
+<tr><td>Type 3: يحتاج ملفات للتشغيل</td><td>يحتاج ملفات لكن لا ينفِّذ الهجمات منها مباشرةً — مثال: استغلال مستند بـ Macro أو Java/Flash لحقن Payload ثم الحفاظ على الاستمرارية بدون ملفات</td></tr>
+</tbody>
+</table></div>
+
+<h3>تقنيات تمويه Fileless Malware لتجاوز مضادات الفيروسات</h3>
+<div class="method-grid">
+<div class="method-card"><div class="mtitle">Inserting Characters</div><div class="mdesc">إدراج أحرف خاصة (فاصلة، فاصلة منقوطة) بين الأوامر لتكسير السلاسل الخبيثة وتجنّب التحليل بالتوقيع — <code>,;cmd.exe,/c,;,echo;powershell.exe</code></div></div>
+<div class="method-card"><div class="mtitle">Custom Environment Variables</div><div class="mdesc">استغلال متغيّرات البيئة لتقسيم الأوامر الخبيثة لسلاسل متعدّدة يُعيَّن لها قيمة وقت التشغيل — <code>set a=Power &&set b=Shell && %a:~0,-1%%b%</code></div></div>
+</div>
+
+<h3>الاستمرارية بتقنيات Fileless</h3>
+<p>المهاجمون يُخزِّنون الـ Payload الخبيث داخل Registry الذي يحتفظ بإعدادات التطبيقات — عند تحميل الكود الخبيث في مفاتيح الـ Registry، يُنفِّذ نفسه مع كل إعادة تشغيل أو عند النقر على ملف اختصار. كمان يُمكن استغلال Windows Task Scheduler لتنشيط سكربتات في أوقات محدَّدة. مثال: LODEINFO — يبدأ برسائل Phishing تحتوي وثائق Word، وعند فتحها تُطلق VBA Macros لتنزيل وتنفيذ الـ Implant.</p>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU5 -->
+<h2 id="lu5"><span class="num">05</span><span class="htext">البرمجيات الخبيثة المعتمدة على الذكاء الاصطناعي</span></h2>
+
+<p>تطوّر AI أدّى لتحوّل المجرمين الإلكترونيين لاستغلال خوارزميات التعلّم الآلي لإنشاء برمجيات خبيثة أكثر تخفّيًا وصمودًا. أبرز متغيّراتها: BlackMamba، WormGPT، FraudGPT، Stuxnet، DeepLocker، Mylobott.</p>
+
+<h3>مراحل عدوى AI Malware</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>المرحلة</th><th>الوصف</th></tr></thead>
+<tbody>
+<tr><td>Infiltration (التسلّل)</td><td>الوصول للنظام المستهدَف عبر رسائل Phishing أو أجهزة سيّئة الإعداد أو برمجيات خبيثة قائمة</td></tr>
+<tr><td>Establishment (التثبيت)</td><td>تأمين موطئ قدم باستغلال الثغرات أو تقنيات تهرّب متقدّمة</td></tr>
+<tr><td>Learning (التعلّم)</td><td>استخراج بيانات النظام والشبكة والسلوك وآليات الأمان لاكتساب رؤى</td></tr>
+<tr><td>Adaptation (التكيّف)</td><td>تعديل الكود المصدري بناءً على رؤى مرحلة التعلّم لتجاوز مضادات الفيروسات واعتماد استراتيجيات جديدة</td></tr>
+<tr><td>Execution (التنفيذ)</td><td>تنفيذ الأنشطة المقصودة — سرقة بيانات، تشفير، إنشاء Backdoors</td></tr>
+<tr><td>Propagation (الانتشار)</td><td>الانتشار لأنظمة أخرى باستغلال ثغرات أو أساليب هندسة اجتماعية</td></tr>
+<tr><td>Evolution (التطوّر)</td><td>التحوّل لشكل أكثر تطوّرًا بالتكيّف مع كل التغييرات المواجَهة في المراحل السابقة</td></tr>
+</tbody>
+</table></div>
+
+<h3>تقنيات تطوير AI Malware</h3>
+<div class="method-grid">
+<div class="method-card"><div class="mtitle">GANs (Generative Adversarial Networks)</div><div class="mdesc">توليد بيانات جديدة مشابهة للبيانات التدريبية — تستخدم لتوليد أنماط إصابة جديدة تتجنّب الكشف.</div></div>
+<div class="method-card"><div class="mtitle">Reinforcement Learning</div><div class="mdesc">تطوير أو تحوير AI Malware بإضافة خصائص جديدة — نتائج GAN تُستخدَم كمدخل لاستيراد أقسام في البرمجية الخبيثة للطفرة.</div></div>
+<div class="method-card"><div class="mtitle">NLP (Natural Language Processing)</div><div class="mdesc">رسائل Phishing متطوّرة تُحاكي أسلوب مرسلين شرعيين، برمجيات خبيثة واعية بالسياق تسرق بيانات حسّاسة، هجمات هندسة اجتماعية آلية عبر Chatbots، واتصالات C2 تُشابه حركة المرور الشرعية.</div></div>
+</div>
+
+<h3>أمثلة AI Malware</h3>
+<div class="method-grid">
+<div class="method-card"><div class="mtitle">BlackMamba</div><div class="mdesc">برمجية Polymorphic مولَّدة بـ AI تستخدم LLM لإنشاء Keylogger متعدّد الأشكال — تستخرج ضغطات المفاتيح وترسلها لسيرفر C2 في شظايا صغيرة عبر قنوات مشفَّرة.</div></div>
+<div class="method-card"><div class="mtitle">FakeGPT</div><div class="mdesc">امتداد Chrome يُحاكي ChatGPT يُوزَّع عبر إعلانات Facebook مُضلِّلة — يستقبل بيانات المتصفح ويستولي على حسابات Facebook، يُنشئ تطبيقًا مارقًا بصلاحيات واسعة ويُنشر عبر الحسابات المخترَقة.</div></div>
+<div class="method-card"><div class="mtitle">AI-Generated Videos (YouTube)</div><div class="mdesc">مقاطع فيديو بـ Deepfake تصطنع دروس برمجيات تُقدِّم نسخًا مكسورة من Photoshop وAutodesk وAutoCAD — محمَّلة ببرمجيات خبيثة مخفية.</div></div>
+</div>
+
+<h3>مؤشّرات إصابة AI Malware</h3>
+<ul>
+<li>ارتفاع مفاجئ في نقل البيانات، اتصالات خارجية غير مألوفة</li>
+<li>استخدام بورتات أو بروتوكولات غير شائعة</li>
+<li>حلول أمنية كانت فعّالة أصبحت أقل فاعلية فجأةً</li>
+<li>استهلاك مفرط للـ CPU وذاكرة RAM وعرض النطاق</li>
+<li>رسائل Phishing شخصية مُرسَلة من شبكة خاضعة للتحكّم</li>
+<li>تغييرات غير مصرَّح بها في إعدادات النظام أو صلاحيات المستخدمين</li>
+<li>تنفيذات كود غامضة في الذاكرة لا تُحفَظ على القرص</li>
+</ul>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU6 -->
+<h2 id="lu6"><span class="num">06</span><span class="htext">تحليل البرمجيات الخبيثة</span></h2>
+
+<h3>الحاسوب العازل (Sheep Dip Computer)</h3>
+<p>مصطلح مستوحى من زراعة الخراف (غمس الخراف في محاليل كيميائية لتنظيفها من الطفيليات) — في أمان المعلومات هو تحليل ملفات مشبوهة وبرمجيات خبيثة محتملة على جهاز معزول عن بقية الشبكة لمنع انتشار أي إصابة. المهام النموذجية: تشغيل مراقِبات المستخدم والعمليات والبورتات والشبكة والمحرّكات والملفات والـ Registry والـ Kernel.</p>
+
+<h3>لماذا تحليل البرمجيات الخبيثة؟</h3>
+<div class="goals-grid">
+<div class="goal-card"><span class="gi">1</span><span>تحديد النية الخبيثة للبرمجية بدقة</span></div>
+<div class="goal-card"><span class="gi">2</span><span>تحديد مؤشّرات الاختراق (IoC)</span></div>
+<div class="goal-card"><span class="gi">3</span><span>تحديد الثغرة المستغلَّة ونطاق الضرر</span></div>
+<div class="goal-card"><span class="gi">4</span><span>القبض على الجاني ومحاسبته</span></div>
+</div>
+
+<h3>نوعا التحليل</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>النوع</th><th>الوصف</th></tr></thead>
+<tbody>
+<tr><td>Static Malware Analysis (Code Analysis)</td><td>فحص الكود التنفيذي الثنائي بدون تشغيله — آمن لأن المحقّق لا يثبّت أو يُشغِّل الملف المشبوه. يتضمّن: File Fingerprinting، فحص محلي وأونلاين، بحث Strings، تحديد Packing/Obfuscation، معلومات PE، تبعيات الملف، Disassembly، تحليل ELF وMach-O وVBA Macros وPDF</td></tr>
+<tr><td>Dynamic Malware Analysis (Behavioral Analysis)</td><td>تشغيل كود البرمجية الخبيثة لفهم تفاعلها مع النظام المضيف وأثرها بعد الإصابة — في بيئة محكومة (VM وSandbox). تعتمد على: Port Monitoring، Process Monitoring، Registry Monitoring، Network Traffic Analysis، وغيرها</td></tr>
+</tbody>
+</table></div>
+<div class="callout tip"><div class="callout-label">ملاحظة جوهرية</div><p>يُوصى دائمًا بإجراء كلا نوعَي التحليل معًا للحصول على فهم شامل لوظيفة البرمجية الخبيثة.</p></div>
+
+<hr />
+
+<h3>التحليل الثابت (Static Analysis) — التقنيات والأدوات</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>التقنية</th><th>الوصف والأدوات</th></tr></thead>
+<tbody>
+<tr><td>File Fingerprinting</td><td>حساب هاش للكود الثنائي (MD5، SHA-1، SHA-256) لتحديد البرمجية وتتبّعها ومقارنتها. أداة <strong>HashMyFiles</strong> (nirsoft.net) تحسب MD5/SHA1/CRC32/SHA-256/SHA-512. أدوات إضافية: Hashing، SHA-256 Calculator، Hash Tool، MD5sums</td></tr>
+<tr><td>Local and Online Malware Scanning</td><td>فحص محلي بمضادات فيروسات محدَّثة أو رفع الملف على <strong>VirusTotal</strong> (virustotal.com) الذي يحسب الهاش ويقارنه بقواعد بيانات معروفة. أدوات إضافية: Any.Run، Hybrid Analysis، JoeSandbox Cloud، Jotti، Valkyrie Sandbox</td></tr>
+<tr><td>Performing Strings Search</td><td>البحث عن سلاسل نصّية مُدمَجة في الكود الثنائي تكشف الوظيفة الخبيثة — URLs أو أوامر شبكية أو مسارات ملفات. أداة <strong>BinText</strong> تستخرج نصوص ASCII وUnicode وResource Strings</td></tr>
+<tr><td>Identifying Packing/Obfuscation</td><td>تعبئة/تشويش الملفات التنفيذية لتجنّب الكشف — <strong>PEiD</strong> يُعرِّف أكثر من 600 Packer ومُجمِّع. <strong>DIE (Detect It Easy)</strong> للـ ELF (Linux/macOS). أدوات إضافية: Macro_Pack، UPX، ASPack، VMprotect</td></tr>
+<tr><td>Finding PE Information</td><td>صيغة PE تحتوي Metadata عن البرنامج — وقت الإنشاء والتعديل، دوال Import/Export، وقت الترجمة، DLLs، سلاسل نصّية. أداة <strong>PE Explorer</strong> لفتح وعرض وتعديل ملفات EXE وDLL وActiveX وSCR وغيرها</td></tr>
+<tr><td>Identifying File Dependencies</td><td>مكتبات واستدعاءات دوال يعتمد عليها الكود — <strong>Dependency Walker</strong> يبني مخطّطات هرمية لكل الوحدات المُعتمدة ويكشف مشاكل شائعة كوحدات مفقودة وتعارضات</td></tr>
+<tr><td>Malware Disassembly</td><td>تفكيك الملف التنفيذي للكود الثنائي لدراسة وظائفه — يُحدِّد لغة البرمجة وAPIs المستخدَمة. أداة <strong>IDA Pro</strong> — Disassembler وDebugger متعدّد المنصّات يعرض التعليمات بصيغة Assembly</td></tr>
+<tr><td>Analyzing ELF Executable Files</td><td>ELF الصيغة القياسية للملفات التنفيذية في Linux — يحتوي ELF Header وSections وSegments. أداة <strong>readelf</strong> لاستخراج Symbols وProgram Headers ومعلومات ELF Header</td></tr>
+<tr><td>Analyzing Mach-O Files</td><td>صيغة Mach Object لـ macOS وiOS — تحتوي أجزاء __PAGEZERO/__TEXT/__DATA/__OBJC. أدوات: <strong>LIEF</strong> (قراءة وتلاعب)، <strong>otool</strong> (فحص المكتبات المرتبطة)، <strong>Hopper Disassembler</strong> (Reverse Engineering)</td></tr>
+<tr><td>Analyzing Malicious MS Office Documents</td><td>أداة <strong>oletools</strong> (Python) لتحليل ملفات OLE2 الخاصة بـ Office — oleid لمراجعة المكوّنات المشبوهة، oledump لتحليل Macro Streams، olevba لعرض كود VBA وتحديد الكلمات المفتاحية المشبوهة</td></tr>
+<tr><td>Analyzing Suspicious PDF Documents</td><td><strong>PDFiD</strong> لفحص PDF وعرض هيكله والسكربتات — <strong>PDFStreamDumper</strong> لفحص العناصر الداخلية وسكربتات JavaScript المُخفَّفة والاستغلالات المعروفة. <strong>YARA</strong> لإنشاء قواعد مخصَّصة للكشف عن أنماط الإصابة في الملفات</td></tr>
+</tbody>
+</table></div>
+
+<hr />
+
+<h3>التحليل الديناميكي (Dynamic Analysis) — المراقبة والأدوات</h3>
+<p>تحليل ديناميكي بيدرس سلوك البرمجية الخبيثة بتشغيلها في بيئة مُراقَبة — يُوفِّر معلومات قيّمة حول الملفات المُنشأة والبورتات والـ URLs المُتَّصل بها والمكتبات المُستدعاة والتغييرات في الإعدادات. يستلزم VM وSandboxes آمنة مع أدوات تلتقط كل تصرّف للبرمجية.</p>
+
+<h4>إعداد بيئة الاختبار (Testbed)</h4>
+<ol>
+<li>تخصيص جهاز فيزيائي لمعمل التحليل</li>
+<li>تثبيت Virtual Machine (VMware أو Hyper-V)</li>
+<li>تثبيت نظام تشغيل Guest على الـ VM</li>
+<li>عزل الجهاز عن الشبكة (NIC في وضع "Host Only")</li>
+<li>محاكاة خدمات الإنترنت بأدوات مثل INetSim</li>
+<li>تعطيل "Shared Folders" و"Guest Isolation"</li>
+<li>تثبيت أدوات تحليل البرمجيات الخبيثة</li>
+<li>توليد هاش لكل نظام تشغيل وأداة (للمقارنة لاحقًا)</li>
+<li>نسخ البرمجية الخبيثة للـ Guest OS</li>
+</ol>
+
+<div class="table-wrap"><table>
+<thead><tr><th>نوع المراقبة</th><th>الوصف والأدوات الأساسية</th></tr></thead>
+<tbody>
+<tr><td>Port Monitoring</td><td>البرمجيات الخبيثة تفتح بورتات للاتصال بسيرفرات بعيدة. <strong>Netstat</strong> لعرض اتصالات TCP النشطة. <strong>TCPView</strong> (Sysinternals) لقائمة تفصيلية بكل TCP وUDP Endpoints مع الحالة</td></tr>
+<tr><td>Process Monitoring</td><td>البرمجيات الخبيثة تختفي خلف خدمات Windows أو تحقن نفسها في عمليات كـ explorer.exe. <strong>Process Monitor</strong> (Sysinternals) يُظهر نشاط نظام الملفات والـ Registry والعمليات في الوقت الفعلي. إضافي: Process Explorer، ESET SysInspector</td></tr>
+<tr><td>Registry Monitoring</td><td>البرمجيات الخبيثة تُضيف مداخل Registry لضمان تشغيلها مع كل إقلاع. <strong>jv16 PowerTools</strong> لفحص ومراقبة الـ Registry. إضافي: Reg Organizer، Registry Viewer، Regshot</td></tr>
+<tr><td>Windows Services Monitoring</td><td>البرمجيات الخبيثة تُثبَّت كخدمات تعمل في الخلفية بدون ظهور. <strong>Windows Service Manager (SrvMan)</strong> يكشف التغييرات ويفحص الخدمات المشبوهة</td></tr>
+<tr><td>Startup Programs Monitoring</td><td>البرمجيات الخبيثة تُضيف نفسها لقائمة Startup. <strong>Autoruns for Windows</strong> يُظهر كل التطبيقات المُعدَّة للتشغيل التلقائي مرتّبة بالترتيب الذي تعالجه Windows</td></tr>
+<tr><td>Event Logs Monitoring</td><td>تحليل سجلّات الأحداث لرصد السلوك الخبيث. أدوات: Splunk، ManageEngine Event Log Analyzer، Solarwinds Loggly، Netwrix Event Log Manager</td></tr>
+<tr><td>Files and Folders Monitoring</td><td>البرمجيات الخبيثة تُعدِّل ملفات ومجلّدات النظام. أدوات: Tripwire، Netwrix Auditor، Verisys Integrity Suite، NNT Change Tracker</td></tr>
+<tr><td>Device Drivers Monitoring</td><td>البرمجيات الخبيثة تُثبَّت مع Drivers من مصادر غير موثوقة كدرع للتمويه. أدوات: DriverView، Driver Booster. فحص يدوي: Run → msinfo32 → Software Environment → System Drivers</td></tr>
+<tr><td>Network Traffic Monitoring</td><td>البرمجيات الخبيثة تتصل بسيرفرات C2 وترسل بيانات حسّاسة. أدوات: Wireshark، Capsa Network Analyzer، PRTG، SolarWinds NetFlow Traffic Analyzer، GFI LanGuard</td></tr>
+<tr><td>DNS Monitoring</td><td>DNSChanger يُغيّر إعدادات DNS للنظام. أداة <strong>DNSQuerySniffer</strong> لمراقبة سيرفرات DNS التي تحاول البرمجية الاتصال بها. إضافي: DNSstuff، UltraDNS، Dotcom-Monitor</td></tr>
+<tr><td>API Calls Monitoring</td><td>البرمجيات الخبيثة تستخدم Windows APIs للوصول لنظام الملفات والـ Registry. <strong>API Monitor</strong> لتتبّع استدعاءات API من التطبيقات. إضافي: Runscope، AlertSite</td></tr>
+<tr><td>System Calls Monitoring</td><td>Syscalls واجهة بين التطبيق والـ Kernel. أداة <strong>strace</strong> في Linux لعرض وتتبّع استدعاءات النظام</td></tr>
+<tr><td>Scheduled Tasks Monitoring</td><td>البرمجيات الخبيثة تُفعِّل مشغِّلات زمنية أو بناءً على أحداث. أدوات: Windows Task Scheduler، schtasks، ADAudit Plus</td></tr>
+<tr><td>Browser Activity Monitoring</td><td>البرمجيات الخبيثة تستخدم المتصفحات للاتصال بسيرفرات C2 وتحميل ملفات خبيثة. أدوات: Wireshark، Colasoft Portable Network Analyzer، OmniPeek</td></tr>
+</tbody>
+</table></div>
+
+<h3>طرق كشف الفيروسات</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>الطريقة</th><th>الوصف</th></tr></thead>
+<tbody>
+<tr><td>Scanning</td><td>البحث عن سلاسل نصّية مميِّزة للفيروس المعروف بعد اكتشافه مرة أولى</td></tr>
+<tr><td>Integrity Checking</td><td>قراءة القرص كاملًا وتسجيل بيانات سلامة تعمل كتوقيع للملفات وقطاعات النظام — مقارنتها لاحقًا لرصد التغييرات</td></tr>
+<tr><td>Interception</td><td>مراقبة طلبات نظام التشغيل المتعلّقة بالكتابة على القرص</td></tr>
+<tr><td>Code Emulation</td><td>تنفيذ الكود الخبيث داخل آلة افتراضية تُحاكي CPU والذاكرة — فعّال جدًا مع الفيروسات المشفَّرة والـ Polymorphic</td></tr>
+<tr><td>Heuristic Analysis</td><td>ثابتة: تحليل صيغة الملف وبنية الكود. ديناميكية: محاكاة الكود المشبوه للتحقّق من سلوكه الخبيث</td></tr>
+</tbody>
+</table></div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU7 -->
+<h2 id="lu7"><span class="num">07</span><span class="htext">الإجراءات المضادة للبرمجيات الخبيثة</span></h2>
+
+<ul>
+<li>تجنّب فتح مرفقات بريد إلكتروني من مرسلين مجهولين</li>
+<li>حجب جميع البورتات غير الضرورية على المضيف والـ Firewall</li>
+<li>تجنّب تنزيل وتشغيل التطبيقات من مصادر غير موثوقة</li>
+<li>استخدام أدوات مضاد فيروسات (Bitdefender، Kaspersky) للكشف عن الـ Backdoors وإزالتها</li>
+<li>الحفاظ على نسخ احتياطية للبيانات بانتظام</li>
+<li>تفعيل حاجبات النوافذ المنبثقة واستخدام Firewall للإنترنت</li>
+<li>عدم فتح ملفات ذات أكثر من امتداد (.exe.jpg)</li>
+<li>الإبقاء على نظام التشغيل والتطبيقات محدَّثة دائمًا بأحدث التصحيحات</li>
+</ul>
+<p>حلول EDR/XDR شائعة: Microsoft Defender for Endpoint، Tanium Endpoint Management، Cisco XDR، Trellix ENS، VMware Carbon Black.</p>
+
+<hr />
+
+<!-- ══════════════════════════════════ METHODOLOGY -->
+<h2 id="methodology"><span class="htext">منهجية تحليل البرمجيات الخبيثة خطوة بخطوة</span></h2>
+
+<div class="step-track">
+<div class="step-item"><div class="step-num">1</div><div class="step-title">إعداد بيئة الاختبار المعزولة</div><div class="step-body"><p>VM معزولة (Host-Only NIC)، محاكاة إنترنت بـ INetSim، تعطيل Shared Folders وGuest Isolation، تثبيت أدوات التحليل، وأخذ Snapshot للـ VM قبل الإصابة.</p></div></div>
+<div class="step-item"><div class="step-num">2</div><div class="step-title">Static Analysis — File Fingerprinting والفحص الأولي</div><div class="step-body"><p>حساب هاش الملف (MD5/SHA-256)، فحصه محليًا وعبر VirusTotal، استخراج Strings، تحديد Packing بـ PEiD أو DIE، وفحص PE Metadata.</p></div></div>
+<div class="step-item"><div class="step-num">3</div><div class="step-title">Static Analysis — التحليل العميق حسب نوع الملف</div><div class="step-body"><p>ELF: readelf. Mach-O: LIEF وotool وHopper. Office Documents: oletools. PDF: PDFiD وPDFStreamDumper. Windows PE: IDA Pro وDependency Walker. YARA لإنشاء قواعد كشف مخصَّصة.</p></div></div>
+<div class="step-item"><div class="step-num">4</div><div class="step-title">System Baselining قبل التشغيل</div><div class="step-body"><p>التقاط حالة النظام (Snapshot) — نظام الملفات، الـ Registry، البورتات المفتوحة، نشاط الشبكة، الخدمات الجارية، عمليات نظام التشغيل.</p></div></div>
+<div class="step-item"><div class="step-num">5</div><div class="step-title">Dynamic Analysis — تشغيل البرمجية ومراقبة السلوك</div><div class="step-body"><p>تشغيل البرمجية الخبيثة مع مراقبة: البورتات (TCPView)، العمليات (Process Monitor)، الـ Registry (Regshot)، حركة الشبكة (Wireshark)، الخدمات (SrvMan)، Startup Programs (Autoruns)، استدعاءات API.</p></div></div>
+<div class="step-item"><div class="step-num">6</div><div class="step-title">تحليل الفروق وتحديد الأثر</div><div class="step-body"><p>مقارنة حالة النظام قبل وبعد الإصابة لتحديد الملفات المُنشأة، مداخل Registry الجديدة، البورتات المفتوحة، اتصالات C2، والخدمات الجديدة.</p></div></div>
+<div class="step-item"><div class="step-num">7</div><div class="step-title">التوثيق ووضع توصيات المعالجة</div><div class="step-body"><p>توثيق كل خطوة وأدوات ومشاهدات ونتائج، تحديد IoCs (هاشات، URLs، IPs، مداخل Registry)، ووضع توصيات معالجة قابلة للتنفيذ.</p></div></div>
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ CHEAT SHEET -->
+<h2 id="cheat"><span class="htext">Cheat Sheet مرجعي</span></h2>
+<div class="cheat-section">
+
+<h4>مقارنة سريعة: Static مقابل Dynamic Analysis</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>الجانب</th><th>Static Analysis</th><th>Dynamic Analysis</th></tr></thead>
+<tbody>
+<tr><td>الاسم البديل</td><td>Code Analysis</td><td>Behavioral Analysis</td></tr>
+<tr><td>هل البرمجية تُشغَّل؟</td><td>لا — آمن تمامًا</td><td>نعم — بحاجة لبيئة معزولة</td></tr>
+<tr><td>ما الذي يُكشَف؟</td><td>هيكل الكود، التبعيات، التوقيعات، الـ Strings</td><td>سلوك في وقت التشغيل، ملفات مُنشأة، اتصالات شبكية</td></tr>
+<tr><td>أداة مرجعية</td><td>IDA Pro، VirusTotal، PEiD</td><td>Wireshark، Process Monitor، TCPView</td></tr>
+</tbody>
+</table></div>
+
+<h4>مرجع سريع لأنواع أحصنة طروادة</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>النوع</th><th>مثال حديث</th></tr></thead>
+<tbody>
+<tr><td>RAT</td><td>njRAT</td></tr>
+<tr><td>Backdoor</td><td>TinyTurla-NG (Turla APT Group)</td></tr>
+<tr><td>Botnet</td><td>RDDoS، Qakbot، XorDdos</td></tr>
+<tr><td>Rootkit</td><td>Reptile Rootkit (Linux)</td></tr>
+<tr><td>E-Banking</td><td>CHAVECLOAK، Grandoreiro</td></tr>
+<tr><td>POS</td><td>PrilexPOS</td></tr>
+<tr><td>Mobile</td><td>Chameleon (Android)</td></tr>
+<tr><td>IoT</td><td>OpenSSH Trojan</td></tr>
+</tbody>
+</table></div>
+
+<h4>أدوات Static Analysis حسب نوع الملف</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>نوع الملف</th><th>الأداة الأساسية</th></tr></thead>
+<tbody>
+<tr><td>Windows PE (.exe, .dll)</td><td>PEiD، PE Explorer، Dependency Walker، IDA Pro</td></tr>
+<tr><td>Linux ELF</td><td>readelf، DIE (Detect It Easy)</td></tr>
+<tr><td>macOS Mach-O</td><td>LIEF، otool، Hopper Disassembler</td></tr>
+<tr><td>MS Office Documents</td><td>oletools (oleid، oledump، olevba)</td></tr>
+<tr><td>PDF</td><td>PDFiD، PDFStreamDumper</td></tr>
+<tr><td>Any File</td><td>YARA (قواعد مخصَّصة)، VirusTotal، HashMyFiles</td></tr>
+</tbody>
+</table></div>
+
+<h4>أدوات Dynamic Analysis حسب نوع المراقبة</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>المراقبة</th><th>الأداة الأساسية</th></tr></thead>
+<tbody>
+<tr><td>بورتات شبكية</td><td>TCPView، Netstat</td></tr>
+<tr><td>عمليات النظام</td><td>Process Monitor، Process Explorer</td></tr>
+<tr><td>Registry</td><td>Regshot، jv16 PowerTools</td></tr>
+<tr><td>خدمات Windows</td><td>Windows Service Manager (SrvMan)</td></tr>
+<tr><td>برامج الإقلاع</td><td>Autoruns for Windows</td></tr>
+<tr><td>حركة الشبكة</td><td>Wireshark، Capsa Network Analyzer</td></tr>
+<tr><td>API Calls</td><td>API Monitor</td></tr>
+<tr><td>System Calls (Linux)</td><td>strace</td></tr>
+</tbody>
+</table></div>
+
+<div class="code-wrap"><span class="code-tag">yara — scanning a suspicious file</span><pre><code># إنشاء قاعدة YARA لفحص ملفات PDF
+# (محتوى القاعدة يُحدَّد في ملف pdf_rules.yar)
+
+yara &lt;path_to/pdf_rules.yar&gt; &lt;path_to/suspicious_file&gt;
+
+# فحص مستند مشبوه بـ oletools
+oleid '&lt;path_to/document&gt;'
+python3 oledump.py '&lt;path_to/document&gt;'
+python3 oledump.py -s &lt;stream_number&gt; '&lt;path_to/document&gt;'
+olevba '&lt;path_to/document&gt;'
+
+# تحليل ELF بـ readelf
+readelf -s &lt;malware.elf&gt;    # Symbols
+readelf -l &lt;malware.elf&gt;    # Program Headers
+readelf -h &lt;malware.elf&gt;    # ELF Header
+
+# تحليل Mach-O بـ otool
+otool -L &lt;binary&gt;           # مكتبات مرتبطة
+</code></pre></div>
+
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ SUMMARY -->
+<h2 id="summary"><span class="htext">الخلاصة العامة للموديول</span></h2>
+<p>الموديول ده قدّم مفاهيم البرمجيات الخبيثة وتقنيات انتشارها، شرح التطبيقات غير المرغوب فيها، وناقش APTs ودورة حياتها. وصف أحصنة طروادة بأنواعها الأربعة عشر، الفيروسات بأنواعها الثمانية عشر، وكيفية إصابة الأنظمة بها. وضَّح الديدان والـ Ransomware ثم انتقل للفيلسلس ملوير وكيف تُصيب الأنظمة. تطرَّق لمفاهيم AI Malware وعرض عملية التحليل كاملة (Static وDynamic) مع الأدوات المتخصّصة. وختم بالإجراءات المضادة وأدوات مكافحة أحصنة طروادة والفيروسات.</p>
+
+<div class="takeaways">
+<div class="takeaways-title">$ cat ./module07_summary.txt</div>
+<ul>
+<li>البرمجيات الخبيثة تدخل الأنظمة عبر مسارات متعدّدة — البريد وUSB والمتصفحات وتطبيقات المراسلة — لا يوجد مسار واحد أكثر شيوعًا من البريد الإلكتروني المُرفق</li>
+<li>APT ليست هجومًا واحدًا — هي دورة من ست مراحل تستمر أشهرًا أو سنوات، وتستهدف مؤسسات بعينها بتقنيات Zero-Day متطوّرة</li>
+<li>أحصنة طروادة تعمل بنفس صلاحيات الضحية — ده معناه إن اختيار الحساب المُستهدَف يحدّد نطاق الضرر مباشرةً</li>
+<li>Fileless Malware لا يُخزَّن على القرص — الكشف التقليدي بالتوقيع لا يكفي، والمراقبة السلوكية هي الحل الأمثل</li>
+<li>AI Malware بيتكيَّف ويتعلَّم ويطوَّر — التحديات الرئيسية هي أتمتة التصعيد وتجاوز الكشف بالتوقيع والتخصيص الموجَّه للهدف</li>
+<li>Static Analysis آمن لكن محدود — لازم يُكمِّله Dynamic Analysis لفهم السلوك الفعلي وقت التشغيل</li>
+<li>إعداد بيئة الاختبار المعزولة خطوة غير قابلة للتجاوز — تحليل البرمجيات الخبيثة على شبكة إنتاجية خطر حقيقي</li>
+</ul>
+</div>
+
+<blockquote>
+<p><strong>البرمجيات الخبيثة الحديثة لم تعد برامج بسيطة</strong> — هي منظومة متكاملة من المكوّنات (Crypter، Dropper، Downloader، Injector، Payload) تعمل معًا في تنسيق دقيق. فهمها لا يعني فقط معرفة ما تفعله، بل فهم كيف تُخفي نفسها، وكيف تستمر في النظام، وكيف تتواصل مع مُشغِّلها — وهذا بالظبط ما بيركّز عليه التحليل الجيّد سواء كان ثابتًا أو ديناميكيًا.</p>
+</blockquote>
+
+<div class="callout examtip">
+<div class="callout-label">Exam Tip</div>
+<p>ركّز على الفرق بين أنواع أحصنة طروادة (خصوصًا RAT مقابل Backdoor مقابل Rootkit Trojan)، الفرق بين Dropper وDownloader، مراحل APT الست بالترتيب، تعريف Fileless Malware وطرق الإطلاق الست، وتصنيف Fileless بالأنواع الثلاثة. في التحليل: الفرق بين Static وDynamic، وأي أداة لأي نوع ملف (IDA Pro للـ PE، readelf للـ ELF، oletools للـ Office، PDFiD للـ PDF). أسئلة السيناريو غالبًا بتربط بين مؤشّر معيّن (ملف بامتداد مزدوج، بورت غير معتاد مفتوح) وتحديد نوع الإصابة.</p>
+</div>
+
+<hr />
+<p><em>نهاية نوتس الموديول السابع — Malware Threats</em></p>
+<div class="footer-note">-- EOF: module-07/malware-threats.md --</div>
+</div>
+
+<script>
+(function(){
+  var root=document.documentElement,btn=document.getElementById('themeSwitch');
+  function applyTheme(t){root.setAttribute('data-theme',t);btn.textContent='theme: '+t;try{localStorage.setItem('oscp-notes-theme',t);}catch(e){}}
+  var saved='dark';try{saved=localStorage.getItem('oscp-notes-theme')||'dark';}catch(e){}
+  applyTheme(saved);
+  btn.addEventListener('click',function(){applyTheme(root.getAttribute('data-theme')==='dark'?'light':'dark');});
+  var bar=document.getElementById('progressBar');
+  function onScroll(){var h=document.documentElement,s=h.scrollTop,ht=h.scrollHeight-h.clientHeight;bar.style.width=(ht>0?(s/ht*100):0)+'%';var t=document.getElementById('toTop');s>500?t.classList.add('show'):t.classList.remove('show');}
+  document.addEventListener('scroll',onScroll);onScroll();
+  document.getElementById('toTop').addEventListener('click',function(){window.scrollTo({top:0,behavior:'smooth'});});
+  document.querySelectorAll('.code-wrap').forEach(function(wrap){
+    var c=wrap.querySelector('code');if(!c)return;
+    var b=document.createElement('button');b.className='copy-btn';b.textContent='copy';
+    b.addEventListener('click',function(){if(navigator.clipboard){navigator.clipboard.writeText(c.innerText).then(function(){b.textContent='copied ✓';b.classList.add('copied');setTimeout(function(){b.textContent='copy';b.classList.remove('copied');},1500);});}});
+    wrap.appendChild(b);
+  });
+})();
+</script>
+</body>
+</html>

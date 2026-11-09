@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CEHv13 · Module 14: Hacking Web Applications</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-0:#0B0B0D;--bg-1:#121214;--surface:#17171A;--surface-2:#1D1D21;
+    --border:#2A2A2F;--border-soft:#232326;
+    --text:#E6E6E9;--text-soft:#C4C4CA;--muted:#8A8A92;
+    --red:#E1362F;--red-soft:rgba(225,54,47,0.10);--red-border:rgba(225,54,47,0.35);
+    --red-grad:linear-gradient(90deg,#E1362F,#F2794A);
+    --amber:#E8A23A;--amber-soft:rgba(232,162,58,0.09);--amber-border:rgba(232,162,58,0.30);
+    --green:#3FBF6E;--green-soft:rgba(63,191,110,0.09);--green-border:rgba(63,191,110,0.30);
+    --blue:#4EA1D3;--blue-soft:rgba(78,161,211,0.09);--blue-border:rgba(78,161,211,0.30);
+    --purple:#A179E8;--purple-soft:rgba(161,121,232,0.10);--purple-border:rgba(161,121,232,0.32);
+    --mono:'IBM Plex Mono','Courier New',monospace;
+  }
+  html[data-theme="light"]{--bg-0:#F4F3F1;--bg-1:#ECEBE8;--surface:#FFFFFF;--surface-2:#F3F2EF;--border:#DEDCD6;--border-soft:#E6E4DF;--text:#1C1B19;--text-soft:#3C3A36;--muted:#726F68;}
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;direction:rtl;text-align:right;background:var(--bg-0);}
+  body{font-family:'Cairo','Segoe UI',Tahoma,sans-serif;line-height:1.95;font-size:16.5px;color:var(--text);
+    background:radial-gradient(900px 420px at 12% -8%,rgba(225,54,47,0.10),transparent 60%),radial-gradient(800px 420px at 90% 6%,rgba(232,162,58,0.06),transparent 60%),linear-gradient(180deg,var(--bg-0) 0%,var(--bg-1) 100%);
+    background-attachment:fixed;transition:background 0.2s ease,color 0.2s ease;}
+  html[data-theme="light"] body{background:radial-gradient(900px 420px at 12% -8%,rgba(225,54,47,0.06),transparent 60%),radial-gradient(800px 420px at 90% 6%,rgba(232,162,58,0.05),transparent 60%),linear-gradient(180deg,var(--bg-0) 0%,var(--bg-1) 100%);}
+  .progress-rail{position:fixed;top:0;inset-inline:0;height:3px;background:rgba(255,255,255,0.04);z-index:60;}
+  html[data-theme="light"] .progress-rail{background:rgba(0,0,0,0.05);}
+  .progress-bar{height:100%;width:0%;background:var(--red-grad);transition:width 0.08s linear;}
+  .float-controls{position:fixed;bottom:22px;left:22px;z-index:55;display:flex;flex-direction:column;gap:10px;}
+  .fctrl-btn{width:42px;height:42px;border-radius:50%;background:var(--surface);border:1px solid var(--border);color:var(--text-soft);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;box-shadow:0 10px 24px -10px rgba(0,0,0,0.5);transition:transform 0.15s ease,border-color 0.15s ease,opacity 0.2s ease;}
+  .fctrl-btn:hover{transform:translateY(-2px);border-color:var(--red-border);color:var(--red);}
+  #toTop{opacity:0;pointer-events:none;}#toTop.show{opacity:1;pointer-events:auto;}
+  .page{max-width:860px;margin:0 auto;padding:46px 22px 100px;}
+  .banner{position:relative;overflow:hidden;background:linear-gradient(155deg,var(--surface) 0%,var(--bg-1) 55%,var(--surface) 100%);border:1px solid var(--border-soft);border-radius:10px;padding:0 0 34px;margin-bottom:26px;box-shadow:0 20px 50px -20px rgba(0,0,0,0.6);}
+  .term-bar{display:flex;align-items:center;gap:8px;padding:13px 18px;border-bottom:1px solid var(--border-soft);background:rgba(255,255,255,0.015);direction:ltr;}
+  .term-dot{width:11px;height:11px;border-radius:50%;display:inline-block;}.term-dot.r{background:#E1362F;}.term-dot.y{background:#E8A23A;}.term-dot.g{background:#3FBF6E;}
+  .term-path{margin-inline-start:12px;font-family:var(--mono);font-size:12px;color:var(--muted);}
+  .theme-switch{margin-inline-start:auto;font-family:var(--mono);font-size:11px;color:var(--muted);background:transparent;border:1px solid var(--border);border-radius:4px;padding:4px 9px;cursor:pointer;}
+  .theme-switch:hover{color:var(--amber);border-color:var(--amber-border);}
+  .banner-body{padding:30px 34px 4px;}
+  .banner .kicker{display:inline-block;font-family:var(--mono);font-size:12.5px;letter-spacing:0.03em;color:var(--red);background:var(--red-soft);border:1px solid var(--red-border);border-radius:3px;padding:5px 12px;margin-bottom:20px;direction:ltr;}
+  .banner h1{margin:0 0 14px;font-size:28px;font-weight:800;line-height:1.5;color:var(--text);}
+  .banner .lede{color:var(--muted);font-size:15.5px;line-height:1.95;max-width:640px;margin:0 0 24px;}
+  .tags{display:flex;flex-wrap:wrap;gap:9px;}
+  .tag{font-size:12.5px;font-family:var(--mono);color:var(--amber);background:var(--amber-soft);border:1px solid var(--amber-border);border-radius:3px;padding:5px 11px;}
+  .toc{background:var(--surface);border:1px solid var(--border-soft);border-radius:8px;padding:6px 0 6px;margin-bottom:50px;overflow:hidden;}
+  .toc-title{font-family:var(--mono);font-weight:600;font-size:13px;color:var(--green);padding:14px 22px;border-bottom:1px solid var(--border-soft);direction:ltr;text-align:left;}
+  .toc-list{display:flex;flex-direction:column;}
+  .toc-item{display:flex;align-items:center;gap:14px;padding:12px 22px;color:var(--text-soft);text-decoration:none;font-size:14.5px;border-bottom:1px solid rgba(255,255,255,0.03);transition:background 0.15s ease;}
+  .toc-list .toc-item:last-child{border-bottom:none;}
+  .toc-item:hover{background:var(--red-soft);}
+  .toc-num{flex:none;font-family:var(--mono);font-size:12.5px;font-weight:600;color:#0F0F10;background:var(--red-grad);border-radius:3px;padding:3px 8px;direction:ltr;}
+  h1,h2,h3,h4{font-weight:700;}
+  h2{display:flex;align-items:center;gap:14px;font-size:21px;margin:66px 0 22px;padding-bottom:16px;border-bottom:1px solid var(--border-soft);color:var(--text);}
+  h2 .num{flex:none;font-family:var(--mono);font-size:13px;font-weight:700;color:#0F0F10;background:var(--red-grad);border-radius:5px;padding:7px 12px;direction:ltr;}
+  h2 .htext{line-height:1.5;}
+  h3{font-size:17px;margin:34px 0 14px;color:var(--red);display:flex;align-items:center;gap:9px;}
+  h3::before{content:"#";font-family:var(--mono);color:var(--amber);font-weight:700;}
+  h4{font-size:14.8px;margin:22px 0 10px;color:var(--text-soft);font-family:var(--mono);}
+  p{margin:0 0 17px;color:var(--text);}
+  strong{color:var(--text);font-weight:700;}:root:not([data-theme="light"]) strong{color:#FBFBFC;}
+  a{color:var(--amber);text-decoration:none;border-bottom:1px dashed var(--amber-border);}
+  hr{border:none;height:1px;margin:50px 0;background:linear-gradient(90deg,transparent,var(--border),transparent);}
+  ul,ol{margin:0 0 18px;padding-inline-start:24px;}
+  li{margin-bottom:9px;color:var(--text);}li::marker{color:var(--red);font-family:var(--mono);}li>ul,li>ol{margin-top:9px;}
+  blockquote{margin:24px 0;padding:17px 22px;background:var(--red-soft);border:1px solid var(--red-border);border-inline-start:3px solid var(--red);border-radius:6px;color:var(--text-soft);}
+  blockquote p{margin:0;color:inherit;line-height:1.85;}blockquote p+p{margin-top:10px;}blockquote strong{color:var(--text);}
+  .callout{margin:24px 0;padding:17px 22px 18px;border-radius:6px;border:1px solid var(--border-soft);border-inline-start:3px solid var(--border);background:var(--surface);}
+  .callout p{margin:0;color:var(--text-soft);line-height:1.85;}.callout p+p{margin-top:10px;}.callout ul,.callout ol{margin:6px 0 0;}
+  .callout-label{display:inline-flex;align-items:center;gap:7px;font-family:var(--mono);font-size:11.5px;font-weight:700;letter-spacing:0.02em;text-transform:uppercase;margin-bottom:10px;direction:ltr;}
+  .callout.note{border-inline-start-color:var(--blue);background:var(--blue-soft);}.callout.note .callout-label{color:var(--blue);}
+  .callout.warning{border-inline-start-color:var(--red);background:var(--red-soft);}.callout.warning .callout-label{color:var(--red);}
+  .callout.tip{border-inline-start-color:var(--green);background:var(--green-soft);}.callout.tip .callout-label{color:var(--green);}
+  .callout.examtip{border-inline-start-color:var(--purple);background:var(--purple-soft);}.callout.examtip .callout-label{color:var(--purple);}
+  .callout.case{border-inline-start-color:var(--amber);background:var(--amber-soft);}.callout.case .callout-label{color:var(--amber);}
+  .callout.definition{border-inline-start-color:var(--muted);background:var(--surface-2);}.callout.definition .callout-label{color:var(--text-soft);}
+  .callout.danger{border-inline-start-color:#FF5A52;background:rgba(255,90,82,0.08);}.callout.danger .callout-label{color:#FF5A52;}
+  .table-wrap{overflow-x:auto;margin:22px 0;border:1px solid var(--border-soft);border-radius:8px;}
+  table{width:100%;border-collapse:collapse;font-size:14.2px;min-width:480px;}
+  thead th{background:var(--surface-2);color:var(--amber);font-weight:700;font-family:var(--mono);font-size:12.5px;text-transform:uppercase;letter-spacing:0.02em;text-align:start;padding:13px 15px;border-bottom:1px solid var(--border-soft);white-space:nowrap;}
+  tbody td{padding:12px 15px;border-bottom:1px solid var(--border-soft);color:var(--text-soft);vertical-align:top;}
+  tbody tr:last-child td{border-bottom:none;}tbody tr:nth-child(even){background:rgba(127,127,127,0.03);}tbody tr:hover{background:var(--red-soft);}
+  code{font-family:var(--mono);font-size:13.3px;background:var(--surface-2);border:1px solid var(--border-soft);border-radius:4px;padding:2px 6px;direction:ltr;unicode-bidi:embed;color:var(--green);}
+  .code-wrap{position:relative;overflow-x:auto;margin:22px 0;}
+  .code-tag{position:absolute;top:10px;left:14px;font-family:var(--mono);font-size:10.5px;color:var(--muted);letter-spacing:0.04em;text-transform:uppercase;z-index:2;}
+  .copy-btn{position:absolute;top:8px;right:10px;z-index:2;font-family:var(--mono);font-size:11px;color:var(--muted);background:var(--surface-2);border:1px solid var(--border-soft);border-radius:4px;padding:4px 9px;cursor:pointer;direction:ltr;}
+  .copy-btn:hover{color:var(--amber);border-color:var(--amber-border);}.copy-btn.copied{color:var(--green);border-color:var(--green-border);}
+  pre{background:var(--bg-0);border:1px solid var(--border-soft);border-inline-start:3px solid var(--red);border-radius:8px;padding:30px 22px 18px;direction:ltr;text-align:left;margin:0;}
+  html[data-theme="light"] pre{background:#16181C;}
+  pre code{background:none;border:none;padding:0;color:#B9E8C9;font-size:13.2px;line-height:1.75;}
+  .diagram-card{background:var(--surface);border:1px solid var(--border-soft);border-radius:10px;padding:22px 18px 16px;margin:24px 0;}
+  .diagram-card svg{width:100%;height:auto;display:block;}
+  .diagram-caption{margin-top:10px;text-align:center;font-family:var(--mono);font-size:11.5px;color:var(--muted);}
+  .takeaways{background:var(--surface);border:1px solid var(--border-soft);border-radius:8px;padding:18px 22px 20px;margin:30px 0 10px;}
+  .takeaways-title{font-family:var(--mono);font-size:12.5px;font-weight:700;color:var(--green);margin-bottom:12px;direction:ltr;text-align:left;display:flex;align-items:center;gap:8px;}
+  .takeaways ul{margin:0;padding-inline-start:20px;}.takeaways li{color:var(--text-soft);font-size:14.5px;}
+  .step-track{display:flex;flex-direction:column;gap:0;margin:24px 0;}
+  .step-item{position:relative;padding:0 0 26px 0;padding-inline-start:46px;border-inline-start:2px solid var(--border-soft);}
+  .step-item:last-child{border-inline-start:2px solid transparent;padding-bottom:4px;}
+  .step-num{position:absolute;inset-inline-start:-17px;top:0;width:32px;height:32px;border-radius:50%;background:var(--red-grad);color:#0F0F10;font-family:var(--mono);font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;}
+  .step-title{font-weight:700;color:var(--text);margin-bottom:6px;font-size:15px;}
+  .step-body{color:var(--text-soft);font-size:14.5px;}.step-body p{margin:0 0 10px;}.step-body p:last-child{margin-bottom:0;}.step-body ul{margin:8px 0 0;}
+  .method-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px;margin:22px 0;}
+  .method-card{background:var(--surface);border:1px solid var(--border-soft);border-radius:8px;padding:14px 16px;}
+  .method-card .mtitle{font-weight:700;color:var(--text);font-size:14px;margin-bottom:5px;}.method-card .mdesc{color:var(--text-soft);font-size:13.3px;line-height:1.75;}
+  .cheat-section h4{color:var(--amber);font-size:13px;margin:26px 0 8px;}
+  .footer-note{margin-top:70px;padding-top:26px;border-top:1px solid var(--border-soft);color:var(--muted);font-size:13.3px;font-family:var(--mono);text-align:center;direction:ltr;}
+  @media print{.float-controls,.progress-rail,.copy-btn,.theme-switch{display:none !important;}body{background:#fff;color:#000;}.page{max-width:100%;}}
+  @media(max-width:640px){.page{padding:28px 14px 70px;}.banner-body{padding:24px 20px 4px;}.banner h1{font-size:21px;}h2{font-size:18px;gap:10px;}.float-controls{left:12px;bottom:14px;}}
+</style>
+</head>
+<body>
+<div class="progress-rail"><div class="progress-bar" id="progressBar"></div></div>
+<div class="float-controls"><button class="fctrl-btn" id="toTop" title="ارجع لفوق">↑</button></div>
+
+<div class="page">
+<div class="banner">
+  <div class="term-bar">
+    <span class="term-dot r"></span><span class="term-dot y"></span><span class="term-dot g"></span>
+    <span class="term-path">root@ceh:~/module-14$</span>
+    <button class="theme-switch" id="themeSwitch">theme: dark</button>
+  </div>
+  <div class="banner-body">
+    <span class="kicker">EC-Council · CEHv13 · Module 14</span>
+    <h1>اختراق الـ Web Applications</h1>
+    <p class="lede">من مفاهيم بنية الـ Web Application وWeb Services وطبقات الـ Vulnerability Stack، مرورًا بأكثر من 25 نوع هجوم (XSS وCSRF وClickjacking وMagecart وDNS Rebinding وXXE وDeserialization)، وصولاً لمنهجية الاختراق الكاملة من Footprinting لهجمات الـ Session وAuthentication وAuthorization والـ Injection وDatabase Connectivity، وانتهاءً بالـ Web API والـ Webhooks وأدوات SAST/DAST وأساليب التشفير وتقنيات الدفاع.</p>
+    <div class="tags">
+      <span class="tag">web-app</span><span class="tag">xss-csrf</span>
+      <span class="tag">xxe-ssrf</span><span class="tag">injection</span>
+      <span class="tag">session-mgmt</span><span class="tag">api-security</span>
+      <span class="tag">sast-dast</span><span class="tag">fuzzing</span>
+    </div>
+  </div>
+</div>
+
+<nav class="toc"><div class="toc-title">$ ls learning_units/</div><div class="toc-list">
+  <a class="toc-item" href="#lu1"><span class="toc-num">01</span><span>مفاهيم الـ Web Applications وWeb Services</span></a>
+  <a class="toc-item" href="#lu2"><span class="toc-num">02</span><span>هجمات الـ Web Applications (التهديدات)</span></a>
+  <a class="toc-item" href="#lu3"><span class="toc-num">03</span><span>منهجية اختراق الـ Web Application</span></a>
+  <a class="toc-item" href="#lu4"><span class="toc-num">04</span><span>الـ Web API والـ Webhooks</span></a>
+  <a class="toc-item" href="#lu5"><span class="toc-num">05</span><span>أمان الـ Web Applications — اختبار وتشفير وإجراءات مضادة</span></a>
+  <a class="toc-item" href="#cheat"><span class="toc-num">--</span><span>Cheat Sheet مرجعي</span></a>
+  <a class="toc-item" href="#summary"><span class="toc-num">--</span><span>الخلاصة العامة للموديول</span></a>
+</div></nav>
+
+<!-- LU1 -->
+<h2 id="lu1"><span class="num">01</span><span class="htext">مفاهيم الـ Web Applications وWeb Services</span></h2>
+
+<h3>كيف تعمل الـ Web Applications؟</h3>
+<p>الـ Web Application توفّر واجهة بين المستخدمين ونهائيين والـ Web Servers عبر صفحات ويب يُولَّد بعضها من السيرفر أو تحتوي كودًا ينفَّذ ديناميكيًا داخل متصفح العميل. وظيفتها الأساسية جلب البيانات المطلوبة من قاعدة البيانات وعرضها.</p>
+<div class="table-wrap"><table>
+<thead><tr><th>الطبقة</th><th>الوصف</th></tr></thead>
+<tbody>
+<tr><td>Client / Presentation Layer</td><td>الطبقة التي يتعامل معها المستخدم مباشرةً (المتصفح والواجهة)</td></tr>
+<tr><td>Business Logic Layer</td><td>تحتوي قواعد العمل والمعالجة — مكتوبة بلغات مثل .NET وJava</td></tr>
+<tr><td>Database Layer</td><td>تُخزِّن البيانات الحسّاسة (IDs وكلمات المرور وبيانات العملاء)</td></tr>
+</tbody>
+</table></div>
+
+
+<h3>بنية الـ Web Service</h3>
+<p>الـ Web Service تطبيق مُنشَر على الإنترنت يستخدم بروتوكول رسائل قياسي (مثل SOAP) لتمكين التواصل بين تطبيقات مبنية على منصّات مختلفة. تتفاعل عبر SOAP وUDDI وWSDL وREST.</p>
+<div class="table-wrap"><table>
+<thead><tr><th>الدور / المكوّن</th><th>الشرح</th></tr></thead>
+<tbody>
+<tr><td>Service Provider</td><td>المنصّة التي تُقدِّم الخدمة</td></tr>
+<tr><td>Service Requester</td><td>التطبيق أو العميل الباحث عن خدمة — المتصفح عادةً</td></tr>
+<tr><td>Service Registry</td><td>المكان الذي يُحمِّل فيه المزوّد توصيف الخدمة — يُستخدَم للاكتشاف والربط</td></tr>
+<tr><td>Service</td><td>وحدة برمجية يُقدِّمها المزوّد — تتواصل مع الطالبين وقد تستدعي خدمات أخرى</td></tr>
+<tr><td>Service Description</td><td>توصيف الواجهة والتنفيذ — يحتوي كل العمليات والمواقع والبيانات والأنواع</td></tr>
+<tr><td>UDDI</td><td>Universal Description, Discovery, and Integration — دليل يُدرِج الخدمات المتاحة</td></tr>
+<tr><td>WSDL</td><td>Web Services Description Language — XML لوصف وتتبّع Web Services</td></tr>
+<tr><td>WS-Security</td><td>امتداد لـ SOAP يحافظ على سلامة وسرية رسائل SOAP ويُصادِق المستخدمين</td></tr>
+</tbody>
+</table></div>
+
+<div class="table-wrap"><table>
+<thead><tr><th>النوع</th><th>الفلسفة</th></tr></thead>
+<tbody>
+<tr><td>SOAP</td><td>بروتوكول يعتمد XML لتبادل البيانات ويدعم التشفير والأمان المدمَج</td></tr>
+<tr><td>RESTful</td><td>أسلوب معماري يستخدم مفاهيم HTTP — أكثر مرونةً وأقل تعقيدًا من SOAP</td></tr>
+</tbody>
+</table></div>
+
+
+<h3>Vulnerability Stack — طبقات الضعف</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>الطبقة</th><th>المكوّن</th><th>الثغرة المحتملة</th></tr></thead>
+<tbody>
+<tr><td>7 (Application)</td><td>Custom Web Applications (.NET, Java)</td><td>منطق أعمال ضعيف — هجمات XSS وInput Validation</td></tr>
+<tr><td>6 (3rd Party)</td><td>مكوّنات خارجية (Citrix, Amazon)</td><td>اختراق مزوّد خارجي يؤثر على الموقع الرئيسي</td></tr>
+<tr><td>5 (Web Server)</td><td>Apache, IIS, Nginx</td><td>Banner Grabbing، ثغرات معروفة في إصدار السيرفر</td></tr>
+<tr><td>4 (Database)</td><td>MySQL, MSSQL, Oracle</td><td>SQL Injection بأدوات مثل sqlmap</td></tr>
+<tr><td>3 (OS)</td><td>Windows, Linux</td><td>فحص البورتات، Malware عبر بورتات مفتوحة</td></tr>
+<tr><td>2 (Network)</td><td>Routers / Switches</td><td>MAC Flooding يحوّل Switch لـ Hub ← Sniffing</td></tr>
+</tbody>
+</table></div>
+
+
+<!-- LU2 -->
+
+<hr />
+
+<h2 id="lu2"><span class="num">02</span><span class="htext">هجمات الـ Web Applications (التهديدات)</span></h2>
+
+
+
+<h3>قائمة هجمات الـ Web Application</h3>
+<ul>
+<li>Directory Traversal</li>
+<li>Hidden Field Manipulation</li>
+<li>Cookie Snooping</li>
+<li>RC4 NOMORE Attack</li>
+<li>Same-Site Attack</li>
+<li>Pass-the-Cookie Attack</li>
+<li>SQL Injection</li>
+<li>Command Injection</li>
+<li>Unvalidated Redirects and Forwards</li>
+<li>Cookie/Session Poisoning</li>
+<li>Denial-of-Service (DoS)</li>
+<li>Magecart Attack</li>
+<li>Insecure Deserialization</li>
+<li>Web Service Attacks</li>
+<li>Cross-Site Port Attack (XSPA)</li>
+<li>Clickjacking Attack</li>
+<li>Obfuscation Application</li>
+<li>DNS Rebinding Attack</li>
+<li>JavaScript Hijacking</li>
+<li>Cross-Site Request Forgery (CSRF)</li>
+<li>Watering Hole Attack</li>
+<li>Injecting an SSRF Payload</li>
+<li>H2C Smuggling Attack</li>
+<li>Cross-Site WebSocket Hijacking</li>
+<li>Web-based Timing Attacks</li>
+<li>XML External Entity (XXE) Attack</li>
+</ul>
+
+
+<h3>Web-based Timing Attacks</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>النوع</th><th>الشرح</th></tr></thead>
+<tbody>
+<tr><td>Direct Timing Attack</td><td>قياس الوقت التقريبي لمعالجة السيرفر لطلب POST لاستنتاج وجود اسم مستخدم</td></tr>
+<tr><td>Cross-site Timing Attack</td><td>إرسال حزم طلب مصمَّمة للموقع عبر JavaScript لقياس وقت الاستجابة</td></tr>
+<tr><td>Browser-based Timing Attack</td><td>استغلال التسرّبات الجانبية في المتصفح لتقدير وقت معالجة الموارد — مثل Cache Storage Timing Attack لقياس حجم الاستجابة من وقت تحميل القرص</td></tr>
+</tbody>
+</table></div>
+
+
+<h3>XML External Entity (XXE) Attack</h3>
+<p>هجوم SSRF يحدث لما محلّل XML بإعدادات خاطئة يسمح بمعالجة إدخال XML من مصدر غير موثوق. المهاجم يُضمِّن إشارةً لكيان خارجي في الإدخال الخبيث، فبعد معالجته يقدر يصل لملفات وخدمات محميّة من السيرفرات أو الشبكات المتصلة.</p>
+
+<h3>Unvalidated Redirects and Forwards</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>النوع</th><th>الأثر</th></tr></thead>
+<tbody>
+<tr><td>Unsafe Redirects</td><td>تنصيب Malware أو خداع الضحايا للكشف عن كلمات مرور ومعلومات حسّاسة</td></tr>
+<tr><td>Unsafe Forwards</td><td>تجاوز Access Control → Session Fixation أو Security Management Exploits أو Failure to Restrict URL Access</td></tr>
+</tbody>
+</table></div>
+
+<div class="table-wrap"><table>
+<thead><tr><th>نوع الـ Redirection</th><th>الشرح</th></tr></thead>
+<tbody>
+<tr><td>Open Redirection</td><td>ثغرة تسمح بإضافة Parameters للـ URL لتحويل المستخدمين من مواقع موثوقة لمواقع خبيثة — Credential Sniffing وXSS</td></tr>
+<tr><td>Header-Based Open Redirection</td><td>تعديل HTTP Location Header لتحويل المستخدم لصفحة خبيثة بدون علمه</td></tr>
+<tr><td>JavaScript-Based Open Redirection</td><td>حقن JavaScript في استجابة صفحة ويب — يُستخدَم كثيرًا في التصيّد</td></tr>
+</tbody>
+</table></div>
+
+
+<h3>Magecart Attack وWatering Hole Attack</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>الهجوم</th><th>الآلية</th></tr></thead>
+<tbody>
+<tr><td>Magecart (Web Skimming)</td><td>حقن كود خبيث في موقع تجارة إلكتروني لجمع بيانات بطاقات الائتمان — يستهدف مواقع بإضافات أو برمجيات قديمة</td></tr>
+<tr><td>Watering Hole Attack</td><td>تحديد المواقع التي يزورها الهدف ← اختبار ثغراتها ← حقن كود خبيث يُعيد توجيه الصفحة أو يُحمِّل Malware. يُسمّى "Watering Hole" لأن المهاجم ينتظر الضحية تقع في الفخ</td></tr>
+</tbody>
+</table></div>
+
+
+<h3>CSRF وCookie/Session Poisoning</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>الهجوم</th><th>الآلية</th></tr></thead>
+<tbody>
+<tr><td>CSRF (One-Click / Session Riding)</td><td>استغلال ثغرات صفحة ويب لإجبار متصفح المستخدم على إرسال طلبات خبيثة — الضحية عنده جلسة نشطة مع موقع موثوق ويزور موقعًا خبيثًا يحقن HTTP Request للموقع الموثوق في جلسته</td></tr>
+<tr><td>Cookie Poisoning</td><td>تعديل محتوى الـ Cookie على جهة العميل قبل إرسال الطلب للسيرفر — يسمح بالتلاعب بالـ Session State وUser ID وبيانات هوية أخرى. Cookie تُعدَّل بـ JavaScript أو Proxy</td></tr>
+</tbody>
+</table></div>
+
+
+<h3>Insecure Deserialization</h3>
+<p>الـ Serialization يحوّل كائنات البيانات لتنسيق خطي للنقل. المهاجم يحقن كودًا خبيثًا في البيانات المُسلسَلة ويُرسِلها للضحية. عند إلغاء التسلسل (Deserialization) يُنفَّذ الكود الخبيث المحقون ويخترق النظام أو الشبكة.</p>
+
+<h3>Web Service Attacks</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>الهجوم</th><th>الشرح</th></tr></thead>
+<tbody>
+<tr><td>Web Service Footprinting</td><td>استخدام Universal Business Registry (UBR) — سجل عام يعمل بـ UDDI وSOAP — لجمع معلومات عن الـ Web Services (مشابه لـ Whois)</td></tr>
+<tr><td>XML Poisoning</td><td>حقن كود XML خبيث في طلبات SOAP لتلاعب في عقد XML أو تسميم مخطّط XML — يُولِّد أخطاء في منطق تحليل XML ويُعطِّل منطق التنفيذ. يؤدّي لـ DoS أو كشف معلومات سرية</td></tr>
+<tr><td>SOAPAction Spoofing</td><td>التلاعب في عملية SOAPAction Header دون الحاجة لـ XML Parsing — أداة WS-Attacker</td></tr>
+<tr><td>WS-Address Spoofing</td><td>إرسال رسالة SOAP تحتوي بيانات WS-Address مزوَّرة — Header ReplyTo يحتوي عنوان المهاجم بدل عنوان العميل</td></tr>
+</tbody>
+</table></div>
+
+<div class="callout note"><div class="callout-label">XML Poisoning مقابل SQL Injection</div><p>XML Poisoning مشابه لـ SQL Injection لكن بمعدّل نجاح أعلى في بيئة Web Service. المهاجم يسمِّم حركة البيانات بين السيرفر والمتصفح بإنشاء مستندات XML خبيثة تُغيِّر آليات التحليل مثل SAX وDOM.</p></div>
+
+
+<h3>DNS Rebinding Attack</h3>
+<p>تجاوز قيود Same-Origin Policy بتقنية DNS Rebinding — المهاجم ينشئ موقعًا خبيثًا ويسجّل دومينه مع سيرفر DNS يتحكّم فيه، ويضبط استجابات DNS بقيم TTL قصيرة جدًا لتجنّب الـ Caching. هذا يُتيح للموقع الخبيث التواصل وإرسال طلبات عشوائية للدومينات المحلية.</p>
+
+<h3>Clickjacking Attack</h3>
+<p>المهاجم يخدع الضحية للنقر على عنصر ويب خبيث مُوضَع بشكل شفّاف فوق صفحة موثوقة. هو مجموعة متنوّعة من تقنيات UI Redress Attacks — يستغل ثغرات HTML iframes أو الإعداد الخاطئ لـ X-Frame-Options Header.</p>
+
+<h3>MarioNet Attack</h3>
+<p>هجوم مبني على المتصفح يُشغِّل كودًا خبيثًا داخله — العدوى تستمرّ حتى بعد إغلاق صفحة الاختراق أو التصفّح بعيدًا عنها. المهاجم يُسجِّل ويُفعِّل <strong>Service Worker API</strong> عبر موقع يتحكّم فيه. عند تصفّح الضحية للموقع، يتفعّل Service Worker تلقائيًا ويشتغل بصمت في الخلفية. يُستخدَم لإنشاء Botnet وشنّ هجمات مثل Cryptojacking وDDoS وClick Fraud وكسر كلمات المرور الموزَّع.</p>
+
+<h3>هجمات أخرى</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>الهجوم</th><th>الشرح</th></tr></thead>
+<tbody>
+<tr><td>Cookie Snooping</td><td>تحليل عادات تصفّح الضحية وبيع المعلومات لمهاجمين آخرين أو استخدامها لشنّ هجمات</td></tr>
+<tr><td>RC4 NOMORE Attack</td><td>هجوم على RC4 Stream Cipher يستغل ثغرات في السيرفر لفكّ تشفير Web Cookies المحميّة بـ HTTPS وحقن حزم عشوائية</td></tr>
+<tr><td>Buffer Overflow</td><td>الفشل في حماية الـ Buffer والسماح بالكتابة خارج حجمه الأقصى</td></tr>
+<tr><td>CAPTCHA Attacks</td><td>استهداف الاختبارات التحقّقية لتجاوزها رغم تصميمها كمقاومة للآلات</td></tr>
+<tr><td>DoS</td><td>تقليل أو تقييد أو منع وصول المستخدمين الشرعيين لموارد النظام</td></tr>
+<tr><td>DMZ Protocol Attacks</td><td>اختراق نظام يسمح بالوصول لبروتوكولات DMZ أخرى يُعطي وصولًا للأنظمة الداخلية</td></tr>
+</tbody>
+</table></div>
+
+
+<!-- LU3 -->
+
+<hr />
+
+<h2 id="lu3"><span class="num">03</span><span class="htext">منهجية اختراق الـ Web Application</span></h2>
+
+
+<p>منهجية الاختراق الكاملة تمرّ بـ 13 مرحلة:</p>
+<ul>
+<li>Footprint Web Infrastructure</li>
+<li>Analyze Web Applications</li>
+<li>Bypass Client-Side Controls</li>
+<li>Attack Authentication Mechanisms</li>
+<li>Attack Authorization Schemes</li>
+<li>Attack Access Controls</li>
+<li>Attack Session Management Mechanisms</li>
+<li>Perform Injection Attacks</li>
+<li>Attack Application Logic Flaws</li>
+<li>Attack Shared Environments</li>
+<li>Attack Database Connectivity</li>
+<li>Attack Web Application Clients</li>
+<li>Attack Web Services</li>
+</ul>
+
+
+<h3>1 — Footprint Web Infrastructure</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>المهمّة</th><th>الأدوات / التقنية</th></tr></thead>
+<tbody>
+<tr><td>Server Discovery (Whois & DNS)</td><td>Netcraft، Whois Lookup، Batch IP Converter — DNSRecon، DNS Records، Domain Dossier، DNSdumpster</td></tr>
+<tr><td>Port & Service Discovery</td><td>Nmap، NetScanTools Pro، Advanced Port Scanner، Open Port Scanner</td></tr>
+<tr><td>Detect WAF & Proxies</td><td>WAFW00F (يكشف WAF بالكوكيز والـ Response Codes والـ Drop Action)، WhatWaf، Nmap — HTTP/1.1 TRACE للكشف عن الـ Proxy</td></tr>
+<tr><td>Hidden Content Discovery</td><td>Web Spidering بـ OWASP ZAP وBurp Suite وWebScarab — User-Directed Spidering (مراقبة حركة الموقع)</td></tr>
+<tr><td>Load Balancer Detection</td><td><code>dig</code>، lbd (load balancing detector) — يحلّل الفروق في Server: وDate: Headers</td></tr>
+<tr><td>Web App Technologies</td><td>Wappalyzer، BuiltWith — CMS وPlatforms وPayment Processors</td></tr>
+<tr><td>WebSockets Enumeration</td><td>STEWS: <code>python3 STEWS-fingerprint.py -1 -k -u &lt;Target URL&gt;</code></td></tr>
+</tbody>
+</table></div>
+
+<div class="callout tip"><div class="callout-label">أهمية Footprinting</div><p>Footprinting هي الخطوة الأولى وتُتيح: Server Discovery، Service Discovery، Server Identification (Banner Grabbing)، WAF & Proxy Detection، Hidden Content Discovery، Load Balancer Detection، Web App Technologies Detection، وWebSocket Enumeration.</p></div>
+
+
+<h3>2 — Analyze Web Applications</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>التقنية</th><th>الهدف</th></tr></thead>
+<tbody>
+<tr><td>Website Mirroring</td><td>تحميل الموقع كاملًا للتصفّح Offline وفهم البنية — HTTrack، Cyotek WebCopy</td></tr>
+<tr><td>Server-Side Technologies</td><td>فحص امتدادات الـ URLs والـ Error Messages والـ Session Tokens (JSESSIONID=Java، ASPSESSIONID=IIS، PHPSESSID=PHP) بأدوات httprint وWhatWeb</td></tr>
+<tr><td>Extracting Website Links</td><td>Octoparse لاستخراج النصوص والروابط وURLs الـ JS وCSS</td></tr>
+<tr><td>Wordlist Gathering</td><td>جمع كلمات من الموقع وعناوين البريد الإلكتروني لاستخدامها في هجمات لاحقة</td></tr>
+<tr><td>Metadata Extraction</td><td>استخراج Metadata من مستندات PDF وWord للحصول على عنوان الصفحة والكلمات المفتاحية</td></tr>
+<tr><td>Monitoring Changes</td><td>مراقبة تحديثات الموقع لاكتشاف تغييرات في صفحات الدخول أو إصدارات البرمجيات</td></tr>
+<tr><td>Directory Enumeration</td><td>Gobuster (Go-based Directory Scanner)، GNU Wget</td></tr>
+</tbody>
+</table></div>
+
+
+<h3>3 — Bypass Client-Side Controls</h3>
+<ul>
+<li>Cross-site Scripting (XSS)</li>
+<li>Cross-site Request Forgery (CSRF)</li>
+<li>Parameter Tampering</li>
+<li>HTTP Parameter Pollution</li>
+<li>Input Field Manipulation</li>
+<li>Hidden Field Manipulation</li>
+<li>Client-side Input Validation Bypass</li>
+<li>JavaScript Injection</li>
+<li>CORS Misconfiguration</li>
+<li>Session Fixation</li>
+<li>Attack Browser Extensions</li>
+</ul>
+
+<div class="callout definition"><div class="callout-label">Attack Hidden Form Fields</div><p>تطبيقات e-Commerce تستخدم Hidden HTML Form Fields لتخزين الأسعار. المهاجم يحفظ الـ Source Code، يحدّد الحقل المخفي، يعدّل قيمة السعر (حتى قيم سالبة لاسترداد المبلغ)، ثم يُعيد التحميل. يُستخدَم Burp Suite لاعتراض الطلب وتعديله.</p></div>
+
+
+<h3>4 — Attack Authentication Mechanisms</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>الهجوم</th><th>التقنية</th></tr></thead>
+<tbody>
+<tr><td>Username Enumeration</td><td>رسائل خطأ مفصَّلة، أسماء مستخدمين متوقَّعة</td></tr>
+<tr><td>Cookie Exploitation</td><td>Cookie Poisoning، Cookie Sniffing، Cookie Replay</td></tr>
+<tr><td>Password Attacks</td><td>Password Guessing، Brute-force، Dictionary Attack، هجمات Password Reset</td></tr>
+<tr><td>Session Attacks</td><td>Session Prediction، Session Brute-forcing، Session Poisoning</td></tr>
+<tr><td>Bypass SSO (SAML)</td><td>SAML Messages مشفَّرة بـ Base64 قابلة للفكّ — أداة SAML Raider</td></tr>
+<tr><td>Bypass Rate Limit</td><td>تجربة إصدارات مختلفة للـ Endpoints، إضافة Blank Characters مثل %00، تعديل Headers مثل X-Forwarded-For</td></tr>
+<tr><td>Bypass MFA</td><td>استغلال ثغرات في تنفيذ التحقّق الثنائي</td></tr>
+</tbody>
+</table></div>
+
+
+<h4>هجوم Password Reset Poisoning</h4>
+<div class="step-track">
+<div class="step-item"><div class="step-num">1</div><div class="step-title">جمع معلومات الهدف</div><div class="step-body"><p>المهاجم يحصل على عنوان البريد الإلكتروني للهدف بالـ OSINT والهندسة الاجتماعية.</p></div></div>
+<div class="step-item"><div class="step-num">2</div><div class="step-title">تعديل Host Header</div><div class="step-body"><p>إرسال طلب إعادة تعيين كلمة المرور بـ Host Header معدَّل — السيرفر يُنشئ رابط إعادة التعيين بناءً على الـ Host Header. مثال: <code>Host: badhost.com</code> فيُنشَأ رابط <code>https://badhost.com/reset-password.php?token=87654321</code></p></div></div>
+<div class="step-item"><div class="step-num">3</div><div class="step-title">انتظار الضحية</div><div class="step-body"><p>المهاجم ينتظر الضحية تضغط الرابط الخبيث في البريد.</p></div></div>
+<div class="step-item"><div class="step-num">4</div><div class="step-title">سرقة الـ Token</div><div class="step-body"><p>بعد الضغط على الرابط، المهاجم يستخرج Password Reset Token وينفّذ أنشطة خبيثة.</p></div></div>
+</div>
+
+
+<h3>5 — Attack Authorization Schemes</h3>
+<ul>
+<li>الدخول بحساب صلاحيات منخفضة ثم تصعيد الصلاحيات للوصول للموارد المحميّة</li>
+<li>التلاعب في طلبات HTTP بتعديل حقول الإدخال المتعلّقة بـ User ID وUsername وAccess Group وCost وFilenames</li>
+<li>Cookie Parameter Tampering: جمع Session Cookies وتحليل آلية توليدها ثم التلاعب بباراميتراتها بـ Burp Suite وإعادة تشغيل التطبيق</li>
+</ul>
+
+
+<h3>6 — Attack Access Controls</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>أسلوب الهجوم</th><th>الشرح</th></tr></thead>
+<tbody>
+<tr><td>Parameter-Based Access Control</td><td>الـ Access يُحدَّد بناءً على Cookies أو Query String Parameters — المهاجم يحدّد بارامترات الـ Admin ويضيفها لطلباته</td></tr>
+<tr><td>Referer-Based Access Control</td><td>الـ HTTP Referer عدم الموثوقية — المهاجم يتلاعب فيه لأي قيمة</td></tr>
+<tr><td>Location-Based Access Control</td><td>تحديد الموقع الجغرافي عبر IP Address — المهاجم يتجاوزه بـ VPN أو Proxy</td></tr>
+<tr><td>Attack with Different Accounts</td><td>Burp Suite لمقارنة سياقين مختلفين — Broken Access Control يسمح بوصول عير مصرَّح</td></tr>
+<tr><td>Attack Static Resources</td><td>طلب مباشر لـ URLs المحمية للتحقّق من منح وصول للمستخدمين غير المصرَّح لهم</td></tr>
+<tr><td>Attack Direct Access to Methods</td><td>استغلال ضعف Access Control في Direct Access Methods للـ Server-Side APIs</td></tr>
+<tr><td>Attack HTTP Methods</td><td>اختبار GET وPOST وPUT وDELETE وTRACE وOPTIONS — تعديل HTTP Methods لتجاوز Access Controls</td></tr>
+</tbody>
+</table></div>
+
+
+<h3>7 — Attack Session Management</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>المرحلة</th><th>الشرح</th></tr></thead>
+<tbody>
+<tr><td>Session Token Prediction</td><td>المهاجم يلاحظ نمطًا حتميًا بين Session IDs — يحصل على IDs السابق والتالي وينتحل هوية المستخدم</td></tr>
+<tr><td>Session Token Tampering</td><td>بعد الحصول على IDs يتلاعب ببيانات الجلسة</td></tr>
+<tr><td>MITM</td><td>اعتراض الاتصال وتقسيمه لـ Client-Attacker وAttacker-Server</td></tr>
+<tr><td>Session Hijacking</td><td>سرقة User Session ID من موقع موثوق</td></tr>
+<tr><td>Session Replay</td><td>الحصول على Session ID وإعادة استخدامه للوصول للحساب</td></tr>
+</tbody>
+</table></div>
+
+
+<h3>8 — Perform Injection/Input Validation Attacks</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>نوع الـ Injection</th><th>الشرح</th></tr></thead>
+<tbody>
+<tr><td>Web Scripts Injection</td><td>لو الإدخال يُستخدَم في كود يُنفَّذ ديناميكيًا، إدخال مُصمَّم يكسر السياق المقصود وينفّذ أوامر على السيرفر</td></tr>
+<tr><td>OS Command Injection</td><td>حقن كود خبيث في حقول الإدخال عندما التطبيق يستخدم المدخل في أمر على مستوى النظام</td></tr>
+<tr><td>SMTP Injection</td><td>حقن أوامر SMTP عشوائية لتوليد كميات كبيرة من Spam Email</td></tr>
+<tr><td>SQL Injection</td><td>إدخال استعلامات SQL خبيثة للتلاعب المباشر في قاعدة البيانات</td></tr>
+<tr><td>LDAP Injection</td><td>استغلال ثغرات عدم التحقّق للوصول المباشر لقواعد البيانات عبر فلاتر LDAP</td></tr>
+<tr><td>Local File Inclusion (LFI)</td><td>ثغرة تسمح بإضافة ملفات على السيرفر عبر المتصفح — تحدث عند إضافة ملفات بدون تحقّق سليم من المسار</td></tr>
+</tbody>
+</table></div>
+
+
+<h3>9 — Attack Application Logic Flaws</h3>
+<p>معظم ثغرات المنطق بسبب إهمال المطوّرين أو افتراضات خاطئة. مثال: في تطبيقات التجزئة، المطوّر يفترض أن العميل سيتبع مراحل الطلب بالتسلسل (اختيار المنتج ← تأكيد الطلب ← الدفع ← التسليم). المهاجم يستخدم Burp Suite لـ <strong>Forced Browsing</strong> — القفز من المرحلة 2 للمرحلة 4 متجاوزًا الدفع.</p>
+
+<h3>10 — Attack Database Connectivity</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>نوع الهجوم</th><th>الشرح</th></tr></thead>
+<tbody>
+<tr><td>Connection String Injection</td><td>حقن بارامترات في Connection String بإلحاقها بعد فاصلة منقوطة <code>;</code> — يحدث عند بناء Connection Strings ديناميكيًا من مدخلات المستخدم</td></tr>
+<tr><td>CSPP — Hash Stealing</td><td>استبدال قيمة Data Source بـ Rogue SQL Server — يعمل Sniff لـ Windows Credentials عند محاولة الاتصال</td></tr>
+<tr><td>CSPP — Port Scanning</td><td>تغيير قيمة الـ Port في Connection String لاكتشاف بورتات مفتوحة</td></tr>
+<tr><td>CSPP — Hijacking Credentials</td><td>محاولة الاتصال بالـ Database بحساب Web Application System بدل بيانات المستخدم</td></tr>
+<tr><td>Connection Pool DoS</td><td>إنشاء استعلامات SQL ضخمة متعددة في وقت واحد لاستهلاك كل الاتصالات في الـ Pool — في ASP.NET الحد الأقصى 100 اتصال ومهلة 30 ثانية</td></tr>
+</tbody>
+</table></div>
+
+
+<!-- LU4 -->
+
+<hr />
+
+<h2 id="lu4"><span class="num">04</span><span class="htext">الـ Web API والـ Webhooks</span></h2>
+
+
+
+<h3>Web API</h3>
+<p>الـ Web API واجهة برمجية توفّر خدمات ويب لتطبيقات جانب العميل لاسترداد وتحديث بيانات من مصادر متعدّدة عبر الإنترنت. يُوصَل إليها عادةً عبر HTTP.</p>
+<div class="table-wrap"><table>
+<thead><tr><th>نوع الـ API</th><th>الشرح</th></tr></thead>
+<tbody>
+<tr><td>SOAP API</td><td>بروتوكول اتصال يُمكِّن التفاعل بين منصّات مختلفة عبر XML وHTTP — يُولِّد ويُعدِّل ويحذف السجلات</td></tr>
+<tr><td>REST API</td><td>أسلوب معماري يعمل كوسيط اتصال بين الأنظمة عبر الويب</td></tr>
+<tr><td>RESTful API</td><td>REST مبني على مبادئ REST وبروتوكولات HTTP — يستخدم PUT وPOST وGET وDELETE. يجعل التطبيقات مستقلّة لتحسين الأداء والـ Scalability</td></tr>
+</tbody>
+</table></div>
+
+
+<h3>Webhooks</h3>
+<p>الـ Webhooks HTTP Callbacks مُعرَّفة من المستخدم تُطلَق بناءً على أحداث مُحدَّدة (مثل تلقّي تعليق أو Push لكود). تُسمّى أحيانًا <strong>"Reverse APIs"</strong> — تُبلِّغ التطبيقات الأخرى بآخر المعلومات فور حدوثها بدون حاجة لاستعلام دوري.</p>
+<div class="table-wrap"><table>
+<thead><tr><th></th><th>Webhooks</th><th>APIs</th></tr></thead>
+<tbody>
+<tr><td>الاتجاه</td><td>من الموقع للسيرفر (Automated Push)</td><td>من السيرفر للموقع (Request-based)</td></tr>
+<tr><td>متى تعمل</td><td>HTTP POST فقط عند تحديث جديد</td><td>تُجري طلبات بغضّ النظر عن التحديثات</td></tr>
+<tr><td>البيانات</td><td>Real-time عند الحدث</td><td>تحتاج تنفيذًا إضافيًا للـ Real-time</td></tr>
+<tr><td>التحكّم</td><td>أقل تحكّمًا في تدفّق البيانات</td><td>تحكّم سهل في تدفّق البيانات</td></tr>
+</tbody>
+</table></div>
+
+
+<h3>منهجية اختراق Web API</h3>
+<div class="step-track">
+<div class="step-item"><div class="step-num">1</div><div class="step-title">تحديد الهدف</div><div class="step-body"><p>تحليل HTTP Headers وMessage Formats (JSON لـ REST، XML لـ SOAP). API Enumeration بأداة Kiterunner — أداة متقدّمة للمسح السياقي لـ APIs.</p></div></div>
+<div class="step-item"><div class="step-num">2</div><div class="step-title">تحديد Attack Surface</div><div class="step-body"><p>فحص API Metadata (Paths وParameters وMessage Formats) — REST يستخدم Swagger وRAML وAPI-Blueprint، SOAP يستخدم WSDL/XML-Schema. لو لا Metadata، مراقبة وتسجيل الاتصال بين API والعميل.</p></div></div>
+<div class="step-item"><div class="step-num">3</div><div class="step-title">تنفيذ الهجمات</div><div class="step-body"><p>Fuzzing (Fuzzapi)، Invalid Input Attacks، Malicious Input Attacks، Injection Attacks، Insecure SSL Config، IDOR، Insecure Session/Authentication Handling، API DDoS Attacks.</p></div></div>
+</div>
+
+
+<h3>ثغرات API وIDOR</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>الثغرة</th><th>الشرح</th></tr></thead>
+<tbody>
+<tr><td>Insecure SSL Config</td><td>شهادات Self-Signed تسمح بـ MITM — المهاجم يراقب أو يتلاعب بالحركة المشفَّرة</td></tr>
+<tr><td>IDOR (Insecure Direct Object References)</td><td>مراجع مباشرة للكائنات دون تطبيق حقوق الوصول — المهاجم يتعداد القيم الممكنة عبر API Metadata</td></tr>
+<tr><td>Insecure Session/Auth Handling</td><td>إعادة استخدام Session Tokens، Tokens تسلسلية، Timeout طويل، Token غير مشفَّر أو في الـ URL</td></tr>
+<tr><td>API DDoS</td><td>إغراق API بحركة ضخمة من Botnet لتأخير الخدمة للمستخدمين الشرعيين رغم Rate Limiting</td></tr>
+</tbody>
+</table></div>
+
+<div class="callout note"><div class="callout-label">Bypassing IDOR via Parameter Pollution</div><p>IDOR ثغرة تنشأ عندما يكشف المطوّرون مراجع للكائنات الداخلية (مفاتيح قواعد البيانات والمجلدات والملفات). المهاجم يعدّل المراجع للوصول لبيانات غير مصرَّح بها.</p></div>
+
+
+<h3>Secure API Architecture — أفضل الممارسات</h3>
+<ul>
+<li>استخدام HTTPS عبر SSL/TLS</li>
+<li>استخدام Tokens مُولَّدة من السيرفر كـ Hidden Fields للتحقّق من الطلبات</li>
+<li>تعقيم البيانات والتحقّق السليم من الإدخال</li>
+<li>IP Whitelisting للوصول للـ APIs</li>
+<li>Rate Limiting لتحديد عدد طلبات API في وحدة الزمن</li>
+<li>API Gateways لمصادقة الحركة والتحكّم والتحليل</li>
+<li>MFA وبروتوكولات مصادقة مثل AppToken وOAuth2 وOpenID Connect</li>
+<li>SOAP APIs بدلًا من REST التقليدي لأمان مدمَج أقوى</li>
+<li>WAF مع TLS/SSL لتأمين APIs</li>
+</ul>
+
+
+<h3>أفضل ممارسات تأمين Webhooks</h3>
+<ul>
+<li>HTTPS بدلًا من HTTP لحماية البيانات أثناء النقل</li>
+<li>مشاركة Authentication Secrets (HTTP Basic Auth) لجميع Webhooks</li>
+<li>Webhook Signing للتحقّق من بيانات ESPs وباستخدام Constant Time-Compare</li>
+<li>تتبّع event_id لتجنّب المعالجة المزدوجة غير المقصودة (Replay Attacks)</li>
+<li>الـ Firewall يرفض Webhook Calls من مصادر غير مصرَّح بها غير ESPs</li>
+<li>Rate Limiting على Webhook Calls في Web Server</li>
+</ul>
+
+
+<!-- LU5 -->
+
+<hr />
+
+<h2 id="lu5"><span class="num">05</span><span class="htext">أمان الـ Web Applications — اختبار وتشفير وإجراءات مضادة</span></h2>
+
+
+
+<h3>أنواع اختبار أمان الـ Web Application</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>النوع</th><th>الوصف</th><th>الأدوات</th></tr></thead>
+<tbody>
+<tr><td>Manual Testing</td><td>اختبار يدوي ببيانات مصمَّمة يدويًا وكود مخصَّص وأدوات مستعرض</td><td>SecApps، Selenium، Apache JMeter</td></tr>
+<tr><td>Automated Testing</td><td>أتمتة عملية الاختبار ودمجها في كل مرحلة من التطوير</td><td>Ranorex Studio، TestComplete، Leapwork</td></tr>
+<tr><td>SAST (Static — White-box)</td><td>النظام والـ Source Code معروف للمختبِر — يحلّل الكود بدون تشغيله</td><td>Codacy، JFrog، Klocwork</td></tr>
+<tr><td>DAST (Dynamic — Black-box)</td><td>يُنفَّذ مباشرةً على الكود الشغّال لاكتشاف مشاكل الواجهات والـ Sessions والـ Injections</td><td>Invicti، Acunetix، HCL AppScan</td></tr>
+<tr><td>Fuzz Testing (Black-box)</td><td>توليد كميات ضخمة من بيانات عشوائية (Fuzz) واختبارها ضد التطبيق لاكتشاف Buffer Overflow وDoS وXSS وSQL Injection</td><td>WebScarab، Burp Suite، AppScan Standard، Defensics، ffuf</td></tr>
+</tbody>
+</table></div>
+
+
+<h4>خطوات Fuzz Testing</h4>
+<div class="step-track">
+<div class="step-item"><div class="step-num">1</div><div class="step-title">تحديد النظام الهدف</div><div class="step-body"><p></p></div></div>
+<div class="step-item"><div class="step-num">2</div><div class="step-title">تحديد المدخلات</div><div class="step-body"><p></p></div></div>
+<div class="step-item"><div class="step-num">3</div><div class="step-title">توليد بيانات Fuzz</div><div class="step-body"><p></p></div></div>
+<div class="step-item"><div class="step-num">4</div><div class="step-title">تنفيذ الاختبار ببيانات الـ Fuzz</div><div class="step-body"><p></p></div></div>
+<div class="step-item"><div class="step-num">5</div><div class="step-title">مراقبة سلوك النظام</div><div class="step-body"><p></p></div></div>
+<div class="step-item"><div class="step-num">6</div><div class="step-title">تسجيل العيوب</div><div class="step-body"><p></p></div></div>
+</div>
+
+<div class="callout tip"><div class="callout-label">AI-Powered Fuzzing</div><p>AI-powered Fuzz Testing يستخدم Machine Learning لتصميم مدخلات متنوّعة معقّدة بدلًا من البيانات العشوائية التقليدية — يتعلّم من الاختبارات السابقة ويتنبّأ بالمدخلات الفعّالة لاستكشاف مسارات الكود الأعمق.</p></div>
+
+
+<h3>أنواع ترميز البيانات (Encoding Schemes)</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>النوع</th><th>الشرح</th><th>مثال</th></tr></thead>
+<tbody>
+<tr><td>URL Encoding</td><td>تحويل URL لتنسيق ASCII صالح لنقل آمن عبر HTTP</td><td>%20 = مسافة</td></tr>
+<tr><td>HTML Encoding</td><td>تمثيل الأحرف غير العادية بشكل آمن داخل مستند HTML</td><td>&amp; = &</td></tr>
+<tr><td>Unicode Encoding (16-bit)</td><td>استبدال أحرف Unicode غير عادية بـ %u متبوعًا بـ Codepoint بالـ Hex</td><td>%u2215 = /</td></tr>
+<tr><td>UTF-8</td><td>ترميز متغيّر الطول يعبّر عن كل بايت بالـ Hex مسبوقًا بـ %</td><td>%c2%a9 = ©</td></tr>
+<tr><td>Base64</td><td>يمثّل أي بيانات ثنائية بأحرف ASCII قابلة للطباعة — يُستخدَم لمرفقات البريد وبيانات الاعتماد</td><td>cake → Y2FrZQ==</td></tr>
+<tr><td>Hex Encoding</td><td>يستخدم القيمة الست عشرية لكل حرف</td><td>Hello = 48 65 6C 6C 6F</td></tr>
+</tbody>
+</table></div>
+
+
+<h3>Application Whitelisting مقابل Blacklisting</h3>
+<div class="table-wrap"><table>
+<thead><tr><th></th><th>Application Whitelisting</th><th>Application Blacklisting</th></tr></thead>
+<tbody>
+<tr><td>التعريف</td><td>قائمة بمكوّنات مسموح بتنفيذها (Libraries، Plugins، Extensions)</td><td>قائمة بالتطبيقات أو البرمجيات الخبيثة غير المسموح بتنفيذها</td></tr>
+<tr><td>النهج</td><td>الكل محجوب إلا ما هو مسموح</td><td>الكل مسموح إلا ما هو محجوب</td></tr>
+<tr><td>الحماية</td><td>منع تشغيل برامج غير مُعتمَدة — أفضل ضد Ransomware/Malware</td><td>تحديد وحجب التطبيقات الخبيثة المعروفة</td></tr>
+<tr><td>الضعف</td><td>يتطلّب إدارة مستمرّة للقائمة</td><td>لا يكشف التهديدات الحديثة غير المعروفة — يتطلّب تحديثًا منتظمًا</td></tr>
+</tbody>
+</table></div>
+
+
+<h3>الإجراءات المضادة لهجمات الـ Web Application (OWASP Top 10)</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>الفئة</th><th>الإجراءات المضادة</th></tr></thead>
+<tbody>
+<tr><td>Broken Access Control</td><td>فحص Access Control قبل التحويل للمورد، تجنّب IDs غير آمنة، Session Timeout، تقييد صلاحيات الملفات</td></tr>
+<tr><td>Insecure Design</td><td>Threat Modelling، Secure SDLC، فحوصات موثوقية دورية</td></tr>
+<tr><td>Cryptographic Failures</td><td>عدم استخدام خوارزميات تشفير ضعيفة، توليد مفاتيح Offline وتخزينها بأمان، AES-256 للتشفير المتماثل وRSA-2048 للغير متماثل</td></tr>
+<tr><td>Security Misconfiguration</td><td>ضبط كل آليات الأمان وتعطيل الخدمات غير المستخدَمة، تعطيل الحسابات الافتراضية، فصل بيئات التطوير والاختبار والإنتاج</td></tr>
+<tr><td>XXE</td><td>عدم معالجة XML يحتوي مراجع خارجية، تكوين XML Unmarshaller بأمان، استخدام Static Local DTD وتعطيل DTD المُعلَن في الـ XML</td></tr>
+<tr><td>Vulnerable Components</td><td>فحص إصدارات المكوّنات بانتظام، مراقبة NVD، تطبيق Security Patches، أدوات Dependency Management</td></tr>
+<tr><td>Authentication Failures</td><td>SSL للأجزاء المصادَق عليها، تخزين Credentials بصيغة Hash، IAM وسياسات كلمات مرور قوية، Session IDs طويلة وعشوائية، Rate Limiting</td></tr>
+</tbody>
+</table></div>
+
+
+<!-- CHEAT -->
+
+<hr />
+
+<h2 id="cheat"><span class="htext">Cheat Sheet مرجعي</span></h2>
+
+
+<div class="cheat-section">
+
+<h4>مقارنة أنواع Web Service APIs</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>النوع</th><th>البروتوكول</th><th>Format</th><th>الميزة الرئيسية</th></tr></thead>
+<tbody>
+<tr><td>SOAP API</td><td>SOAP عبر HTTP</td><td>XML</td><td>أمان مدمَج — WS-Security — مناسب للبيئات المؤسسية</td></tr>
+<tr><td>REST API</td><td>HTTP</td><td>JSON أو XML</td><td>مرونة عالية — أسرع — أكثر شيوعًا</td></tr>
+<tr><td>RESTful API</td><td>HTTP + REST Principles</td><td>JSON</td><td>HTTP Methods (PUT/POST/GET/DELETE) — مستقلّ عن التطبيق</td></tr>
+</tbody>
+</table></div>
+
+
+<h4>أنواع Encoding — مرجع سريع</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>الترميز</th><th>الاستخدام</th><th>مثال</th></tr></thead>
+<tbody>
+<tr><td>URL Encoding</td><td>URLs لـ HTTP</td><td>مسافة = %20</td></tr>
+<tr><td>HTML Encoding</td><td>مستندات HTML</td><td>> = &gt; — & = &amp;</td></tr>
+<tr><td>Base64</td><td>مرفقات البريد وCredentials</td><td>Hello = SGVsbG8=</td></tr>
+<tr><td>Hex</td><td>HTML وبيانات ثنائية</td><td>Hello = 48 65 6C 6C 6F</td></tr>
+<tr><td>Unicode (16-bit)</td><td>أحرف Unicode خاصة</td><td>/ = %u2215</td></tr>
+<tr><td>UTF-8</td><td>أحرف Unicode متغيّرة</td><td>© = %c2%a9</td></tr>
+</tbody>
+</table></div>
+
+
+<h4>أنواع اختبار الأمان — مقارنة</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>النوع</th><th>المعرفة</th><th>يُشغَّل على</th><th>الأدوات</th></tr></thead>
+<tbody>
+<tr><td>SAST (White-box)</td><td>كامل — Source Code متاح</td><td>كود ثابت بدون تشغيل</td><td>Codacy، JFrog، Klocwork</td></tr>
+<tr><td>DAST (Black-box)</td><td>لا معرفة مسبقة</td><td>كود شغّال في Runtime</td><td>Invicti، Acunetix، HCL AppScan</td></tr>
+<tr><td>Fuzzing (Black-box)</td><td>لا معرفة مسبقة</td><td>كود شغّال في Runtime</td><td>WebScarab، Burp Suite، ffuf</td></tr>
+<tr><td>Manual</td><td>حسب السياق</td><td>أي مرحلة</td><td>SecApps، Selenium، Burp Suite</td></tr>
+</tbody>
+</table></div>
+
+
+<h4>Vulnerability Stack — ملخّص</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>الطبقة</th><th>مثال الهجوم</th></tr></thead>
+<tbody>
+<tr><td>L7 — Business Logic</td><td>XSS، Input Validation Bypass</td></tr>
+<tr><td>L6 — 3rd Party Components</td><td>اختراق المزوّد الخارجي</td></tr>
+<tr><td>L5 — Web Server</td><td>Banner Grabbing، CVE Exploitation</td></tr>
+<tr><td>L4 — Database</td><td>SQL Injection بـ sqlmap</td></tr>
+<tr><td>L3 — OS</td><td>Port Scanning، Malware Injection</td></tr>
+<tr><td>L2 — Network</td><td>MAC Flooding، Sniffing</td></tr>
+</tbody>
+</table></div>
+
+
+</div>
+
+<!-- SUMMARY -->
+
+<hr />
+
+<h2 id="summary"><span class="htext">الخلاصة العامة للموديول</span></h2>
+
+
+<p>الموديول ناقش مفاهيم الـ Web Application وWeb Services وطبقات الـ Vulnerability Stack الست، وأكثر من 25 نوع هجوم، ومنهجية الاختراق الكاملة في 13 مرحلة. ثم تطرّق لمفاهيم Web API وWebhooks ومنهجية اختراقها، وأنواع اختبار الأمان (SAST وDASTوFuzzing) وأنواع الترميز والإجراءات المضادة.</p>
+
+<div class="takeaways">
+<div class="takeaways-title">$ cat ./module14_summary.txt</div>
+<ul>
+<li>الـ Web Application بتشتغل على 3 طبقات: Client (Presentation) ← Business Logic ← Database — كل طبقة نقطة هجوم محتملة</li>
+<li>XXE هو SSRF على مستوى XML Parser — ينجح لما المحلّل مُهيَّأ بشكل خاطئ ويقبل كيانات خارجية</li>
+<li>MarioNet خطير لأن العدوى تستمرّ بعد إغلاق الصفحة عبر Service Worker API</li>
+<li>Password Reset Poisoning يستغل Host Header لتحويل رابط الإعادة لسيرفر المهاجم</li>
+<li>Connection Pool DoS يستهدف قاعدة البيانات بـ 100 استعلام بطيء (30 ثانية+) في وقت واحد لاستهلاك كل الاتصالات</li>
+<li>Webhooks هي "Reverse APIs" — Push عند الحدث بدلًا من Poll دوري — وتأمينها يستلزم HTTPS وSigning وevent_id tracking</li>
+<li>SAST يحلّل الكود الثابت (White-box)، DAST يختبر Runtime (Black-box)، وFuzzing يضخّ بيانات عشوائية لكشف ثغرات الحافّة</li>
+</ul>
+</div>
+
+<blockquote>
+<p><strong>الـ Web Application ليست مجرّد موقع — هي نظام طبقات.</strong> كلّ طبقة من الـ 6 (Vulnerability Stack) تقدّم نافذة مختلفة للمهاجم: من SQL Injection في قاعدة البيانات، لـ XSS في منطق الأعمال، لـ Banner Grabbing في السيرفر. الدفاع الحقيقي يبدأ بفهم هذه الطبقات والتحقّق السليم من كل مدخل في كل مستوى.</p>
+</blockquote>
+
+<div class="callout examtip"><div class="callout-label">Exam Tip</div><p>أسئلة هذا الموديول تُركِّز على: الفرق بين SOAP وREST وRESTful، مكوّنات Web Service Architecture (UDDI وWSDL وWS-Security)، طبقات Vulnerability Stack، الفرق بين SAST وDASTوFuzzing، أنواع Encoding (Base64 وURL وHex)، آلية Magecart Attack وWatering Hole وMarioNet وXXE، وخطوات Password Reset Poisoning.</p></div>
+
+
+<hr />
+<p><em>نهاية نوتس الموديول الرابع عشر — Hacking Web Applications</em></p>
+<div class="footer-note">-- EOF: module-14/web-applications.md --</div>
+</div>
+
+<script>
+(function(){
+  var root=document.documentElement,btn=document.getElementById('themeSwitch');
+  function applyTheme(t){root.setAttribute('data-theme',t);btn.textContent='theme: '+t;try{localStorage.setItem('oscp-notes-theme',t);}catch(e){}}
+  var saved='dark';try{saved=localStorage.getItem('oscp-notes-theme')||'dark';}catch(e){}
+  applyTheme(saved);
+  btn.addEventListener('click',function(){applyTheme(root.getAttribute('data-theme')==='dark'?'light':'dark');});
+  var bar=document.getElementById('progressBar');
+  function onScroll(){var h=document.documentElement,s=h.scrollTop,ht=h.scrollHeight-h.clientHeight;bar.style.width=(ht>0?(s/ht*100):0)+'%';var t=document.getElementById('toTop');s>500?t.classList.add('show'):t.classList.remove('show');}
+  document.addEventListener('scroll',onScroll);onScroll();
+  document.getElementById('toTop').addEventListener('click',function(){window.scrollTo({top:0,behavior:'smooth'});});
+  document.querySelectorAll('.code-wrap').forEach(function(wrap){
+    var c=wrap.querySelector('code');if(!c)return;
+    var b=document.createElement('button');b.className='copy-btn';b.textContent='copy';
+    b.addEventListener('click',function(){if(navigator.clipboard){navigator.clipboard.writeText(c.innerText).then(function(){b.textContent='copied ✓';b.classList.add('copied');setTimeout(function(){b.textContent='copy';b.classList.remove('copied');},1500);});}});
+    wrap.appendChild(b);
+  });
+})();
+</script>
+</body>
+</html>

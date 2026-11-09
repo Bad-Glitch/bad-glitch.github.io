@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>eWPTXv3 · Module 06: هجمات جهة السيرفر</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-0:#0B0B0D;--bg-1:#121214;--surface:#17171A;--surface-2:#1D1D21;
+    --border:#2A2A2F;--border-soft:#232326;
+    --text:#E6E6E9;--text-soft:#C4C4CA;--muted:#8A8A92;
+    --red:#E1362F;--red-soft:rgba(225,54,47,0.10);--red-border:rgba(225,54,47,0.35);
+    --red-grad:linear-gradient(90deg,#E1362F,#F2794A);
+    --amber:#E8A23A;--amber-soft:rgba(232,162,58,0.09);--amber-border:rgba(232,162,58,0.30);
+    --green:#3FBF6E;--green-soft:rgba(63,191,110,0.09);--green-border:rgba(63,191,110,0.30);
+    --blue:#4EA1D3;--blue-soft:rgba(78,161,211,0.09);--blue-border:rgba(78,161,211,0.30);
+    --purple:#A179E8;--purple-soft:rgba(161,121,232,0.10);--purple-border:rgba(161,121,232,0.32);
+    --mono:'IBM Plex Mono','Courier New',monospace;
+  }
+  html[data-theme="light"]{
+    --bg-0:#F4F3F1;--bg-1:#ECEBE8;--surface:#FFFFFF;--surface-2:#F3F2EF;
+    --border:#DEDCD6;--border-soft:#E6E4DF;--text:#1C1B19;--text-soft:#3C3A36;--muted:#726F68;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;direction:rtl;text-align:right;background:var(--bg-0);}
+  body{font-family:'Cairo','Segoe UI',Tahoma,sans-serif;line-height:1.95;font-size:16.5px;color:var(--text);
+    background:radial-gradient(900px 420px at 12% -8%,rgba(225,54,47,0.10),transparent 60%),
+               radial-gradient(800px 420px at 90% 6%,rgba(232,162,58,0.06),transparent 60%),
+               linear-gradient(180deg,var(--bg-0) 0%,var(--bg-1) 100%);
+    background-attachment:fixed;transition:background 0.2s ease,color 0.2s ease;}
+  html[data-theme="light"] body{background:radial-gradient(900px 420px at 12% -8%,rgba(225,54,47,0.06),transparent 60%),radial-gradient(800px 420px at 90% 6%,rgba(232,162,58,0.05),transparent 60%),linear-gradient(180deg,var(--bg-0) 0%,var(--bg-1) 100%);}
+  .progress-rail{position:fixed;top:0;inset-inline:0;height:3px;background:rgba(255,255,255,0.04);z-index:60;}
+  html[data-theme="light"] .progress-rail{background:rgba(0,0,0,0.05);}
+  .progress-bar{height:100%;width:0%;background:var(--red-grad);transition:width 0.08s linear;}
+  .float-controls{position:fixed;bottom:22px;left:22px;z-index:55;display:flex;flex-direction:column;gap:10px;}
+  .fctrl-btn{width:42px;height:42px;border-radius:50%;background:var(--surface);border:1px solid var(--border);color:var(--text-soft);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;box-shadow:0 10px 24px -10px rgba(0,0,0,0.5);transition:transform 0.15s ease,border-color 0.15s ease,opacity 0.2s ease;}
+  .fctrl-btn:hover{transform:translateY(-2px);border-color:var(--red-border);color:var(--red);}
+  #toTop{opacity:0;pointer-events:none;}
+  #toTop.show{opacity:1;pointer-events:auto;}
+  .page{max-width:860px;margin:0 auto;padding:46px 22px 100px;}
+  .banner{position:relative;overflow:hidden;background:linear-gradient(155deg,var(--surface) 0%,var(--bg-1) 55%,var(--surface) 100%);border:1px solid var(--border-soft);border-radius:10px;padding:0 0 34px;margin-bottom:26px;box-shadow:0 20px 50px -20px rgba(0,0,0,0.6);}
+  .term-bar{display:flex;align-items:center;gap:8px;padding:13px 18px;border-bottom:1px solid var(--border-soft);background:rgba(255,255,255,0.015);direction:ltr;}
+  .term-dot{width:11px;height:11px;border-radius:50%;display:inline-block;}
+  .term-dot.r{background:#E1362F;}.term-dot.y{background:#E8A23A;}.term-dot.g{background:#3FBF6E;}
+  .term-path{margin-inline-start:12px;font-family:var(--mono);font-size:12px;color:var(--muted);}
+  .theme-switch{margin-inline-start:auto;font-family:var(--mono);font-size:11px;color:var(--muted);background:transparent;border:1px solid var(--border);border-radius:4px;padding:4px 9px;cursor:pointer;}
+  .theme-switch:hover{color:var(--amber);border-color:var(--amber-border);}
+  .banner-body{padding:30px 34px 4px;}
+  .banner .kicker{display:inline-block;font-family:var(--mono);font-size:12.5px;letter-spacing:0.03em;color:var(--red);background:var(--red-soft);border:1px solid var(--red-border);border-radius:3px;padding:5px 12px;margin-bottom:20px;direction:ltr;}
+  .banner h1{margin:0 0 14px;font-size:28px;font-weight:800;line-height:1.5;color:var(--text);}
+  .banner .lede{color:var(--muted);font-size:15.5px;line-height:1.95;max-width:640px;margin:0 0 24px;}
+  .tags{display:flex;flex-wrap:wrap;gap:9px;}
+  .tag{font-size:12.5px;font-family:var(--mono);color:var(--amber);background:var(--amber-soft);border:1px solid var(--amber-border);border-radius:3px;padding:5px 11px;}
+  .toc{background:var(--surface);border:1px solid var(--border-soft);border-radius:8px;padding:6px 0 6px;margin-bottom:50px;overflow:hidden;}
+  .toc-title{font-family:var(--mono);font-weight:600;font-size:13px;color:var(--green);padding:14px 22px;border-bottom:1px solid var(--border-soft);direction:ltr;text-align:left;}
+  .toc-list{display:flex;flex-direction:column;}
+  .toc-item{display:flex;align-items:center;gap:14px;padding:12px 22px;color:var(--text-soft);text-decoration:none;font-size:14.5px;border-bottom:1px solid rgba(255,255,255,0.03);transition:background 0.15s ease;}
+  .toc-list .toc-item:last-child{border-bottom:none;}
+  .toc-item:hover{background:var(--red-soft);}
+  .toc-num{flex:none;font-family:var(--mono);font-size:12.5px;font-weight:600;color:#0F0F10;background:var(--red-grad);border-radius:3px;padding:3px 8px;direction:ltr;}
+  h1,h2,h3,h4{font-weight:700;}
+  h2{display:flex;align-items:center;gap:14px;font-size:21px;margin:66px 0 22px;padding-bottom:16px;border-bottom:1px solid var(--border-soft);color:var(--text);}
+  h2 .num{flex:none;font-family:var(--mono);font-size:13px;font-weight:700;color:#0F0F10;background:var(--red-grad);border-radius:5px;padding:7px 12px;direction:ltr;}
+  h2 .htext{line-height:1.5;}
+  h3{font-size:17px;margin:34px 0 14px;color:var(--red);display:flex;align-items:center;gap:9px;}
+  h3::before{content:"#";font-family:var(--mono);color:var(--amber);font-weight:700;}
+  h4{font-size:14.8px;margin:22px 0 10px;color:var(--text-soft);font-family:var(--mono);}
+  p{margin:0 0 17px;color:var(--text);}
+  strong{color:var(--text);font-weight:700;}
+  :root:not([data-theme="light"]) strong{color:#FBFBFC;}
+  a{color:var(--amber);text-decoration:none;border-bottom:1px dashed var(--amber-border);}
+  hr{border:none;height:1px;margin:50px 0;background:linear-gradient(90deg,transparent,var(--border),transparent);}
+  ul,ol{margin:0 0 18px;padding-inline-start:24px;}
+  li{margin-bottom:9px;color:var(--text);}
+  li::marker{color:var(--red);font-family:var(--mono);}
+  li>ul,li>ol{margin-top:9px;}
+  .goals-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px;margin:0 0 22px;}
+  .goal-card{display:flex;gap:10px;align-items:flex-start;background:var(--surface);border:1px solid var(--border-soft);border-radius:7px;padding:13px 15px;font-size:14px;color:var(--text-soft);}
+  .goal-card .gi{flex:none;font-family:var(--mono);font-size:11px;font-weight:700;color:var(--green);background:var(--green-soft);border:1px solid var(--green-border);border-radius:4px;width:22px;height:22px;display:flex;align-items:center;justify-content:center;}
+  blockquote{margin:24px 0;padding:17px 22px;background:var(--red-soft);border:1px solid var(--red-border);border-inline-start:3px solid var(--red);border-radius:6px;color:var(--text-soft);}
+  blockquote p{margin:0;color:inherit;line-height:1.85;}
+  blockquote p+p{margin-top:10px;}
+  blockquote strong{color:var(--text);}
+  .callout{margin:24px 0;padding:17px 22px 18px;border-radius:6px;border:1px solid var(--border-soft);border-inline-start:3px solid var(--border);background:var(--surface);}
+  .callout p{margin:0;color:var(--text-soft);line-height:1.85;}
+  .callout p+p{margin-top:10px;}
+  .callout ul{margin:6px 0 0;}
+  .callout-label{display:inline-flex;align-items:center;gap:7px;font-family:var(--mono);font-size:11.5px;font-weight:700;letter-spacing:0.02em;text-transform:uppercase;margin-bottom:10px;direction:ltr;}
+  .callout.note{border-inline-start-color:var(--blue);background:var(--blue-soft);}
+  .callout.note .callout-label{color:var(--blue);}
+  .callout.warning{border-inline-start-color:var(--red);background:var(--red-soft);}
+  .callout.warning .callout-label{color:var(--red);}
+  .callout.tip{border-inline-start-color:var(--green);background:var(--green-soft);}
+  .callout.tip .callout-label{color:var(--green);}
+  .callout.examtip{border-inline-start-color:var(--purple);background:var(--purple-soft);}
+  .callout.examtip .callout-label{color:var(--purple);}
+  .callout.case{border-inline-start-color:var(--amber);background:var(--amber-soft);}
+  .callout.case .callout-label{color:var(--amber);}
+  .callout.definition{border-inline-start-color:var(--muted);background:var(--surface-2);}
+  .callout.definition .callout-label{color:var(--text-soft);}
+  .callout.danger{border-inline-start-color:#FF5A52;background:rgba(255,90,82,0.08);}
+  .callout.danger .callout-label{color:#FF5A52;}
+  .table-wrap{overflow-x:auto;margin:22px 0;border:1px solid var(--border-soft);border-radius:8px;}
+  table{width:100%;border-collapse:collapse;font-size:14.2px;min-width:480px;}
+  thead th{background:var(--surface-2);color:var(--amber);font-weight:700;font-family:var(--mono);font-size:12.5px;text-transform:uppercase;letter-spacing:0.02em;text-align:start;padding:13px 15px;border-bottom:1px solid var(--border-soft);white-space:nowrap;}
+  tbody td{padding:12px 15px;border-bottom:1px solid var(--border-soft);color:var(--text-soft);vertical-align:top;}
+  tbody tr:last-child td{border-bottom:none;}
+  tbody tr:nth-child(even){background:rgba(127,127,127,0.03);}
+  tbody tr:hover{background:var(--red-soft);}
+  code{font-family:var(--mono);font-size:13.3px;background:var(--surface-2);border:1px solid var(--border-soft);border-radius:4px;padding:2px 6px;direction:ltr;unicode-bidi:embed;color:var(--green);}
+  .code-wrap{position:relative;overflow-x:auto;margin:22px 0;}
+  .code-tag{position:absolute;top:10px;left:14px;font-family:var(--mono);font-size:10.5px;color:var(--muted);letter-spacing:0.04em;text-transform:uppercase;z-index:2;}
+  .copy-btn{position:absolute;top:8px;right:10px;z-index:2;font-family:var(--mono);font-size:11px;color:var(--muted);background:var(--surface-2);border:1px solid var(--border-soft);border-radius:4px;padding:4px 9px;cursor:pointer;direction:ltr;}
+  .copy-btn:hover{color:var(--amber);border-color:var(--amber-border);}
+  .copy-btn.copied{color:var(--green);border-color:var(--green-border);}
+  pre{background:var(--bg-0);border:1px solid var(--border-soft);border-inline-start:3px solid var(--red);border-radius:8px;padding:30px 22px 18px;direction:ltr;text-align:left;margin:0;}
+  html[data-theme="light"] pre{background:#16181C;}
+  pre code{background:none;border:none;padding:0;color:#B9E8C9;font-size:13.2px;line-height:1.75;}
+  .diagram-card{background:var(--surface);border:1px solid var(--border-soft);border-radius:10px;padding:22px 18px 16px;margin:24px 0;}
+  .diagram-card svg{width:100%;height:auto;display:block;}
+  .diagram-caption{margin-top:10px;text-align:center;font-family:var(--mono);font-size:11.5px;color:var(--muted);}
+  .takeaways{background:var(--surface);border:1px solid var(--border-soft);border-radius:8px;padding:18px 22px 20px;margin:30px 0 10px;}
+  .takeaways-title{font-family:var(--mono);font-size:12.5px;font-weight:700;color:var(--green);margin-bottom:12px;direction:ltr;text-align:left;display:flex;align-items:center;gap:8px;}
+  .takeaways ul{margin:0;padding-inline-start:20px;}
+  .takeaways li{color:var(--text-soft);font-size:14.5px;}
+  .cheat-section h4{color:var(--amber);font-size:13px;margin:26px 0 8px;}
+  .step-track{display:flex;flex-direction:column;gap:0;margin:24px 0;}
+  .step-item{position:relative;padding:0 0 26px 0;padding-inline-start:46px;border-inline-start:2px solid var(--border-soft);}
+  .step-item:last-child{border-inline-start:2px solid transparent;padding-bottom:4px;}
+  .step-num{position:absolute;inset-inline-start:-17px;top:0;width:32px;height:32px;border-radius:50%;background:var(--red-grad);color:#0F0F10;font-family:var(--mono);font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;}
+  .step-title{font-weight:700;color:var(--text);margin-bottom:6px;font-size:15px;}
+  .step-body{color:var(--text-soft);font-size:14.5px;}
+  .step-body p{margin:0 0 10px;}
+  .step-body p:last-child{margin-bottom:0;}
+  .method-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px;margin:22px 0;}
+  .method-card{background:var(--surface);border:1px solid var(--border-soft);border-radius:8px;padding:14px 16px;}
+  .method-card .mnum{font-family:var(--mono);font-size:11px;font-weight:700;color:#0F0F10;background:var(--red-grad);border-radius:4px;padding:2px 8px;display:inline-block;margin-bottom:8px;direction:ltr;}
+  .method-card .mtitle{font-weight:700;color:var(--text);font-size:14px;margin-bottom:5px;}
+  .method-card .mdesc{color:var(--text-soft);font-size:13.3px;line-height:1.75;}
+  .footer-note{margin-top:70px;padding-top:26px;border-top:1px solid var(--border-soft);color:var(--muted);font-size:13.3px;font-family:var(--mono);text-align:center;direction:ltr;}
+  .dsvg-box{fill:var(--surface-2);stroke:var(--border-soft);stroke-width:1;}
+  .dsvg-box-r{fill:var(--red-soft);stroke:var(--red-border);stroke-width:1;}
+  .dsvg-box-g{fill:var(--green-soft);stroke:var(--green-border);stroke-width:1;}
+  .dsvg-box-b{fill:var(--blue-soft);stroke:var(--blue-border);stroke-width:1;}
+  .dsvg-box-a{fill:var(--amber-soft);stroke:var(--amber-border);stroke-width:1;}
+  .dsvg-box-p{fill:var(--purple-soft);stroke:var(--purple-border);stroke-width:1;}
+  .dsvg-line{stroke:var(--border);stroke-width:1.5;fill:none;}
+  .dsvg-arr{fill:var(--border);}
+  .dsvg-arr-r{fill:var(--red);}
+  .dsvg-txt{fill:var(--text);font-family:IBM Plex Mono,monospace;}
+  .dsvg-muted{fill:var(--muted);font-family:IBM Plex Mono,monospace;}
+  .dsvg-red{fill:var(--red);}
+  .dsvg-green{fill:var(--green);}
+  .dsvg-amber{fill:var(--amber);}
+  .dsvg-blue{fill:var(--blue);}
+  @media print{.float-controls,.progress-rail,.copy-btn,.theme-switch{display:none !important;}body{background:#fff;color:#000;}.page{max-width:100%;}}
+  @media(max-width:640px){.page{padding:28px 14px 70px;}.banner-body{padding:24px 20px 4px;}.banner h1{font-size:21px;}h2{font-size:18px;gap:10px;}.float-controls{left:12px;bottom:14px;}}
+</style>
+</head>
+<body>
+
+<div class="progress-rail"><div class="progress-bar" id="progressBar"></div></div>
+<div class="float-controls">
+  <button class="fctrl-btn" id="toTop" title="ارجع لفوق">↑</button>
+</div>
+
+<div class="page">
+
+<div class="banner">
+  <div class="term-bar">
+    <span class="term-dot r"></span><span class="term-dot y"></span><span class="term-dot g"></span>
+    <span class="term-path">root@ewptx:~/module-06$</span>
+    <button class="theme-switch" id="themeSwitch">theme: dark</button>
+  </div>
+  <div class="banner-body">
+    <span class="kicker">EWPTXv3 · INE · Module 06</span>
+    <h1>هجمات جهة السيرفر (Server-Side Attacks)</h1>
+    <p class="lede">من فهم بنية تطبيقات الويب الحديثة وطبقاتها، مرورًا بتشريح هجمات SSRF الكاملة بأنواعها، ووصولًا لاستغلال فك التسلسل غير الآمن (Insecure Deserialization) عبر Python وJava وPHP.</p>
+    <div class="tags">
+      <span class="tag">web-architecture</span>
+      <span class="tag">ssrf</span>
+      <span class="tag">insecure-deserialization</span>
+      <span class="tag">pickle</span>
+      <span class="tag">java-deserialization</span>
+      <span class="tag">ysoserial</span>
+      <span class="tag">php-object-injection</span>
+      <span class="tag">gadget-chains</span>
+    </div>
+  </div>
+</div>
+
+<nav class="toc"><div class="toc-title">$ ls learning_units/</div><div class="toc-list">
+  <a class="toc-item" href="#lu1"><span class="toc-num">01</span><span>بنية تطبيقات الويب الحديثة</span></a>
+  <a class="toc-item" href="#lu2"><span class="toc-num">02</span><span>نماذج بنية تطبيقات الويب</span></a>
+  <a class="toc-item" href="#lu3"><span class="toc-num">03</span><span>مثال عملي: بنية طبقية لموقع تجارة إلكترونية</span></a>
+  <a class="toc-item" href="#lu4"><span class="toc-num">04</span><span>هجمات Server-Side — التعريف والمعايير</span></a>
+  <a class="toc-item" href="#lu5"><span class="toc-num">05</span><span>الطبقات المستهدَفة وWeb Server مقابل App Server</span></a>
+  <a class="toc-item" href="#lu6"><span class="toc-num">06</span><span>مقدمة في SSRF</span></a>
+  <a class="toc-item" href="#lu7"><span class="toc-num">07</span><span>تشريح هجوم SSRF</span></a>
+  <a class="toc-item" href="#lu8"><span class="toc-num">08</span><span>أنواع هجمات SSRF</span></a>
+  <a class="toc-item" href="#lu9"><span class="toc-num">09</span><span>مقدمة في التسلسل وفك التسلسل</span></a>
+  <a class="toc-item" href="#lu10"><span class="toc-num">10</span><span>فك التسلسل غير الآمن (Insecure Deserialization)</span></a>
+  <a class="toc-item" href="#lu11"><span class="toc-num">11</span><span>مثال عملي: Pickle Deserialization</span></a>
+  <a class="toc-item" href="#lu12"><span class="toc-num">12</span><span>فك التسلسل غير الآمن في Java</span></a>
+  <a class="toc-item" href="#lu13"><span class="toc-num">13</span><span>فك التسلسل غير الآمن في PHP</span></a>
+  <a class="toc-item" href="#methodology"><span class="toc-num">--</span><span>سلسلة هجوم متكاملة: من SSRF إلى RCE</span></a>
+  <a class="toc-item" href="#cheat"><span class="toc-num">--</span><span>Cheat Sheet مرجعي</span></a>
+  <a class="toc-item" href="#summary"><span class="toc-num">--</span><span>الخلاصة العامة للموديول</span></a>
+</div></nav>
+
+<!-- ══════════════════════════════════ LU1 -->
+<h2 id="lu1"><span class="num">01</span><span class="htext">بنية تطبيقات الويب الحديثة</span></h2>
+
+<h3>ما هي بنية تطبيق الويب؟</h3>
+<p>الإطار والهيكل اللي بيحدّد إزاي مكوّنات تطبيق الويب بتتفاعل مع بعض وبتشتغل سوا عشان توصل التطبيق للمستخدمين — بيشمل تصميم الواجهة الأمامية (Front-end)، الخلفية (Back-end)، تخزين البيانات، والتواصل بينهم. بدون بنية متينة، حتى أكتر التطبيقات ابتكارًا ممكن تفشل في تلبية توقعات المستخدمين أو أهداف العمل.</p>
+
+<h3>المكوّنات الأساسية</h3>
+<div class="goals-grid">
+  <div class="goal-card"><span class="gi">1</span><span><strong>Application Servers</strong> — بتعالج منطق العمل وتتعامل مع الطلبات الديناميكية من المستخدمين</span></div>
+  <div class="goal-card"><span class="gi">2</span><span><strong>Database Servers</strong> — سيرفرات مخصّصة لتخزين واسترجاع بيانات التطبيق، محمية عادة خلف جدران نارية ومعزولة عن الوصول الخارجي المباشر</span></div>
+  <div class="goal-card"><span class="gi">3</span><span><strong>آليات تحسين الأداء</strong> — خدمات زي CDNs بتخزّن الأصول الثابتة (صور، JS، CSS) أقرب للمستخدم لتقليل زمن الاستجابة</span></div>
+</div>
+<div class="callout note">
+<div class="callout-label">أهمية فهم البنية في هذا الموديول</div>
+<p>فهم بنية السيرفر الداخلية مهم جدًا في سياق "هجمات جهة السيرفر" — لأن ثغرات زي SSRF وInsecure Deserialization غالبًا بتستغل علاقات الثقة الداخلية، تدفّق البيانات، وتفاعلات المكوّنات جوه البنية. فهمك للبنية بيخلّيك تقترب من الهجمات دي بدقة، تكتشف عيوب خفيّة، وتوصي بإجراءات معالجة مستهدَفة.</p>
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU2 -->
+<h2 id="lu2"><span class="num">02</span><span class="htext">نماذج بنية تطبيقات الويب</span></h2>
+
+<div class="table-wrap"><table>
+<thead><tr><th>النموذج</th><th>الوصف</th><th>أفضل استخدام</th></tr></thead>
+<tbody>
+<tr><td>Layered</td><td>تنظيم المكوّنات في طبقات منفصلة (عرض، منطق عمل، بيانات)</td><td>تطبيقات Monolithic تقليدية</td></tr>
+<tr><td>Microservices</td><td>خدمات صغيرة مستقلة بتعالج وظائف عمل محدَّدة، بتتواصل عبر APIs</td><td>تطبيقات كبيرة ومعقّدة وقابلة للتوسّع</td></tr>
+<tr><td>SOA</td><td>خدمات مركزية قابلة لإعادة الاستخدام تُدار عبر Enterprise Service Bus</td><td>تكاملات على مستوى المؤسسة</td></tr>
+<tr><td>Event-Driven</td><td>عمليات تُشغَّل عبر إجراءات مستخدم أو أحداث نظام، غالبًا بشكل غير متزامن</td><td>أنظمة لحظية زي التجارة الإلكترونية أو IoT</td></tr>
+<tr><td>Serverless</td><td>دوال تُشغَّل بالأحداث ويديرها مزوّد سحابي (FaaS)</td><td>أعباء عمل خفيفة ومدفوعة بالأحداث</td></tr>
+<tr><td>Monolithic</td><td>كل مكوّنات التطبيق مجمَّعة في وحدة واحدة</td><td>تطبيقات صغيرة أو شركات ناشئة في مراحلها الأولى</td></tr>
+<tr><td>Distributed</td><td>التطبيق منتشر عبر عدة أنظمة أو عُقَد مترابطة</td><td>أنظمة عالية القابلية للتوسّع وتحمّل الأعطال</td></tr>
+</tbody>
+</table></div>
+
+<h3>Layered Architecture بالتفصيل</h3>
+<p>بتنظّم التطبيق في طبقات منفصلة، كل واحدة مسؤولة عن مهام محدَّدة: <strong>Presentation Layer</strong> (تفاعلات المستخدم — متصفحات، تطبيقات موبايل)، <strong>Business Logic Layer</strong> (سيرفر التطبيق — معالجة الطلبات وتطبيق المنطق والتفاعل مع قاعدة البيانات)، و<strong>Data Access Layer</strong> (إدارة تخزين واسترجاع البيانات). الطبقات بتتواصل هرميًا، غالبًا من أعلى لأسفل — الأنسب للتطبيقات التقليدية اللي محتاجة فصل واضح للأدوار.</p>
+
+<h3>Microservices Architecture بالتفصيل</h3>
+<p>بيقسّم التطبيق لخدمات صغيرة مستقلة، كل واحدة بتتعامل مع قدرة عمل محدَّدة (مصادقة المستخدم، معالجة الدفع). كل خدمة مفكوكة الارتباط (Loosely Coupled) وقابلة للنشر بشكل مستقل، بتتواصل مع خدمات تانية عبر APIs (REST، gRPC)، وغالبًا عندها قاعدة بياناتها الخاصة. مثالي للتطبيقات الكبيرة اللي محتاجة مرونة وقابلية توسّع ونشر مستمر، وبيسمح باستخدام تقنيات مختلفة لخدمات مختلفة (Polyglot Programming).</p>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU3 -->
+<h2 id="lu3"><span class="num">03</span><span class="htext">مثال عملي: بنية طبقية لموقع تجارة إلكترونية</span></h2>
+
+<div class="step-track">
+<div class="step-item">
+<div class="step-num">1</div>
+<div class="step-title">Client Layer</div>
+<div class="step-body"><p>الواجهة الأمامية اللي العميل بيتفاعل معها — موقع بيوفّر تصفّح وبحث المنتجات، سلة الشراء، وإدارة الحساب. بيشتغل في متصفحات الويب وبيبعت طلبات HTTP للسيرفر.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">2</div>
+<div class="step-title">Web Server Layer — Nginx</div>
+<div class="step-body"><p>بيتعامل مع طلبات HTTP/HTTPS الواردة، بيقدّم الملفات الثابتة (صور، CSS، JS)، بيعمل كـ Reverse Proxy بيحوّل الطلبات الديناميكية لسيرفر التطبيق (uWSGI)، وبيوفّر موازنة الحمل لو فيه أكتر من سيرفر تطبيق.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">3</div>
+<div class="step-title">Application Server Layer — uWSGI</div>
+<div class="step-body"><p>بيعالج الطلبات الديناميكية اللي وصلت من Nginx، بينفّذ منطق العمل ويدير العمليات الخلفية — مصادقة المستخدم، منطق سلة الشراء، معالجة الطلبات.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">4</div>
+<div class="step-title">API Layer</div>
+<div class="step-body"><p>واجهات مهيكلة للتواصل بين سيرفر التطبيق والأنظمة الخارجية/الداخلية — API معلومات المنتج (توافر، سعر، وصف) وAPI إدارة الطلبات (تتبّع وحالة الطلب).</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">5</div>
+<div class="step-title">Database Layer — MongoDB</div>
+<div class="step-body"><p>بتخزّن كتالوج المنتجات، بيانات العملاء، وسجل الطلبات والمعاملات — مستضافة على سيرفر منفصل لقابلية التوسّع والأمان. سيرفر التطبيق بيتصل بـ MongoDB عبر Driver زي PyMongo لـ Python.</p></div>
+</div>
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU4 -->
+<h2 id="lu4"><span class="num">04</span><span class="htext">هجمات Server-Side — التعريف والمعايير</span></h2>
+
+<h3>معنى "Server-Side"</h3>
+<p>بيشاور للعمليات والمنطق والبنية التحتية اللي بتشتغل على السيرفر مش على العميل — بيعالج مهام حرجة زي معالجة الطلبات، تنفيذ منطق العمل، التواصل مع قواعد البيانات وAPIs، والتكامل مع خدمات داخلية. هجمات Server-Side بتستغل ضعف في طريقة معالجة السيرفر للمدخلات، تواصله مع أنظمة تانية، وإدارته للموارد — بعكس هجمات Client-Side اللي بتستهدف المكوّنات المواجهة للمستخدم.</p>
+
+<h3>معايير التمييز</h3>
+<div class="goals-grid">
+  <div class="goal-card"><span class="gi">1</span><span><strong>سياق التنفيذ</strong> — الكود أو المنطق بيتنفّذ على السيرفر، مش المتصفح</span></div>
+  <div class="goal-card"><span class="gi">2</span><span><strong>النطاق</strong> — بتأثّر على بنية أو إعداد السيرفر أو التواصل بين المكوّنات</span></div>
+  <div class="goal-card"><span class="gi">3</span><span><strong>التفاعل مع المكوّنات</strong> — استغلال طريقة تفاعل السيرفر مع APIs أو خدمات مصغّرة أو أنظمة خارجية</span></div>
+  <div class="goal-card"><span class="gi">4</span><span><strong>افتراضات الثقة</strong> — استغلال ثقة ضمنية (ثقة في مدخل المستخدم → Insecure Deserialization، ثقة في طلبات الشبكة الداخلية → SSRF)</span></div>
+  <div class="goal-card"><span class="gi">5</span><span><strong>موارد السيرفر</strong> — استغلال نظام الملفات أو الذاكرة أو المعالج الخاص بالسيرفر</span></div>
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU5 -->
+<h2 id="lu5"><span class="num">05</span><span class="htext">الطبقات المستهدَفة وWeb Server مقابل App Server</span></h2>
+
+<h3>الطبقات اللي بتستهدفها هجمات Server-Side</h3>
+<ul>
+<li><strong>Web Server Layer:</strong> بيتعامل مع طلبات HTTP ويقدّم محتوى ثابت — بوابة لسيرفر التطبيق</li>
+<li><strong>Application Server Layer:</strong> بيعالج محتوى ديناميكي وينفّذ منطق العمل — بيتواصل مع قاعدة البيانات وAPIs</li>
+<li><strong>Data Access Layer (بشكل غير مباشر):</strong> استغلالات من سيرفر التطبيق أو الويب ممكن تتلاعب في البيانات أو تخترق سلامة قاعدة البيانات</li>
+</ul>
+
+<h3>Web Server مقابل Application Server</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>الجانب</th><th>Web Server</th><th>Application Server</th></tr></thead>
+<tbody>
+<tr><td>الدور</td><td>يقدّم محتوى ثابت، يوجّه الطلبات</td><td>ينفّذ منطق العمل، يولّد استجابات ديناميكية</td></tr>
+<tr><td>التفاعل</td><td>يتواصل مع العملاء (HTTP/HTTPS)</td><td>يتواصل مع قواعد البيانات وAPIs والخدمات</td></tr>
+<tr><td>المعالجة</td><td>مهام خفيفة (تقديم ملفات ثابتة)</td><td>معالجة ثقيلة (معالجة بيانات)</td></tr>
+<tr><td>المخرجات</td><td>ملفات (HTML، CSS، JavaScript)</td><td>بيانات محسوبة (JSON، HTML)</td></tr>
+<tr><td>أمثلة</td><td>Apache، Nginx، IIS</td><td>Node.js، Django، Spring Boot</td></tr>
+</tbody>
+</table></div>
+
+<h3>ثغرات طبقة Web Server</h3>
+<ul>
+<li><strong>Directory Traversal:</strong> استغلال تحقّق غير صحيح من مسارات الملفات للوصول لملفات حساسة خارج المجلد المقصود (<code>../../etc/passwd</code>)</li>
+<li><strong>HTTP Response Splitting:</strong> التلاعب في رؤوس HTTP لحقن استجابات خبيثة أو إعادة توجيه المستخدمين لمواقع خبيثة</li>
+<li><strong>Misconfigured SSL/TLS:</strong> استغلال إعدادات ضعيفة أو قديمة (دعم SSLv3 أو Ciphers ضعيفة) لهجمات MITM</li>
+<li><strong>File Inclusion:</strong> استغلال معالجة غير صحيحة لمسارات الملفات لتنفيذ ملفات غير مصرَّح بها على السيرفر</li>
+</ul>
+
+<h3>ثغرات طبقة Application Server</h3>
+<ul>
+<li><strong>SSRF:</strong> استغلال قدرة السيرفر على تنفيذ طلبات HTTP للوصول لموارد داخلية أو خارجية</li>
+<li><strong>Insecure Deserialization:</strong> حقن حمولات خبيثة أثناء عملية فك التسلسل، مما يؤدّي لتنفيذ كود عن بُعد أو تصعيد صلاحيات</li>
+<li><strong>Broken Access Control:</strong> عيوب في منطق التفويض تسمح بتنفيذ إجراءات أو الوصول لموارد بدون صلاحيات مناسبة</li>
+<li><strong>Command Injection:</strong> استغلال ثغرات في سيرفر التطبيق لتنفيذ أوامر نظام عشوائية على المضيف</li>
+</ul>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU6 -->
+<h2 id="lu6"><span class="num">06</span><span class="htext">مقدمة في SSRF</span></h2>
+<p>Server-Side Request Forgery ثغرة بتخلّي المهاجم يخدع السيرفر عشان ينفّذ طلبات غير مصرَّح بها لموارد داخلية أو خارجية نيابةً عنه — الطلبات دي بتبدأها التطبيق الضعيف لكن بيتحكّم فيها المهاجم، وغالبًا بتؤدي لكشف بيانات حساسة أو الوصول لأنظمة مقيَّدة.</p>
+
+<div class="goals-grid">
+  <div class="goal-card"><span class="gi">1</span><span>كشف بيانات حساسة</span></div>
+  <div class="goal-card"><span class="gi">2</span><span>سرقة معلومات مصادقة</span></div>
+  <div class="goal-card"><span class="gi">3</span><span>استطلاع الشبكة الداخلية</span></div>
+  <div class="goal-card"><span class="gi">4</span><span>RCE — نقطة دخول لهجمات متقدّمة زي تنفيذ كود عن بُعد أو تصعيد صلاحيات</span></div>
+  <div class="goal-card"><span class="gi">5</span><span>قراءة/تضمين ملفات</span></div>
+</div>
+
+<h3>أسباب SSRF</h3>
+<ul>
+<li><strong>مدخلات غير مُتحقَّق منها:</strong> التطبيق بيقبل روابط أو موارد يقدّمها المستخدم بدون تحقّق أو تنقية مناسبة</li>
+<li><strong>ثقة السيرفر:</strong> السيرفر عنده وصول لموارد مش متاحة مباشرة للمهاجم — زي APIs داخلية، قواعد بيانات، أو خدمات Metadata السحابية</li>
+<li><strong>ضوابط وصول غير كافية:</strong> التطبيق مش بيفرض سياسات صارمة لمنع طلبات غير مصرَّح بها أو غير مقصودة</li>
+</ul>
+<div class="callout note">
+<div class="callout-label">سيناريوهات عرضة شائعة</div>
+<p>أدوات جلب الصور أو مولّدات معاينة الروابط اللي بتنزّل محتوى من روابط يحدّدها المستخدم، وتكاملات API اللي السيرفر فيها بيعالج مدخل المستخدم كجزء من طلب خارجي.</p>
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU7 -->
+<h2 id="lu7"><span class="num">07</span><span class="htext">تشريح هجوم SSRF</span></h2>
+
+<div class="step-track">
+<div class="step-item">
+<div class="step-num">1</div>
+<div class="step-title">تحديد Endpoint عرضة</div>
+<div class="step-body"><p>البحث عن وظيفة بيجلب فيها التطبيق موارد أو محتوى من رابط يقدّمه المستخدم (أدوات تنزيل ملفات، Webhooks، أو أدوات اختبار API).</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">2</div>
+<div class="step-title">التلاعب في المدخل</div>
+<div class="step-body"><p>صياغة رابط خبيث بيشاور لمورد داخلي أو غير مصرَّح به — سيرفرات داخلية (<code>http://localhost</code>، <code>http://127.0.0.1</code>) أو نقاط نهاية Metadata السحابية (<code>http://169.254.169.254</code> على AWS).</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">3</div>
+<div class="step-title">السيرفر بيعالج الطلب</div>
+<div class="step-body"><p>سيرفر التطبيق بيعالج الرابط اللي تحت تحكّم المهاجم وينفّذ الطلب — ثقة السيرفر في شبكته بتسمح بالوصول لموارد مقيَّدة أصلًا.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">4</div>
+<div class="step-title">استخراج أو استغلال الاستجابة</div>
+<div class="step-body"><p>المهاجم يقدر يسترجع معلومات حساسة (بيانات خدمة داخلية، بيانات اعتماد). في الحالات المتقدّمة، ممكن يستخدم SSRF لفحص منافذ على أنظمة داخلية أو ربط الهجوم بثغرات تانية (فك تسلسل، RCE).</p></div>
+</div>
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU8 -->
+<h2 id="lu8"><span class="num">08</span><span class="htext">أنواع هجمات SSRF</span></h2>
+
+<div class="method-grid">
+<div class="method-card"><span class="mnum">01</span><div class="mtitle">Basic SSRF</div><div class="mdesc">المهاجم بيستخدم رابط خبيث لجلب موارد داخلية أو بيانات خارجية عبر السيرفر. مثال: <code>http://example.com/fetch?url=http://attacker.com/malicious.png</code> → يتعدّل لـ <code>...url=http://localhost/admin</code>.</div></div>
+<div class="method-card"><span class="mnum">02</span><div class="mtitle">Blind SSRF</div><div class="mdesc">المهاجم مش بيشوف استجابة السيرفر مباشرة، لكن بيستنتج النتائج من آثار جانبية (سجلات السيرفر، حلّ DNS) — مثلًا إرسال استعلام DNS لنطاق يتحكّم فيه ومراقبة سجلاته.</div></div>
+<div class="method-card"><span class="mnum">03</span><div class="mtitle">SSRF للاستطلاع الداخلي</div><div class="mdesc">استخدام SSRF لفحص الشبكات أو الخدمات الداخلية الغير مكشوفة خارجيًا — مثلًا اختبار منافذ مفتوحة عبر <code>http://127.0.0.1:80</code>.</div></div>
+<div class="method-card"><span class="mnum">04</span><div class="mtitle">SSRF Chaining</div><div class="mdesc">دمج SSRF مع ثغرات تانية لاستغلال متقدّم — الوصول لخدمات Metadata السحابية (بيانات اعتماد AWS IAM عبر <code>http://169.254.169.254/latest/meta-data/</code>)، أو الوصول لخدمات داخلية حساسة تؤدي لتصعيد صلاحيات أو حركة جانبية.</div></div>
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU9 -->
+<h2 id="lu9"><span class="num">09</span><span class="htext">مقدمة في التسلسل وفك التسلسل</span></h2>
+
+<h3>ما هو Serialization؟</h3>
+<p>عملية تحويل أوبجكت أو بنية بيانات (أوبجكت Python، Java، أو C#) لصيغة سهلة التخزين أو النقل، وبعدين يُعاد بناؤها (Deserialization) لاحقًا. الصيغة المُسلسَلة غالبًا بتكون Byte Stream، صيغة نصية (JSON، XML)، أو تمثيل ثنائي. المستلم المفروض يقدر يعيد بناء الأوبجكت لشكله الأصلي من غير تغيير.</p>
+
+<h3>كيف تعمل عملية التسلسل</h3>
+<ol>
+<li><strong>تحويل الأوبجكت:</strong> التمثيل الموجود في الذاكرة (خصائصه، دواله، حالته) بيتحوّل لصيغة محدَّدة (ثنائية مضغوطة أو نصية قابلة للقراءة زي JSON/XML/YAML)</li>
+<li><strong>التخزين أو النقل:</strong> البيانات المُسلسَلة ممكن تُخزَّن (ملف أو قاعدة بيانات) أو تُنقَل (عبر شبكة أو API)</li>
+<li><strong>إعادة بناء الأوبجكت (فك التسلسل):</strong> البيانات المُسلسَلة بتُحلَّل لإعادة إنشاء الأوبجكت أو بنية البيانات الأصلية في الذاكرة</li>
+</ol>
+
+<div class="callout warning">
+<div class="callout-label">اعتبار أمني حاسم</div>
+<p>البيانات المُسلسَلة عادة مش مشفَّرة ولا موقَّعة افتراضيًا — ده يعني إنها لو اتُعرِضت، ممكن يتم العبث بيها بحرّية، وده ممكن يؤدي لسلوك غير متوقَّع أو خبيث في المكوّن المسؤول عن فك التسلسل. بعض بروتوكولات النقل بتدمج التسلسل مع الضغط أو التشفير اللي ممكن يخفي أو يؤمّن البيانات، لكن غالبًا بتظهر بصيغة نصية غير محمية — ده بالضبط اللي بيديه فرصة للمختبر أو المهاجم يحلّل ويتلاعب في البيانات.</p>
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU10 -->
+<h2 id="lu10"><span class="num">10</span><span class="htext">فك التسلسل غير الآمن (Insecure Deserialization)</span></h2>
+<p>ثغرة بتحدث لما بيانات غير موثوقة أو يتحكّم فيها المستخدم بتتعرّض لعملية فك تسلسل بدون تحقّق أو فحوصات أمنية مناسبة — ممكن تؤدي لعواقب وخيمة زي تنفيذ كود عن بُعد (RCE)، تصعيد صلاحيات، أو تلاعب بالبيانات.</p>
+
+<h3>أسباب الثغرة</h3>
+<ul>
+<li>غياب التحقّق من المدخلات — التطبيق بيقبل بيانات مُسلسَلة من مصادر غير موثوقة بدون التحقّق من أصالتها أو سلامتها</li>
+<li>مكتبات فك تسلسل مفرطة الصلاحية — بعض الأطر بتنشئ أوبجكتس أو تستدعي دوال أو تنفّذ كود تلقائيًا كجزء من عملية فك التسلسل</li>
+<li>الثقة في مدخلات المستخدم — بيانات مُسلسَلة من المستخدمين غالبًا بتُعامَل كآمنة رغم إنها غير موثوقة أصلًا</li>
+<li>هرميات أوبجكتس معقَّدة — فك تسلسل بيانات لأوبجكتس معقَّدة ممكن يسبّب سلوك غير متوقَّع، خصوصًا لو فك التسلسل استدعى Constructors أو دوال</li>
+<li>غياب ضوابط أمنية — عدم وجود توقيع تشفيري أو آلية تحقّق بتسمح للمهاجم يعبث بالبيانات من غير اكتشاف</li>
+</ul>
+
+<h3>التأثيرات المحتملة</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>التأثير</th><th>الوصف</th></tr></thead>
+<tbody>
+<tr><td>Remote Code Execution</td><td>حقن حمولات تستغل عملية فك التسلسل لتنفيذ كود عشوائي على السيرفر</td></tr>
+<tr><td>Privilege Escalation</td><td>العبث بالبيانات المُسلسَلة لتصعيد الصلاحيات أو انتحال مستخدمين بتعديل توكنات/أوبجكتس جلسة</td></tr>
+<tr><td>Data Tampering</td><td>تغيير قيم البيانات المُسلسَلة للتلاعب في سلوك التطبيق (مثل زيادة رصيد حساب)</td></tr>
+<tr><td>Application Logic Abuse</td><td>حقن أوبجكتس تستدعي وظائف غير مقصودة أثناء فك التسلسل</td></tr>
+<tr><td>Denial of Service</td><td>صياغة بيانات مُسلسَلة تستنزف موارد السيرفر أثناء فك التسلسل وتسبّب تعطّل التطبيق</td></tr>
+</tbody>
+</table></div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU11 -->
+<h2 id="lu11"><span class="num">11</span><span class="htext">مثال عملي: Pickle Deserialization</span></h2>
+<p>Pickle موديول Python لتسلسل وفك تسلسل أوبجكتس Python — بيحوّل الأوبجكت لـ Byte Stream يمكن تخزينه أو نقله، والعكس عبر فك التسلسل لإعادة بناء الأوبجكت الأصلي في الذاكرة.</p>
+<div class="code-wrap"><span class="code-tag">python — pickle serialize/deserialize</span><pre><code>import pickle
+
+# أوبجكت مثال:
+data = {"name": "Alice", "age": 30, "roles": ["admin", "user"]}
+
+# تسلسل الأوبجكت:
+serialized_data = pickle.dumps(data)
+print("Serialized Data:", serialized_data)
+
+# فك تسلسل الأوبجكت:
+deserialized_data = pickle.loads(serialized_data)
+print("Deserialized Data:", deserialized_data)
+</code></pre></div>
+<div class="callout danger">
+<div class="callout-label">خطر Pickle الحقيقي</div>
+<p><code>pickle.loads()</code> على بيانات قادمة من مصدر غير موثوق خطر جدًا — صيغة Pickle قادرة تنفّذ كود عشوائي أثناء فك التسلسل عبر دوال زي <code>__reduce__</code>، وده بيخليها من أخطر أشكال فك التسلسل غير الآمن في بايثون.</p>
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU12 -->
+<h2 id="lu12"><span class="num">12</span><span class="htext">فك التسلسل غير الآمن في Java</span></h2>
+
+<h3>آلية التسلسل في Java</h3>
+<p>Java بتستخدم واجهة <code>Serializable</code> لتحديد الأوبجكتس القابلة للتسلسل، ومدعومة بشكل مدمج عبر كلاسات <code>ObjectOutputStream</code> و<code>ObjectInputStream</code>. أي بيانات ثنائية تبدأ بالبايتات <code>ac ed 00 05</code> غالبًا تحتوي أوبجكتس Java مُسلسَلة — ده توقيع صيغة Java Serialized القياسي.</p>
+
+<h3>شروط فك التسلسل غير الآمن</h3>
+<p>حالة قابلة للاستغلال في Java بتحدث لما <code>readObject()</code> أو دالة مشابهة تُستدعى على أوبجكت يتحكّم فيه المستخدم، وبعدين دالة على الأوبجكت ده بتُستدعى. المهاجم يقدر يصنع أوبجكت بخصائص متداخلة متعدّدة، بحيث عند استدعائها بتنفّذ شيء مختلف تمامًا — مثلًا اختطاف الدالة المُستدعاة عبر Dynamic Proxy وInvocation Handler في خصائص الأوبجكت المُسلسَل.</p>
+
+<h3>Gadgets وGadget Chains</h3>
+<p>كل خاصية أو دالة جزء من أوبجكت استغلال متداخل بتُسمى <strong>Gadget</strong>. بعض مكتبات Java معروفة باحتوائها Gadgets عامة تُستخدَم لبناء أوبجكتس استغلال مُسلسَلة — بتُسمى <strong>Gadget Libraries</strong>. ده مش معناه إن المكتبات دي غير آمنة بالتصميم، لكن لو فك تسلسل غير آمن حصل وهي محمَّلة جوه Classpath التطبيق، المهاجم يقدر يستغلها لبناء سلسلة Gadgets معروفة تؤدي لاستغلال ناجح. أشهر مثال: <code>CommonsCollections</code> (الإصدارات 1-6).</p>
+
+<h3>Ysoserial</h3>
+<p>أداة بـ Java مصمَّمة لتوليد حمولات مُسلسَلة خبيثة لاستغلال ثغرات فك التسلسل غير الآمن — بتستغل ثغرات معروفة في مكتبات Java شهيرة (Apache Commons Collections، Spring، وغيرها) لصنع حمولات تنفّذ أوامر عشوائية أثناء فك التسلسل.</p>
+<div class="code-wrap"><span class="code-tag">ysoserial — generate malicious payload</span><pre><code>java -jar ysoserial.jar CommonsCollections1 "whoami" > payload.ser
+
+# الحمولة الناتجة بتتبعت للتطبيق الهدف عبر Cookies أو طلبات HTTP أو ملفات
+# لما التطبيق يفكّ تسلسل الحمولة، الأمر "whoami" بيتنفّذ على السيرفر
+</code></pre></div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU13 -->
+<h2 id="lu13"><span class="num">13</span><span class="htext">فك التسلسل غير الآمن في PHP</span></h2>
+
+<h3>صياغة تسلسل PHP</h3>
+<p>دالة <code>serialize()</code> بتحوّل أوبجكت أو مصفوفة أو قيمة PHP لسلسلة نصية، ودالة <code>unserialize()</code> بتعكس العملية. الصياغة العامة:</p>
+<div class="code-wrap"><span class="code-tag">php serialization syntax</span><pre><code>O:&lt;length&gt;:"&lt;class_name&gt;":&lt;num_properties&gt;:{&lt;property_name&gt;;&lt;property_value&gt;;}
+
+# مثال فعلي لكلاس User بخاصيتين:
+O:4:"User":2:{s:4:"name";s:5:"Alice";s:4:"role";s:5:"admin";}
+# O = Object | 4 = طول اسم الكلاس | "User" = اسم الكلاس | 2 = عدد الخصائص
+# s:4:"name" = اسم الخاصية (نص بطول 4) | s:5:"Alice" = القيمة (نص بطول 5)
+</code></pre></div>
+
+<h3>Magic Methods الحرجة في فك التسلسل</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>الدالة</th><th>متى تُستدعى</th></tr></thead>
+<tbody>
+<tr><td><code>__wakeup()</code></td><td>تلقائيًا أثناء فك التسلسل — غالبًا لإعادة تهيئة خصائص الأوبجكت</td></tr>
+<tr><td><code>__destruct()</code></td><td>عند تدمير الأوبجكت (مثلًا في نهاية السكريبت)</td></tr>
+<tr><td><code>__toString()</code></td><td>لما الأوبجكت يُعامَل كنص</td></tr>
+<tr><td><code>__sleep()</code></td><td>أثناء التسلسل — لتنظيف أو تجهيز خصائص الأوبجكت</td></tr>
+<tr><td><code>__call()</code></td><td>عند استدعاء دالة غير مُعرَّفة</td></tr>
+</tbody>
+</table></div>
+<div class="callout danger">
+<div class="callout-label">كيف يُستغَل</div>
+<p>المهاجمون بيستغلوا الـ Magic Methods بزرع منطق خبيث جوه الحمولة المُسلسَلة — لما التطبيق يفكّ تسلسل الحمولة، دوال زي <code>__wakeup()</code> أو <code>__destruct()</code> بتتنفّذ تلقائيًا بدون أي تدخّل إضافي من المهاجم.</p>
+</div>
+
+<h3>PHP Object Injection — مثال عملي</h3>
+<div class="code-wrap"><span class="code-tag">php object injection — vulnerable code</span><pre><code>&lt;?php
+class User {
+    public $name;
+    public $role;
+    public function __destruct() {
+        if ($this-&gt;role === "admin") {
+            echo "Access Granted! Admin privileges.";
+        }
+    }
+}
+if (isset($_GET['data'])) {
+    $data = $_GET['data'];
+    $user = unserialize($data); // عرضة للاستغلال
+}
+?&gt;
+</code></pre></div>
+<div class="code-wrap"><span class="code-tag">exploit — crafted payload via get request</span><pre><code># المهاجم بيصنع حمولة مُسلسَلة:
+# O:4:"User":2:{s:4:"name";s:8:"EvilUser";s:4:"role";s:5:"admin";}
+
+# ويبعتها عبر GET:
+http://example.com/vuln.php?data=O:4:"User":2:{s:4:"name";s:8:"EvilUser";s:4:"role";s:5:"admin";}
+
+# unserialize() بيعيد بناء الأوبجكت
+# __destruct() بيتنفّذ تلقائيًا → "Access Granted! Admin privileges."
+</code></pre></div>
+
+<hr />
+
+<!-- ══════════════════════════════════ METHODOLOGY -->
+<h2 id="methodology"><span class="num">--</span><span class="htext">سلسلة هجوم متكاملة: من SSRF إلى RCE</span></h2>
+
+<div class="diagram-card">
+<svg viewBox="0 0 700 150" xmlns="http://www.w3.org/2000/svg">
+  <rect x="5" y="55" width="130" height="55" rx="7" class="dsvg-box-b"/>
+  <text x="70" y="78" text-anchor="middle" class="dsvg-blue" font-size="11" font-weight="700">استطلاع نقطة الدخول</text>
+  <text x="70" y="95" text-anchor="middle" class="dsvg-muted" font-size="8">Endpoint يجلب روابط</text>
+
+  <rect x="180" y="55" width="130" height="55" rx="7" class="dsvg-box-a"/>
+  <text x="245" y="78" text-anchor="middle" class="dsvg-amber" font-size="11" font-weight="700">استغلال SSRF</text>
+  <text x="245" y="95" text-anchor="middle" class="dsvg-muted" font-size="8">Metadata / Localhost</text>
+
+  <rect x="355" y="55" width="130" height="55" rx="7" class="dsvg-box"/>
+  <text x="420" y="78" text-anchor="middle" class="dsvg-txt" font-size="11" font-weight="700">الوصول لـ API داخلي</text>
+  <text x="420" y="95" text-anchor="middle" class="dsvg-muted" font-size="8">خدمة غير مكشوفة</text>
+
+  <rect x="530" y="55" width="165" height="55" rx="7" class="dsvg-box-r"/>
+  <text x="612" y="78" text-anchor="middle" class="dsvg-red" font-size="11" font-weight="700">تصعيد / RCE</text>
+  <text x="612" y="95" text-anchor="middle" class="dsvg-muted" font-size="8">بيانات اعتماد / فك تسلسل</text>
+
+  <line x1="135" y1="82" x2="180" y2="82" class="dsvg-line"/>
+  <line x1="310" y1="82" x2="355" y2="82" class="dsvg-line"/>
+  <line x1="485" y1="82" x2="530" y2="82" class="dsvg-line"/>
+</svg>
+<div class="diagram-caption">SSRF نادرًا ما يكون هجوم مستقل — غالبًا نقطة دخول لسلسلة هجوم أعمق</div>
+</div>
+
+<ul>
+<li>ابحث دايمًا عن وظائف بتجلب موارد خارجية بناءً على مدخل المستخدم (أدوات معاينة، Webhooks، API Testers)</li>
+<li>جرّب روابط داخلية (<code>localhost</code>، <code>127.0.0.1</code>) ونقاط Metadata السحابية (<code>169.254.169.254</code>) كخطوة أولى</li>
+<li>لو مفيش استجابة مباشرة، انتقل لـ Blind SSRF عبر مراقبة سجلات DNS أو HTTP خارجية</li>
+<li>بعد الوصول لموارد داخلية، افحص هل فيه بيانات اعتماد أو توكنات ممكن تُستخدَم للتصعيد</li>
+<li>لو التطبيق بيستخدم فك تسلسل جوه معالجة البيانات الداخلية، ابحث عن فرصة لدمج SSRF مع Insecure Deserialization لتحقيق RCE كامل</li>
+</ul>
+
+<hr />
+
+<!-- ══════════════════════════════════ CHEAT SHEET -->
+<h2 id="cheat"><span class="num">--</span><span class="htext">Cheat Sheet مرجعي</span></h2>
+<div class="cheat-section">
+
+<h4>أهداف SSRF شائعة</h4>
+<div class="code-wrap"><span class="code-tag">common ssrf targets</span><pre><code>http://localhost
+http://127.0.0.1
+http://169.254.169.254/latest/meta-data/        # AWS metadata
+http://metadata.google.internal/computeMetadata/v1/  # GCP metadata
+file:///etc/passwd
+http://[::1]/                                    # IPv6 localhost bypass
+</code></pre></div>
+
+<h4>أوامر Ysoserial سريعة</h4>
+<div class="code-wrap"><span class="code-tag">quick reference</span><pre><code>java -jar ysoserial.jar CommonsCollections1 "id" > payload.ser
+java -jar ysoserial.jar CommonsCollections5 "whoami" > payload.ser
+java -jar ysoserial.jar Spring1 "touch /tmp/pwned" > payload.ser
+</code></pre></div>
+
+<h4>PHP Magic Methods لفحصها أثناء الاختبار</h4>
+<ul>
+<li><code>__wakeup()</code> — أول هدف لاستغلال فك التسلسل</li>
+<li><code>__destruct()</code> — بيتنفّذ تلقائيًا حتى لو السكريبت انتهى عاديًا</li>
+<li><code>__toString()</code> — لو الأوبجكت اتطبع أو اتستخدم كنص</li>
+</ul>
+
+<h4>Quick Wins — أسرع المسارات في هجمات Server-Side</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>#</th><th>التحقق</th><th>الطريقة</th><th>النتيجة المحتملة</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>فيه وظيفة بتجلب صورة أو محتوى من رابط يحدّده المستخدم؟</td><td>تعديل المعامل لـ <code>localhost</code></td><td>SSRF أساسي</td></tr>
+<tr><td>2</td><td>التطبيق مستضاف على AWS/GCP/Azure؟</td><td>طلب نقطة Metadata السحابية</td><td>تسريب بيانات اعتماد IAM</td></tr>
+<tr><td>3</td><td>كوكي أو باراميتر يبدأ ببايتات <code>ac ed 00 05</code>؟</td><td>فحص Hex للقيمة</td><td>Java Serialized Object</td></tr>
+<tr><td>4</td><td>كوكي أو باراميتر يبدأ بـ <code>O:</code> أو <code>a:</code>؟</td><td>فحص الصياغة</td><td>PHP Serialized Object</td></tr>
+<tr><td>5</td><td>فك تسلسل Python عبر Pickle على مدخل مستخدم؟</td><td>فحص استخدام <code>pickle.loads()</code></td><td>RCE محتمل عبر <code>__reduce__</code></td></tr>
+</tbody>
+</table></div>
+
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ SUMMARY -->
+<h2 id="summary"><span class="htext">الخلاصة العامة للموديول</span></h2>
+<p>الموديول ده غطّى هجمات جهة السيرفر بعمق — بدايةً من فهم بنية تطبيقات الويب الحديثة وطبقاتها، مرورًا بـ SSRF بكل أنواعه وتشريحه الكامل، ووصولًا لاستغلال فك التسلسل غير الآمن عبر Python وJava وPHP.</p>
+
+<div class="takeaways">
+<div class="takeaways-title">$ cat ./ewptx_module06_summary.txt</div>
+<ul>
+<li>فهم بنية تطبيق الويب (الطبقات والمكوّنات) ضروري لتحديد نقاط الثقة الداخلية اللي هجمات Server-Side بتستغلها</li>
+<li>هجمات Server-Side بتُميَّز بسياق التنفيذ (على السيرفر) وافتراضات الثقة المستغَلة، مش بس نوع الثغرة نفسها</li>
+<li>SSRF بيحوّل السيرفر لأداة بيد المهاجم للوصول لموارد داخلية مقيَّدة — Blind SSRF محتاج تقنيات استنتاج غير مباشرة</li>
+<li>نقاط Metadata السحابية (AWS/GCP) من أخطر أهداف SSRF — ممكن تسرّب بيانات اعتماد IAM كاملة</li>
+<li>البيانات المُسلسَلة غير مشفَّرة أو موقَّعة افتراضيًا — فرصة ذهبية للتحليل والتلاعب من أي مختبر أو مهاجم</li>
+<li>Gadget Chains وأدوات زي Ysoserial حوّلت استغلال فك التسلسل في Java من تقنية نظرية لهجوم عملي قابل للأتمتة</li>
+<li>Magic Methods في PHP (خصوصًا <code>__wakeup()</code> و<code>__destruct()</code>) هي المفتاح لتحويل فك تسلسل بسيط لتنفيذ كود فعلي</li>
+<li>SSRF وInsecure Deserialization نادرًا ما يكونوا هجمات مستقلة — غالبًا نقاط دخول لسلاسل هجوم أعمق تنتهي بـ RCE أو تصعيد صلاحيات</li>
+</ul>
+</div>
+
+<blockquote>
+<p><strong>الفكرة الجوهرية للموديول:</strong> هجمات جهة السيرفر كلها بتستغل نفس الثغرة الجوهرية — ثقة ضمنية غير مُتحقَّق منها. سواء كانت ثقة في رابط يقدّمه المستخدم (SSRF) أو ثقة في بيانات مُسلسَلة قادمة من خارج التطبيق (Insecure Deserialization)، المبدأ واحد: السيرفر بيفترض إن اللي جاله شرعي بدون ما يتحقّق فعليًا.</p>
+</blockquote>
+
+<div class="callout examtip">
+<div class="callout-label">Professional Mindset</div>
+<p>قبل ما تفترض إن ثغرة SSRF أو فك تسلسل "محدودة التأثير"، افحص دايمًا إيه اللي ممكن توصله من خلالها — خدمات داخلية، Metadata سحابية، أو مكتبات فك تسلسل محمَّلة جوه Classpath التطبيق. أعظم تأثير في هجمات Server-Side بييجي من ربط الثغرة بسلسلة هجوم أكبر، مش من استغلالها بمعزل عن السياق.</p>
+</div>
+
+<hr />
+<p><em>نهاية نوتس الموديول السادس — Server-Side Attacks (eWPTXv3)</em></p>
+<div class="footer-note">-- EOF: ewptx-module-06/server-side-attacks.md --</div>
+
+</div>
+
+<script>
+(function(){
+  var root=document.documentElement,btn=document.getElementById('themeSwitch');
+  function applyTheme(t){root.setAttribute('data-theme',t);btn.textContent='theme: '+t;try{localStorage.setItem('oscp-notes-theme',t);}catch(e){}}
+  var saved='dark';try{saved=localStorage.getItem('oscp-notes-theme')||'dark';}catch(e){}
+  applyTheme(saved);
+  btn.addEventListener('click',function(){applyTheme(root.getAttribute('data-theme')==='dark'?'light':'dark');});
+  var bar=document.getElementById('progressBar');
+  function onScroll(){var h=document.documentElement,s=h.scrollTop,ht=h.scrollHeight-h.clientHeight;bar.style.width=(ht>0?(s/ht*100):0)+'%';var t=document.getElementById('toTop');s>500?t.classList.add('show'):t.classList.remove('show');}
+  document.addEventListener('scroll',onScroll);onScroll();
+  document.getElementById('toTop').addEventListener('click',function(){window.scrollTo({top:0,behavior:'smooth'});});
+  document.querySelectorAll('.code-wrap').forEach(function(wrap){
+    var c=wrap.querySelector('code');if(!c)return;
+    var b=document.createElement('button');b.className='copy-btn';b.textContent='copy';
+    b.addEventListener('click',function(){if(navigator.clipboard){navigator.clipboard.writeText(c.innerText).then(function(){b.textContent='copied ✓';b.classList.add('copied');setTimeout(function(){b.textContent='copy';b.classList.remove('copied');},1500);});}});
+    wrap.appendChild(b);
+  });
+})();
+</script>
+</body>
+</html>

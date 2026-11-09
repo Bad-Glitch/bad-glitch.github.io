@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CEHv13 · Module 03: مسح الشبكات</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-0:#0B0B0D;--bg-1:#121214;--surface:#17171A;--surface-2:#1D1D21;
+    --border:#2A2A2F;--border-soft:#232326;
+    --text:#E6E6E9;--text-soft:#C4C4CA;--muted:#8A8A92;
+    --red:#E1362F;--red-soft:rgba(225,54,47,0.10);--red-border:rgba(225,54,47,0.35);
+    --red-grad:linear-gradient(90deg,#E1362F,#F2794A);
+    --amber:#E8A23A;--amber-soft:rgba(232,162,58,0.09);--amber-border:rgba(232,162,58,0.30);
+    --green:#3FBF6E;--green-soft:rgba(63,191,110,0.09);--green-border:rgba(63,191,110,0.30);
+    --blue:#4EA1D3;--blue-soft:rgba(78,161,211,0.09);--blue-border:rgba(78,161,211,0.30);
+    --purple:#A179E8;--purple-soft:rgba(161,121,232,0.10);--purple-border:rgba(161,121,232,0.32);
+    --mono:'IBM Plex Mono','Courier New',monospace;
+  }
+  html[data-theme="light"]{
+    --bg-0:#F4F3F1;--bg-1:#ECEBE8;--surface:#FFFFFF;--surface-2:#F3F2EF;
+    --border:#DEDCD6;--border-soft:#E6E4DF;--text:#1C1B19;--text-soft:#3C3A36;--muted:#726F68;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;direction:rtl;text-align:right;background:var(--bg-0);}
+  body{font-family:'Cairo','Segoe UI',Tahoma,sans-serif;line-height:1.95;font-size:16.5px;color:var(--text);
+    background:radial-gradient(900px 420px at 12% -8%,rgba(225,54,47,0.10),transparent 60%),
+               radial-gradient(800px 420px at 90% 6%,rgba(232,162,58,0.06),transparent 60%),
+               linear-gradient(180deg,var(--bg-0) 0%,var(--bg-1) 100%);
+    background-attachment:fixed;transition:background 0.2s ease,color 0.2s ease;}
+  html[data-theme="light"] body{background:radial-gradient(900px 420px at 12% -8%,rgba(225,54,47,0.06),transparent 60%),radial-gradient(800px 420px at 90% 6%,rgba(232,162,58,0.05),transparent 60%),linear-gradient(180deg,var(--bg-0) 0%,var(--bg-1) 100%);}
+  .progress-rail{position:fixed;top:0;inset-inline:0;height:3px;background:rgba(255,255,255,0.04);z-index:60;}
+  html[data-theme="light"] .progress-rail{background:rgba(0,0,0,0.05);}
+  .progress-bar{height:100%;width:0%;background:var(--red-grad);transition:width 0.08s linear;}
+  .float-controls{position:fixed;bottom:22px;left:22px;z-index:55;display:flex;flex-direction:column;gap:10px;}
+  .fctrl-btn{width:42px;height:42px;border-radius:50%;background:var(--surface);border:1px solid var(--border);color:var(--text-soft);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;box-shadow:0 10px 24px -10px rgba(0,0,0,0.5);transition:transform 0.15s ease,border-color 0.15s ease,opacity 0.2s ease;}
+  .fctrl-btn:hover{transform:translateY(-2px);border-color:var(--red-border);color:var(--red);}
+  #toTop{opacity:0;pointer-events:none;}
+  #toTop.show{opacity:1;pointer-events:auto;}
+  .page{max-width:860px;margin:0 auto;padding:46px 22px 100px;}
+  .banner{position:relative;overflow:hidden;background:linear-gradient(155deg,var(--surface) 0%,var(--bg-1) 55%,var(--surface) 100%);border:1px solid var(--border-soft);border-radius:10px;padding:0 0 34px;margin-bottom:26px;box-shadow:0 20px 50px -20px rgba(0,0,0,0.6);}
+  .term-bar{display:flex;align-items:center;gap:8px;padding:13px 18px;border-bottom:1px solid var(--border-soft);background:rgba(255,255,255,0.015);direction:ltr;}
+  .term-dot{width:11px;height:11px;border-radius:50%;display:inline-block;}
+  .term-dot.r{background:#E1362F;}.term-dot.y{background:#E8A23A;}.term-dot.g{background:#3FBF6E;}
+  .term-path{margin-inline-start:12px;font-family:var(--mono);font-size:12px;color:var(--muted);}
+  .theme-switch{margin-inline-start:auto;font-family:var(--mono);font-size:11px;color:var(--muted);background:transparent;border:1px solid var(--border);border-radius:4px;padding:4px 9px;cursor:pointer;}
+  .theme-switch:hover{color:var(--amber);border-color:var(--amber-border);}
+  .banner-body{padding:30px 34px 4px;}
+  .banner .kicker{display:inline-block;font-family:var(--mono);font-size:12.5px;letter-spacing:0.03em;color:var(--red);background:var(--red-soft);border:1px solid var(--red-border);border-radius:3px;padding:5px 12px;margin-bottom:20px;direction:ltr;}
+  .banner h1{margin:0 0 14px;font-size:28px;font-weight:800;line-height:1.5;color:var(--text);}
+  .banner .lede{color:var(--muted);font-size:15.5px;line-height:1.95;max-width:640px;margin:0 0 24px;}
+  .tags{display:flex;flex-wrap:wrap;gap:9px;}
+  .tag{font-size:12.5px;font-family:var(--mono);color:var(--amber);background:var(--amber-soft);border:1px solid var(--amber-border);border-radius:3px;padding:5px 11px;}
+  .toc{background:var(--surface);border:1px solid var(--border-soft);border-radius:8px;padding:6px 0 6px;margin-bottom:50px;overflow:hidden;}
+  .toc-title{font-family:var(--mono);font-weight:600;font-size:13px;color:var(--green);padding:14px 22px;border-bottom:1px solid var(--border-soft);direction:ltr;text-align:left;}
+  .toc-list{display:flex;flex-direction:column;}
+  .toc-item{display:flex;align-items:center;gap:14px;padding:12px 22px;color:var(--text-soft);text-decoration:none;font-size:14.5px;border-bottom:1px solid rgba(255,255,255,0.03);transition:background 0.15s ease;}
+  .toc-list .toc-item:last-child{border-bottom:none;}
+  .toc-item:hover{background:var(--red-soft);}
+  .toc-num{flex:none;font-family:var(--mono);font-size:12.5px;font-weight:600;color:#0F0F10;background:var(--red-grad);border-radius:3px;padding:3px 8px;direction:ltr;}
+  h1,h2,h3,h4{font-weight:700;}
+  h2{display:flex;align-items:center;gap:14px;font-size:21px;margin:66px 0 22px;padding-bottom:16px;border-bottom:1px solid var(--border-soft);color:var(--text);}
+  h2 .num{flex:none;font-family:var(--mono);font-size:13px;font-weight:700;color:#0F0F10;background:var(--red-grad);border-radius:5px;padding:7px 12px;direction:ltr;}
+  h2 .htext{line-height:1.5;}
+  h3{font-size:17px;margin:34px 0 14px;color:var(--red);display:flex;align-items:center;gap:9px;}
+  h3::before{content:"#";font-family:var(--mono);color:var(--amber);font-weight:700;}
+  h4{font-size:14.8px;margin:22px 0 10px;color:var(--text-soft);font-family:var(--mono);}
+  p{margin:0 0 17px;color:var(--text);}
+  strong{color:var(--text);font-weight:700;}
+  :root:not([data-theme="light"]) strong{color:#FBFBFC;}
+  a{color:var(--amber);text-decoration:none;border-bottom:1px dashed var(--amber-border);}
+  hr{border:none;height:1px;margin:50px 0;background:linear-gradient(90deg,transparent,var(--border),transparent);}
+  ul,ol{margin:0 0 18px;padding-inline-start:24px;}
+  li{margin-bottom:9px;color:var(--text);}
+  li::marker{color:var(--red);font-family:var(--mono);}
+  li>ul,li>ol{margin-top:9px;}
+  .goals-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px;margin:0 0 22px;}
+  .goal-card{display:flex;gap:10px;align-items:flex-start;background:var(--surface);border:1px solid var(--border-soft);border-radius:7px;padding:13px 15px;font-size:14px;color:var(--text-soft);}
+  .goal-card .gi{flex:none;font-family:var(--mono);font-size:11px;font-weight:700;color:var(--green);background:var(--green-soft);border:1px solid var(--green-border);border-radius:4px;width:22px;height:22px;display:flex;align-items:center;justify-content:center;}
+  blockquote{margin:24px 0;padding:17px 22px;background:var(--red-soft);border:1px solid var(--red-border);border-inline-start:3px solid var(--red);border-radius:6px;color:var(--text-soft);}
+  blockquote p{margin:0;color:inherit;line-height:1.85;}
+  blockquote p+p{margin-top:10px;}
+  blockquote strong{color:var(--text);}
+  .callout{margin:24px 0;padding:17px 22px 18px;border-radius:6px;border:1px solid var(--border-soft);border-inline-start:3px solid var(--border);background:var(--surface);}
+  .callout p{margin:0;color:var(--text-soft);line-height:1.85;}
+  .callout p+p{margin-top:10px;}
+  .callout ul{margin:6px 0 0;}
+  .callout-label{display:inline-flex;align-items:center;gap:7px;font-family:var(--mono);font-size:11.5px;font-weight:700;letter-spacing:0.02em;text-transform:uppercase;margin-bottom:10px;direction:ltr;}
+  .callout.note{border-inline-start-color:var(--blue);background:var(--blue-soft);}
+  .callout.note .callout-label{color:var(--blue);}
+  .callout.warning{border-inline-start-color:var(--red);background:var(--red-soft);}
+  .callout.warning .callout-label{color:var(--red);}
+  .callout.tip{border-inline-start-color:var(--green);background:var(--green-soft);}
+  .callout.tip .callout-label{color:var(--green);}
+  .callout.examtip{border-inline-start-color:var(--purple);background:var(--purple-soft);}
+  .callout.examtip .callout-label{color:var(--purple);}
+  .callout.case{border-inline-start-color:var(--amber);background:var(--amber-soft);}
+  .callout.case .callout-label{color:var(--amber);}
+  .callout.definition{border-inline-start-color:var(--muted);background:var(--surface-2);}
+  .callout.definition .callout-label{color:var(--text-soft);}
+  .callout.danger{border-inline-start-color:#FF5A52;background:rgba(255,90,82,0.08);}
+  .callout.danger .callout-label{color:#FF5A52;}
+  .table-wrap{overflow-x:auto;margin:22px 0;border:1px solid var(--border-soft);border-radius:8px;}
+  table{width:100%;border-collapse:collapse;font-size:14.2px;min-width:480px;}
+  thead th{background:var(--surface-2);color:var(--amber);font-weight:700;font-family:var(--mono);font-size:12.5px;text-transform:uppercase;letter-spacing:0.02em;text-align:start;padding:13px 15px;border-bottom:1px solid var(--border-soft);white-space:nowrap;}
+  tbody td{padding:12px 15px;border-bottom:1px solid var(--border-soft);color:var(--text-soft);vertical-align:top;}
+  tbody tr:last-child td{border-bottom:none;}
+  tbody tr:nth-child(even){background:rgba(127,127,127,0.03);}
+  tbody tr:hover{background:var(--red-soft);}
+  code{font-family:var(--mono);font-size:13.3px;background:var(--surface-2);border:1px solid var(--border-soft);border-radius:4px;padding:2px 6px;direction:ltr;unicode-bidi:embed;color:var(--green);}
+  .code-wrap{position:relative;overflow-x:auto;margin:22px 0;}
+  .code-tag{position:absolute;top:10px;left:14px;font-family:var(--mono);font-size:10.5px;color:var(--muted);letter-spacing:0.04em;text-transform:uppercase;z-index:2;}
+  .copy-btn{position:absolute;top:8px;right:10px;z-index:2;font-family:var(--mono);font-size:11px;color:var(--muted);background:var(--surface-2);border:1px solid var(--border-soft);border-radius:4px;padding:4px 9px;cursor:pointer;direction:ltr;}
+  .copy-btn:hover{color:var(--amber);border-color:var(--amber-border);}
+  .copy-btn.copied{color:var(--green);border-color:var(--green-border);}
+  pre{background:var(--bg-0);border:1px solid var(--border-soft);border-inline-start:3px solid var(--red);border-radius:8px;padding:30px 22px 18px;direction:ltr;text-align:left;margin:0;}
+  html[data-theme="light"] pre{background:#16181C;}
+  pre code{background:none;border:none;padding:0;color:#B9E8C9;font-size:13.2px;line-height:1.75;}
+  .diagram-card{background:var(--surface);border:1px solid var(--border-soft);border-radius:10px;padding:22px 18px 16px;margin:24px 0;}
+  .diagram-card svg{width:100%;height:auto;display:block;}
+  .diagram-caption{margin-top:10px;text-align:center;font-family:var(--mono);font-size:11.5px;color:var(--muted);}
+  .takeaways{background:var(--surface);border:1px solid var(--border-soft);border-radius:8px;padding:18px 22px 20px;margin:30px 0 10px;}
+  .takeaways-title{font-family:var(--mono);font-size:12.5px;font-weight:700;color:var(--green);margin-bottom:12px;direction:ltr;text-align:left;display:flex;align-items:center;gap:8px;}
+  .takeaways ul{margin:0;padding-inline-start:20px;}
+  .takeaways li{color:var(--text-soft);font-size:14.5px;}
+  .cheat-section h4{color:var(--amber);font-size:13px;margin:26px 0 8px;}
+  .step-track{display:flex;flex-direction:column;gap:0;margin:24px 0;}
+  .step-item{position:relative;padding:0 0 26px 0;padding-inline-start:46px;border-inline-start:2px solid var(--border-soft);}
+  .step-item:last-child{border-inline-start:2px solid transparent;padding-bottom:4px;}
+  .step-num{position:absolute;inset-inline-start:-17px;top:0;width:32px;height:32px;border-radius:50%;background:var(--red-grad);color:#0F0F10;font-family:var(--mono);font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;}
+  .step-title{font-weight:700;color:var(--text);margin-bottom:6px;font-size:15px;}
+  .step-body{color:var(--text-soft);font-size:14.5px;}
+  .step-body p{margin:0 0 10px;}
+  .step-body p:last-child{margin-bottom:0;}
+  .method-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px;margin:22px 0;}
+  .method-card{background:var(--surface);border:1px solid var(--border-soft);border-radius:8px;padding:14px 16px;}
+  .method-card .mnum{font-family:var(--mono);font-size:11px;font-weight:700;color:#0F0F10;background:var(--red-grad);border-radius:4px;padding:2px 8px;display:inline-block;margin-bottom:8px;direction:ltr;}
+  .method-card .mtitle{font-weight:700;color:var(--text);font-size:14px;margin-bottom:5px;}
+  .method-card .mdesc{color:var(--text-soft);font-size:13.3px;line-height:1.75;}
+  .footer-note{margin-top:70px;padding-top:26px;border-top:1px solid var(--border-soft);color:var(--muted);font-size:13.3px;font-family:var(--mono);text-align:center;direction:ltr;}
+  .dsvg-box{fill:var(--surface-2);stroke:var(--border-soft);stroke-width:1;}
+  .dsvg-box-r{fill:var(--red-soft);stroke:var(--red-border);stroke-width:1;}
+  .dsvg-box-g{fill:var(--green-soft);stroke:var(--green-border);stroke-width:1;}
+  .dsvg-box-b{fill:var(--blue-soft);stroke:var(--blue-border);stroke-width:1;}
+  .dsvg-box-a{fill:var(--amber-soft);stroke:var(--amber-border);stroke-width:1;}
+  .dsvg-box-p{fill:var(--purple-soft);stroke:var(--purple-border);stroke-width:1;}
+  .dsvg-line{stroke:var(--border);stroke-width:1.5;fill:none;}
+  .dsvg-arr{fill:var(--border);}
+  .dsvg-arr-r{fill:var(--red);}
+  .dsvg-txt{fill:var(--text);font-family:IBM Plex Mono,monospace;}
+  .dsvg-muted{fill:var(--muted);font-family:IBM Plex Mono,monospace;}
+  .dsvg-red{fill:var(--red);}
+  .dsvg-green{fill:var(--green);}
+  .dsvg-amber{fill:var(--amber);}
+  .dsvg-blue{fill:var(--blue);}
+  @media print{.float-controls,.progress-rail,.copy-btn,.theme-switch{display:none !important;}body{background:#fff;color:#000;}.page{max-width:100%;}}
+  @media(max-width:640px){.page{padding:28px 14px 70px;}.banner-body{padding:24px 20px 4px;}.banner h1{font-size:21px;}h2{font-size:18px;gap:10px;}.float-controls{left:12px;bottom:14px;}}
+</style>
+</head>
+<body>
+
+<div class="progress-rail"><div class="progress-bar" id="progressBar"></div></div>
+<div class="float-controls">
+  <button class="fctrl-btn" id="toTop" title="ارجع لفوق">↑</button>
+</div>
+
+<div class="page">
+
+<div class="banner">
+  <div class="term-bar">
+    <span class="term-dot r"></span><span class="term-dot y"></span><span class="term-dot g"></span>
+    <span class="term-path">root@cehv13:~/module-03$</span>
+    <button class="theme-switch" id="themeSwitch">theme: dark</button>
+  </div>
+  <div class="banner-body">
+    <span class="kicker">CEHv13 · EC-Council · Module 03</span>
+    <h1>مسح الشبكات (Scanning Networks)</h1>
+    <p class="lede">من اكتشاف المضيفين النشطين وحتى تحديد المنافذ والخدمات ونظام التشغيل، مرورًا بعشرات تقنيات المسح المتقدّمة (SYN، Xmas، IDLE، SCTP)، ووصولًا لتقنيات تجاوز IDS/Firewall وإجراءات المواجهة.</p>
+    <div class="tags">
+      <span class="tag">network-scanning</span>
+      <span class="tag">nmap</span>
+      <span class="tag">hping3</span>
+      <span class="tag">host-discovery</span>
+      <span class="tag">port-scanning</span>
+      <span class="tag">os-fingerprinting</span>
+      <span class="tag">ids-evasion</span>
+      <span class="tag">proxy-chaining</span>
+    </div>
+  </div>
+</div>
+
+<nav class="toc"><div class="toc-title">$ ls learning_units/</div><div class="toc-list">
+  <a class="toc-item" href="#lu1"><span class="toc-num">01</span><span>مفاهيم المسح الشبكي الأساسية</span></a>
+  <a class="toc-item" href="#lu2"><span class="toc-num">02</span><span>أعلام TCP والمصافحة الثلاثية</span></a>
+  <a class="toc-item" href="#lu3"><span class="toc-num">03</span><span>أدوات المسح الأساسية</span></a>
+  <a class="toc-item" href="#lu4"><span class="toc-num">04</span><span>تقنيات اكتشاف المضيفين النشطين</span></a>
+  <a class="toc-item" href="#lu5"><span class="toc-num">05</span><span>اكتشاف المضيفين بالذكاء الاصطناعي وPing Sweep</span></a>
+  <a class="toc-item" href="#lu6"><span class="toc-num">06</span><span>تقنيات اكتشاف المنافذ الأساسية</span></a>
+  <a class="toc-item" href="#lu7"><span class="toc-num">07</span><span>تقنيات اكتشاف المنافذ المتقدّمة</span></a>
+  <a class="toc-item" href="#lu8"><span class="toc-num">08</span><span>تقنيات مسح إضافية واكتشاف إصدار الخدمة</span></a>
+  <a class="toc-item" href="#lu9"><span class="toc-num">09</span><span>اكتشاف نظام التشغيل (Banner Grabbing)</span></a>
+  <a class="toc-item" href="#lu10"><span class="toc-num">10</span><span>المسح خارج IDS والجدران النارية — الجزء الأول</span></a>
+  <a class="toc-item" href="#lu11"><span class="toc-num">11</span><span>المسح خارج IDS والجدران النارية — خوادم البروكسي</span></a>
+  <a class="toc-item" href="#lu12"><span class="toc-num">12</span><span>إجراءات مواجهة مسح الشبكات</span></a>
+  <a class="toc-item" href="#methodology"><span class="toc-num">--</span><span>منهجية المسح الشبكي الكاملة</span></a>
+  <a class="toc-item" href="#cheat"><span class="toc-num">--</span><span>Cheat Sheet مرجعي</span></a>
+  <a class="toc-item" href="#summary"><span class="toc-num">--</span><span>الخلاصة العامة للموديول</span></a>
+</div></nav>
+
+<!-- ══════════════════════════════════ LU1 -->
+<h2 id="lu1"><span class="num">01</span><span class="htext">مفاهيم المسح الشبكي الأساسية</span></h2>
+<p>المسح هو امتداد موسَّع للاستطلاع — عملية جمع معلومات مفصَّلة إضافية عن الهدف باستخدام تقنيات استطلاع معقَّدة وعدوانية. المسح نفسه مش الاختراق الفعلي، لكنه بيساعد المهاجم يتعلّم أكتر عن هدفه (أنظمة تشغيل، خدمات، أخطاء إعداد) عشان يختار استراتيجية الهجوم.</p>
+
+<h3>أهداف المسح الشبكي</h3>
+<div class="goals-grid">
+  <div class="goal-card"><span class="gi">1</span><span>اكتشاف المضيفين النشطين وعناوين IP والمنافذ المفتوحة</span></div>
+  <div class="goal-card"><span class="gi">2</span><span>اكتشاف نظام التشغيل وبنية النظام (Fingerprinting)</span></div>
+  <div class="goal-card"><span class="gi">3</span><span>اكتشاف الخدمات الشغّالة على المضيفين</span></div>
+  <div class="goal-card"><span class="gi">4</span><span>اكتشاف ثغرات في المضيفين النشطين</span></div>
+</div>
+
+<h3>أنواع المسح</h3>
+<div class="method-grid">
+<div class="method-card"><span class="mnum">01</span><div class="mtitle">Port Scanning</div><div class="mdesc">سرد المنافذ المفتوحة والخدمات — فحص الاتصال بمنافذ TCP/UDP لتحديد هل الخدمات شغّالة أو في حالة استماع.</div></div>
+<div class="method-card"><span class="mnum">02</span><div class="mtitle">Network Scanning</div><div class="mdesc">سرد المضيفين النشطين وعناوين IP — إجراء لتحديد المضيفين النشطين في الشبكة لمهاجمتهم أو تقييم أمانها.</div></div>
+<div class="method-card"><span class="mnum">03</span><div class="mtitle">Vulnerability Scanning</div><div class="mdesc">كشف نقاط ضعف معروفة — ماسح الثغرات مكوَّن من محرّك فحص وكتالوج يحتوي قائمة ملفات وثغرات شائعة.</div></div>
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU2 -->
+<h2 id="lu2"><span class="num">02</span><span class="htext">أعلام TCP والمصافحة الثلاثية</span></h2>
+<p>رأس TCP يحتوي أعلام (Flags) بتتحكّم في نقل البيانات عبر اتصال TCP — ستة أعلام، كل واحد بحجم بت واحد. أربعة بتحكم إنشاء/صيانة/إنهاء الاتصال (SYN، ACK، FIN، RST)، واثنان بيديّا تعليمات للنظام (PSH، URG).</p>
+
+<div class="table-wrap"><table>
+<thead><tr><th>العلم</th><th>الوظيفة</th></tr></thead>
+<tbody>
+<tr><td>SYN</td><td>يُعلن إرسال رقم تسلسل جديد — غالبًا بيمثّل إنشاء اتصال (Three-way Handshake)</td></tr>
+<tr><td>ACK</td><td>يؤكّد استلام النقل ويحدّد رقم التسلسل التالي المتوقَّع</td></tr>
+<tr><td>PSH</td><td>يشير إن المرسل رفع عملية Push للمستقبل — بيُستخدَم في بداية ونهاية نقل البيانات</td></tr>
+<tr><td>URG</td><td>يأمر النظام بمعالجة البيانات فورًا كأولوية قصوى</td></tr>
+<tr><td>FIN</td><td>يُضبَط على 1 للإعلان إن مفيش نقل تاني هيُرسَل، وإنهاء الاتصال</td></tr>
+<tr><td>RST</td><td>يُضبَط عند وجود خطأ في الاتصال الحالي — المهاجمون يستخدموه لمسح المضيفين وتحديد المنافذ المفتوحة</td></tr>
+</tbody>
+</table></div>
+
+<h3>اتصال TCP/IP (المصافحة الثلاثية)</h3>
+<p>TCP بروتوكول Connection-Oriented — بيعطي أولوية لإنشاء الاتصال قبل نقل البيانات.</p>
+<div class="step-track">
+<div class="step-item">
+<div class="step-num">1</div>
+<div class="step-title">إرسال SYN</div>
+<div class="step-body"><p>المصدر بيبعت حزمة SYN للوجهة لبدء اتصال TCP.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">2</div>
+<div class="step-title">استقبال SYN/ACK</div>
+<div class="step-body"><p>الوجهة بترد بحزمة SYN/ACK عند استلام SYN.</p></div>
+</div>
+<div class="step-item">
+<div class="step-num">3</div>
+<div class="step-title">إرسال ACK النهائي</div>
+<div class="step-body"><p>المصدر بيبعت ACK لتأكيد حزمة ACK/SYN — ده بيُطلق اتصال "مفتوح" يستمر حتى إرسال FIN أو RST.</p></div>
+</div>
+</div>
+<p>عند الإنهاء: المرسل بيبعت FIN أو RST بعد انتهاء النقل، المستقبل بيرد بـ ACK ثم بيبعت FIN خاصته، وبعدين يُنهى الاتصال.</p>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU3 -->
+<h2 id="lu3"><span class="num">03</span><span class="htext">أدوات المسح الأساسية</span></h2>
+
+<div class="table-wrap"><table>
+<thead><tr><th>الأداة</th><th>الوظيفة</th></tr></thead>
+<tbody>
+<tr><td>Nmap</td><td>ماسح أمني لاستكشاف الشبكة — بيرسم "خريطة" للشبكة عبر حزم مصمَّمة خصيصًا وتحليل الاستجابات. يدعم مسح TCP/UDP، كشف نظام التشغيل، كشف الإصدار، Ping Sweeps</td></tr>
+<tr><td>Hping3</td><td>أداة سطر أوامر لمسح الشبكة وصياغة الحزم لبروتوكول TCP/IP — تدقيق أمان الشبكة، اختبار الجدار الناري، اكتشاف MTU، Traceroute متقدّم، بصمة نظام التشغيل عن بُعد</td></tr>
+<tr><td>Metasploit</td><td>مشروع مفتوح المصدر يوفّر بنية تحتية وأدوات لاختبار الاختراق والتدقيق الأمني — نهج معياري بيدمج أي Exploit مع أي Payload</td></tr>
+<tr><td>NetScanTools Pro</td><td>أداة تحقيق لاستكشاف ومراقبة الأجهزة على الشبكة — عناوين IPv4/IPv6، أسماء مضيفين، نطاقات، بريد إلكتروني، روابط</td></tr>
+</tbody>
+</table></div>
+
+<h3>أوامر Hping3 الأساسية</h3>
+<div class="code-wrap"><span class="code-tag">hping3 — essential commands</span><pre><code>hping3 -1 10.0.0.25                      # ICMP ping
+hping3 -A 10.0.0.25 -p 80                # ACK scan على المنفذ 80 (فحص جدار ناري)
+hping3 -2 10.0.0.25 -p 80                # UDP scan
+hping3 192.168.1.103 -Q -p 139           # جمع أرقام التسلسل الأولية (ISN)
+hping3 -S 72.14.207.99 -p 80 --tcp-timestamp   # فحص الجدار الناري والـ Timestamp
+hping3 -8 50-60 -S 10.0.0.25 -V          # SYN scan على نطاق منافذ 50-60
+hping3 -1 10.0.1.x --rand-dest -I eth0   # فحص subnet كامل بحثًا عن مضيفين نشطين
+hping3 -9 HTTP -I eth0                   # اعتراض كل ترافيك يحمل توقيع HTTP
+</code></pre></div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU4 -->
+<h2 id="lu4"><span class="num">04</span><span class="htext">تقنيات اكتشاف المضيفين النشطين</span></h2>
+<p>اكتشاف المضيفين (Host Discovery) هو المهمة الأساسية الأولى في عملية المسح — بيوفّر حالة دقيقة للأنظمة في الشبكة، فبيتجنّب المهاجم مسح كل منفذ على كل نظام من غير داعي.</p>
+
+<div class="table-wrap"><table>
+<thead><tr><th>التقنية</th><th>الآلية</th><th>ميزة رئيسية</th></tr></thead>
+<tbody>
+<tr><td>ARP Ping Scan</td><td>حزم ARP لاكتشاف كل الأجهزة النشطة في نطاق IPv4 حتى لو مخفية خلف جدران نارية صارمة</td><td>الأكثر كفاءة ودقة — بيُعالج طلبات وإعادة إرسال ARP تلقائيًا</td></tr>
+<tr><td>UDP Ping Scan</td><td>Nmap بيبعت حزم UDP (المنفذ الافتراضي 40,125)</td><td>كشف أنظمة خلف جدران نارية بفلترة TCP صارمة تنسى UDP</td></tr>
+<tr><td>ICMP ECHO Ping Scan</td><td>حزم ICMP للهدف — لا يشمل تجريد منفذ، مختلف عن Port Scanning</td><td>تحديد المضيفين الشغّالين بسرعة</td></tr>
+<tr><td>ICMP ECHO Ping Sweep</td><td>طلبات ICMP ECHO متعدّدة لمضيفين كتير لتحديد نطاق IP حي — عبر Zenmap بخيار <code>-PE</code></td><td>جرد كامل للأنظمة الحية في Subnet</td></tr>
+<tr><td>ICMP Timestamp/Address Mask Ping</td><td>بديل لـ ICMP ECHO التقليدي — استعلام Address Mask لمعرفة Subnet Mask (<code>-PM</code> في Zenmap)</td><td>فعّال لما الأدمن يحجب ICMP Echo التقليدي</td></tr>
+<tr><td>TCP SYN Ping Scan</td><td>بدء مصافحة ثلاثية بإرسال SYN فارغ — الهدف بيرد بـ ACK</td><td>بدون اتصال فعلي، فمفيش سجلات — تخفٍّ عالي</td></tr>
+<tr><td>TCP ACK Ping Scan</td><td>إرسال حزمة ACK فارغة مباشرة — الهدف بيرد بـ RST لأنه مفيش اتصال سابق</td><td>فعّال لتجاوز جدران نارية بتحجب SYN بس</td></tr>
+<tr><td>IP Protocol Ping Scan</td><td>حزم Ping بأي رقم بروتوكول IP محدَّد — بنفس صيغة TCP/UDP Ping</td><td>يجرّب بروتوكولات IP مختلفة لإيجاد استجابة</td></tr>
+</tbody>
+</table></div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU5 -->
+<h2 id="lu5"><span class="num">05</span><span class="htext">اكتشاف المضيفين بالذكاء الاصطناعي وPing Sweep</span></h2>
+<p>المهاجمون يقدروا يستخدموا ChatGPT أو تقنيات AI توليدية تانية لأتمتة اكتشاف المضيفين عبر Prompts مباشرة:</p>
+<div class="code-wrap"><span class="code-tag">ai prompts for host discovery</span><pre><code>"Scan the target network 10.10.1.0/24 for active hosts and place only the IP addresses into a file scan1.txt"
+"Run a fast but comprehensive Nmap scan against scan1.txt with low verbosity and write the results to scan2.txt"
+"Use Nmap to perform ICMP ECHO ping sweep on the target network 10.10.1.0/24"
+</code></pre></div>
+
+<h3>Angry IP Scanner — أداة Ping Sweep</h3>
+<p>ماسح عناوين IP ومنافذ — بيفحص أي نطاق IP وأي منفذ، بيعمل Ping لكل عنوان IP للتحقق من نشاطه، وممكن يحلّل اسم المضيف ويحدّد عنوان MAC ويفحص المنافذ. ميزات إضافية: معلومات NetBIOS (اسم الحاسوب، اسم مجموعة العمل، المستخدم المسجَّل دخوله)، نطاقات IP مفضَّلة، كشف سيرفر ويب. بيستخدم نهج Multithreaded — خيط مسح منفصل لكل عنوان IP لزيادة السرعة.</p>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU6 -->
+<h2 id="lu6"><span class="num">06</span><span class="htext">تقنيات اكتشاف المنافذ الأساسية</span></h2>
+
+<div class="method-grid">
+<div class="method-card"><span class="mnum">01</span><div class="mtitle">TCP Connect/Full-Open Scan</div><div class="mdesc">الأكثر موثوقية بين أنواع مسح TCP — استدعاء <code>connect()</code> لنظام التشغيل بيحاول فتح اتصال لكل منفذ. اتصال ناجح = المنفذ في حالة استماع؛ خطأ = المنفذ غير قابل للوصول.</div></div>
+<div class="method-card"><span class="mnum">02</span><div class="mtitle">Stealth Scan (Half-Open / SYN Scan)</div><div class="mdesc">إعادة تعيين الاتصال فجأة قبل اكتمال المصافحة الثلاثية — إرسال SYN بس. لو المنفذ مفتوح، الهدف بيرد بـ SYN/ACK؛ لو مغلق، بيرد بـ RST. يتجاوز قواعد الجدار الناري وآليات التسجيل (<code>-sS</code> في Zenmap).</div></div>
+<div class="method-card"><span class="mnum">03</span><div class="mtitle">Inverse TCP Flag Scan</div><div class="mdesc">إرسال حزم بعلم TCP مضبوط (FIN، URG، PSH) أو بدون أعلام — منفذ مفتوح = بدون استجابة، منفذ مغلق = RST. وفقًا لـ RFC 793، حزمة RST/ACK بتُرسَل عند إغلاق منفذ.</div></div>
+<div class="method-card"><span class="mnum">04</span><div class="mtitle">Xmas Scan</div><div class="mdesc">نوع من Inverse TCP بأعلام FIN وURG وPUSH مضبوطة معًا — بدون استجابة = منفذ مفتوح، RST = منفذ مغلق. يعمل فقط على مضيفي UNIX (كود BSD Networking) — ضد Windows كل المنافذ تظهر مفتوحة خطأً.</div></div>
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU7 -->
+<h2 id="lu7"><span class="num">07</span><span class="htext">تقنيات اكتشاف المنافذ المتقدّمة</span></h2>
+
+<h3>TCP Maimon Scan</h3>
+<p>مشابه جدًا لـ NULL وFIN وXmas scan، لكن الفحص المستخدَم هنا FIN/ACK — في أنظمة BSD كتيرة، المنفذ مفتوح لو الحزمة اتسقطت استجابة للفحص.</p>
+
+<h3>ACK Flag Probe Scan</h3>
+<p>إرسال حزم TCP بعلم ACK وتحليل معلومات رأس حزم RST المستلَمة (حقلي TTL وWINDOW) لتحديد حالة المنفذ — يستغل ثغرات في مكدَّس TCP/IP المشتق من BSD.</p>
+<div class="table-wrap"><table>
+<thead><tr><th>النوع</th><th>الآلية</th></tr></thead>
+<tbody>
+<tr><td>TTL-Based</td><td>إرسال آلاف حزم ACK لمنافذ TCP مختلفة وتحليل قيمة حقل TTL في حزم RST (<code>nmap --ttl [time] [target]</code>)</td></tr>
+<tr><td>Window-Based</td><td>تحليل قيمة حقل Window في حزم RST — مفيد لما كل المنافذ بترجّع نفس قيمة TTL (<code>-sW</code> في Zenmap)</td></tr>
+</tbody>
+</table></div>
+<p>يساعد كمان في فحص أنظمة الفلترة: مفيش استجابة = منفذ مُفلتَر (جدار ناري Stateful موجود)؛ استجابة RST = منفذ غير مُفلتَر (لا جدار ناري).</p>
+
+<h3>IDLE/IPID Header Scan</h3>
+<p>بيبعت عنوان مصدر مُزوَّر لحاسوب لتحديد الخدمات المتاحة — مسح أعمى بالكامل لمضيف بعيد. المنفذ "مفتوح" لو تطبيق بيستمع عليه — إرسال SYN بيرجّع SYN|ACK (مفتوح) أو RST (مغلق).</p>
+
+<h3>UDP Scan</h3>
+<p>مفيش مصافحة ثلاثية في مسح UDP — أصعب من TCP لأنك تقدر تبعت حزمة لكن مش تقدر تحدّد هل المضيف حي أو ميت أو مُفلتَر. لو بعتّ حزمة UDP لمنفذ بدون تطبيق مرتبط، مكدَّس IP بيرجّع <code>ICMP_PORT_UNREACH</code> — أي خطأ ICMP يعني المنفذ مغلق، أما المنافذ اللي ماردّتش يبقى إما مفتوحة أو مُفلتَرة (<code>-sU</code> في Zenmap).</p>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU8 -->
+<h2 id="lu8"><span class="num">08</span><span class="htext">تقنيات مسح إضافية واكتشاف إصدار الخدمة</span></h2>
+
+<h3>SCTP وSSDP وList وIPv6 Scans</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>النوع</th><th>الوصف</th></tr></thead>
+<tbody>
+<tr><td>SCTP INIT Scan</td><td>بروتوكول طبقة نقل موثوق قائم على الرسائل، بديل لـ TCP/UDP — يُستخدَم لـ VoIP وIP Telephony وSS7/SIGTRAN. ارتباط SCTP بيتكوّن من مصافحة رباعية</td></tr>
+<tr><td>SCTP COOKIE ECHO Scan</td><td>نوع متقدّم — إرسال COOKIE ECHO chunk؛ منفذ مفتوح = إسقاط صامت، منفذ مغلق = رد ABORT. غير محجوب بقواعد جدار ناري غير Stateful (<code>-sZ</code> في Zenmap)، فقط IDS متقدّم يكتشفه</td></tr>
+<tr><td>SSDP Scan</td><td>بروتوكول اكتشاف خدمة بسيط للتواصل عبر عناوين Multicast — يتحكّم في UPnP. يُستخدَم لكشف ثغرات UPnP المؤدية لـ Buffer Overflow أو DoS</td></tr>
+<tr><td>List Scan</td><td>يولّد ويطبع قائمة IPs/أسماء بدون Ping أو مسح فعلي — كل العناوين تظهر "not scanned"</td></tr>
+<tr><td>IPv6 Scan</td><td>مساحة البحث الأكبر (64 بت) بتخليه أصعب وأعقد من مسح IPv4 — بعض الأدوات مش بتدعم Ping Sweeps على IPv6، فلازم حصاد عناوين من ترافيك الشبكة أو السجلات</td></tr>
+</tbody>
+</table></div>
+
+<h3>مسح المنافذ بالذكاء الاصطناعي واكتشاف إصدار الخدمة</h3>
+<div class="code-wrap"><span class="code-tag">ai prompts for port + service discovery</span><pre><code>"Use Nmap to find open ports on target IP 10.10.1.11"
+"Perform stealth scan on target IP 10.10.1.11 and display the results"
+"Use Nmap to scan open ports, MAC details, services running on open ports with their versions on target IP 10.10.1.11"
+</code></pre></div>
+<p>اكتشاف إصدار الخدمة بيساعد المهاجم يحدّد أي استغلالات النظام الهدف عرضة ليها — بعض إصدارات البروتوكولات غير آمنة وتسمح بالاختراق عبر استغلال الثغرة.</p>
+
+<h3>تقنيات تقليل زمن مسح Nmap</h3>
+<ul>
+<li>تجنّب الفحص الكثيف لو محتاج معلومات محدودة فقط، وتحديد عدد المنافذ المفحوصة</li>
+<li>تخطّي <code>-sn</code> لو الهدف بس التحقق من الاتصال، وتجنّب الأنواع المتقدّمة (<code>-sC</code>، <code>-sV</code>، <code>-O</code>، <code>--traceroute</code>، <code>-A</code>) لو مش ضرورية</li>
+<li>تحسين معامل التوقيت <code>-T</code> حسب شراسة المسح المطلوبة</li>
+<li>فصل مسح UDP عن TCP وتحسينه بشكل منفصل — متأثر أكتر بـ ICMP Rate-Limiting</li>
+<li>استخدام أحدث إصدار من Nmap، تنفيذ نسخ متوازية، المسح من موقع شبكي مناسب، وزيادة النطاق الترددي المتاح</li>
+</ul>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU9 -->
+<h2 id="lu9"><span class="num">09</span><span class="htext">اكتشاف نظام التشغيل (Banner Grabbing)</span></h2>
+<p>Banner Grabbing أو "OS Fingerprinting" طريقة لتحديد نظام التشغيل الشغّال على نظام هدف بعيد — أهمّية حرجة لأن معظم الثغرات خاصة بنظام تشغيل محدَّد، وده بيساعد المهاجم يصيغ استراتيجية هجوم مناسبة.</p>
+
+<div class="method-grid">
+<div class="method-card"><span class="mnum">فعّال</span><div class="mtitle">Active Banner Grabbing</div><div class="mdesc">يعتمد على إن مكدَّس IP لكل نظام تشغيل له طريقة فريدة للرد على حزم TCP مصمَّمة خصيصًا — المهاجم بيبعت حزم مُشوَّهة متنوّعة ويقارن الاستجابات بقاعدة بيانات.</div></div>
+<div class="method-card"><span class="mnum">سلبي</span><div class="mtitle">Passive Banner Grabbing</div><div class="mdesc">بدل الاعتماد على مسح الهدف، البصمة السلبية بتلتقط حزم من الهدف عبر Sniffing. يشمل: استخراج معلومات من رسائل الخطأ، تحليل ترافيك الشبكة، وفحص امتدادات الصفحة (مثلًا <code>.aspx</code> → سيرفر IIS ومنصّة Windows).</div></div>
+</div>
+
+<h3>أدوات وتقنيات اكتشاف نظام التشغيل</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>الأداة/التقنية</th><th>الآلية</th></tr></thead>
+<tbody>
+<tr><td>Wireshark</td><td>التقاط استجابة الهدف ومراقبة حقلي TTL وحجم نافذة TCP في أول حزمة ملتقَطة، ومقارنتها بجدول مرجعي</td></tr>
+<tr><td>Nmap (<code>-O</code> في Zenmap)</td><td>عرض تفاصيل نظام تشغيل الجهاز الهدف مباشرة</td></tr>
+<tr><td>Unicornscan</td><td>تحديد نظام التشغيل عبر مراقبة قيم TTL في نتيجة الفحص — TTL=128 غالبًا يعني Windows</td></tr>
+<tr><td>Nmap Script Engine (NSE)</td><td>سكريبتات لأتمتة مهام الشبكة — مثل <code>smb-os-discovery</code> لجمع معلومات نظام التشغيل عبر بروتوكول SMB</td></tr>
+<tr><td>IPv6 Fingerprinting</td><td>نفس وظيفة IPv4 لكن بفحوصات إضافية خاصة بـ IPv6 ومحرّك كشف منفصل — Nmap بيبعت نحو 18 فحص (S1-S6، IE1، IE2، NI)</td></tr>
+</tbody>
+</table></div>
+<div class="callout note">
+<div class="callout-label">اكتشاف نظام التشغيل بالذكاء الاصطناعي</div>
+<p>المهاجمون يقدروا يستخدموا ChatGPT لتوجيه استخدام TTL Ping لتحديد نظام التشغيل الهدف عبر Prompts مباشرة.</p>
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU10 -->
+<h2 id="lu10"><span class="num">10</span><span class="htext">المسح خارج IDS والجدران النارية — الجزء الأول</span></h2>
+<p>IDS والجدران النارية آليات أمنية لمنع وصول المهاجم — لكن حتى هذه الأنظمة عندها قيود. المهاجمون بيستغلّوا القيود دي بتقنيات متعدّدة.</p>
+
+<div class="table-wrap"><table>
+<thead><tr><th>التقنية</th><th>الآلية</th></tr></thead>
+<tbody>
+<tr><td>Packet Fragmentation</td><td>تقسيم حزمة الفحص لعدة حزم أصغر — معظم IDS بتُعدَّ لتخطّي الحزم المجزَّأة أثناء مسح المنافذ لأن معالجتها بتستهلك موارد كتير</td></tr>
+<tr><td>SYN/FIN Scanning باستخدام IP Fragments</td><td>تعديل لتقنيات سابقة — رأس TCP بيتقسّم لعدة حزم لتجاوز جهاز فلترة الحزم</td></tr>
+<tr><td>Source Routing</td><td>حقل IP Options بيخزّن معلومات توجيه المصدر — قائمة عناوين IP اللي الحزمة بتمر بيها لوجهتها</td></tr>
+<tr><td>Source Port Manipulation</td><td>التلاعب برقم المنفذ المصدر الفعلي بأرقام منافذ شائعة — استغلال ثقة الأدمن العمياء في أرقام منافذ معروفة (HTTP، DNS، FTP)</td></tr>
+<tr><td>IP Address Decoy</td><td>توليد أو تحديد عناوين IP وهمية لخداع IDS/Firewall — يصعب تحديد مين فعليًا بيمسح الشبكة ومين عناوين وهمية</td></tr>
+<tr><td>IP Address Spoofing</td><td>تزوير عنوان IP المصدر لتجاوز جدران نارية بتفلتر بناءً على المصدر</td></tr>
+<tr><td>MAC Address Spoofing</td><td>استخدام عناوين MAC مزيَّفة لانتحال مستخدمين شرعيين وتجاوز قواعد فلترة MAC</td></tr>
+</tbody>
+</table></div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU11 -->
+<h2 id="lu11"><span class="num">11</span><span class="htext">المسح خارج IDS والجدران النارية — خوادم البروكسي</span></h2>
+
+<h3>حزم مخصَّصة وتقنيات إضافية</h3>
+<ul>
+<li><strong>Creating Custom Packets:</strong> أدوات صياغة حزم زي Colasoft Packet Builder وNetScanTools Pro لصنع وإرسال تدفّقات حزم مخصَّصة ببروتوكولات ومعدّلات نقل مختلفة</li>
+<li><strong>Randomizing Host Order:</strong> مسح المضيفين بترتيب عشوائي (<code>--randomize-hosts</code> في Nmap) لتجنّب أنماط قابلة للكشف</li>
+<li><strong>Sending Bad Checksums:</strong> إرسال حزم بـ Checksums خاطئة لاختبار استجابة النظام المستهدَف</li>
+</ul>
+
+<h3>خوادم البروكسي (Proxy Servers)</h3>
+<p>تطبيق وسيط للاتصال بحواسيب أخرى — يُستخدَم كجدار ناري وحماية الشبكة المحلية، مضاعِف عناوين IP (NAT/PAT)، إخفاء هوية التصفّح جزئيًا، وتوفير النطاق الترددي.</p>
+<div class="callout warning">
+<div class="callout-label">ليه المهاجمون يستخدموا البروكسي</div>
+<p>إخفاء هوية المهاجم هو التحدّي الأساسي — بيستخدم بروكسي لإخفاء عنوان IP الحقيقي، فسجلات السيرفر الهدف بتسجّل عنوان البروكسي مش عنوان المهاجم الفعلي.</p>
+</div>
+
+<h3>تسلسل البروكسي (Proxy Chaining)</h3>
+<p>بيزيد تخفّي المهاجم على الإنترنت — كل ما زاد عدد سيرفرات البروكسي المستخدَمة، زادت درجة التخفّي. المستخدم بيطلب مورد، عميل البروكسي بيتصل بسيرفر بروكسي ويمرّر الطلب، السيرفر بيشيل معلومات هوية المستخدم ويمرّر الطلب لسيرفر بروكسي تاني.</p>
+
+<h3>أدوات البروكسي والتخفّي</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>الأداة</th><th>الوظيفة</th></tr></thead>
+<tbody>
+<tr><td>Proxy Switcher</td><td>تصفّح مجهول بدون كشف عنوان IP — الوصول لمواقع محظورة في المؤسسة</td></tr>
+<tr><td>CyberGhost VPN</td><td>إخفاء IP المهاجم واستبداله بـ IP مختار — تشفير الاتصال بدون الاحتفاظ بسجلات</td></tr>
+<tr><td>Tails</td><td>نظام تشغيل حي (Live OS) من USB/SD — أدوات تشفير متقدّمة، تصفّح مجهول بدون ترك أثر على الحاسوب</td></tr>
+</tbody>
+</table></div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU12 -->
+<h2 id="lu12"><span class="num">12</span><span class="htext">إجراءات مواجهة مسح الشبكات</span></h2>
+<p>المخترق الأخلاقي، بعكس المخترق العادي، لازم يتبنّى إجراءات مواجهة للثغرات اللي اكتشفها — معرفة الثغرات بدون حماية ضدها عديمة الفائدة.</p>
+
+<h3>مواجهة Port Scanning وBanner Grabbing</h3>
+<p>تعطيل أو تغيير الـ Banner — منفذ مفتوح يعني خدمة/Banner شغّال عليه. لما المهاجم يتصل بمنفذ مفتوح عبر تقنيات Banner Grabbing، النظام بيعرض Banner يحتوي معلومات حساسة (نظام التشغيل، نوع السيرفر، الإصدار) — إخفاء أو تعديل البيانات دي بيمنع استغلالها.</p>
+
+<h3>تقنيات اكتشاف IP Spoofing</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>التقنية</th><th>الآلية</th></tr></thead>
+<tbody>
+<tr><td>Direct TTL Probes</td><td>إرسال حزمة (Ping) للمضيف الشرعي، ومقارنة قيمة TTL في الرد بقيمة الحزمة المشكوك فيها. TCP/UDP: 64 أو 128؛ ICMP: 128 أو 255</td></tr>
+<tr><td>IP Identification Number (IPID)</td><td>مراقبة رقم تعريف IP المتزايد تدريجيًا — قيمة IPID في استجابة الفحص لازم تكون قريبة من لكن أكبر شوية من قيمة حزمة الفحص. لو بعيدة، العنوان مزوَّر</td></tr>
+</tbody>
+</table></div>
+
+<h3>أدوات كشف ومنع المسح</h3>
+<p><strong>ExtraHop</strong> بيوفّر رؤية كاملة واكتشاف لحظي واستجابة ذكية للمسح الشبكي الخبيث — اكتشاف تلقائي لكل جهاز وثغراته بما فيه أجهزة IoT غير المُدارة. أدوات إضافية: Splunk Enterprise Security، Scanlogd، Vectra Detect، IBM Security QRadar XDR، وCynet360 AutoXDR.</p>
+
+<hr />
+
+<!-- ══════════════════════════════════ METHODOLOGY -->
+<h2 id="methodology"><span class="num">--</span><span class="htext">منهجية المسح الشبكي الكاملة</span></h2>
+
+<div class="diagram-card">
+<svg viewBox="0 0 700 150" xmlns="http://www.w3.org/2000/svg">
+  <rect x="5" y="55" width="105" height="55" rx="7" class="dsvg-box-b"/>
+  <text x="57" y="78" text-anchor="middle" class="dsvg-blue" font-size="10.5" font-weight="700">اكتشاف المضيفين</text>
+  <text x="57" y="95" text-anchor="middle" class="dsvg-muted" font-size="8">ARP / ICMP / TCP Ping</text>
+
+  <rect x="150" y="55" width="110" height="55" rx="7" class="dsvg-box-a"/>
+  <text x="205" y="78" text-anchor="middle" class="dsvg-amber" font-size="10.5" font-weight="700">مسح المنافذ</text>
+  <text x="205" y="95" text-anchor="middle" class="dsvg-muted" font-size="8">SYN / Xmas / UDP</text>
+
+  <rect x="300" y="55" width="110" height="55" rx="7" class="dsvg-box"/>
+  <text x="355" y="78" text-anchor="middle" class="dsvg-txt" font-size="10.5" font-weight="700">اكتشاف الخدمة والنظام</text>
+  <text x="355" y="95" text-anchor="middle" class="dsvg-muted" font-size="8">Banner Grabbing</text>
+
+  <rect x="450" y="55" width="110" height="55" rx="7" class="dsvg-box-r"/>
+  <text x="505" y="78" text-anchor="middle" class="dsvg-red" font-size="10.5" font-weight="700">تجاوز IDS/Firewall</text>
+  <text x="505" y="95" text-anchor="middle" class="dsvg-muted" font-size="8">Fragmentation / Proxy</text>
+
+  <rect x="600" y="55" width="95" height="55" rx="7" class="dsvg-box-g"/>
+  <text x="647" y="78" text-anchor="middle" class="dsvg-green" font-size="10.5" font-weight="700">استراتيجية الهجوم</text>
+  <text x="647" y="95" text-anchor="middle" class="dsvg-muted" font-size="8">تحليل النتائج</text>
+
+  <line x1="110" y1="82" x2="150" y2="82" class="dsvg-line"/>
+  <line x1="260" y1="82" x2="300" y2="82" class="dsvg-line"/>
+  <line x1="410" y1="82" x2="450" y2="82" class="dsvg-line"/>
+  <line x1="560" y1="82" x2="600" y2="82" class="dsvg-line"/>
+</svg>
+<div class="diagram-caption">من اكتشاف المضيفين وحتى صياغة استراتيجية الهجوم — الترتيب المنطقي الكامل لمسح الشبكة</div>
+</div>
+
+<ul>
+<li>ابدأ دايمًا باكتشاف المضيفين النشطين قبل أي مسح منافذ — يوفّر وقت كبير ويقلّل الترافيك غير الضروري</li>
+<li>اختر تقنية المسح حسب درجة التخفّي المطلوبة — TCP Connect للموثوقية، SYN/Stealth للتخفّي، Xmas/FIN لتجاوز فلاتر بسيطة</li>
+<li>بعد تحديد المنافذ المفتوحة، نفّذ اكتشاف إصدار الخدمة ونظام التشغيل فورًا — ده بيحدّد الثغرات المحتملة بدقة</li>
+<li>لو الهدف محمي بـ IDS/Firewall، ادمج تقنيات تجزئة الحزم والتزوير والبروكسي بدل الاعتماد على تقنية واحدة</li>
+<li>وثّق كل خطوة والنتائج — ده الأساس لبناء استراتيجية الاستغلال في المراحل اللاحقة</li>
+</ul>
+
+<hr />
+
+<!-- ══════════════════════════════════ CHEAT SHEET -->
+<h2 id="cheat"><span class="num">--</span><span class="htext">Cheat Sheet مرجعي</span></h2>
+<div class="cheat-section">
+
+<h4>خيارات Zenmap/Nmap السريعة</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>الخيار</th><th>الوظيفة</th></tr></thead>
+<tbody>
+<tr><td><code>-sS</code></td><td>Stealth/SYN Scan (Half-Open)</td></tr>
+<tr><td><code>-sU</code></td><td>UDP Scan</td></tr>
+<tr><td><code>-sW</code></td><td>TCP Window Scan (ACK Flag Probe)</td></tr>
+<tr><td><code>-sZ</code></td><td>SCTP COOKIE ECHO Scan</td></tr>
+<tr><td><code>-PE</code></td><td>ICMP ECHO Ping Sweep</td></tr>
+<tr><td><code>-PM</code></td><td>ICMP Address Mask Ping</td></tr>
+<tr><td><code>-PA</code></td><td>TCP ACK Ping Scan</td></tr>
+<tr><td><code>-O</code></td><td>OS Discovery</td></tr>
+<tr><td><code>--randomize-hosts</code></td><td>مسح بترتيب مضيفين عشوائي</td></tr>
+<tr><td><code>--ttl [time] [target]</code></td><td>TTL-Based ACK Flag Probe Scan</td></tr>
+</tbody>
+</table></div>
+
+<h4>مقارنة سريعة بين أنواع المسح</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>النوع</th><th>التخفّي</th><th>الموثوقية</th></tr></thead>
+<tbody>
+<tr><td>TCP Connect</td><td>منخفض (يُسجَّل بالكامل)</td><td>عالية جدًا</td></tr>
+<tr><td>SYN/Stealth</td><td>عالي</td><td>عالية</td></tr>
+<tr><td>Xmas/FIN/NULL</td><td>عالي جدًا</td><td>محدودة (UNIX فقط)</td></tr>
+<tr><td>IDLE/IPID</td><td>أعلى (مسح أعمى بالكامل)</td><td>معقَّد الإعداد</td></tr>
+</tbody>
+</table></div>
+
+<h4>Quick Wins — مراجعة سريعة قبل الامتحان</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>#</th><th>السؤال</th><th>الإجابة السريعة</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>كام علم TCP؟</td><td>6: SYN، ACK، FIN، RST، PSH، URG</td></tr>
+<tr><td>2</td><td>أي نوع مسح بيعمل بس على UNIX؟</td><td>Xmas Scan (يعتمد على BSD Networking Code)</td></tr>
+<tr><td>3</td><td>الفرق بين TCP SYN Ping وTCP ACK Ping؟</td><td>SYN بيبدأ مصافحة (بدون اتصال كامل) — ACK بيبعت مباشرة فبيرجع RST دايمًا من مضيف نشط</td></tr>
+<tr><td>4</td><td>إيه القيم الشائعة لـ TTL الأولي؟</td><td>TCP/UDP: 64 أو 128 — ICMP: 128 أو 255</td></tr>
+<tr><td>5</td><td>أي نوع مسح بيحتاج IDS متقدّم جدًا لاكتشافه؟</td><td>SCTP COOKIE ECHO Scan</td></tr>
+</tbody>
+</table></div>
+
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ SUMMARY -->
+<h2 id="summary"><span class="htext">الخلاصة العامة للموديول</span></h2>
+<p>الموديول ده غطّى مسح الشبكات بعمق — من اكتشاف المضيفين النشطين بتقنيات Ping متعدّدة، مرورًا بعشرات تقنيات مسح المنافذ (من TCP Connect وحتى SCTP COOKIE ECHO)، واكتشاف نظام التشغيل عبر Banner Grabbing، ووصولًا لتقنيات تجاوز IDS/Firewall وإجراءات المواجهة.</p>
+
+<div class="takeaways">
+<div class="takeaways-title">$ cat ./cehv13_module03_summary.txt</div>
+<ul>
+<li>المسح امتداد موسَّع للاستطلاع — مش الاختراق نفسه، لكنه بيبني صورة دقيقة لاستراتيجية الهجوم</li>
+<li>اكتشاف المضيفين النشطين خطوة أولى إلزامية — بيوفّر وقت ويقلّل الأثر المكتشَف قبل مسح المنافذ</li>
+<li>تقنيات مسح المنافذ متعدّدة بتنوّع في التخفّي والموثوقية — من TCP Connect الموثوق جدًا وحتى IDLE Scan الأعمى بالكامل</li>
+<li>Banner Grabbing (نشط أو سلبي) حرج لأن معظم الثغرات مرتبطة بنظام تشغيل أو إصدار خدمة محدَّد</li>
+<li>تقنيات تجاوز IDS/Firewall (تجزئة، تزوير، بروكسي) ضرورية ضد بيئات محمية بشكل جيد</li>
+<li>الذكاء الاصطناعي بقى أداة فعّالة لأتمتة كل مراحل المسح — من اكتشاف المضيفين وحتى تحديد الإصدارات</li>
+<li>إجراءات المواجهة (إخفاء Banner، كشف IP Spoofing، أدوات اكتشاف المسح) جزء أساسي من أي دفاع احترافي</li>
+</ul>
+</div>
+
+<blockquote>
+<p><strong>الفكرة الجوهرية للموديول:</strong> كل تقنية مسح هي محاولة للإجابة على سؤال واحد بطريقة مختلفة — "هل في حد موجود هنا، وإيه اللي بيشتغل؟" التنوّع الهائل في التقنيات مش تعقيد بلا داعي، هو استجابة مباشرة لتنوّع الدفاعات اللي بتحاول تمنع الإجابة على السؤال ده.</p>
+</blockquote>
+
+<div class="callout examtip">
+<div class="callout-label">Professional Mindset</div>
+<p>احفظ خيارات Zenmap/Nmap المختصرة بدقة (<code>-sS</code>، <code>-sU</code>، <code>-O</code>، إلخ) لأن الامتحان بيختبرها مباشرة. افهم الفرق الدقيق بين كل نوع Ping/Scan من حيث الاستجابة المتوقَّعة (SYN/ACK مقابل RST مقابل لا استجابة) — ده أساس فهم ليه تقنية معيّنة بتنجح ضد دفاع معيّن وتفشل ضد تاني.</p>
+</div>
+
+<hr />
+<p><em>نهاية نوتس الموديول الثالث — Scanning Networks (CEHv13)</em></p>
+<div class="footer-note">-- EOF: cehv13-module-03/scanning-networks.md --</div>
+
+</div>
+
+<script>
+(function(){
+  var root=document.documentElement,btn=document.getElementById('themeSwitch');
+  function applyTheme(t){root.setAttribute('data-theme',t);btn.textContent='theme: '+t;try{localStorage.setItem('oscp-notes-theme',t);}catch(e){}}
+  var saved='dark';try{saved=localStorage.getItem('oscp-notes-theme')||'dark';}catch(e){}
+  applyTheme(saved);
+  btn.addEventListener('click',function(){applyTheme(root.getAttribute('data-theme')==='dark'?'light':'dark');});
+  var bar=document.getElementById('progressBar');
+  function onScroll(){var h=document.documentElement,s=h.scrollTop,ht=h.scrollHeight-h.clientHeight;bar.style.width=(ht>0?(s/ht*100):0)+'%';var t=document.getElementById('toTop');s>500?t.classList.add('show'):t.classList.remove('show');}
+  document.addEventListener('scroll',onScroll);onScroll();
+  document.getElementById('toTop').addEventListener('click',function(){window.scrollTo({top:0,behavior:'smooth'});});
+  document.querySelectorAll('.code-wrap').forEach(function(wrap){
+    var c=wrap.querySelector('code');if(!c)return;
+    var b=document.createElement('button');b.className='copy-btn';b.textContent='copy';
+    b.addEventListener('click',function(){if(navigator.clipboard){navigator.clipboard.writeText(c.innerText).then(function(){b.textContent='copied ✓';b.classList.add('copied');setTimeout(function(){b.textContent='copy';b.classList.remove('copied');},1500);});}});
+    wrap.appendChild(b);
+  });
+})();
+</script>
+</body>
+</html>

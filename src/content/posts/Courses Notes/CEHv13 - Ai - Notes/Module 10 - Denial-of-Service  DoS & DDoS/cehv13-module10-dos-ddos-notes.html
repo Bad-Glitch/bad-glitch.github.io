@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CEHv13 · Module 10: هجمات الحرمان من الخدمة</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-0:#0B0B0D;--bg-1:#121214;--surface:#17171A;--surface-2:#1D1D21;
+    --border:#2A2A2F;--border-soft:#232326;
+    --text:#E6E6E9;--text-soft:#C4C4CA;--muted:#8A8A92;
+    --red:#E1362F;--red-soft:rgba(225,54,47,.10);--red-border:rgba(225,54,47,.35);
+    --red-grad:linear-gradient(90deg,#E1362F,#F2794A);
+    --amber:#E8A23A;--amber-soft:rgba(232,162,58,.09);--amber-border:rgba(232,162,58,.30);
+    --green:#3FBF6E;--green-soft:rgba(63,191,110,.09);--green-border:rgba(63,191,110,.30);
+    --blue:#4EA1D3;--blue-soft:rgba(78,161,211,.09);--blue-border:rgba(78,161,211,.30);
+    --purple:#A179E8;--purple-soft:rgba(161,121,232,.10);--purple-border:rgba(161,121,232,.32);
+    --mono:'IBM Plex Mono','Courier New',monospace;
+  }
+  html[data-theme="light"]{--bg-0:#F4F3F1;--bg-1:#ECEBE8;--surface:#FFFFFF;--surface-2:#F3F2EF;--border:#DEDCD6;--border-soft:#E6E4DF;--text:#1C1B19;--text-soft:#3C3A36;--muted:#726F68;}
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;direction:rtl;text-align:right;background:var(--bg-0);}
+  body{font-family:'Cairo','Segoe UI',Tahoma,sans-serif;line-height:1.95;font-size:16.5px;color:var(--text);
+    background:radial-gradient(900px 420px at 12% -8%,rgba(225,54,47,.10),transparent 60%),
+               radial-gradient(800px 420px at 90% 6%,rgba(232,162,58,.06),transparent 60%),
+               linear-gradient(180deg,var(--bg-0) 0%,var(--bg-1) 100%);
+    background-attachment:fixed;transition:background .2s,color .2s;}
+  html[data-theme="light"] body{background:radial-gradient(900px 420px at 12% -8%,rgba(225,54,47,.06),transparent 60%),radial-gradient(800px 420px at 90% 6%,rgba(232,162,58,.05),transparent 60%),linear-gradient(180deg,var(--bg-0) 0%,var(--bg-1) 100%);}
+  .progress-rail{position:fixed;top:0;inset-inline:0;height:3px;background:rgba(255,255,255,.04);z-index:60;}
+  html[data-theme="light"] .progress-rail{background:rgba(0,0,0,.05);}
+  .progress-bar{height:100%;width:0%;background:var(--red-grad);transition:width .08s linear;}
+  .float-controls{position:fixed;bottom:22px;left:22px;z-index:55;display:flex;flex-direction:column;gap:10px;}
+  .fctrl-btn{width:42px;height:42px;border-radius:50%;background:var(--surface);border:1px solid var(--border);color:var(--text-soft);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;box-shadow:0 10px 24px -10px rgba(0,0,0,.5);transition:transform .15s,border-color .15s,opacity .2s;}
+  .fctrl-btn:hover{transform:translateY(-2px);border-color:var(--red-border);color:var(--red);}
+  #toTop{opacity:0;pointer-events:none;}#toTop.show{opacity:1;pointer-events:auto;}
+  .page{max-width:860px;margin:0 auto;padding:46px 22px 100px;}
+  .banner{position:relative;overflow:hidden;background:linear-gradient(155deg,var(--surface) 0%,var(--bg-1) 55%,var(--surface) 100%);border:1px solid var(--border-soft);border-radius:10px;padding:0 0 34px;margin-bottom:26px;box-shadow:0 20px 50px -20px rgba(0,0,0,.6);}
+  .term-bar{display:flex;align-items:center;gap:8px;padding:13px 18px;border-bottom:1px solid var(--border-soft);background:rgba(255,255,255,.015);direction:ltr;}
+  .term-dot{width:11px;height:11px;border-radius:50%;display:inline-block;}
+  .term-dot.r{background:#E1362F;}.term-dot.y{background:#E8A23A;}.term-dot.g{background:#3FBF6E;}
+  .term-path{margin-inline-start:12px;font-family:var(--mono);font-size:12px;color:var(--muted);}
+  .theme-switch{margin-inline-start:auto;font-family:var(--mono);font-size:11px;color:var(--muted);background:transparent;border:1px solid var(--border);border-radius:4px;padding:4px 9px;cursor:pointer;}
+  .theme-switch:hover{color:var(--amber);border-color:var(--amber-border);}
+  .banner-body{padding:30px 34px 4px;}
+  .banner .kicker{display:inline-block;font-family:var(--mono);font-size:12.5px;letter-spacing:.03em;color:var(--red);background:var(--red-soft);border:1px solid var(--red-border);border-radius:3px;padding:5px 12px;margin-bottom:20px;direction:ltr;}
+  .banner h1{margin:0 0 14px;font-size:28px;font-weight:800;line-height:1.5;color:var(--text);}
+  .banner .lede{color:var(--muted);font-size:15.5px;line-height:1.95;max-width:640px;margin:0 0 24px;}
+  .tags{display:flex;flex-wrap:wrap;gap:9px;}
+  .tag{font-size:12.5px;font-family:var(--mono);color:var(--amber);background:var(--amber-soft);border:1px solid var(--amber-border);border-radius:3px;padding:5px 11px;}
+  .toc{background:var(--surface);border:1px solid var(--border-soft);border-radius:8px;padding:6px 0;margin-bottom:50px;overflow:hidden;}
+  .toc-title{font-family:var(--mono);font-weight:600;font-size:13px;color:var(--green);padding:14px 22px;border-bottom:1px solid var(--border-soft);direction:ltr;text-align:left;}
+  .toc-list{display:flex;flex-direction:column;}
+  .toc-item{display:flex;align-items:center;gap:14px;padding:12px 22px;color:var(--text-soft);text-decoration:none;font-size:14.5px;border-bottom:1px solid rgba(255,255,255,.03);transition:background .15s;}
+  .toc-list .toc-item:last-child{border-bottom:none;}
+  .toc-item:hover{background:var(--red-soft);}
+  .toc-num{flex:none;font-family:var(--mono);font-size:12.5px;font-weight:600;color:#0F0F10;background:var(--red-grad);border-radius:3px;padding:3px 8px;direction:ltr;}
+  h1,h2,h3,h4{font-weight:700;}
+  h2{display:flex;align-items:center;gap:14px;font-size:21px;margin:66px 0 22px;padding-bottom:16px;border-bottom:1px solid var(--border-soft);color:var(--text);}
+  h2 .num{flex:none;font-family:var(--mono);font-size:13px;font-weight:700;color:#0F0F10;background:var(--red-grad);border-radius:5px;padding:7px 12px;direction:ltr;}
+  h2 .htext{line-height:1.5;}
+  h3{font-size:17px;margin:34px 0 14px;color:var(--red);display:flex;align-items:center;gap:9px;}
+  h3::before{content:"#";font-family:var(--mono);color:var(--amber);font-weight:700;}
+  h4{font-size:14.8px;margin:22px 0 10px;color:var(--text-soft);font-family:var(--mono);}
+  p{margin:0 0 17px;color:var(--text);}
+  strong{color:var(--text);font-weight:700;}
+  :root:not([data-theme="light"]) strong{color:#FBFBFC;}
+  a{color:var(--amber);text-decoration:none;border-bottom:1px dashed var(--amber-border);}
+  hr{border:none;height:1px;margin:50px 0;background:linear-gradient(90deg,transparent,var(--border),transparent);}
+  ul,ol{margin:0 0 18px;padding-inline-start:24px;}
+  li{margin-bottom:9px;color:var(--text);}
+  li::marker{color:var(--red);font-family:var(--mono);}
+  .goals-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px;margin:0 0 22px;}
+  .goal-card{display:flex;gap:10px;align-items:flex-start;background:var(--surface);border:1px solid var(--border-soft);border-radius:7px;padding:13px 15px;font-size:14px;color:var(--text-soft);}
+  .goal-card .gi{flex:none;font-family:var(--mono);font-size:11px;font-weight:700;color:var(--green);background:var(--green-soft);border:1px solid var(--green-border);border-radius:4px;width:22px;height:22px;display:flex;align-items:center;justify-content:center;}
+  blockquote{margin:24px 0;padding:17px 22px;background:var(--red-soft);border:1px solid var(--red-border);border-inline-start:3px solid var(--red);border-radius:6px;color:var(--text-soft);}
+  blockquote p{margin:0;color:inherit;line-height:1.85;}
+  blockquote p+p{margin-top:10px;}
+  blockquote strong{color:var(--text);}
+  .callout{margin:24px 0;padding:17px 22px 18px;border-radius:6px;border:1px solid var(--border-soft);border-inline-start:3px solid var(--border);background:var(--surface);}
+  .callout p{margin:0;color:var(--text-soft);line-height:1.85;}
+  .callout p+p{margin-top:10px;}
+  .callout-label{display:inline-flex;align-items:center;gap:7px;font-family:var(--mono);font-size:11.5px;font-weight:700;letter-spacing:.02em;text-transform:uppercase;margin-bottom:10px;direction:ltr;}
+  .callout.note{border-inline-start-color:var(--blue);background:var(--blue-soft);}
+  .callout.note .callout-label{color:var(--blue);}
+  .callout.warning{border-inline-start-color:var(--red);background:var(--red-soft);}
+  .callout.warning .callout-label{color:var(--red);}
+  .callout.tip{border-inline-start-color:var(--green);background:var(--green-soft);}
+  .callout.tip .callout-label{color:var(--green);}
+  .callout.examtip{border-inline-start-color:var(--purple);background:var(--purple-soft);}
+  .callout.examtip .callout-label{color:var(--purple);}
+  .callout.case{border-inline-start-color:var(--amber);background:var(--amber-soft);}
+  .callout.case .callout-label{color:var(--amber);}
+  .callout.definition{border-inline-start-color:var(--muted);background:var(--surface-2);}
+  .callout.definition .callout-label{color:var(--text-soft);}
+  .callout.danger{border-inline-start-color:#FF5A52;background:rgba(255,90,82,.08);}
+  .callout.danger .callout-label{color:#FF5A52;}
+  .table-wrap{overflow-x:auto;margin:22px 0;border:1px solid var(--border-soft);border-radius:8px;}
+  table{width:100%;border-collapse:collapse;font-size:14.2px;min-width:480px;}
+  thead th{background:var(--surface-2);color:var(--amber);font-weight:700;font-family:var(--mono);font-size:12.5px;text-transform:uppercase;letter-spacing:.02em;text-align:start;padding:13px 15px;border-bottom:1px solid var(--border-soft);white-space:nowrap;}
+  tbody td{padding:12px 15px;border-bottom:1px solid var(--border-soft);color:var(--text-soft);vertical-align:top;}
+  tbody tr:last-child td{border-bottom:none;}
+  tbody tr:nth-child(even){background:rgba(127,127,127,.03);}
+  tbody tr:hover{background:var(--red-soft);}
+  code{font-family:var(--mono);font-size:13.3px;background:var(--surface-2);border:1px solid var(--border-soft);border-radius:4px;padding:2px 6px;direction:ltr;unicode-bidi:embed;color:var(--green);}
+  .code-wrap{position:relative;overflow-x:auto;margin:22px 0;}
+  .code-tag{position:absolute;top:10px;left:14px;font-family:var(--mono);font-size:10.5px;color:var(--muted);letter-spacing:.04em;text-transform:uppercase;z-index:2;}
+  .copy-btn{position:absolute;top:8px;right:10px;z-index:2;font-family:var(--mono);font-size:11px;color:var(--muted);background:var(--surface-2);border:1px solid var(--border-soft);border-radius:4px;padding:4px 9px;cursor:pointer;direction:ltr;}
+  .copy-btn:hover{color:var(--amber);border-color:var(--amber-border);}
+  .copy-btn.copied{color:var(--green);border-color:var(--green-border);}
+  pre{background:var(--bg-0);border:1px solid var(--border-soft);border-inline-start:3px solid var(--red);border-radius:8px;padding:30px 22px 18px;direction:ltr;text-align:left;margin:0;}
+  html[data-theme="light"] pre{background:#16181C;}
+  pre code{background:none;border:none;padding:0;color:#B9E8C9;font-size:13.2px;line-height:1.75;}
+  .diagram-card{background:var(--surface);border:1px solid var(--border-soft);border-radius:10px;padding:22px 18px 16px;margin:24px 0;}
+  .diagram-card svg{width:100%;height:auto;display:block;}
+  .diagram-caption{margin-top:10px;text-align:center;font-family:var(--mono);font-size:11.5px;color:var(--muted);}
+  .takeaways{background:var(--surface);border:1px solid var(--border-soft);border-radius:8px;padding:18px 22px 20px;margin:30px 0 10px;}
+  .takeaways-title{font-family:var(--mono);font-size:12.5px;font-weight:700;color:var(--green);margin-bottom:12px;direction:ltr;text-align:left;display:flex;align-items:center;gap:8px;}
+  .takeaways ul{margin:0;padding-inline-start:20px;}
+  .takeaways li{color:var(--text-soft);font-size:14.5px;}
+  .cheat-section h4{color:var(--amber);font-size:13px;margin:26px 0 8px;}
+  .method-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px;margin:22px 0;}
+  .method-card{background:var(--surface);border:1px solid var(--border-soft);border-radius:8px;padding:14px 16px;}
+  .method-card .mnum{font-family:var(--mono);font-size:11px;font-weight:700;color:#0F0F10;background:var(--red-grad);border-radius:4px;padding:2px 8px;display:inline-block;margin-bottom:8px;direction:ltr;}
+  .method-card .mtitle{font-weight:700;color:var(--text);font-size:14px;margin-bottom:5px;}
+  .method-card .mdesc{color:var(--text-soft);font-size:13.3px;line-height:1.75;}
+  .footer-note{margin-top:70px;padding-top:26px;border-top:1px solid var(--border-soft);color:var(--muted);font-size:13.3px;font-family:var(--mono);text-align:center;direction:ltr;}
+  .dsvg-box{fill:var(--surface-2);stroke:var(--border-soft);stroke-width:1;}
+  .dsvg-box-r{fill:var(--red-soft);stroke:var(--red-border);stroke-width:1;}
+  .dsvg-box-g{fill:var(--green-soft);stroke:var(--green-border);stroke-width:1;}
+  .dsvg-box-b{fill:var(--blue-soft);stroke:var(--blue-border);stroke-width:1;}
+  .dsvg-box-a{fill:var(--amber-soft);stroke:var(--amber-border);stroke-width:1;}
+  .dsvg-box-p{fill:var(--purple-soft);stroke:var(--purple-border);stroke-width:1;}
+  .dsvg-line{stroke:var(--border);stroke-width:1.5;fill:none;}
+  .dsvg-line-r{stroke:var(--red);stroke-width:1.5;fill:none;}
+  .dsvg-line-g{stroke:var(--green);stroke-width:1.5;fill:none;}
+  .dsvg-arr{fill:var(--border);}
+  .dsvg-arr-r{fill:var(--red);}
+  .dsvg-arr-g{fill:var(--green);}
+  .dsvg-txt{fill:var(--text);font-family:IBM Plex Mono,monospace;}
+  .dsvg-muted{fill:var(--muted);font-family:IBM Plex Mono,monospace;}
+  .dsvg-red{fill:var(--red);}
+  .dsvg-green{fill:var(--green);}
+  .dsvg-amber{fill:var(--amber);}
+  .dsvg-blue{fill:var(--blue);}
+  @media print{.float-controls,.progress-rail,.copy-btn,.theme-switch{display:none !important;}body{background:#fff;color:#000;}.page{max-width:100%;}}
+  @media(max-width:640px){.page{padding:28px 14px 70px;}.banner-body{padding:24px 20px 4px;}.banner h1{font-size:21px;}h2{font-size:18px;gap:10px;}.float-controls{left:12px;bottom:14px;}}
+</style>
+</head>
+<body>
+
+<div class="progress-rail"><div class="progress-bar" id="progressBar"></div></div>
+<div class="float-controls"><button class="fctrl-btn" id="toTop" title="ارجع لفوق">↑</button></div>
+
+<div class="page">
+
+<div class="banner">
+  <div class="term-bar">
+    <span class="term-dot r"></span><span class="term-dot y"></span><span class="term-dot g"></span>
+    <span class="term-path">student@ceh:~/module-10$</span>
+    <button class="theme-switch" id="themeSwitch">theme: dark</button>
+  </div>
+  <div class="banner-body">
+    <span class="kicker">CEHv13 · Certified Ethical Hacker · Module 10</span>
+    <h1>هجمات الحرمان من الخدمة (DoS / DDoS)</h1>
+    <p class="lede">من مفاهيم DoS وDDoS وBotnets، لفئات الهجمات الثلاث (Volumetric / Protocol / Application)، لـ 20+ تقنية هجوم من SYN Flood للـ Phlashing، وصولاً لآليات الكشف والتصدّي والحماية.</p>
+    <div class="tags">
+      <span class="tag">dos-ddos</span>
+      <span class="tag">syn-flood</span>
+      <span class="tag">botnet</span>
+      <span class="tag">amplification</span>
+      <span class="tag">drdos</span>
+      <span class="tag">slowloris</span>
+      <span class="tag">phlashing</span>
+      <span class="tag">countermeasures</span>
+    </div>
+  </div>
+</div>
+
+<nav class="toc"><div class="toc-title">$ ls learning_units/</div><div class="toc-list">
+  <a class="toc-item" href="#intro"><span class="toc-num">00</span><span>مفاهيم DoS وDDoS — الفرق والآليات</span></a>
+  <a class="toc-item" href="#lu1"><span class="toc-num">01</span><span>Botnets — البنية وطرق الانتشار</span></a>
+  <a class="toc-item" href="#lu2"><span class="toc-num">02</span><span>فئات هجمات DoS/DDoS الثلاث</span></a>
+  <a class="toc-item" href="#lu3"><span class="toc-num">03</span><span>تقنيات الهجوم — 20+ Attack Technique</span></a>
+  <a class="toc-item" href="#lu4"><span class="toc-num">04</span><span>أدوات الهجوم — DoS/DDoS Toolkits</span></a>
+  <a class="toc-item" href="#lu5"><span class="toc-num">05</span><span>الكشف والتصدّي والحماية</span></a>
+  <a class="toc-item" href="#cheat"><span class="toc-num">--</span><span>Cheat Sheet مرجعي</span></a>
+  <a class="toc-item" href="#summary"><span class="toc-num">--</span><span>الخلاصة العامة للموديول</span></a>
+</div></nav>
+
+<!-- ══════════════════════════════════ INTRO -->
+<h1 id="intro">Module 10: هجمات الحرمان من الخدمة (DoS / DDoS)</h1>
+
+<div class="callout definition">
+<div class="callout-label">⬦ DoS vs DDoS</div>
+<p><strong>DoS Attack:</strong> هجوم على جهاز أو شبكة يقلَّل أو يمنع الوصول لموارد النظام للمستخدمين الشرعيين — من جهاز مهاجم واحد.</p>
+<p><strong>DDoS Attack:</strong> هجوم منسَّق واسع النطاق على توفَّر الخدمات — مُطلَق بشكل غير مباشر من خلال آلاف الأجهزة المخترقة (Botnets). الهدف الأول: الحصول على وصول إداري لأكبر عدد ممكن من الأجهزة.</p>
+</div>
+
+<h3>أنواع هجمات DoS — أهداف الموارد</h3>
+<div class="goals-grid">
+  <div class="goal-card"><span class="gi">B</span><span><strong>Bandwidth Attacks:</strong> إغراق الشبكة بحجم ترافيك ضخم لاستنفاد الـ Bandwidth وحرمان المستخدمين الشرعيين</span></div>
+  <div class="goal-card"><span class="gi">C</span><span><strong>Connectivity Attacks:</strong> إغراق النظام بطلبات اتصال ضخمة لاستنفاد كل موارد الـ OS وتعطيل معالجة الطلبات الشرعية</span></div>
+</div>
+
+<h3>كيف تعمل هجمات DDoS؟</h3>
+<div class="diagram-card">
+<svg viewBox="0 0 700 185" xmlns="http://www.w3.org/2000/svg">
+  <!-- Attacker -->
+  <rect x="8" y="60" width="100" height="65" rx="7" class="dsvg-box-r"/>
+  <text x="58" y="84" text-anchor="middle" class="dsvg-red" font-size="10" font-weight="700">Attacker</text>
+  <text x="58" y="100" text-anchor="middle" class="dsvg-muted" font-size="8">Sends Command</text>
+  <text x="58" y="113" text-anchor="middle" class="dsvg-muted" font-size="8">via C&amp;C</text>
+
+  <!-- Arrow to C&C -->
+  <line x1="108" y1="92" x2="150" y2="92" class="dsvg-line-r"/>
+  <polygon points="150,87 160,92 150,97" class="dsvg-arr-r"/>
+
+  <!-- C&C -->
+  <rect x="160" y="50" width="110" height="85" rx="7" class="dsvg-box-p"/>
+  <text x="215" y="78" text-anchor="middle" font-size="10" font-weight="700" style="fill:var(--purple)">C&amp;C Server</text>
+  <text x="215" y="94" text-anchor="middle" class="dsvg-muted" font-size="8">Command &amp;</text>
+  <text x="215" y="107" text-anchor="middle" class="dsvg-muted" font-size="8">Control</text>
+  <text x="215" y="122" text-anchor="middle" class="dsvg-muted" font-size="7">Coordinates Zombies</text>
+
+  <!-- Arrow to Zombies -->
+  <line x1="270" y1="92" x2="305" y2="50" class="dsvg-line-r"/>
+  <line x1="270" y1="92" x2="305" y2="92" class="dsvg-line-r"/>
+  <line x1="270" y1="92" x2="305" y2="134" class="dsvg-line-r"/>
+
+  <!-- Zombies -->
+  <rect x="305" y="8"   width="110" height="50" rx="5" class="dsvg-box-a"/>
+  <text x="360" y="28" text-anchor="middle" class="dsvg-amber" font-size="9" font-weight="700">Zombie 1</text>
+  <text x="360" y="44" text-anchor="middle" class="dsvg-muted" font-size="7">Infected Device</text>
+  <rect x="305" y="67"  width="110" height="50" rx="5" class="dsvg-box-a"/>
+  <text x="360" y="87" text-anchor="middle" class="dsvg-amber" font-size="9" font-weight="700">Zombie 2</text>
+  <text x="360" y="103" text-anchor="middle" class="dsvg-muted" font-size="7">Infected Device</text>
+  <rect x="305" y="126" width="110" height="50" rx="5" class="dsvg-box-a"/>
+  <text x="360" y="146" text-anchor="middle" class="dsvg-amber" font-size="9" font-weight="700">Zombie 3</text>
+  <text x="360" y="162" text-anchor="middle" class="dsvg-muted" font-size="7">Infected Device</text>
+
+  <!-- Arrows to Reflectors -->
+  <polygon points="430,33 440,28 440,38" class="dsvg-arr"/>
+  <line x1="415" y1="33" x2="440" y2="33" class="dsvg-line"/>
+  <polygon points="430,92 440,87 440,97" class="dsvg-arr"/>
+  <line x1="415" y1="92" x2="440" y2="92" class="dsvg-line"/>
+  <polygon points="430,151 440,146 430,156" class="dsvg-arr"/>
+  <line x1="415" y1="151" x2="440" y2="151" class="dsvg-line"/>
+
+  <!-- Reflectors / Target -->
+  <rect x="440" y="8" width="250" height="170" rx="7" class="dsvg-box-r" style="stroke-width:2;"/>
+  <text x="565" y="32" text-anchor="middle" class="dsvg-red" font-size="12" font-weight="700">🎯 TARGET</text>
+  <text x="565" y="50" text-anchor="middle" class="dsvg-muted" font-size="9">Flooded with:</text>
+  <text x="565" y="68" text-anchor="middle" class="dsvg-muted" font-size="9">• Spoofed Connection Requests</text>
+  <text x="565" y="85" text-anchor="middle" class="dsvg-muted" font-size="9">• UDP/ICMP/SYN Floods</text>
+  <text x="565" y="102" text-anchor="middle" class="dsvg-muted" font-size="9">• HTTP Floods / Slowloris</text>
+  <text x="565" y="119" text-anchor="middle" class="dsvg-muted" font-size="9">• Amplified Responses</text>
+  <text x="565" y="150" text-anchor="middle" class="dsvg-red" font-size="11" font-weight="700">⚡ Service UNAVAILABLE</text>
+  <text x="565" y="167" text-anchor="middle" class="dsvg-muted" font-size="8">Bandwidth / Resources Exhausted</text>
+</svg>
+<div class="diagram-caption">Attacker → C&amp;C → Zombies → Target: الهجوم المنسَّق يستحيل تتبُّعه لمصدره الحقيقي</div>
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU1 -->
+<h2 id="lu1"><span class="num">01</span><span class="htext">Botnets — البنية وطرق الانتشار</span></h2>
+
+<div class="callout definition">
+<div class="callout-label">⬦ Botnet</div>
+<p><strong>Bot</strong> = برنامج لجمع البيانات أو تنفيذ مهام آلية. <strong>Botnet</strong> = شبكة ضخمة من الأجهزة المُصابة ببرمجيات خبيثة. Botnet صغير بـ 1,000 Bot عنده Bandwidth مشترك أكبر من معظم الأنظمة المؤسسية.</p>
+</div>
+
+<h3>ما تُستخدَم فيه الـ Botnets</h3>
+<div class="method-grid">
+<div class="method-card">
+  <span class="mnum">DDoS</span>
+  <div class="mtitle">DDoS Attacks</div>
+  <div class="mdesc">توليد هجمات DDoS تستنفد Bandwidth الضحية وتشغل Host Resources وتدمر Network Connectivity.</div>
+</div>
+<div class="method-card">
+  <span class="mnum">Spam</span>
+  <div class="mtitle">Spamming</div>
+  <div class="mdesc">استخدام SOCKS Proxy للـ Spamming وجمع Email Addresses من صفحات الويب لإرسال Spam Emails.</div>
+</div>
+<div class="method-card">
+  <span class="mnum">Sniff</span>
+  <div class="mtitle">Traffic Sniffing</div>
+  <div class="mdesc">Packet Sniffer يراقب بيانات الترافيك — يسمح بسرقة Credit Cards وكلمات المرور. الـ Botnets ممكن حتى تسرق بعضها.</div>
+</div>
+</div>
+
+<h3>طرق الفحص للبحث عن أجهزة ضعيفة</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>الطريقة</th><th>الآلية</th><th>الخاصية</th></tr></thead>
+<tbody>
+<tr><td><strong>Random Scanning</strong></td><td>الجهاز المصاب يفحص IP Addresses عشوائياً في نطاق الهدف</td><td>يولَّد ترافيك ضخم — يبطأ مع مرور الوقت</td></tr>
+<tr><td><strong>Hit-list Scanning</strong></td><td>قائمة مُسبَقة بالأجهزة الضعيفة — تُقسَم نصفين بعد كل إصابة</td><td>انتشار أُسّي — الأسرع</td></tr>
+<tr><td><strong>Local Subnet Scanning</strong></td><td>الجهاز المصاب يبحث في الشبكة المحلية خلف الـ Firewall</td><td>يُستخدَم مع أساليب أخرى</td></tr>
+</tbody>
+</table></div>
+
+<h3>طرق انتشار الـ Malicious Code</h3>
+<div class="goals-grid">
+  <div class="goal-card"><span class="gi">1</span><span><strong>Central Source Propagation:</strong> المهاجم يضع Toolkit على مصدر مركزي — يُنقَل لكل جهاز ضعيف جديد عبر HTTP/FTP/RPC</span></div>
+  <div class="goal-card"><span class="gi">2</span><span><strong>Back-chaining Propagation:</strong> الـ Toolkit على جهاز المهاجم — الجهاز المخترَق يتصَّل رجوعاً لتنزيله — يستخدم TFTP</span></div>
+  <div class="goal-card"><span class="gi">3</span><span><strong>Mobile Botnets:</strong> أجهزة Android في App Stores الخارجية — APK files مرتبطة بـ Malicious Server — DDoS عبر الموبايل</span></div>
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU2 -->
+<h2 id="lu2"><span class="num">02</span><span class="htext">فئات هجمات DoS/DDoS الثلاث</span></h2>
+
+<div class="diagram-card">
+<svg viewBox="0 0 700 180" xmlns="http://www.w3.org/2000/svg">
+  <!-- Volumetric -->
+  <rect x="8" y="10" width="214" height="160" rx="8" class="dsvg-box-r" style="stroke-width:2;"/>
+  <text x="115" y="34" text-anchor="middle" class="dsvg-red" font-size="12" font-weight="700">Volumetric Attacks</text>
+  <text x="115" y="52" text-anchor="middle" class="dsvg-muted" font-size="10">Bandwidth Exhaustion</text>
+  <text x="115" y="70" text-anchor="middle" class="dsvg-red" font-size="11" font-weight="700">Measured: bps</text>
+  <text x="20" y="92"  class="dsvg-muted" font-size="9">• UDP Flood</text>
+  <text x="20" y="106" class="dsvg-muted" font-size="9">• ICMP Flood</text>
+  <text x="20" y="120" class="dsvg-muted" font-size="9">• Ping of Death</text>
+  <text x="20" y="134" class="dsvg-muted" font-size="9">• Smurf Attack</text>
+  <text x="20" y="148" class="dsvg-muted" font-size="9">• NTP Amplification</text>
+  <text x="20" y="162" class="dsvg-muted" font-size="9">• Pulse Wave / Zero-Day</text>
+
+  <!-- Protocol -->
+  <rect x="242" y="10" width="216" height="160" rx="8" class="dsvg-box-a" style="stroke-width:2;"/>
+  <text x="350" y="34" text-anchor="middle" class="dsvg-amber" font-size="12" font-weight="700">Protocol Attacks</text>
+  <text x="350" y="52" text-anchor="middle" class="dsvg-muted" font-size="10">Connection State Exhaustion</text>
+  <text x="350" y="70" text-anchor="middle" class="dsvg-amber" font-size="11" font-weight="700">Measured: pps / cps</text>
+  <text x="254" y="92"  class="dsvg-muted" font-size="9">• SYN Flood</text>
+  <text x="254" y="106" class="dsvg-muted" font-size="9">• SYN-ACK Flood</text>
+  <text x="254" y="120" class="dsvg-muted" font-size="9">• ACK / PUSH ACK Flood</text>
+  <text x="254" y="134" class="dsvg-muted" font-size="9">• Fragmentation Attack</text>
+  <text x="254" y="148" class="dsvg-muted" font-size="9">• TCP State Exhaustion</text>
+  <text x="254" y="162" class="dsvg-muted" font-size="9">• Spoofed Session Flood</text>
+
+  <!-- Application Layer -->
+  <rect x="478" y="10" width="214" height="160" rx="8" class="dsvg-box-b" style="stroke-width:2;"/>
+  <text x="585" y="34" text-anchor="middle" class="dsvg-blue" font-size="12" font-weight="700">Application Layer</text>
+  <text x="585" y="52" text-anchor="middle" class="dsvg-muted" font-size="10">App Resource Exhaustion</text>
+  <text x="585" y="70" text-anchor="middle" class="dsvg-blue" font-size="11" font-weight="700">Measured: rps</text>
+  <text x="490" y="92"  class="dsvg-muted" font-size="9">• HTTP GET/POST Flood</text>
+  <text x="490" y="106" class="dsvg-muted" font-size="9">• Slowloris</text>
+  <text x="490" y="120" class="dsvg-muted" font-size="9">• UDP App Layer Flood</text>
+  <text x="490" y="134" class="dsvg-muted" font-size="9">• DDoS Extortion (RDDoS)</text>
+  <text x="490" y="148" class="dsvg-muted" font-size="9">• Single-Session HTTP</text>
+  <text x="490" y="162" class="dsvg-muted" font-size="9">• Single-Request HTTP</text>
+</svg>
+<div class="diagram-caption">الفئات الثلاث — كل واحدة تستهدف موردًا مختلفًا وتُقاس بوحدة مختلفة</div>
+</div>
+
+<div class="callout examtip">
+<div class="callout-label">★ CEH Exam — وحدات القياس</div>
+<p><strong>Volumetric = bps</strong> (Bits per Second) — استنفاد الـ Bandwidth.<br/>
+<strong>Protocol = pps / cps</strong> (Packets/Connections per Second) — استنفاد Connection State Tables.<br/>
+<strong>Application = rps</strong> (Requests per Second) — استنفاد App Resources.</p>
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU3 -->
+<h2 id="lu3"><span class="num">03</span><span class="htext">تقنيات الهجوم — 20+ Attack Technique</span></h2>
+
+<h3>الهجمات الحجمية (Volumetric Attacks)</h3>
+<div class="method-grid">
+<div class="method-card">
+  <span class="mnum">UDP Flood</span>
+  <div class="mtitle">UDP Flood Attack</div>
+  <div class="mdesc">إرسال UDP Packets مُزوَّرة بمعدَّل عالٍ لـ Random Ports على الخادم المستهدَف. الخادم يبحث باستمرار عن تطبيقات غير موجودة → ICMP "Destination Unreachable" يُعاد إرساله حتى تنضب الموارد.</div>
+</div>
+<div class="method-card">
+  <span class="mnum">ICMP Flood</span>
+  <div class="mtitle">ICMP Flood Attack</div>
+  <div class="mdesc">إرسال كميات ضخمة من ICMP Echo Requests للضحية مباشرةً أو عبر Reflection Networks → الضحية تُشبَع Bandwidth وتتوقف عن الرد على طلبات TCP/IP الشرعية.</div>
+</div>
+<div class="method-card">
+  <span class="mnum">PoD</span>
+  <div class="mtitle">Ping of Death</div>
+  <div class="mdesc">إرسال Packets بحجم <strong>65,538 bytes</strong> (تتجاوز الحد المسموح RFC 791 وهو 65,535 bytes) → عملية إعادة التجميع (Reassembly) تسبَّب Crash. هوية المهاجم سهلة الإخفاء.</div>
+</div>
+<div class="method-card">
+  <span class="mnum">Smurf</span>
+  <div class="mtitle">Smurf Attack</div>
+  <div class="mdesc">المهاجم يُزوَّر Source IP بـ IP الضحية ويُرسَّل ICMP ECHO Requests لعنوان Broadcast → كل الأجهزة في الشبكة ترد للضحية (بسبب الـ IP المزوَّر) → فيضان ضخم يُعطَّل الجهاز.</div>
+</div>
+<div class="method-card">
+  <span class="mnum">Pulse Wave</span>
+  <div class="mtitle">Pulse Wave DDoS</div>
+  <div class="mdesc">نمط دوري — الهجوم بأمواج كل 10 دقائق تقريباً، كل موجة ≥ 300 Gbps لساعة أو أيام. صعب الاسترداد. يستنفد الـ Bandwidth بالكامل وقت كل موجة.</div>
+</div>
+<div class="method-card">
+  <span class="mnum">NTP Amp</span>
+  <div class="mtitle">NTP Amplification</div>
+  <div class="mdesc">Botnet بيُرسَّل UDP Packets بـ IP مُزوَّر (IP الضحية) لـ NTP Server بـ monlist مُفعَّل → NTP يرد بقائمة ضخمة لـ IP الضحية. الضحية تُغرَق بردود NTP غير مطلوبة.</div>
+</div>
+</div>
+
+<div class="code-wrap"><span class="code-tag">bash — ntp amplification check</span><pre><code># فحص NTP Server للـ monlist
+nmap -sU -pU:123 -Pn -n --script=ntp-monlist <target>
+# لو monlist مُفعَّل → NTP Server قابل للاستخدام في Amplification Attack
+</code></pre></div>
+
+<h3>هجمات البروتوكول (Protocol Attacks)</h3>
+
+<div class="callout case">
+<div class="callout-label">⚙ SYN Flood — استغلال الـ Three-Way Handshake</div>
+<p>
+الاتصال الطبيعي: Client → SYN → Server → SYN/ACK → Client → ACK → Connected ✓<br/>
+SYN Flood: المهاجم يُرسَّل آلاف SYN Requests بـ Fake IPs → Server يُرسَّل SYN/ACK ويبقى ينتظر الـ ACK → Connection مفتوح غير مكتمل يشغل الـ Listening Queue → لا مجال لاتصالات جديدة.
+</p>
+</div>
+
+<div class="method-grid">
+<div class="method-card">
+  <span class="mnum">SYN</span>
+  <div class="mtitle">SYN Flood</div>
+  <div class="mdesc">يستغل Three-Way Handshake — SYN Requests بـ Fake IPs → Half-open Connections تملأ Listening Queue → Server لا يقبل اتصالات جديدة.</div>
+</div>
+<div class="method-card">
+  <span class="mnum">SYN-ACK</span>
+  <div class="mtitle">SYN-ACK Flood</div>
+  <div class="mdesc">يستغل المرحلة الثانية من الـ Handshake — إرسال SYN-ACK Packets ضخمة للهدف لاستنفاد موارده.</div>
+</div>
+<div class="method-card">
+  <span class="mnum">ACK</span>
+  <div class="mtitle">ACK + PUSH ACK Flood</div>
+  <div class="mdesc">إرسال ACK وPUSH ACK Packets مُزوَّرة بكميات ضخمة → الجهاز المستهدَف يصبح غير فعَّال.</div>
+</div>
+<div class="method-card">
+  <span class="mnum">Frag</span>
+  <div class="mtitle">Fragmentation Attack</div>
+  <div class="mdesc">إرسال TCP/UDP Fragments ضخمة (1500+ bytes) — عادةً لا تُفحَص من Routers/Firewalls. إعادة التجميع تستنفد الموارد. المحتوى عشوائي لجعل الفحص أصعب.</div>
+</div>
+<div class="method-card">
+  <span class="mnum">Spoof</span>
+  <div class="mtitle">Spoofed Session Flood</div>
+  <div class="mdesc">إنشاء TCP Sessions وهمية بـ SYN+ACK+RST/FIN — يتجاوز الـ Firewalls ويستنفد الموارد. النوع Multi-ACK لا يستخدم SYN فيصعب اكتشافه بالـ Firewalls.</div>
+</div>
+<div class="method-card">
+  <span class="mnum">SACK</span>
+  <div class="mtitle">TCP SACK Panic</div>
+  <div class="mdesc">هجوم بعيد على Linux — SACK Packets بـ MSS = 48 bytes (أدنى قيمة) → يزيد TCP Segments للإعادة → Integer Overflow في SKB → Kernel Panic → DoS. يؤثر أيضاً على Containers وVMs.</div>
+</div>
+</div>
+
+<h3>هجمات طبقة التطبيق (Application Layer Attacks)</h3>
+<div class="method-grid">
+<div class="method-card">
+  <span class="mnum">HTTP</span>
+  <div class="mtitle">HTTP GET/POST Flood</div>
+  <div class="mdesc"><strong>GET:</strong> Time-delayed HTTP Header يُبقي الاتصال مفتوحاً — Server ينتظر باقي الطلب الذي لا يأتي. <strong>POST:</strong> Body ناقص — Server ينتظر الباقي. Layer-7 — لا يحتاج Spoofing أو كثير من الـ Bandwidth.</div>
+</div>
+<div class="method-card">
+  <span class="mnum">Slowloris</span>
+  <div class="mtitle">Slowloris Attack</div>
+  <div class="mdesc">يُرسَّل HTTP Requests جزئية ويُبقيها مفتوحة بإرسال Headers بشكل بطيء — يستنفد كل الـ Connections المتاحة بدون إكمال أي طلب. فعَّال جداً بموارد قليلة.</div>
+</div>
+<div class="method-card">
+  <span class="mnum">UDP App</span>
+  <div class="mtitle">UDP App Layer Flood</div>
+  <div class="mdesc">بروتوكولات UDP على مستوى التطبيق: CHARGEN, SNMPv2, QOTD, TFTP, NetBIOS, NTP, VoIP, Steam Protocol, Quake Network Protocol.</div>
+</div>
+<div class="method-card">
+  <span class="mnum">RDDoS</span>
+  <div class="mtitle">DDoS Extortion / RDDoS</div>
+  <div class="mdesc">تهديد بـ DDoS + طلب فدية (Digital Currency). ممكن يُرفَق بـ Sample Attack حقيقي للإثبات. Email يحتوي Deadline وخيارات الدفع.</div>
+</div>
+</div>
+
+<h3>هجمات خاصة وهجمات متقدّمة</h3>
+<div class="method-grid">
+<div class="method-card">
+  <span class="mnum">Multi-V</span>
+  <div class="mtitle">Multi-Vector Attack</div>
+  <div class="mdesc">تجميع Volumetric + Protocol + Application Layer في نفس الوقت أو بالتناوب لإرباك فريق الـ IT وتشتيت موارده.</div>
+</div>
+<div class="method-card">
+  <span class="mnum">P2P</span>
+  <div class="mtitle">Peer-to-Peer Attack</div>
+  <div class="mdesc">يستغل Bugs في P2P Servers وبروتوكول DC++ — يُوجَّه Clients للاتصال بموقع الضحية بدل بعضهم. لا يحتاج Botnets. سهل الكشف بالـ Signatures.</div>
+</div>
+<div class="method-card">
+  <span class="mnum">PDoS</span>
+  <div class="mtitle">Permanent DoS (Phlashing)</div>
+  <div class="mdesc">يستهدف الـ Hardware ويتلفه بشكل دائم — يتطلَّب استبدال أو إعادة تثبيت. يستغل Remote Admin Interfaces بـ Fake Firmware Updates. أسرع وأشد دماراً من DDoS.</div>
+</div>
+<div class="method-card">
+  <span class="mnum">DRDoS</span>
+  <div class="mtitle">Distributed Reflection DoS</div>
+  <div class="mdesc">يستخدم Reflectors (أجهزة غير مخترقة) — Zombies بيُرسَّلوا SYN بـ IP الضحية للـ Reflectors → Reflectors يُرسَّلوا SYN/ACK للضحية → صعب التتبَّع.</div>
+</div>
+</div>
+
+<h3>DRDoS — الهجوم عبر الـ Reflectors</h3>
+<div class="diagram-card">
+<svg viewBox="0 0 700 140" xmlns="http://www.w3.org/2000/svg">
+  <!-- Attacker -->
+  <rect x="4" y="45" width="90" height="50" rx="6" class="dsvg-box-r"/>
+  <text x="49" y="65" text-anchor="middle" class="dsvg-red" font-size="9" font-weight="700">Attacker</text>
+  <text x="49" y="79" text-anchor="middle" class="dsvg-muted" font-size="7">Commands Zombies</text>
+
+  <!-- Zombies -->
+  <line x1="94" y1="70" x2="155" y2="50" class="dsvg-line-r"/>
+  <line x1="94" y1="70" x2="155" y2="90" class="dsvg-line-r"/>
+  <rect x="155" y="20" width="115" height="40" rx="5" class="dsvg-box-a"/>
+  <text x="212" y="36" text-anchor="middle" class="dsvg-amber" font-size="9" font-weight="700">Zombie Army</text>
+  <text x="212" y="50" text-anchor="middle" class="dsvg-muted" font-size="7">SYN with Victim's IP</text>
+  <rect x="155" y="72" width="115" height="40" rx="5" class="dsvg-box-a"/>
+  <text x="212" y="88" text-anchor="middle" class="dsvg-amber" font-size="9" font-weight="700">Zombie Army</text>
+  <text x="212" y="102" text-anchor="middle" class="dsvg-muted" font-size="7">Spoofed Source IP</text>
+
+  <!-- Reflectors -->
+  <line x1="270" y1="40" x2="350" y2="40" class="dsvg-line"/>
+  <line x1="270" y1="92" x2="350" y2="92" class="dsvg-line"/>
+  <polygon points="350,35 360,40 350,45" class="dsvg-arr"/>
+  <polygon points="350,87 360,92 350,97" class="dsvg-arr"/>
+  <rect x="360" y="20" width="120" height="50" rx="5" class="dsvg-box-b"/>
+  <text x="420" y="40" text-anchor="middle" class="dsvg-blue" font-size="9" font-weight="700">Reflectors</text>
+  <text x="420" y="55" text-anchor="middle" class="dsvg-muted" font-size="7">Non-compromised</text>
+  <text x="420" y="66" text-anchor="middle" class="dsvg-muted" font-size="7">systems</text>
+  <rect x="360" y="80" width="120" height="50" rx="5" class="dsvg-box-b"/>
+  <text x="420" y="100" text-anchor="middle" class="dsvg-blue" font-size="9" font-weight="700">Reflectors</text>
+  <text x="420" y="115" text-anchor="middle" class="dsvg-muted" font-size="7">Send SYN/ACK</text>
+  <text x="420" y="126" text-anchor="middle" class="dsvg-muted" font-size="7">to Victim</text>
+
+  <!-- Target -->
+  <line x1="480" y1="45" x2="555" y2="65" class="dsvg-line-r"/>
+  <line x1="480" y1="105" x2="555" y2="75" class="dsvg-line-r"/>
+  <polygon points="555,60 565,65 555,70" class="dsvg-arr-r"/>
+  <polygon points="555,70 565,75 555,80" class="dsvg-arr-r"/>
+  <rect x="565" y="35" width="130" height="70" rx="7" class="dsvg-box-r" style="stroke-width:2;"/>
+  <text x="630" y="58" text-anchor="middle" class="dsvg-red" font-size="10" font-weight="700">🎯 Primary</text>
+  <text x="630" y="72" text-anchor="middle" class="dsvg-red" font-size="10" font-weight="700">Target</text>
+  <text x="630" y="90" text-anchor="middle" class="dsvg-muted" font-size="7">Flooded by Reflectors</text>
+  <text x="350" y="133" text-anchor="middle" class="dsvg-muted" font-size="8">⚡ Attacker أصعب تتبُّعه — Reflectors هي ما يُرى</text>
+</svg>
+<div class="diagram-caption">DRDoS — الـ Reflectors (غير المخترقة) هي من يبدو أنها تهاجم الضحية مباشرة</div>
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU4 -->
+<h2 id="lu4"><span class="num">04</span><span class="htext">أدوات الهجوم — DoS/DDoS Toolkits</span></h2>
+
+<div class="table-wrap"><table>
+<thead><tr><th>الأداة</th><th>الوظيفة</th><th>نوع الهجوم</th></tr></thead>
+<tbody>
+<tr><td><strong>LOIC</strong> (Low Orbit Ion Cannon)</td><td>TCP/UDP/HTTP Flood بسيطة — واجهة GUI سهلة</td><td>Volumetric / App</td></tr>
+<tr><td><strong>HOIC</strong> (High Orbit Ion Cannon)</td><td>HTTP Flood متطوَّرة — دعم Scripts للتخصيص</td><td>Application Layer</td></tr>
+<tr><td><strong>HULK</strong></td><td>HTTP Unique Load King — يولَّد طلبات HTTP فريدة باستمرار</td><td>Application Layer</td></tr>
+<tr><td><strong>Slowloris</strong></td><td>يُبقي الاتصالات HTTP مفتوحة ببطء — موارد قليلة جداً</td><td>Application Layer</td></tr>
+<tr><td><strong>UFONet</strong></td><td>يستخدم Open Redirects و ZombieNet للـ DDoS</td><td>Application / Volumetric</td></tr>
+<tr><td><strong>ISB</strong></td><td>HTTP, UDP, TCP, ICMP Floods — مع WHOIS/netstat/traceroute</td><td>All Categories</td></tr>
+<tr><td><strong>UltraDDoS-v2</strong></td><td>GUI بسيطة — IP + Port + Packet Count → Launch</td><td>Volumetric</td></tr>
+</tbody>
+</table></div>
+
+<hr />
+
+<!-- ══════════════════════════════════ LU5 -->
+<h2 id="lu5"><span class="num">05</span><span class="htext">الكشف والتصدّي والحماية</span></h2>
+
+<h3>تقنيات الكشف</h3>
+<div class="method-grid">
+<div class="method-card">
+  <span class="mnum">01</span>
+  <div class="mtitle">Activity Profiling</div>
+  <div class="mdesc">يبني Profile بناءً على متوسَّط معدَّل الـ Packets لكل Network Flow. يُنبَّه عند زيادة ملحوظة في Activity Levels أو ارتفاع عدد الـ Distinct Clusters (DDoS مُحتمَل).</div>
+</div>
+<div class="method-card">
+  <span class="mnum">02</span>
+  <div class="mtitle">Sequential Change-Point Detection</div>
+  <div class="mdesc">يُصفَّي بيانات الترافيك ويخزَّنها كـ Time Series. يستخدم خوارزمية Cusum لعزل التغيّرات في إحصاءات الترافيك. يكتشف أيضاً Scanning Activities للـ Network Worms.</div>
+</div>
+<div class="method-card">
+  <span class="mnum">03</span>
+  <div class="mtitle">Wavelet-Based Signal Analysis</div>
+  <div class="mdesc">يصف الـ Input Signal بـ Spectral Components. يحلَّل طاقة كل Spectral Window للكشف عن الـ Anomalies. يُصفَّي الـ Anomalous Traffic من الـ Background Noise.</div>
+</div>
+</div>
+
+<h3>استراتيجيات التصدّي</h3>
+<div class="goals-grid">
+  <div class="goal-card"><span class="gi">A</span><span><strong>Absorbing (الامتصاص):</strong> استخدام طاقة إضافية لاستيعاب الهجوم — يحتاج تخطيط مسبَّق وموارد إضافية (تكلفة حتى بدون هجوم)</span></div>
+  <div class="goal-card"><span class="gi">D</span><span><strong>Degrading (التدهور التدريجي):</strong> الحفاظ على الخدمات الحرجة فقط أثناء الهجوم وتعطيل الغير ضرورية</span></div>
+  <div class="goal-card"><span class="gi">S</span><span><strong>Shutting Down (الإغلاق):</strong> إغلاق كل الخدمات حتى يتوقَّف الهجوم — الملاذ الأخير عندما لا يوجد خيار آخر</span></div>
+</div>
+
+<h3>تقنيات الدفاع ضد الـ Botnets</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>التقنية</th><th>الآلية</th></tr></thead>
+<tbody>
+<tr><td><strong>RFC 3704 Filtering</strong></td><td>Basic ACL Filter يحجب الترافيك بـ Spoofed Addresses. يستخدم "Bogon List" — IPs غير مُخصَّصة أو محجوزة تُحذَف فوراً</td></tr>
+<tr><td><strong>Cisco IPS Source IP Reputation</strong></td><td>Cisco SensorBase Network — معلومات عن Botnets وMalware وDark Nets. Cisco Global Correlation يُعيَّن درجة Threat لكل IP</td></tr>
+<tr><td><strong>Black Hole Filtering</strong></td><td>Network Nodes تحذف الترافيك الوارد بدون إعلام المصدر — فعَّال ضد الـ Botnets</td></tr>
+<tr><td><strong>TCP SYN Cookie Protection</strong></td><td>الـ Server لا يخصَّص موارد للـ Half-open Connections — مقاومة لـ SYN Flood</td></tr>
+</tbody>
+</table></div>
+
+<h3>الحماية على مستوى الـ ISP</h3>
+<div class="callout note">
+<div class="callout-label">📌 ISP-Level Protection</div>
+<p>معظم ISPs بيحجبوا كل الطلبات أثناء DDoS — حتى الشرعية منها. In-the-Cloud DDoS Protection يُعيَّد توجيه الترافيك للـ ISP أثناء الهجوم. المسؤولون يطلبون من الـ ISP حجب الـ IP المُصاب وتحويل الموقع لـ IP جديد بعد DNS Propagation.</p>
+</div>
+
+<h3>Post-Attack Forensics</h3>
+<div class="goals-grid">
+  <div class="goal-card"><span class="gi">1</span><span><strong>Traffic Pattern Analysis:</strong> تحليل بيانات ما بعد الهجوم لتحديد خصائص الترافيك المهاجم وتحسين Load Balancing وFiltering</span></div>
+  <div class="goal-card"><span class="gi">2</span><span><strong>Packet Traceback:</strong> تتبُّع الـ Attack Traffic عكسياً لمصدره الحقيقي → حجب الهجمات المستقبلية</span></div>
+  <div class="goal-card"><span class="gi">3</span><span><strong>Event Log Analysis:</strong> Logs من Honeypots والـ Firewalls والـ Packet Sniffers لدعم التحقيق الجنائي وتطبيق القانون</span></div>
+</div>
+
+<h3>أدوات الحماية المتقدَّمة</h3>
+<div class="method-grid">
+<div class="method-card">
+  <span class="mnum">Forti</span>
+  <div class="mtitle">FortiDDoS</div>
+  <div class="mdesc">Massively Parallel Machine-Learning Architecture — أدنى Latency. يفحص Inbound وOutbound Layer 3/4/7. أسرع وأدق كشف واستجابة.</div>
+</div>
+<div class="method-card">
+  <span class="mnum">CP</span>
+  <div class="mtitle">Check Point Quantum DDoS</div>
+  <div class="mdesc">Multi-layered Protection — Behavioral Baseline + Auto-generated Signatures + Advanced Challenge/Response. يحجب مجموعة واسعة من الهجمات.</div>
+</div>
+<div class="method-card">
+  <span class="mnum">A10</span>
+  <div class="mtitle">A10 Thunder TPS</div>
+  <div class="mdesc">Threat Protection System — يكتشف ويحجب DDoS وهجمات خارجية قبل تصعيدها. Scalable Protection مع تقليل Security OpEx.</div>
+</div>
+<div class="method-card">
+  <span class="mnum">Anti</span>
+  <div class="mtitle">Anti DDoS Guardian</div>
+  <div class="mdesc">يراقب كل Incoming/Outgoing Packet في Real-Time. يحمي IIS, Apache, Mail, FTP, VoIP/SIP Servers. يعرض Remote Address لكل Network Flow.</div>
+</div>
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ CHEAT SHEET -->
+<h2 id="cheat"><span class="htext">Cheat Sheet مرجعي</span></h2>
+<div class="cheat-section">
+
+<h4>مرجع سريع — كل تقنيات الهجوم</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>الهجوم</th><th>الفئة</th><th>الآلية الأساسية</th><th>ما يُميَّزه</th></tr></thead>
+<tbody>
+<tr><td>UDP Flood</td><td>Volumetric</td><td>UDP عشوائي لـ Random Ports</td><td>ICMP Unreachable يُعاد للمصدر</td></tr>
+<tr><td>ICMP Flood</td><td>Volumetric</td><td>ICMP Echo Requests ضخمة</td><td>Bandwidth Saturation</td></tr>
+<tr><td>Ping of Death</td><td>Volumetric</td><td>Packets > 65,535 bytes</td><td>Reassembly يُسبَّب Crash</td></tr>
+<tr><td>Smurf</td><td>Volumetric</td><td>ICMP Broadcast بـ IP مُزوَّر</td><td>كل الشبكة ترد للضحية</td></tr>
+<tr><td>Pulse Wave</td><td>Volumetric</td><td>أمواج دورية كل 10 دقائق</td><td>≥ 300 Gbps لكل موجة</td></tr>
+<tr><td>NTP Amplification</td><td>Volumetric</td><td>monlist + Spoofed IP</td><td>Amplification Factor ضخم</td></tr>
+<tr><td>SYN Flood</td><td>Protocol</td><td>Half-open TCP Connections</td><td>Listening Queue ممتلئة</td></tr>
+<tr><td>Fragmentation</td><td>Protocol</td><td>TCP/UDP Fragments كبيرة</td><td>Reassembly يستنفد الموارد</td></tr>
+<tr><td>Spoofed Session</td><td>Protocol</td><td>Fake TCP Sessions</td><td>يتجاوز SYN Packet Filters</td></tr>
+<tr><td>TCP SACK Panic</td><td>Protocol</td><td>MSS = 48 bytes</td><td>Linux Kernel Panic</td></tr>
+<tr><td>HTTP GET/POST</td><td>Application</td><td>Time-delayed Headers/Body</td><td>Layer-7 — لا يحتاج Spoofing</td></tr>
+<tr><td>Slowloris</td><td>Application</td><td>Partial HTTP Requests</td><td>موارد قليلة جداً</td></tr>
+<tr><td>Multi-Vector</td><td>Combined</td><td>تجميع Volumetric+Protocol+App</td><td>يربك فريق الـ IT</td></tr>
+<tr><td>Peer-to-Peer</td><td>Special</td><td>DC++ Protocol Bugs</td><td>لا يحتاج Botnets</td></tr>
+<tr><td>PDoS (Phlashing)</td><td>Special</td><td>Fake Firmware Updates</td><td>Hardware Damage دائم</td></tr>
+<tr><td>DRDoS</td><td>Reflection</td><td>Reflectors + Spoofed IP</td><td>صعب تتبُّع المهاجم</td></tr>
+<tr><td>RDDoS Extortion</td><td>Application</td><td>Ransom + Sample Attack</td><td>Digital Currency Payment</td></tr>
+</tbody>
+</table></div>
+
+<h4>الدفاع — ملخَّص الاستراتيجيات</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>المشكلة</th><th>الحل</th><th>الأداة/الأسلوب</th></tr></thead>
+<tbody>
+<tr><td>SYN Flood</td><td>TCP SYN Cookie Protection</td><td>Cisco IOS TCP Intercept</td></tr>
+<tr><td>Spoofed Source IPs</td><td>RFC 3704 Filtering / Bogon List</td><td>ACL على الـ Router/Firewall</td></tr>
+<tr><td>Reflection Attacks</td><td>Block port 123/53/161 inbound من Service Ports</td><td>Ingress Filtering</td></tr>
+<tr><td>Botnet Traffic</td><td>IP Reputation Filtering</td><td>Cisco IPS / SensorBase</td></tr>
+<tr><td>Eavesdropping</td><td>WPA2/WPA3 + AES 256</td><td>Strong Encryption</td></tr>
+<tr><td>Kernel Vulnerabilities</td><td>تحديث الـ Kernel للأحدث</td><td>Patch Management</td></tr>
+<tr><td>High-Volume Attack</td><td>Black Hole Filtering</td><td>Discard without Notification</td></tr>
+<tr><td>NTP Amplification</td><td>تعطيل monlist</td><td>ntp-monlist NSE script للفحص</td></tr>
+</tbody>
+</table></div>
+
+</div>
+
+<hr />
+
+<!-- ══════════════════════════════════ SUMMARY -->
+<h2 id="summary"><span class="htext">الخلاصة العامة للموديول</span></h2>
+<p>الموديول ده غطّى هجمات الـ DoS/DDoS من المفاهيم الأساسية والـ Botnet Ecosystem، لـ 20+ تقنية هجوم تنتمي لثلاث فئات رئيسية، وصولاً لآليات الكشف والتصدّي والأدوات المتخصَّصة.</p>
+
+<div class="takeaways">
+<div class="takeaways-title">$ cat ./module10_summary.txt</div>
+<ul>
+<li>DoS = هجوم فردي. DDoS = هجوم منسَّق من Botnets — الهدف الأول: الوصول الإداري لأكبر عدد من الأجهزة</li>
+<li>Botnet صغير بـ 1,000 جهاز عنده Bandwidth أكبر من معظم المؤسسات</li>
+<li>Hit-list Scanning أسرع أساليب انتشار الـ Malware — عدد الأجهزة المُصابة يتضاعف أُسّياً</li>
+<li>Volumetric = bps | Protocol = pps/cps | Application = rps — كل فئة تستهدف موردًا مختلفًا</li>
+<li>SYN Flood يستغل Three-Way Handshake — Half-open Connections تملأ Listening Queue</li>
+<li>Ping of Death يُرسَّل Packets > 65,535 bytes — Reassembly يُسبَّب Crash</li>
+<li>Smurf Attack = ICMP Broadcast + Spoofed Source IP → كل الشبكة ترد للضحية</li>
+<li>DRDoS يستخدم Reflectors (أجهزة نظيفة) — المهاجم الحقيقي يصعب تتبُّعه</li>
+<li>PDoS (Phlashing) = تلف دائم للـ Hardware عبر Fake Firmware Updates</li>
+<li>TCP SACK Panic = MSS:48 → Integer Overflow → Linux Kernel Panic → DoS</li>
+<li>RFC 3704 + Bogon List + TCP SYN Cookies + Black Hole Filtering = الدفاع الأساسي</li>
+</ul>
+</div>
+
+<blockquote>
+<p><strong>DDoS مش هجوم تقني بحت — هو هجوم على التوافر (Availability) كأحد أعمدة CIA Triad.</strong> الاستعداد المسبَّق (Absorbing + ISP-level Protection + Forensics Plan) هو الفرق بين دقائق التعطَّل وأيام.</p>
+</blockquote>
+
+<div class="callout examtip">
+<div class="callout-label">★ CEH Exam — أهم النقاط</div>
+<p>Phlashing = PDoS = Hardware Damage دائم. DRDoS = Reflectors + Spoofed IP. Pulse Wave = كل 10 دقائق. NTP Amplification = monlist command. TCP SACK = MSS:48 bytes = Linux Kernel Panic. Smurf = ICMP Broadcast. Bogon List = RFC 3704.</p>
+</div>
+
+<hr />
+<p><em>نهاية نوتس الموديول العاشر — CEHv13: Denial-of-Service</em></p>
+<div class="footer-note">-- EOF: module-10/dos-ddos.md --</div>
+</div>
+
+<script>
+(function(){
+  var root=document.documentElement,btn=document.getElementById('themeSwitch');
+  function applyTheme(t){root.setAttribute('data-theme',t);btn.textContent='theme: '+t;try{localStorage.setItem('oscp-notes-theme',t);}catch(e){}}
+  var saved='dark';try{saved=localStorage.getItem('oscp-notes-theme')||'dark';}catch(e){}
+  applyTheme(saved);
+  btn.addEventListener('click',function(){applyTheme(root.getAttribute('data-theme')==='dark'?'light':'dark');});
+  var bar=document.getElementById('progressBar');
+  function onScroll(){var h=document.documentElement,s=h.scrollTop,ht=h.scrollHeight-h.clientHeight;bar.style.width=(ht>0?(s/ht*100):0)+'%';var t=document.getElementById('toTop');s>500?t.classList.add('show'):t.classList.remove('show');}
+  document.addEventListener('scroll',onScroll);onScroll();
+  document.getElementById('toTop').addEventListener('click',function(){window.scrollTo({top:0,behavior:'smooth'});});
+  document.querySelectorAll('.code-wrap').forEach(function(wrap){
+    var c=wrap.querySelector('code');if(!c)return;
+    var b=document.createElement('button');b.className='copy-btn';b.textContent='copy';
+    b.addEventListener('click',function(){if(navigator.clipboard){navigator.clipboard.writeText(c.innerText).then(function(){b.textContent='copied ✓';b.classList.add('copied');setTimeout(function(){b.textContent='copy';b.classList.remove('copied');},1500);});}});
+    wrap.appendChild(b);
+  });
+})();
+</script>
+</body>
+</html>
