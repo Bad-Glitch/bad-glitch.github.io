@@ -80,6 +80,7 @@ const rootCategories = [
 "Methodologies",
 "OSINT Toolkit",
 "Privilege Escalation",
+"RoadMap",
 "Web Client-Side",
 "Web Server-Side",
 ];
