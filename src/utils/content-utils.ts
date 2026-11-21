@@ -71,18 +71,19 @@ return keys.map((key) => ({
 
 export async function getCategoryList(): Promise<Category[]> {
 const rootCategories = [
-"Active Directory",
-"Certification - Notes",
-"Certifications",
-"Courses Notes",
-"Daily - Posts",
-"Labs",
-"Methodologies",
-"OSINT Toolkit",
-"Privilege Escalation",
-"RoadMap",
-"Web Client-Side",
-"Web Server-Side",
+    "Active Directory",
+    "Certification - Notes",
+    "Certifications",
+    "Courses Notes",
+    "Daily - Posts",
+    "Labs",
+    "Methodologies",
+    "Mobile Pentest",
+    "OSINT Toolkit",
+    "Privilege Escalation",
+    "RoadMap",
+    "Web Client-Side",
+    "Web Server-Side",
 ];
 
 const allBlogPosts = await getCollection<"posts">("posts", ({ data }) => {
