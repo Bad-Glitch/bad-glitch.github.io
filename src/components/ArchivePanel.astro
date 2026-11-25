@@ -34,19 +34,107 @@ if (Array.isArray(categories) && categories.length > 0) {
 
 /*
  * Courses
- * -------
- * Course cards are displayed in the Courses Notes category.
- * eAIS and eMAPT modules come from the posts collection.
- * Course content is served from standalone HTML files.
  */
 
 const coursePosts = posts.filter(
     (post) => post.data.category === "Courses Notes" && post.data.course,
 );
 
-const standalonePosts = posts.filter(
-    (post) => !(post.data.category === "Courses Notes" && post.data.course),
+const individualCoursePosts = posts.filter(
+    (post) => post.data.category === "Courses Notes" && !post.data.course,
 );
+
+const standalonePosts = posts.filter(
+    (post) => post.data.category !== "Courses Notes",
+);
+
+const courseDescription = "Learn. Practice. Master.";
+
+/*
+ * Course Cover Images
+ */
+
+function getCourseImage(courseName: string): string {
+    const name = courseName.toLowerCase().replace(/[^a-z0-9]/g, "");
+
+    if (name.includes("emapt")) {
+        return "/images/course-covers/eMAPT.png";
+    }
+
+    if (name.includes("eais")) {
+        return "/images/course-covers/eAIS.png";
+    }
+
+    if (name.includes("oscp")) {
+        return "/images/course-covers/OSCP-plus.png";
+    }
+
+    if (name.includes("ceh")) {
+        return "/images/course-covers/CEHv13.png";
+    }
+
+    if (name.includes("ewptx")) {
+        return "/images/course-covers/eWPTXv3.png";
+    }
+
+    if (name.includes("cysa")) {
+        return "/images/course-covers/CySA-plus.png";
+    }
+
+    if (name.includes("ecthp")) {
+        return "/images/course-covers/eCTHPv3.png";
+    }
+
+    if (name.includes("ecir")) {
+        return "/images/course-covers/eCIR.png";
+    }
+
+    if (name.includes("security")) {
+        return "/images/course-covers/Security-plus.png";
+    }
+
+    if (name.includes("ejpt")) {
+        return "/images/course-covers/eJPTv2.png";
+    }
+
+    if (name.includes("ewptv2")) {
+        return "/images/course-covers/eWPTv2.png";
+    }
+
+    return "/images/course-covers/eMAPT.png";
+}
+
+/*
+ * Course URLs
+ */
+
+function getCourseUrl(courseName: string): string {
+    const normalizedName = courseName
+        .toLowerCase()
+        .replace(/[^a-z0-9]/g, "");
+
+    if (normalizedName.includes("emapt")) {
+        return url("/courses/emapt/index.html");
+    }
+
+    if (normalizedName.includes("oscp")) {
+        return url("/courses/oscp/");
+    }
+
+    if (normalizedName.includes("cehv13")) {
+        return url("/courses/cehv13/");
+    }
+
+    if (normalizedName.includes("ewptxv3")) {
+        return url("/courses/ewptxv3/");
+    }
+
+    return url(`/courses/${normalizedName}/`);
+}
+
+/*
+ * Build Course Cards
+ */
 
 const courses = [
     ...Array.from(
@@ -62,38 +150,56 @@ const courses = [
 
         return {
             name: course,
+            image: getCourseImage(course),
             modules,
-            href: url(`/courses/${course.toLowerCase()}/`),
-            description:
-                course === "eMAPT"
-                    ? "Mobile Application Penetration Testing Notes"
-                    : "AI Security Course Notes",
+            href: getCourseUrl(course),
+            description: courseDescription,
+            countLabel: "Modules Available",
         };
     }),
 
     {
         name: "OSCP+",
+        image: getCourseImage("OSCP+"),
         modules: Array.from({ length: 17 }, (_, i) => i + 1),
         href: url("/courses/oscp/"),
-        description: "Offensive Security Course Notes",
+        description: courseDescription,
+        countLabel: "Modules Available",
     },
 
     {
         name: "CEHv13",
+        image: getCourseImage("CEHv13"),
         modules: Array.from({ length: 17 }, (_, i) => i + 1),
         href: url("/courses/cehv13/"),
-        description: "Certified Ethical Hacker v13 Notes",
+        description: courseDescription,
+        countLabel: "Modules Available",
     },
 
     {
         name: "eWPTXv3",
+        image: getCourseImage("eWPTXv3"),
         modules: Array.from({ length: 6 }, (_, i) => i + 1),
         href: url("/courses/ewptxv3/"),
-        description: "Advanced Web Application Penetration Testing Notes",
+        description: courseDescription,
+        countLabel: "Modules Available",
     },
+
+    ...individualCoursePosts.map((post) => ({
+        name: post.data.title,
+        image: getCourseImage(post.data.title),
+        modules: [post],
+        href: getPostUrlBySlug(post.slug),
+        description: courseDescription,
+        countLabel: "Note Available",
+    })),
 ];
 
 const standaloneCourses = ["OSCP+", "CEHv13", "eWPTXv3", "eMAPT"];
+
+/*
+ * Timeline Groups
+ */
 
 const groups: { year: number; posts: typeof standalonePosts }[] = (() => {
     const groupedPosts = standalonePosts.reduce(
@@ -133,14 +239,15 @@ function formatTag(tag: string[]) {
 }
 ---
 
-<div class="card-base px-8 py-6">
+<div class="card-base px-5 py-6 md:px-8">
 
-    <!-- Course Cards -->
+    <!-- All Course Cards -->
     {
         courses.length > 0 && (
             <div class="mb-8">
 
-                <div class="flex flex-row w-full items-center h-[3.75rem]">
+                <!-- Courses Header -->
+                <div class="flex flex-row w-full items-center h-[3.75rem] mb-4">
                     <div class="w-[15%] md:w-[10%] transition text-2xl font-bold text-right text-75">
                         Courses
                     </div>
@@ -154,67 +261,76 @@ function formatTag(tag: string[]) {
                     </div>
                 </div>
 
-                {
-                    courses.map((course) => (
+                <!-- Responsive Courses Grid -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 items-stretch">
+
+                    {courses.map((course) => (
                         <a
                             href={course.href}
                             aria-label={`${course.name} Course`}
                             data-no-swup={
-                                standaloneCourses.includes(course.name)
+                                standaloneCourses.includes(course.name) ||
+                                course.href.includes("/courses/emapt/")
                                     ? ""
                                     : undefined
                             }
-                            class="group btn-plain !block w-full rounded-xl hover:text-[initial] mb-3"
+                            class="group btn-plain !block w-full h-full rounded-xl hover:text-[initial]"
                         >
-                            <div class="flex flex-row justify-start items-center min-h-20 py-3">
+                            <div class="flex flex-col h-full min-h-[330px] overflow-hidden rounded-xl border border-[var(--line-color)] transition-all duration-300 group-hover:border-[var(--primary)] group-hover:bg-[var(--btn-plain-bg-hover)]">
 
-                                <!-- Course icon -->
-                                <div class="w-[15%] md:w-[10%] flex justify-center">
-                                    <div class="flex h-10 w-10 items-center justify-center rounded-xl
-                                                bg-[var(--btn-plain-bg-hover)]
-                                                font-bold text-sm
-                                                group-hover:bg-[var(--primary)]
-                                                group-hover:text-white
-                                                transition-all">
-                                        {course.name}
-                                    </div>
+                                <!-- Course Cover -->
+                                <div class="relative w-full h-40 overflow-hidden bg-[var(--btn-plain-bg-hover)]">
+                                    <img
+                                        src={course.image}
+                                        alt={`${course.name} Study Notes Cover`}
+                                        loading="lazy"
+                                        class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                    />
                                 </div>
 
-                                <!-- Course information -->
-                                <div class="w-[70%] md:w-[65%] text-left">
-                                    <div class="font-bold text-lg text-75
-                                                group-hover:translate-x-1
-                                                transition-all
-                                                group-hover:text-[var(--primary)]">
-                                        {course.name}
+                                <!-- Course Information -->
+                                <div class="flex flex-col flex-1 justify-between p-4">
+
+                                    <div>
+                                        <!-- Course Name -->
+                                        <div class="flex items-center gap-3">
+                                            <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[var(--btn-plain-bg-hover)] font-bold text-xs group-hover:bg-[var(--primary)] group-hover:text-white transition-all">
+                                                {course.name}
+                                            </div>
+
+                                            <div class="font-bold text-lg text-75 group-hover:text-[var(--primary)] transition-all">
+                                                {course.name}
+                                            </div>
+                                        </div>
+
+                                        <!-- Description -->
+                                        <div class="mt-4">
+                                            <div class="text-sm text-50 leading-relaxed">
+                                                {course.description}
+                                            </div>
+
+                                            <div class="text-xs text-30 mt-2">
+                                                {course.modules.length} {course.countLabel}
+                                            </div>
+                                        </div>
                                     </div>
 
-                                    <div class="text-sm text-50 mt-1">
-                                        {course.description}
+                                    <!-- View Course -->
+                                    <div class="flex justify-end items-center mt-4 text-sm text-30 group-hover:text-[var(--primary)] transition-all">
+                                        View Course →
                                     </div>
 
-                                    <div class="text-xs text-30 mt-1">
-                                        {course.modules.length} Modules Available
-                                    </div>
                                 </div>
-
-                                <!-- Arrow -->
-                                <div class="hidden md:block md:w-[15%] text-right text-30
-                                            group-hover:text-[var(--primary)]
-                                            transition-all">
-                                    View Course →
-                                </div>
-
                             </div>
                         </a>
-                    ))
-                }
+                    ))}
 
+                </div>
             </div>
         )
     }
 
-    <!-- Regular Posts -->
+    <!-- Regular Posts (Outside Courses Notes) -->
     {
         groups.map((group) => (
             <div>
@@ -240,12 +356,12 @@ function formatTag(tag: string[]) {
                     >
                         <div class="flex flex-row justify-start items-center h-full">
 
-                            <!-- date -->
+                            <!-- Date -->
                             <div class="w-[15%] md:w-[10%] transition text-sm text-right text-50">
                                 {formatDate(post.data.published)}
                             </div>
 
-                            <!-- dot and line -->
+                            <!-- Dot and Line -->
                             <div class="w-[15%] md:w-[10%] relative dash-line h-full flex items-center">
                                 <div
                                     class="transition-all mx-auto w-1 h-1 rounded group-hover:h-5
@@ -257,7 +373,7 @@ function formatTag(tag: string[]) {
                                 ></div>
                             </div>
 
-                            <!-- post title -->
+                            <!-- Post Title -->
                             <div
                                 class="w-[70%] md:max-w-[65%] md:w-[65%] text-left font-bold
                                 group-hover:translate-x-1 transition-all group-hover:text-[var(--primary)]
@@ -266,7 +382,7 @@ function formatTag(tag: string[]) {
                                 {post.data.title}
                             </div>
 
-                            <!-- tag list -->
+                            <!-- Tag List -->
                             <div
                                 class="hidden md:block md:w-[15%] text-left text-sm transition
                                 whitespace-nowrap overflow-ellipsis overflow-hidden
