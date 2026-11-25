@@ -32,6 +32,11 @@ if (Array.isArray(categories) && categories.length > 0) {
     );
 }
 
+const isCoursesCategory =
+    Array.isArray(categories) &&
+    categories.length === 1 &&
+    categories[0] === "Courses Notes";
+
 /*
  * Courses
  */
@@ -57,49 +62,17 @@ const courseDescription = "Learn. Practice. Master.";
 function getCourseImage(courseName: string): string {
     const name = courseName.toLowerCase().replace(/[^a-z0-9]/g, "");
 
-    if (name.includes("emapt")) {
-        return "/images/course-covers/eMAPT.png";
-    }
-
-    if (name.includes("eais")) {
-        return "/images/course-covers/eAIS.png";
-    }
-
-    if (name.includes("oscp")) {
-        return "/images/course-covers/OSCP-plus.png";
-    }
-
-    if (name.includes("ceh")) {
-        return "/images/course-covers/CEHv13.png";
-    }
-
-    if (name.includes("ewptx")) {
-        return "/images/course-covers/eWPTXv3.png";
-    }
-
-    if (name.includes("cysa")) {
-        return "/images/course-covers/CySA-plus.png";
-    }
-
-    if (name.includes("ecthp")) {
-        return "/images/course-covers/eCTHPv3.png";
-    }
-
-    if (name.includes("ecir")) {
-        return "/images/course-covers/eCIR.png";
-    }
-
-    if (name.includes("security")) {
-        return "/images/course-covers/Security-plus.png";
-    }
-
-    if (name.includes("ejpt")) {
-        return "/images/course-covers/eJPTv2.png";
-    }
-
-    if (name.includes("ewptv2")) {
-        return "/images/course-covers/eWPTv2.png";
-    }
+    if (name.includes("emapt")) return "/images/course-covers/eMAPT.png";
+    if (name.includes("eais")) return "/images/course-covers/eAIS.png";
+    if (name.includes("oscp")) return "/images/course-covers/OSCP-plus.png";
+    if (name.includes("ceh")) return "/images/course-covers/CEHv13.png";
+    if (name.includes("ewptx")) return "/images/course-covers/eWPTXv3.png";
+    if (name.includes("cysa")) return "/images/course-covers/CySA-plus.png";
+    if (name.includes("ecthp")) return "/images/course-covers/eCTHPv3.png";
+    if (name.includes("ecir")) return "/images/course-covers/eCIR.png";
+    if (name.includes("security")) return "/images/course-covers/Security-plus.png";
+    if (name.includes("ejpt")) return "/images/course-covers/eJPTv2.png";
+    if (name.includes("ewptv2")) return "/images/course-covers/eWPTv2.png";
 
     return "/images/course-covers/eMAPT.png";
 }
@@ -136,7 +109,7 @@ function getCourseUrl(courseName: string): string {
  * Build Course Cards
  */
 
-const courses = [
+const courses = isCoursesCategory ? [
     ...Array.from(
         new Set(
             coursePosts
@@ -193,7 +166,7 @@ const courses = [
         description: courseDescription,
         countLabel: "Note Available",
     })),
-];
+] : [];
 
 const standaloneCourses = ["OSCP+", "CEHv13", "eWPTXv3", "eMAPT"];
 
@@ -229,24 +202,21 @@ const groups: { year: number; posts: typeof standalonePosts }[] = (() => {
 
 function formatDate(date: Date) {
     const month = (date.getMonth() + 1).toString().padStart(2, "0");
-    const day = date.getDate().toString().padStart(2, "0");
+    const day = (date.getDate() + 1).toString().padStart(2, "0");
 
     return `${month}-${day}`;
 }
 
-function formatTag(tag: string[]) {
+function formatTag(tag: string[] = []) {
     return tag.map((t) => `#${t}`).join(" ");
 }
 ---
 
 <div class="card-base px-5 py-6 md:px-8">
 
-    <!-- All Course Cards -->
     {
         courses.length > 0 && (
             <div class="mb-8">
-
-                <!-- Courses Header -->
                 <div class="flex flex-row w-full items-center h-[3.75rem] mb-4">
                     <div class="w-[15%] md:w-[10%] transition text-2xl font-bold text-right text-75">
                         Courses
@@ -261,9 +231,7 @@ function formatTag(tag: string[]) {
                     </div>
                 </div>
 
-                <!-- Responsive Courses Grid -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 items-stretch">
-
                     {courses.map((course) => (
                         <a
                             href={course.href}
@@ -277,8 +245,6 @@ function formatTag(tag: string[]) {
                             class="group btn-plain !block w-full h-full rounded-xl hover:text-[initial]"
                         >
                             <div class="flex flex-col h-full min-h-[330px] overflow-hidden rounded-xl border border-[var(--line-color)] transition-all duration-300 group-hover:border-[var(--primary)] group-hover:bg-[var(--btn-plain-bg-hover)]">
-
-                                <!-- Course Cover -->
                                 <div class="relative w-full h-40 overflow-hidden bg-[var(--btn-plain-bg-hover)]">
                                     <img
                                         src={course.image}
@@ -288,11 +254,8 @@ function formatTag(tag: string[]) {
                                     />
                                 </div>
 
-                                <!-- Course Information -->
                                 <div class="flex flex-col flex-1 justify-between p-4">
-
                                     <div>
-                                        <!-- Course Name -->
                                         <div class="flex items-center gap-3">
                                             <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[var(--btn-plain-bg-hover)] font-bold text-xs group-hover:bg-[var(--primary)] group-hover:text-white transition-all">
                                                 {course.name}
@@ -303,7 +266,6 @@ function formatTag(tag: string[]) {
                                             </div>
                                         </div>
 
-                                        <!-- Description -->
                                         <div class="mt-4">
                                             <div class="text-sm text-50 leading-relaxed">
                                                 {course.description}
@@ -315,22 +277,18 @@ function formatTag(tag: string[]) {
                                         </div>
                                     </div>
 
-                                    <!-- View Course -->
                                     <div class="flex justify-end items-center mt-4 text-sm text-30 group-hover:text-[var(--primary)] transition-all">
                                         View Course →
                                     </div>
-
                                 </div>
                             </div>
                         </a>
                     ))}
-
                 </div>
             </div>
         )
     }
 
-    <!-- Regular Posts (Outside Courses Notes) -->
     {
         groups.map((group) => (
             <div>
@@ -355,13 +313,10 @@ function formatTag(tag: string[]) {
                         class="group btn-plain !block h-10 w-full rounded-lg hover:text-[initial]"
                     >
                         <div class="flex flex-row justify-start items-center h-full">
-
-                            <!-- Date -->
                             <div class="w-[15%] md:w-[10%] transition text-sm text-right text-50">
                                 {formatDate(post.data.published)}
                             </div>
 
-                            <!-- Dot and Line -->
                             <div class="w-[15%] md:w-[10%] relative dash-line h-full flex items-center">
                                 <div
                                     class="transition-all mx-auto w-1 h-1 rounded group-hover:h-5
@@ -373,7 +328,6 @@ function formatTag(tag: string[]) {
                                 ></div>
                             </div>
 
-                            <!-- Post Title -->
                             <div
                                 class="w-[70%] md:max-w-[65%] md:w-[65%] text-left font-bold
                                 group-hover:translate-x-1 transition-all group-hover:text-[var(--primary)]
@@ -382,7 +336,6 @@ function formatTag(tag: string[]) {
                                 {post.data.title}
                             </div>
 
-                            <!-- Tag List -->
                             <div
                                 class="hidden md:block md:w-[15%] text-left text-sm transition
                                 whitespace-nowrap overflow-ellipsis overflow-hidden
@@ -390,7 +343,6 @@ function formatTag(tag: string[]) {
                             >
                                 {formatTag(post.data.tags)}
                             </div>
-
                         </div>
                     </a>
                 ))}

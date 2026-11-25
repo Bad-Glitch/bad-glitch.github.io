@@ -1,3 +1,4 @@
+﻿
 ---
 import ArchivePanel from "@components/ArchivePanel.astro";
 import I18nKey from "@i18n/i18nKey";
@@ -6,19 +7,449 @@ import MainGridLayout from "@layouts/MainGridLayout.astro";
 import { getCategoryList } from "@utils/content-utils";
 
 export async function getStaticPaths() {
-	const categories = await getCategoryList();
-	return categories.map((category) => {
-		return {
-			params: {
-				category: category.name,
-			},
-		};
-	});
+    const categories = await getCategoryList();
+
+    return categories.map((category) => ({
+        params: {
+            category: category.name,
+        },
+    }));
 }
 
 const category = Astro.params.category as string;
+const isExamSimulation = category === "eXam Simulation";
+const examUrl = "/exams/cehv13/index.html";
 ---
 
-<MainGridLayout title={i18n(I18nKey.archive)} description={i18n(I18nKey.archive)}>
-    <ArchivePanel categories={[category]}></ArchivePanel>
+<MainGridLayout
+    title={isExamSimulation ? "CEHv13 Exam Simulation" : i18n(I18nKey.archive)}
+    description={isExamSimulation ? "Certified Ethical Hacker v13 Examination" : i18n(I18nKey.archive)}
+>
+    {isExamSimulation ? (
+        <main class="exam-page">
+            <section class="hero">
+                <div class="hero-content">
+                    <div class="eyebrow">
+                        <span class="status-dot"></span>
+                        EXAM SIMULATION
+                    </div>
+
+                    <p class="course-label">EC-COUNCIL · CEH v13</p>
+
+                    <h1>
+                        Certified Ethical Hacker
+                        <span>v13 Examination</span>
+                    </h1>
+
+                    <p class="hero-description">
+                        Test your cybersecurity knowledge with a realistic
+                        CEHv13 examination experience. Challenge yourself,
+                        evaluate your skills, and measure your readiness.
+                    </p>
+
+                    <div class="hero-actions">
+                        <a
+                            href={examUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            data-no-swup
+                            class="start-button"
+                        >
+                            Start Examination <span>→</span>
+                        </a>
+
+                        <span class="secure-label">◈ Secure Exam Environment</span>
+                    </div>
+                </div>
+
+                <div class="hero-visual">
+                    <div class="visual-glow"></div>
+
+                    <div class="exam-emblem">
+                        <div class="emblem-top">CEH</div>
+                        <div class="emblem-number">v13</div>
+                        <div class="emblem-line"></div>
+                        <div class="emblem-caption">CERTIFIED ETHICAL HACKER</div>
+                    </div>
+
+                    <div class="floating-tag tag-top">125 QUESTIONS</div>
+                    <div class="floating-tag tag-bottom">4 HOURS</div>
+                </div>
+            </section>
+
+            <section class="stats">
+                <div class="stat-card">
+                    <span class="stat-icon">◈</span>
+                    <strong>125</strong>
+                    <span>Questions</span>
+                </div>
+
+                <div class="stat-card">
+                    <span class="stat-icon">◷</span>
+                    <strong>04:00</strong>
+                    <span>Hours Duration</span>
+                </div>
+
+                <div class="stat-card">
+                    <span class="stat-icon">◎</span>
+                    <strong>70%</strong>
+                    <span>Passing Score</span>
+                </div>
+
+                <div class="stat-card">
+                    <span class="stat-icon">✧</span>
+                    <strong>100%</strong>
+                    <span>Online Simulation</span>
+                </div>
+            </section>
+
+            <section class="rules-section">
+                <div class="section-heading">
+                    <span class="section-kicker">BEFORE YOU BEGIN</span>
+                    <h2>Examination <span>Guidelines</span></h2>
+                    <p>Please read the following rules carefully before starting.</p>
+                </div>
+
+                <div class="rules-grid">
+                    <article class="rule-card">
+                        <div class="rule-icon">⌁</div>
+                        <h3>No Copy & Paste</h3>
+                        <p>Copying and pasting are not permitted during the examination.</p>
+                    </article>
+
+                    <article class="rule-card warning">
+                        <div class="rule-icon">⚠</div>
+                        <h3>Stay on Exam Tab</h3>
+                        <p>Leaving the examination tab will trigger the exam termination policy.</p>
+                    </article>
+
+                    <article class="rule-card">
+                        <div class="rule-icon">◷</div>
+                        <h3>Time Limit</h3>
+                        <p>You have exactly four hours to complete all 125 questions.</p>
+                    </article>
+
+                    <article class="rule-card">
+                        <div class="rule-icon">✧</div>
+                        <h3>Completion Certificate</h3>
+                        <p>Receive a Certificate of Completion after finishing the examination.</p>
+                    </article>
+                </div>
+            </section>
+
+            <section class="passing-section">
+                <div class="passing-content">
+                    <span class="section-kicker">YOUR TARGET</span>
+                    <h2>Are you ready to <span>prove your skills?</span></h2>
+
+                    <p>
+                        You must achieve at least 70% to pass the simulation.
+                        Prepare yourself and give it your best.
+                    </p>
+                </div>
+
+                <div class="passing-score">
+                    <strong>70<span>%</span></strong>
+                    <small>PASSING SCORE</small>
+                </div>
+            </section>
+
+            <section class="final-cta" id="exam-access">
+                <span class="section-kicker">CEHv13 · EXAM SIMULATION</span>
+
+                <h2>Your challenge starts here.</h2>
+
+                <p>Make sure you are ready before entering the examination.</p>
+
+                <a
+                    href={examUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    data-no-swup
+                    class="start-button"
+                >
+                    Start Examination <span>→</span>
+                </a>
+
+                <small>125 Questions · 4 Hours · 70% Passing Score</small>
+            </section>
+        </main>
+    ) : (
+        <ArchivePanel categories={[category]} />
+    )}
+</MainGridLayout>
+
+<style>
+    .exam-page {
+        --wine: #8e2445;
+        --wine-light: #c04468;
+        --muted: #a9a1a8;
+        color: var(--font-color);
+        padding: 28px 0 55px;
+    }
+
+    .hero {
+        position: relative;
+        overflow: hidden;
+        display: grid;
+        grid-template-columns: 1.35fr .85fr;
+        align-items: center;
+        gap: 25px;
+        min-height: 390px;
+        padding: 48px;
+        border: 1px solid rgba(192,68,104,.24);
+        border-radius: 22px;
+        background:
+            radial-gradient(ellipse at 85% 50%, rgba(142,36,69,.35), transparent 55%),
+            linear-gradient(120deg, #171318, #24131d 65%, #351421);
+    }
+
+    .hero-content { position: relative; z-index: 2; }
+
+    .eyebrow, .course-label, .section-kicker {
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: 2px;
+    }
+
+    .eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 9px;
+        padding: 9px 13px;
+        border: 1px solid rgba(192,68,104,.35);
+        border-radius: 30px;
+        color: #e58aa4;
+        background: rgba(142,36,69,.13);
+    }
+
+    .status-dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: #d85b7d;
+        box-shadow: 0 0 12px #d85b7d;
+    }
+
+    .course-label { margin: 27px 0 10px; color: #d77b96; }
+
+    .hero h1 {
+        max-width: 650px;
+        margin: 0;
+        font-size: clamp(30px, 4vw, 48px);
+        line-height: 1.15;
+        font-weight: 850;
+        letter-spacing: -1.5px;
+    }
+
+    .hero h1 span, .section-heading h2 span,
+    .passing-content h2 span { color: #d45a7d; }
+
+    .hero-description {
+        max-width: 570px;
+        margin: 20px 0 25px;
+        color: #bcb1b8;
+        line-height: 1.8;
+        font-size: 14px;
+    }
+
+    .hero-actions {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 18px;
+    }
+
+    .start-button {
+        display: inline-flex;
+        align-items: center;
+        gap: 25px;
+        padding: 14px 21px;
+        border-radius: 9px;
+        color: white !important;
+        text-decoration: none !important;
+        font-size: 13px;
+        font-weight: 800;
+        background: linear-gradient(110deg, #84203f, #b53b61);
+        box-shadow: 0 8px 28px rgba(142,36,69,.28);
+        transition: .2s ease;
+    }
+
+    .start-button:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 12px 32px rgba(181,59,97,.35);
+    }
+
+    .start-button span { font-size: 19px; }
+    .secure-label { color: #b7aab2; font-size: 11px; }
+
+    .hero-visual {
+        position: relative;
+        display: grid;
+        place-items: center;
+        min-height: 260px;
+    }
+
+    .visual-glow {
+        position: absolute;
+        width: 240px;
+        height: 240px;
+        border-radius: 50%;
+        background: #922849;
+        filter: blur(85px);
+        opacity: .35;
+    }
+
+    .exam-emblem {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        width: 205px;
+        height: 205px;
+        border: 1px solid rgba(221,117,148,.6);
+        border-radius: 50%;
+        background: linear-gradient(145deg, #492032, #171318 70%);
+        box-shadow: 0 0 0 12px rgba(192,68,104,.06),
+                    0 0 45px rgba(192,68,104,.2);
+    }
+
+    .emblem-top { color: #fff; font-size: 48px; font-weight: 900; letter-spacing: 4px; }
+    .emblem-number { color: #e27b9a; font-size: 26px; font-weight: 800; }
+    .emblem-line { width: 65px; height: 2px; margin: 9px 0; background: #c04468; }
+    .emblem-caption { color: #c9aab6; font-size: 7px; letter-spacing: 1.5px; }
+
+    .floating-tag {
+        position: absolute;
+        padding: 10px 13px;
+        border: 1px solid rgba(192,68,104,.35);
+        border-radius: 8px;
+        color: #f0b0c2;
+        background: #24151e;
+        font-size: 10px;
+        font-weight: 800;
+        letter-spacing: 1px;
+    }
+
+    .tag-top { top: 35px; right: 0; }
+    .tag-bottom { bottom: 30px; left: 0; }
+
+    .stats {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 13px;
+        margin: 18px 0 65px;
+    }
+
+    .stat-card {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        padding: 21px;
+        border: 1px solid var(--line-color);
+        border-radius: 13px;
+        background: var(--card-bg);
+    }
+
+    .stat-icon { color: #cf6686; font-size: 20px; }
+    .stat-card strong { font-size: 26px; font-weight: 850; }
+    .stat-card > span:last-child { color: var(--muted); font-size: 12px; }
+
+    .section-heading { margin-bottom: 25px; }
+    .section-kicker { color: #ce6686; }
+
+    .section-heading h2, .passing-content h2, .final-cta h2 {
+        margin: 9px 0;
+        font-size: clamp(24px, 3vw, 34px);
+        font-weight: 850;
+    }
+
+    .section-heading p, .passing-content p, .final-cta p {
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.8;
+    }
+
+    .rules-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 14px;
+    }
+
+    .rule-card {
+        padding: 23px;
+        border: 1px solid var(--line-color);
+        border-radius: 13px;
+        background: var(--card-bg);
+        transition: .2s ease;
+    }
+
+    .rule-card:hover { border-color: rgba(192,68,104,.5); transform: translateY(-3px); }
+
+    .rule-icon {
+        display: grid;
+        place-items: center;
+        width: 39px;
+        height: 39px;
+        border-radius: 10px;
+        color: #e58aa4;
+        background: rgba(142,36,69,.18);
+        font-size: 20px;
+    }
+
+    .rule-card h3 { margin: 17px 0 8px; font-size: 15px; }
+    .rule-card p { margin: 0; color: var(--muted); font-size: 12px; line-height: 1.8; }
+    .rule-card.warning .rule-icon { color: #e8a36f; background: rgba(180,103,44,.13); }
+
+    .passing-section {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 20px;
+        margin-top: 55px;
+        padding: 30px;
+        border: 1px solid rgba(192,68,104,.25);
+        border-radius: 16px;
+        background: linear-gradient(110deg, rgba(142,36,69,.17), var(--card-bg));
+    }
+
+    .passing-content { max-width: 600px; }
+    .passing-score { display: flex; flex-direction: column; align-items: center; min-width: 125px; }
+    .passing-score strong { color: #dc7594; font-size: 52px; line-height: 1; }
+    .passing-score strong span { font-size: 27px; }
+    .passing-score small { margin-top: 9px; color: var(--muted); font-size: 9px; letter-spacing: 2px; }
+
+    .final-cta {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin-top: 55px;
+        padding: 43px 20px;
+        border: 1px solid rgba(192,68,104,.3);
+        border-radius: 18px;
+        text-align: center;
+        background:
+            radial-gradient(ellipse at center, rgba(142,36,69,.25), transparent 70%),
+            #19151a;
+    }
+
+    .final-cta p { margin: 0 0 22px; }
+    .final-cta small { margin-top: 16px; color: #a99ba3; font-size: 10px; }
+
+    @media (max-width: 750px) {
+        .hero { grid-template-columns: 1fr; padding: 30px 23px; }
+        .hero-visual { min-height: 230px; }
+        .stats { grid-template-columns: repeat(2, 1fr); }
+        .rules-grid { grid-template-columns: 1fr; }
+        .passing-section { align-items: flex-start; flex-direction: column; }
+        .passing-score { align-items: flex-start; }
+    }
+
+    @media (max-width: 420px) {
+        .hero h1 { font-size: 32px; }
+        .hero-actions { align-items: flex-start; flex-direction: column; }
+        .stat-card { padding: 15px; }
+    }
+</style>
 </MainGridLayout>

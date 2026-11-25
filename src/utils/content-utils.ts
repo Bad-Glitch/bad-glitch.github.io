@@ -76,6 +76,7 @@ const rootCategories = [
     "Certifications",
     "Courses Notes",
     "Daily - Posts",
+    "eXam Simulation",
     "Labs",
     "Methodologies",
     "Mobile Pentest",
