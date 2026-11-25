@@ -18,7 +18,9 @@ export async function getStaticPaths() {
 
 const category = Astro.params.category as string;
 const isExamSimulation = category === "eXam Simulation";
+
 const examUrl = "/exams/cehv13/index.html";
+const practiceUrl = "/exams/cehv13-practice/index.html";
 ---
 
 <MainGridLayout
@@ -74,6 +76,65 @@ const examUrl = "/exams/cehv13/index.html";
 
                     <div class="floating-tag tag-top">125 QUESTIONS</div>
                     <div class="floating-tag tag-bottom">4 HOURS</div>
+                </div>
+            </section>
+
+            <!-- Examination Options -->
+            <section class="exam-options" id="exam-options">
+                <div class="section-heading">
+                    <span class="section-kicker">CHOOSE YOUR EXAM</span>
+                    <h2>Select Your <span>Challenge</span></h2>
+                    <p>Choose the examination you want to take.</p>
+                </div>
+
+                <div class="exam-options-grid">
+                    <article class="exam-option-card">
+                        <div class="option-top">
+                            <span class="option-number">01</span>
+                            <span class="option-label">EXAM SIMULATOR</span>
+                        </div>
+
+                        <h3>CEHv13 Exam Simulator</h3>
+
+                        <p>
+                            Test your cybersecurity knowledge with the CEHv13
+                            examination simulation and evaluate your readiness.
+                        </p>
+
+                        <a
+                            href={examUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            data-no-swup
+                            class="start-button"
+                        >
+                            Start Examination <span>→</span>
+                        </a>
+                    </article>
+
+                    <article class="exam-option-card practice-card">
+                        <div class="option-top">
+                            <span class="option-number">02</span>
+                            <span class="option-label">PRACTICE EXAM</span>
+                        </div>
+
+                        <h3>CEHv13 Practice</h3>
+
+                        <p>
+                            Take the additional practice exam to challenge
+                            your knowledge and strengthen your preparation.
+                        </p>
+
+                        <a
+                            href={practiceUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            data-no-swup
+                            class="start-button"
+                        >
+                            Start Practice <span>→</span>
+                        </a>
+                    </article>
                 </div>
             </section>
 
@@ -335,6 +396,89 @@ const examUrl = "/exams/cehv13/index.html";
     .tag-top { top: 35px; right: 0; }
     .tag-bottom { bottom: 30px; left: 0; }
 
+    /* Examination Options */
+
+    .exam-options {
+        margin: 45px 0 60px;
+    }
+
+    .exam-options-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 18px;
+    }
+
+    .exam-option-card {
+        position: relative;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 28px;
+        min-height: 245px;
+        border: 1px solid rgba(192, 68, 104, .25);
+        border-radius: 16px;
+        background:
+            radial-gradient(ellipse at 100% 0%, rgba(142, 36, 69, .22), transparent 60%),
+            var(--card-bg);
+        transition: .25s ease;
+    }
+
+    .exam-option-card:hover {
+        transform: translateY(-5px);
+        border-color: rgba(192, 68, 104, .65);
+        box-shadow: 0 12px 35px rgba(142, 36, 69, .12);
+    }
+
+    .option-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        width: 100%;
+        margin-bottom: 23px;
+    }
+
+    .option-number {
+        color: #d45a7d;
+        font-size: 27px;
+        font-weight: 900;
+    }
+
+    .option-label {
+        padding: 7px 11px;
+        border: 1px solid rgba(192, 68, 104, .3);
+        border-radius: 20px;
+        color: #d77b96;
+        background: rgba(142, 36, 69, .12);
+        font-size: 9px;
+        font-weight: 800;
+        letter-spacing: 1.3px;
+    }
+
+    .exam-option-card h3 {
+        margin: 0 0 10px;
+        font-size: 19px;
+        font-weight: 850;
+    }
+
+    .exam-option-card p {
+        margin: 0 0 23px;
+        max-width: 450px;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.9;
+    }
+
+    .exam-option-card .start-button {
+        margin-top: auto;
+    }
+
+    .practice-card {
+        background:
+            radial-gradient(ellipse at 100% 0%, rgba(192, 68, 104, .25), transparent 60%),
+            var(--card-bg);
+    }
+
     .stats {
         display: grid;
         grid-template-columns: repeat(4, 1fr);
@@ -440,6 +584,7 @@ const examUrl = "/exams/cehv13/index.html";
     @media (max-width: 750px) {
         .hero { grid-template-columns: 1fr; padding: 30px 23px; }
         .hero-visual { min-height: 230px; }
+        .exam-options-grid { grid-template-columns: 1fr; }
         .stats { grid-template-columns: repeat(2, 1fr); }
         .rules-grid { grid-template-columns: 1fr; }
         .passing-section { align-items: flex-start; flex-direction: column; }
@@ -450,6 +595,7 @@ const examUrl = "/exams/cehv13/index.html";
         .hero h1 { font-size: 32px; }
         .hero-actions { align-items: flex-start; flex-direction: column; }
         .stat-card { padding: 15px; }
+        .exam-option-card { padding: 22px; }
     }
 </style>
 </MainGridLayout>
