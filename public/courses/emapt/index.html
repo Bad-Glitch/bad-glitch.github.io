@@ -1,0 +1,305 @@
+﻿
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b1014">
+<title>eMAPT · Mobile Application Penetration Testing</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+
+<style>
+:root {
+    --bg: #0b1014;
+    --panel: #121a21;
+    --line: #22303b;
+    --tx: #d5dee6;
+    --mut: #8a9aa8;
+    --ac: #3ddc97;
+    --ac2: #f5b942;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+
+body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--tx);
+    font: 16px/1.9 Cairo, "Segoe UI", Tahoma, sans-serif;
+}
+
+main {
+    max-width: 950px;
+    margin: auto;
+    padding: 35px 20px 70px;
+}
+
+.mono {
+    font-family: "JetBrains Mono", monospace;
+    direction: ltr;
+    unicode-bidi: isolate;
+}
+
+.prompt {
+    color: var(--ac);
+    font-size: 13px;
+    direction: ltr;
+    text-align: left;
+    font-family: "JetBrains Mono", monospace;
+}
+
+.eyebrow {
+    color: var(--ac2);
+    font-size: 13px;
+    margin-top: 35px;
+    direction: ltr;
+    text-align: left;
+    font-family: "JetBrains Mono", monospace;
+}
+
+h1 {
+    font-size: clamp(30px, 6vw, 48px);
+    line-height: 1.4;
+    margin: 8px 0;
+}
+
+.lead {
+    color: var(--mut);
+    max-width: 720px;
+    margin: 12px 0 25px;
+}
+
+.tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 20px 0 35px;
+    direction: ltr;
+}
+
+.tag {
+    font: 12px "JetBrains Mono", monospace;
+    border: 1px solid var(--line);
+    background: var(--panel);
+    color: var(--mut);
+    padding: 5px 11px;
+    border-radius: 5px;
+}
+
+.stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin: 30px 0 45px;
+}
+
+.stat {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 15px;
+    text-align: center;
+}
+
+.stat strong {
+    display: block;
+    color: var(--ac);
+    font: 26px "JetBrains Mono", monospace;
+}
+
+.stat span {
+    color: var(--mut);
+    font-size: 13px;
+}
+
+.section-title {
+    border-top: 1px solid var(--line);
+    padding-top: 25px;
+    margin: 45px 0 20px;
+    font-size: 23px;
+}
+
+.modules {
+    display: grid;
+    gap: 14px;
+}
+
+.module {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    padding: 20px;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    text-decoration: none;
+    color: var(--tx);
+    transition: .2s ease;
+}
+
+.module:hover {
+    border-color: var(--ac);
+    transform: translateY(-2px);
+}
+
+.number {
+    flex-shrink: 0;
+    width: 48px;
+    height: 48px;
+    display: grid;
+    place-items: center;
+    background: #0b1014;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    color: var(--ac);
+    font: 17px "JetBrains Mono", monospace;
+}
+
+.info { flex: 1; }
+
+.info h3 {
+    margin: 0 0 5px;
+    font-size: 17px;
+}
+
+.info p {
+    margin: 0;
+    color: var(--mut);
+    font-size: 13px;
+}
+
+.arrow {
+    color: var(--ac);
+    font: 20px "JetBrains Mono", monospace;
+}
+
+.note {
+    margin-top: 35px;
+    padding: 16px;
+    background: var(--panel);
+    border-right: 3px solid var(--ac);
+    border-radius: 5px;
+    color: var(--mut);
+    font-size: 14px;
+}
+
+.footer {
+    margin-top: 60px;
+    padding-top: 20px;
+    border-top: 1px solid var(--line);
+    color: var(--mut);
+    font-size: 13px;
+    text-align: center;
+}
+
+@media(max-width:600px) {
+    main { padding: 22px 14px 50px; }
+    .stats { gap: 7px; }
+    .stat { padding: 10px 5px; }
+    .stat strong { font-size: 21px; }
+    .module { padding: 14px 11px; gap: 11px; }
+    .number { width: 40px; height: 40px; font-size: 14px; }
+    .info h3 { font-size: 14px; }
+    .info p { font-size: 12px; }
+}
+</style>
+</head>
+
+<body>
+<main>
+
+<div class="prompt">root@emapt:~$ cat course-info.txt</div>
+
+<div class="eyebrow">eMAPT · MOBILE APPLICATION PENETRATION TESTING</div>
+
+<h1>Mobile Application Security</h1>
+
+<p class="lead">
+مرحبًا بك في ملاحظات كورس eMAPT.
+هنا هتبدأ رحلتك في فهم أمن تطبيقات الموبايل،
+وتعلم منهجية اختبار الاختراق وتحليل تطبيقات Android وiOS،
+من الأساسيات وحتى الأدوات والتقنيات العملية.
+</p>
+
+<div class="tags">
+    <span class="tag">ANDROID</span>
+    <span class="tag">iOS</span>
+    <span class="tag">MOBILE SECURITY</span>
+    <span class="tag">PENETRATION TESTING</span>
+    <span class="tag">MALWARE ANALYSIS</span>
+</div>
+
+<div class="stats">
+    <div class="stat">
+        <strong>04</strong>
+        <span>Modules</span>
+    </div>
+    <div class="stat">
+        <strong>02</strong>
+        <span>Platforms</span>
+    </div>
+    <div class="stat">
+        <strong>eMAPT</strong>
+        <span>Course</span>
+    </div>
+</div>
+
+<h2 class="section-title">Course Modules · محتوى الكورس</h2>
+
+<div class="modules">
+
+    <a class="module" href="/courses/emapt/module-01/index.html">
+        <div class="number">01</div>
+        <div class="info">
+            <h3>Introduction to Mobile Application Security</h3>
+            <p>مقدمة في أمن تطبيقات الموبايل والـ Static Analysis</p>
+        </div>
+        <div class="arrow">←</div>
+    </a>
+
+    <a class="module" href="/courses/emapt/module-02/index.html">
+        <div class="number">02</div>
+        <div class="info">
+            <h3>Mobile Application Penetration Testing Techniques</h3>
+            <p>تقنيات ومنهجية اختبار اختراق تطبيقات الموبايل</p>
+        </div>
+        <div class="arrow">←</div>
+    </a>
+
+    <a class="module" href="/courses/emapt/module-03/index.html">
+        <div class="number">03</div>
+        <div class="info">
+            <h3>Mastering Mobile Security &amp; Malware Analysis</h3>
+            <p>التعمق في أمن تطبيقات الموبايل وتحليل البرمجيات الخبيثة</p>
+        </div>
+        <div class="arrow">←</div>
+    </a>
+
+    <a class="module" href="/courses/emapt/module-04/index.html">
+        <div class="number">04</div>
+        <div class="info">
+            <h3>Mobile Pentest Toolbox</h3>
+            <p>أهم الأدوات المستخدمة في اختبار اختراق تطبيقات الموبايل</p>
+        </div>
+        <div class="arrow">←</div>
+    </a>
+
+</div>
+
+<div class="note">
+    <strong style="color:var(--ac)">ملاحظة:</strong>
+    اختر الموديول الذي تريد دراسته من القائمة بالأعلى.
+    كل موديول يحتوي على صفحة مستقلة بتصميمها ومحتواها.
+</div>
+
+<div class="footer">
+    <div class="mono">root@emapt:~$ exit</div>
+    <p>eMAPT · Mobile Application Penetration Testing</p>
+</div>
+
+</main>
+</body>
+</html>

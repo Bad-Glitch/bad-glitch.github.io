@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mobile Application Reverse Engineering &amp; Security — نوتس عربي</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+:root{--bg:#0b1014;--panel:#121a21;--line:#22303b;--tx:#d5dee6;--mut:#8a9aa8;--ac:#3ddc97;--ac2:#f5b942;--bad:#ff6b6b;--code:#0a0f13;color-scheme:dark;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:light){:root:not([data-theme="dark"]){--bg:#f4f7f9;--panel:#fff;--line:#d3dde5;--tx:#1b2832;--mut:#586a78;--ac:#0b7a4b;--ac2:#9a6400;--bad:#c0392b;--code:#eaf0f4;color-scheme:light}}
+:root[data-theme="dark"]{--bg:#0b1014}
+html{scroll-padding-top:env(safe-area-inset-top,0px);scroll-behavior:smooth}
+*,*::before,*::after{box-sizing:inherit}
+body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.9 Cairo,"Segoe UI",Tahoma,sans-serif}
+main{max-width:860px;margin:0 auto;padding:24px 18px 64px;counter-reset:sec}
+.mono,code,pre,.prompt,.tag,.eyebrow{font-family:"JetBrains Mono",ui-monospace,Consolas,monospace;direction:ltr;unicode-bidi:isolate}
+.prompt{color:var(--ac);font-size:14px;text-align:left}
+.eyebrow{color:var(--ac2);font-size:13px;text-align:left;margin-top:18px}
+h1{font-size:clamp(26px,5vw,40px);line-height:1.35;margin:6px 0 10px}
+h2{font-size:24px;margin:52px 0 6px;padding-top:18px;border-top:1px solid var(--line);counter-increment:sec;counter-reset:sub}
+h2 .n{font-family:"JetBrains Mono",monospace;color:var(--ac);margin-inline-end:10px;font-size:18px}
+h3{counter-increment:sub;font-size:19px;margin:30px 0 8px;color:var(--ac)}
+h3::before{content:counter(sec,decimal-leading-zero) "." counter(sub);font-family:"JetBrains Mono",monospace;font-size:13px;color:var(--ac2);margin-inline-end:10px;direction:ltr;unicode-bidi:isolate;display:inline-block}
+h4{font-size:16px;margin:20px 0 4px;color:var(--ac2)}
+p{margin:8px 0}
+.lead{color:var(--mut);max-width:70ch}
+.tags{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0;direction:ltr}
+.tag{font-size:12px;border:1px solid var(--line);background:var(--panel);color:var(--mut);padding:2px 10px;border-radius:4px}
+nav ol{list-style:none;margin:8px 0;padding:0;display:grid;gap:6px}
+nav a{display:block;padding:8px 14px;background:var(--panel);border:1px solid var(--line);border-radius:6px;color:var(--tx);text-decoration:none}
+nav a:hover,nav a:focus-visible{border-color:var(--ac);outline:none}
+nav a b{font-family:"JetBrains Mono",monospace;color:var(--ac);margin-inline-end:10px}
+nav a small{color:var(--mut);font-family:"JetBrains Mono",monospace;direction:ltr;unicode-bidi:isolate}
+blockquote{margin:14px 0;padding:10px 16px;background:var(--panel);border-inline-start:3px solid var(--ac);border-radius:4px}
+blockquote.w{border-inline-start-color:var(--ac2)}
+blockquote.b{border-inline-start-color:var(--bad)}
+blockquote p{margin:4px 0}
+.tw{overflow-x:auto;margin:14px 0;border:1px solid var(--line);border-radius:6px}
+table{border-collapse:collapse;width:100%;font-size:14.5px;line-height:1.7}
+th,td{padding:8px 12px;text-align:start;border-bottom:1px solid var(--line);vertical-align:top}
+th{background:var(--panel);color:var(--ac);white-space:nowrap}
+tr:last-child td{border-bottom:0}
+td:first-child{font-weight:600;white-space:nowrap}
+code{background:var(--code);padding:1px 6px;border-radius:3px;font-size:.88em;color:var(--ac2)}
+pre{background:var(--code);border:1px solid var(--line);border-radius:6px;padding:12px 16px;overflow-x:auto;font-size:13px;line-height:1.7;text-align:left;margin:12px 0}
+pre code{background:none;padding:0;color:var(--tx)}
+ul{padding-inline-start:22px;margin:8px 0}li{margin:3px 0}
+.flow{direction:ltr;text-align:left}
+.eof{margin-top:56px;color:var(--mut);font-size:13px;text-align:left}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+<main>
+<div class="prompt">root@mobre:~/course$</div>
+<div class="eyebrow">Mobile Application Reverse Engineering &amp; Security · Netriders Academy</div>
+<h1>الهندسة العكسية لتطبيقات الموبايل وأمانها</h1>
+<p class="lead">من داخليات التطبيق وسلوك الـ runtime لتحليل الـ malware واختبار الاختراق والتطوير الآمن: أساسيات الهندسة العكسية، منهجية الـ 6 خطوات، داخليات Android (DEX/ART/Smali) وiOS (Objective-C/Swift/Mach-O)، التعتيم وفكّه، التطبيقات الهجينة، تحليل malware الموبايل، أمان Smart TV/IoT، DevSecOps الآمن، اتجاهات المستقبل، ودراسات حالة واقعية.</p>
+<div class="tags"><span class="tag">reverse-engineering</span><span class="tag">smali</span><span class="tag">mach-o</span><span class="tag">obfuscation</span><span class="tag">malware-analysis</span><span class="tag">devsecops</span></div>
+
+<div class="prompt">$ ls modules/</div>
+<nav><ol>
+<li><a href="#s1"><b>01</b>ليه نحتاج الهندسة العكسية <small>(Why RE)</small></a></li>
+<li><a href="#s2"><b>02</b>أساسيات الهندسة العكسية <small>(Fundamentals)</small></a></li>
+<li><a href="#s3"><b>03</b>منهجية التحليل بـ 6 خطوات</a></li>
+<li><a href="#s4"><b>04</b>جمع المعلومات وبنية الكود</a></li>
+<li><a href="#s5"><b>05</b>الأدوات وسير العمل العملي</a></li>
+<li><a href="#s6"><b>06</b>داخليات Android: DEX وART وSmali</a></li>
+<li><a href="#s7"><b>07</b>داخليات iOS: Objective-C وSwift وMach-O</a></li>
+<li><a href="#s8"><b>08</b>التطبيقات الهجينة والتعتيم <small>(Hybrid &amp; Obfuscation)</small></a></li>
+<li><a href="#s9"><b>09</b>منهجية التحليل المتقدّم <small>(Runtime &amp; Threat Modeling)</small></a></li>
+<li><a href="#s10"><b>10</b>كشف الـ Root والـ Jailbreak ودفاعات منع التحليل</a></li>
+<li><a href="#s11"><b>11</b>تقنيات تعتيم الكود <small>(Code Obfuscation)</small></a></li>
+<li><a href="#s12"><b>12</b>كسر التشفير الضعيف وفكّ التعتيم</a></li>
+<li><a href="#s13"><b>13</b>معماريات التطبيقات الهجينة واختبارها</a></li>
+<li><a href="#s14"><b>14</b>تحليل Malware الموبايل</a></li>
+<li><a href="#s15"><b>15</b>أسطح هجوم Smart TV وIoT</a></li>
+<li><a href="#s16"><b>16</b>التطوير الآمن وDevSecOps</a></li>
+<li><a href="#s17"><b>17</b>اتجاهات مستقبل أمان الموبايل</a></li>
+<li><a href="#s18"><b>18</b>دراسات حالة واقعية <small>(Case Studies)</small></a></li>
+</ol></nav>
+
+<blockquote><p><b>ملاحظة:</b> الكورس ده (Netriders Academy) يغطي الهندسة العكسية والـ malware analysis والتطوير الآمن. كل التقنيات المذكورة للتحليل والاختبار على تطبيقات مصرَّح باختبارها قانونيًا بس.</p></blockquote>
+
+<h2 id="s1"><span class="n">01</span>ليه نحتاج الهندسة العكسية</h2>
+<h3>حدود اختبار الـ Black-Box</h3>
+<p>الاختبار من برّه بيلاحظ المدخلات والمخرجات بس، مش المنطق بينهم. مش بتشوف إزاي البيانات بتتعامل معاها داخليًا، ولا إزاي الحمايات اتبنت فعليًا، ومسارات الكود المخفية بتفضل مخفية.</p>
+<p>الهندسة العكسية بتكشف: المنطق الداخلي وتدفق التحكم، روتينات التشفير وإدارة المفاتيح، الأسرار وendpoints والشهادات المضمّنة، وإزاي ضوابط الأمان شغّالة فعليًا.</p>
+<h3>إمتى الهندسة العكسية بتبقى ضرورية</h3>
+<div class="tw"><table>
+<tr><th>الحالة</th><th>الهدف</th></tr>
+<tr><td>تشفير مخصص (homegrown)</td><td>فهم الخوارزمية وإزاي المفاتيح بتتولد وتتخزن</td></tr>
+<tr><td>تخطّي ضوابط أمان</td><td>تخطّي SSL pinning أو كشف root عشان تقدر تفحص الترافيك والسلوك في بيئة اختبار</td></tr>
+<tr><td>أسرار hardcoded</td><td>استخراج API keys وendpoints وشهادات مضمّنة في التطبيق</td></tr>
+<tr><td>منطق معتّم (obfuscated)</td><td>فهم إيه اللي الكود المعاد تسميته أو المضغوط أو المشفّر بيعمله فعليًا</td></tr>
+</table></div>
+<blockquote class="w"><p>كل ده بينطبق بس على تطبيقات أنت مصرَّح لك تختبرها.</p></blockquote>
+
+<h2 id="s2"><span class="n">02</span>أساسيات الهندسة العكسية</h2>
+<h3>الهندسة العكسية ≠ مجرّد Decompiling</h3>
+<p>الـ Decompiling خطوة أداة بتحوّل الـ binary لكود مقروء — المخرج ده مادة خام مش فهم. الهندسة العكسية الحقيقية: إعادة بناء منطق التطبيق الداخلي، فهم إزاي البيانات بتتخزن وتتحوّل وتتبعت، ربط النتائج الـ static بالسلوك وقت الـ runtime، وتقرير إيه اللي تعدّله أو تتخطّاه أو تبلّغ عنه.</p>
+<h3>مستويات التجريد (Abstraction Levels)</h3>
+<pre class="flow"><code>Source Code (Java/Kotlin/Swift/C++) → Bytecode (مثل Dalvik/DEX) → Assembly (تعليمات CPU زي ARM) → Machine Code (تعليمات ثنائية)
+اتجاه البناء: من فوق لتحت. الهندسة العكسية بتمشي المسار ده بالعكس.</code></pre>
+<p>كل خطوة نزول بتفقد الأسماء والبنية والتعليقات — ده "code transformation": تحويل الـ binary لصيغ مقروءة.</p>
+<h3>تحليل تدفق التحكم وتدفق البيانات</h3>
+<div class="tw"><table>
+<tr><th>Control Flow</th><th>Data Flow</th></tr>
+<tr><td>أي كود بيشتغل، وبأي ترتيب؟</td><td>البيانات جاية منين ورايحة فين؟</td></tr>
+<tr><td>Branches وLoops ونداءات الدوال</td><td>تتبّع القيم من المصدر للوجهة (source → sink)</td></tr>
+<tr><td>Call graphs بتوضّح علاقة الدوال ببعض</td><td>تتبّع مدخلات المستخدم والتوكنز والمفاتيح</td></tr>
+<tr><td>تحديد فين القرارات بتتاخد (كشف root، ترخيص، login)</td><td>بيكشف إيه اللي بيتخزن أو يتشفّر أو يتبعت على الشبكة</td></tr>
+</table></div>
+<h3>Static مقابل Dynamic Analysis</h3>
+<div class="tw"><table>
+<tr><th>المعيار</th><th>Static Analysis</th><th>Dynamic Analysis</th></tr>
+<tr><td>المنهج</td><td>فحص التطبيق من غير تشغيله</td><td>مراقبة التطبيق وهو شغّال</td></tr>
+<tr><td>بيفحص</td><td>البنية، الدوال، الـ strings، الكلاسات</td><td>Runtime hooks، logging، السلوك</td></tr>
+<tr><td>الأفضل لـ</td><td>رسم خريطة الكود وإيجاد بيانات مضمّنة</td><td>رؤية القيم الحقيقية وسلوك الحماية</td></tr>
+<tr><td>القيد</td><td>بيتعثّر قدام كود معتّم أو يتحمّل ديناميكيًا</td><td>بيغطي بس مسارات الكود اللي فعليًا اشتغلت</td></tr>
+<tr><td>أدوات نموذجية</td><td>Decompilers وDisassemblers</td><td>Debuggers وFrida</td></tr>
+</table></div>
+
+<h2 id="s3"><span class="n">03</span>منهجية التحليل بـ 6 خطوات</h2>
+<pre class="flow"><code>1. Recon → 2. Unpacking → 3. Static Analysis → 4. Dynamic Analysis → 5. Patch &amp; Modify → 6. Rebuild &amp; Re-sign</code></pre>
+<div class="tw"><table>
+<tr><th>#</th><th>الخطوة</th><th>التفاصيل</th></tr>
+<tr><td>1</td><td>Recon</td><td>اجمع الـ APK/IPA وبياناته الوصفية، وراقب سلوك التطبيق</td></tr>
+<tr><td>2</td><td>Unpacking</td><td>فك ضغط الحزمة واستكشف الـ assets والـ manifests والشهادات</td></tr>
+<tr><td>3</td><td>Static Analysis</td><td>Decompile وتحليل الكود والبحث في الـ strings والكلاسات</td></tr>
+<tr><td>4</td><td>Dynamic Analysis</td><td>ربط debugger أو Frida ومراقبة التطبيق وقت التشغيل</td></tr>
+<tr><td>5</td><td>Patch &amp; Modify</td><td>تعديل منطق التطبيق أو تخطّي الحمايات في بيئة اختبار مصرَّح بيها</td></tr>
+<tr><td>6</td><td>Rebuild &amp; Re-sign</td><td>إعادة التعبئة والتوقيع وتشغيل النسخة المعدّلة</td></tr>
+</table></div>
+
+<h2 id="s4"><span class="n">04</span>جمع المعلومات وبنية الكود</h2>
+<h3>جمع معلومات التطبيق</h3>
+<ul><li>معلومات الإصدار (مقارنة البناءات بتوضّح إيه اللي اتغيّر). معلومات المطوّر (فريق التطوير والشركة). متطلبات المنصة (نسخ النظام والاعتماديات). تحليل الصلاحيات (هل كل صلاحية مناسبة لغرض التطبيق).</li></ul>
+<h3>فك الحزمة</h3>
+<p>الـ APK أو IPA مجرد أرشيف ZIP: <code>unzip app.apk -d app_out/</code></p>
+<div class="tw"><table>
+<tr><th>Android APK</th><th>iOS IPA</th></tr>
+<tr><td><code>AndroidManifest.xml</code> — المكونات والصلاحيات</td><td><code>Info.plist</code> — إعدادات التطبيق</td></tr>
+<tr><td><code>classes.dex</code> — كود التطبيق المترجَم</td><td>Mach-O executable — الـ binary المترجَم</td></tr>
+<tr><td><code>lib/</code> — مكتبات native (.so)</td><td><code>embedded.mobileprovision</code> — ملف التزويد</td></tr>
+<tr><td><code>res/</code> و<code>assets/</code> — الموارد والملفات المرفقة</td><td><code>Frameworks/</code> — المكتبات المرفقة</td></tr>
+<tr><td><code>META-INF/</code> — شهادات التوقيع</td><td>الصور والموارد — إعدادات وبيانات</td></tr>
+</table></div>
+<h3>تحليل بنية الكود</h3>
+<ul><li>تنظيم الحزم (الـ architecture العامة). تسلسل الكلاسات (علاقات الوراثة والتركيب). توقيعات الدوال (استخدام الـ API ونقاط التكامل). الـ Strings والموارد (روابط ومفاتيح وflags مضمّنة).</li></ul>
+<h3>تجهيز معمل التحليل</h3>
+<ul><li>جهاز اختبار (فعلي أو emulated، جاهز للتحليل). أدوات مراقبة (debuggers وFrida). مراقبة الشبكة (اعتراض وتحليل الترافيك). التوثيق (تسجيل كل نشاط وإعداد ونتيجة).</li></ul>
+<blockquote><p>قاعدة عامة: معمل موثّق وقابل للتكرار بيخلّي كل نتيجة لاحقة قابلة لإعادة الإنتاج.</p></blockquote>
+
+<h2 id="s5"><span class="n">05</span>الأدوات وسير العمل العملي</h2>
+<h3>المراحل الأربع للهندسة العكسية</h3>
+<div class="tw"><table>
+<tr><th>#</th><th>المرحلة</th><th>التفاصيل</th></tr>
+<tr><td>1</td><td>Reconnaissance</td><td>تحديد التطبيق والحزمة والإصدار والصلاحيات والمكونات</td></tr>
+<tr><td>2</td><td>Static Analysis</td><td>Decompile ومراجعة الكود والموارد والـ strings</td></tr>
+<tr><td>3</td><td>Dynamic Analysis</td><td>تشغيل التطبيق، hook الدوال، مراقبة الملفات والترافيك</td></tr>
+<tr><td>4</td><td>Exploitation / Validation</td><td>تأكيد إن الثغرات المشتبه بها حقيقية، جوه النطاق المصرَّح بيه</td></tr>
+</table></div>
+<blockquote><p>المراحل بتغذّي بعضها: مفاجأة وقت الـ runtime بتوديك ترجع للكود، ونتيجة في الكود بتتأكد وقت الـ runtime.</p></blockquote>
+<h3>اختيار منهج التحليل</h3>
+<p>ثلاث مدخلات بتحدد سلسلة الأدوات: <b>أهداف التحليل</b> (تقييم أمني؟ فحص امتثال؟ تحليل malware؟)، <b>خصائص التطبيق المستهدف</b> (المنصة، native أو hybrid أو WebView، معتّم أو محمي)، و<b>الموارد المتاحة</b> (الوقت والميزانية، تراخيص الأدوات، مهارات الفريق). نفس التطبيق ممكن يحتاج أدوات مختلفة تمامًا حسب الهدف.</p>
+<h3>الهدف: تقييم أمني</h3>
+<div class="tw"><table>
+<tr><th>النوع</th><th>الأدوات</th></tr>
+<tr><td>Quick Scan (فحص آلي سريع)</td><td>MobSF, QARK, Jadx</td></tr>
+<tr><td>Deep Analysis (يدوي + ديناميكي)</td><td>Ghidra, Frida</td></tr>
+<tr><td>Compliance Check (فحص سياسات)</td><td>Checkmarx, Veracode</td></tr>
+</table></div>
+<p>التدفق النموذجي: فحص سريع أول، وبعدين تعمّق بس في اللي الفحص أشار عليه.</p>
+<h3>الهدف: تحليل Malware</h3>
+<div class="tw"><table>
+<tr><th>النوع</th><th>الأدوات</th></tr>
+<tr><td>Behavior Analysis (sandbox)</td><td>Cuckoo, Joe Sandbox</td></tr>
+<tr><td>Code Analysis (disassemblers وhex editors)</td><td>Jadx, Ghidra, Hex Editor</td></tr>
+<tr><td>Network Analysis</td><td>Wireshark, mitmproxy</td></tr>
+</table></div>
+<blockquote class="b"><p>دايمًا شغّل وحلّل العينات في بيئة معمل معزولة.</p></blockquote>
+<h3>المرحلة 1: الاستطلاع الأولي</h3>
+<pre><code>$ file target_app.apk
+# يأكد نوع الملف الحقيقي ويكشف ملفات معاد تسميتها أو تالفة قبل ما تضيّع وقت
+
+$ aapt dump badging target_app.apk
+# يطبع أهم حقائق الـ manifest: اسم الحزمة، الإصدار، مستويات SDK، الصلاحيات، والـ activity القابلة للتشغيل</code></pre>
+<p>نصيحة: سجّل hash للملف (مثل <code>sha256sum</code>) عشان كل نتيجة ترتبط بنسخة بناء واحدة محددة.</p>
+<h3>المرحلة 2: التحليل الـ Static</h3>
+<pre><code>$ jadx -d output_jadx target_app.apk
+# يفك DEX bytecode لكود Java مقروء وموارد في output_jadx/ — الأفضل لقراءة المنطق بسرعة
+
+$ apktool d target_app.apk -o output_apktool
+# يفك الـ manifest والموارد ويفكك الكود لـ Smali في output_apktool/ — الأفضل للتعديل وإعادة البناء</code></pre>
+<p>نصيحة: استخدم Jadx لفهم التطبيق، وApktool لما تحتاج تعدّله.</p>
+<h3>المرحلة 3: التحليل الـ Dynamic</h3>
+<pre><code>$ adb install target_app.apk
+# يثبّت الـ APK على جهاز متصل أو emulator عبر ADB عشان تشغّله وتراقبه
+
+$ frida -U -f com.target.app -l analysis_script.js
+# يشغّل التطبيق (-f) على جهاز USB (-U) ويحقن سكريبتك (-l) لعمل hook ومراقبة السلوك</code></pre>
+<p>نصيحة: اجمع بين Frida hooks والتقاط الشبكة واللوجات عشان تربط السلوك بالترافيك.</p>
+<h3>المرحلة 4: التحليل العميق</h3>
+<div class="tw"><table>
+<tr><th>الأداة</th><th>الاستخدام</th></tr>
+<tr><td>Androguard</td><td>إطار Python للـ static analysis: سرد المكونات والصلاحيات واستخدام الـ API، وأتمتة الفحص عبر عينات كتير</td></tr>
+<tr><td>Ghidra</td><td>Disassembler وdecompiler لملفات <code>lib/*.so</code> — بيكشف منطق ما بتشوفهوش أدوات مستوى Java، مفيد للتشفير native وكود anti-tamper</td></tr>
+</table></div>
+<p>اتعمّق أكتر لما: مخرجات Jadx تكون ضعيفة، التطبيق بيعتمد على كود native، أو محتاج تؤتمت التحليل.</p>
+<h3>مبادئ استخدام الأدوات</h3>
+<ul><li>اختر الأدوات حسب الاشتباك (الهدف والهدف والموارد، مش العادة). استخدم الأدوات "ديناميكيًا" (سلسلها حسب الحاجة، مثلًا Zipalign عند إعادة تعبئة APK قبل توقيعه). اعرف المخرج المتوقع (توقّع إيه كل أمر المفروض يطلعه، والمفاجآت بتشاور على packing أو obfuscation أو غلطة). جرّب وابنِ أدواتك (جرّب أدوات جديدة، أو استخدم AI لكتابة سكريبتات صغيرة مخصصة لهدفك).</li></ul>
+
+<h2 id="s6"><span class="n">06</span>داخليات Android: DEX وART وSmali</h2>
+<h3>بنية ملف DEX</h3>
+<div class="tw"><table>
+<tr><th>الجزء</th><th>المحتوى</th></tr>
+<tr><td>Header</td><td>أرقام سحرية (magic numbers) وchecksums وحجم الملف الكلي، لتحديد والتحقق من الملف</td></tr>
+<tr><td>String Pool</td><td>كل نص حرفي مستخدم في التطبيق: روابط، مفاتيح، رسائل، أسماء كلاسات أو دوال</td></tr>
+<tr><td>Type Definitions</td><td>كل الكلاسات والأنواع الأولية اللي التطبيق بيستخدمها</td></tr>
+<tr><td>Method Definitions</td><td>تعليمات الـ bytecode الفعلية، يعني منطق التطبيق</td></tr>
+</table></div>
+<p>ليه ده مهم: الـ string pool بيوري القيم الـ hardcoded؛ وMethod definitions فيها المنطق اللي بتقراه في Smali.</p>
+<h3>من Dalvik لـ ART</h3>
+<p>بدءًا من Android 5.0، Google قدّمت ART (Android Runtime) بدل Dalvik. لما التطبيق يتثبّت على جهاز ART، الـ DEX bytecode بتتترجم لكود native فورًا (ahead-of-time).</p>
+<div class="tw"><table>
+<tr><th>النتيجة</th><th>التفسير</th></tr>
+<tr><td>Static analysis بيبقى أفعّل</td><td>كود مترجَم مسبقًا وقابل للتنبؤ أسهل في التحليل offline</td></tr>
+<tr><td>هجمات الـ runtime بتصعب</td><td>مفيش JIT compiler وقت التثبيت، فمفيش حاجة كتير تُستغل</td></tr>
+</table></div>
+<blockquote class="w"><p>ملاحظة: من Android 7.0، ART بتجمع بين AOT وJIT وcompilation موجّه بالـ profile، فمخاطر الـ JIT لسه موجودة.</p></blockquote>
+<h3>JIT مقابل AOT: مقايضات أمنية</h3>
+<div class="tw"><table>
+<tr><th>JIT — متجهات هجوم</th><th>AOT — مقايضات</th></tr>
+<tr><td>فساد الـ code cache المترجَم</td><td>تعقيد أقل وقت التشغيل = أجزاء أقل للاستغلال</td></tr>
+<tr><td>JIT spray: توليد كود يمكن التنبؤ به يُستغل لـ ROP gadgets</td><td>تخطيطات ذاكرة يمكن التنبؤ بها — ممكن تساعد في تطوير استغلال</td></tr>
+<tr><td>تعديل كود ديناميكي (code-patching)</td><td>فعالية static analysis أعلى — المدافع كمان بيلاقي الثغرات أسهل</td></tr>
+</table></div>
+<p>الخلاصة: الـ AOT بيبادل سطح هجوم الـ runtime بقابلية التنبؤ، وده بيفيد المهاجم والمدافع مع بعض.</p>
+<h3>Smali: لغة Dalvik</h3>
+<p>تمثيل مقروء لبايت كود Dalvik، الجسر بين كود Java المصدري وDEX bytecode، وأساسي للهندسة العكسية وتحليل الـ malware على Android.</p>
+<div class="tw"><table>
+<tr><th>التسجيل</th><th>الوصف</th></tr>
+<tr><td><code>v0, v1, v2...</code></td><td>Local registers</td></tr>
+<tr><td><code>p0, p1, p2...</code></td><td>Parameter registers</td></tr>
+<tr><td><code>this</code></td><td>مرجع للكائن الحالي — في الدوال غير الثابتة، <code>p0</code> بيحمل <code>this</code></td></tr>
+</table></div>
+<h3>فئات تعليمات Smali</h3>
+<pre><code>move v0, v1              # نسخ v1 لـ v0
+move-object v0, v1        # نسخ مرجع كائن
+move-result v0            # تخزين قيمة مرجوعة من دالة (بعد invoke مباشرة)
+add-int v0, v1, v2        # حسابي: v0 = v1 + v2
+mul-int/lit8 v0, v1, 0x5  # حسابي: v0 = v1 * 5</code></pre>
+<p><code>move-result</code> دايمًا بتيجي بعد تعليمة <code>invoke</code> بترجّع قيمة.</p>
+<h3>تشريح استدعاء دالة</h3>
+<pre><code>invoke-virtual {v0, v1}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z</code></pre>
+<div class="tw"><table>
+<tr><th>الجزء</th><th>المعنى</th></tr>
+<tr><td><code>invoke-virtual</code></td><td>نوع النداء: استدعاء دالة virtual عادية</td></tr>
+<tr><td><code>{v0, v1}</code></td><td>registers الوسائط: v0 الكائن، v1 الوسيطة</td></tr>
+<tr><td><code>Ljava/lang/String;</code></td><td>الكلاس المالك للدالة (<code>java.lang.String</code>)</td></tr>
+<tr><td><code>-&gt;equals</code></td><td>اسم الدالة المستدعاة</td></tr>
+<tr><td><code>(Ljava/lang/Object;)Z</code></td><td>أنواع الوسائط بالقوس، وZ تعني ترجع boolean</td></tr>
+</table></div>
+<p>يُقرأ كـ Java: <code>v0.equals(v1)</code>. تعليمة <code>move-result</code> التالية بتاخد الـ boolean.</p>
+<h3>الشروط في Smali</h3>
+<pre><code>if-eq v0, v1, :cond_equal     # if (v0 == v1) goto :cond_equal
+if-ne v0, v1, :cond_not_equal # if (v0 != v1) goto :cond_not_equal
+if-lt v0, v1, :cond_less      # if (v0 &lt; v1) goto :cond_less
+if-eqz v0, :cond_zero         # if (v0 == 0) goto :cond_zero</code></pre>
+<p>بنية الـ Loops مبنية من نفس الشروط زائد <code>goto</code> بيرجع لـ label سابق.</p>
+<h3>إيه اللي تدوّر عليه في Smali</h3>
+<ul><li><code>invoke-*</code>: نداءات الدوال، خصوصًا دوال التشفير. <code>const-string</code>: قيم hardcoded زي مفاتيح وروابط وtokens وflags. <code>if-*</code>: منطق التحقق (login، ترخيص، كشف root، pinning). <code>return-*</code>: التلاعب بتدفق التحكم — تغيير إيه اللي الدالة بترجّعه ممكن يقلب نتيجة فحص كامل.</li></ul>
+
+<h2 id="s7"><span class="n">07</span>داخليات iOS: Objective-C وSwift وMach-O</h2>
+<h3>Objective-C: كل حاجة عبارة عن رسالة</h3>
+<p>كل حاجة في Objective-C بتحصل عبر message passing: <code>objc_msgSend</code>. نداء زي <code>[obj doThing]</code> بيتحوّل لـ <code>objc_msgSend(obj, selector)</code>، يتم حلّه وقت الـ runtime.</p>
+<ul><li><b>Method swizzling:</b> بيسمح باستبدال تنفيذ الدوال وقت التشغيل. <b>Category injection:</b> بيسمح بحقن كود وقت التشغيل. <b>ISA pointer corruption:</b> ممكن يعيد توجيه نداءات الدوال لكود مختلف. <b>KVO/KVC bypasses:</b> ممكن توصل لخصائص خاصة.</li></ul>
+<h3>Swift: إيه اللي بيتغير أمنيًا</h3>
+<div class="tw"><table>
+<tr><th>بيصعّب هجمات</th><th>بيفتح فرص جديدة</th></tr>
+<tr><td>Type safety: بتمنع كتير من مشاكل فساد الذاكرة</td><td>التلاعب بجداول witness البروتوكول</td></tr>
+<tr><td>ARC: بتقلل ثغرات use-after-free</td><td>هجمات type confusion عامة</td></tr>
+<tr><td>Value semantics: بتحد من مشاركة الحالة القابلة للتغيير</td><td>فساد البيانات الوصفية (metadata) لعمل type confusion</td></tr>
+</table></div>
+<p>الـ ABI الثابت لـ Swift بيخلّي البيانات الوصفية دي يمكن التنبؤ بها وتحليلها. الخلاصة: ميزات اللغة الأكثر أمانًا بتنقل الهجمات من أخطاء الذاكرة الكلاسيكية لـ type/metadata confusion.</p>
+<h3>Mach-O: صيغة تنفيذ iOS</h3>
+<div class="tw"><table>
+<tr><th>الجزء</th><th>الوصف</th></tr>
+<tr><td>Header</td><td>معلومات المعمارية ونوع الملف</td></tr>
+<tr><td>Load Commands</td><td>بتقول للـ loader يعمل إيه: أي segments ومكتبات ونقاط دخول يستخدم</td></tr>
+<tr><td>Segments</td><td>تحتوي على البيانات والكود الفعلي للـ binary</td></tr>
+<tr><td>Sections</td><td>جوه الـ segments، وبتحمل أنواع بيانات محددة زي الكود أو الـ strings</td></tr>
+</table></div>
+<p>نصيحة: فكّك الـ header والـ load commands الأول، لأنهم بيرسموا خريطة باقي الملف.</p>
+
+<h2 id="s8"><span class="n">08</span>التطبيقات الهجينة والتعتيم</h2>
+<h3>أنماط التطبيقات الهجينة الشائعة</h3>
+<ul><li><b>WebView-based:</b> مبنية بإطارات زي Cordova أو PhoneGap. <b>Native wrappers:</b> كود native ملفوف حول محتوى ويب. <b>Progressive Web Apps:</b> تطبيقات ويب متوصّلة بغلاف native. <b>Micro-frontend architectures:</b> تقنيات متعددة مجمّعة في تطبيق واحد.</li></ul>
+<h3>منهج طبقي لتقييم التطبيقات الهجينة</h3>
+<pre class="flow"><code>1. Web Layer Assessment (JS/HTML/CSS) → 2. Bridge Security Review (تواصل native-web) → 3. Native Component Audit → 4. Data Flow Analysis (عبر حدود التقنيات) → 5. Attack Surface Mapping (كل نقطة تكامل)</code></pre>
+<h3>فعالية التعتيم حسب الإطار</h3>
+<div class="tw"><table>
+<tr><th>الإطار</th><th>مستوى الحماية</th></tr>
+<tr><td>Native Android/iOS</td><td>التعتيم محتاج أدوات متخصصة، لكن فعّال نسبيًا</td></tr>
+<tr><td>React Native</td><td>JavaScript minification بس — سهل عكسه</td></tr>
+<tr><td>Flutter</td><td>تجميع Dart بيوفّر حماية متوسطة</td></tr>
+<tr><td>Hybrid Web</td><td>حماية ضئيلة؛ أمان الويب القياسي بس</td></tr>
+</table></div>
+
+<h2 id="s9"><span class="n">09</span>منهجية التحليل المتقدّم</h2>
+<h3>مرحلة Runtime 1: رسم خريطة البيئة</h3>
+<ul><li>بيئة التشغيل (إصدار النظام، patches الأمان، قدرات الهاردوير). الـ sandboxing وحدود الصلاحيات. أنماط الشبكة (الاتصال وقنوات التواصل). رسم خريطة الاعتماديات (مكتبات مشتركة وframeworks وSDKs طرف تالت).</li></ul>
+<h3>مرحلة Runtime 2: خط الأساس السلوكي</h3>
+<ul><li>التدفق الطبيعي موثّق. استخدام الموارد (CPU، ذاكرة، تخزين، شبكة). كل قناة IPC يستخدمها التطبيق. سلوك الخدمات الخلفية.</li></ul>
+<h3>مرحلة Runtime 3: اختبار نشط</h3>
+<ul><li>التحقق من المدخلات (اختبار الحدود عبر كل نقاط الدخول). التلاعب بالحالة (تعديلات مضبوطة وقت التشغيل). استنزاف الموارد وRace conditions. اختبار إجهاد المصادقة والـ sessions.</li></ul>
+<h3>نمذجة فاعلي التهديد</h3>
+<div class="tw"><table>
+<tr><th>الفاعل</th><th>التركيز</th></tr>
+<tr><td>Opportunistic Attackers</td><td>هجمات منخفضة الجهد على أهداف سهلة: ثغرات معروفة، أسرار مكشوفة، إعدادات افتراضية ضعيفة</td></tr>
+<tr><td>Sophisticated Threat Actors</td><td>ماهرين وممولين ومستهدِفين: أدوات مخصصة، ثغرات متسلسلة، وصول طويل المدى</td></tr>
+<tr><td>Insider Threats</td><td>أشخاص بوصول شرعي أو معرفة داخلية: إساءة استخدام الثقة للوصول للتطبيق وبنيته</td></tr>
+</table></div>
+<h3>بناء سرديات هجوم واقعية</h3>
+<pre class="flow"><code>1. Initial Access → 2. Persistence → 3. Lateral Movement → 4. Data Exfiltration → 5. Evidence Elimination</code></pre>
+<p>استخدمها لاختبار الكشف كمان: كل مرحلة فرصة لفحص هل المدافعين هيلاحظوا.</p>
+<h3>منهجية تحليل الذاكرة</h3>
+<ul><li>تحليل الـ Heap (دورة حياة الكائنات وإدارة الذاكرة). تحليل الـ Stack (أنماط نداء الدوال والمتغيرات المحلية). مناطق الذاكرة الثابتة (المتغيرات العامة والبيانات الثابتة). تخصيص الذاكرة الديناميكي (أنماط الاستخدام اللحظي).</li></ul>
+<h3>ربط سلوك الـ Runtime</h3>
+<p>اربط تغيّرات حالة الذاكرة بتفاعلات المستخدم، حدّد فين ومتى البيانات الحساسة بتتخزن، واكشف عمليات التشفير وفك التشفير عبر تحليل الذاكرة. الهدف: اربط إيه اللي المستخدم عمله بإيه اللي الذاكرة بتوريه، عشان النتائج تتفسّر مش بس تُلاحَظ.</p>
+<h3>إطار تحليل التشفير</h3>
+<ul><li>تحديد التشفير (التعرّف على الخوارزميات والتنفيذات المستخدمة). تحليل إدارة المفاتيح (إزاي المفاتيح بتتخزن وتُشتق). استخراج المفاتيح وقت الـ runtime. استرجاع النص الصريح (الوصول للبيانات بعد فك التشفير في الذاكرة).</li></ul>
+<blockquote class="b"><p>النطاق: استخدم التقنيات دي بس على تطبيقات أنت مصرَّح لك تقيّمها.</p></blockquote>
+
+<h2 id="s10"><span class="n">10</span>كشف الـ Root والـ Jailbreak ودفاعات منع التحليل</h2>
+<h3>طرق كشف الـ Root الشائعة على Android</h3>
+<div class="tw"><table>
+<tr><th>الطريقة</th><th>الوصف</th></tr>
+<tr><td>File-Based Checks</td><td>البحث عن ملفات موجودة بس على جهاز rooted، زي <code>/system/app/Superuser.apk</code> أو <code>/system/bin/su</code></td></tr>
+<tr><td>Property Checks</td><td>فحص خصائص البناء زي <code>ro.build.tags</code> و<code>ro.debuggable</code></td></tr>
+<tr><td>Package Manager</td><td>فحص الحزم المثبّتة بحثًا عن تطبيقات إدارة root معروفة</td></tr>
+</table></div>
+<p>ليه 3 فحوصات: مفيش إشارة واحدة موثوقة لوحدها، فالتطبيقات بتجمع أدلة ملفات وخصائص وحزم قبل ما تقرر.</p>
+<h3>معمارية كشف Root طبقية</h3>
+<div class="tw"><table>
+<tr><th>الطبقة</th><th>الوصف</th><th>أمثلة</th></tr>
+<tr><td>1 — Environmental Indicators</td><td>فحص بيئة الـ runtime عن علامات تصعيد صلاحيات (su binaries)</td><td><code>/system/bin/su</code>, <code>/system/xbin/su</code>, <code>/data/local/xbin/su</code></td></tr>
+<tr><td>2 — Process &amp; Service Detection</td><td>مراقبة العمليات وخدمات النظام الشغّالة بحثًا عن أدوات إدارة root</td><td>—</td></tr>
+<tr><td>3 — System Property Analysis</td><td>فحص خصائص البناء المختلفة على بناء rooted أو debuggable</td><td><code>ro.debuggable=1</code>, <code>ro.secure=0</code>, <code>ro.build.tags=test-keys</code></td></tr>
+</table></div>
+<h3>تقنيات كشف Jailbreak على iOS</h3>
+<ul><li><b>File System Checks:</b> البحث عن Cydia وملفات تانية خلّفتها تعديلات غير مصرَّح بيها. <b>Sandbox Violations:</b> محاولة الكتابة برّه حدود الـ sandbox — المفروض تفشل على جهاز عادي. <b>URL Scheme Checks:</b> فحص هل <code>cydia://</code> ممكن يتفتح.</li></ul>
+<p>انعكاس لـ Android: فحص ملفات، فحص صلاحية/sandbox، وإشارة بيئة — نفس فكرة الطبقات التلاتة بنكهة iOS.</p>
+<h3>كشف الـ Emulator وسير عمل التخطّي</h3>
+<pre class="flow"><code>المرحلة 1 — اكتشاف الفحص: حدّد أي فحوصات التطبيق بيشغّلها وفين في الكود
+المرحلة 2 — تنفيذ تخطّي انتقائي: patch أو hook الفحوصات المحددة بس، مع ترك باقي التطبيق سليم</code></pre>
+<h3>طرق التخطّي الممكنة</h3>
+<div class="tw"><table>
+<tr><th>الطريقة</th><th>الوصف</th><th>التقييم</th></tr>
+<tr><td>Hooking الفحص</td><td>استخدام Frida لاعتراض دالة الكشف وقت التشغيل وإجبارها ترجّع نتيجة نظيفة</td><td>الأقل تدخلًا — مفيش تغيير على القرص، سهل التراجع، مثالي للاختبار لمرة واحدة</td></tr>
+<tr><td>Patching الـ Binary</td><td>تعديل كود Smali أو native لإزالة أو عكس الفحص، ثم إعادة البناء والتوقيع</td><td>تدخل أكتر، لكن دائم — مفيد لما تحتاج الفحص يختفي في كل تشغيلة</td></tr>
+<tr><td>إخفاء البيئة</td><td>استخدام أدوات زي إخفاء Magisk/Zygisk، أو بروفايل emulator أنظف</td><td>الأكتر تدخلًا — بيغيّر النظام نفسه، مش بس التطبيق، فبيأثر على كل تطبيق بتختبره</td></tr>
+</table></div>
+<h3>معمارية Android Biometric</h3>
+<p>الـ biometrics الحديثة في Android مش مجرد فحص واجهة — المعمارية مصمّمة إن التطبيق عمره ما يشوف أو يحمل بيانات البصمة أو الوجه الفعلية.</p>
+<div class="tw"><table>
+<tr><th>المكوّن</th><th>الوصف</th></tr>
+<tr><td>BiometricPrompt/BiometricManager</td><td>الـ API القياسي لطلب مصادقة بالبصمة أو الوجه، بديل <code>FingerprintManager</code> القديم</td></tr>
+<tr><td>Trusted Execution Environment (TEE)</td><td>التقاط ومطابقة البصمة بتحصل جوه هاردوير آمن معزول (أو StrongBox)، برّه النظام والتطبيق تمامًا</td></tr>
+<tr><td>Keystore-Backed Keys</td><td>التطبيق بيحمل مفتاح تشفير اتولّد في Android Keystore، مربوط بنجاح المصادقة — مش بيانات البصمة نفسها</td></tr>
+<tr><td>CryptoObject Binding</td><td>عملية تشفير حقيقية (تشفير/فك/توقيع) مربوطة بحدث المصادقة، ففتحها محتاج موافقة الـ TEE مش مجرد flag جوه التطبيق</td></tr>
+</table></div>
+<blockquote><p>ليه ده مهم للتحليل: flag بسيط زي <code>isAuthenticated</code> سهل الـ patch، بس CryptoObject مربوط صح مش سهل — تخطّيه يعني مهاجمة الـ TEE نفسه مش التطبيق.</p></blockquote>
+
+<h2 id="s11"><span class="n">11</span>تقنيات تعتيم الكود</h2>
+<h3>ليه المطوّرين بيعتّموا الكود</h3>
+<ul><li><b>حماية الملكية الفكرية:</b> تصعيب نسخ الخوارزميات ومنطق العمل الخاص. <b>مكافحة القرصنة:</b> رفع تكلفة كسر فحوصات الترخيص والميزات المدفوعة. <b>تفادي الكشف:</b> مؤلفو الـ malware بيستخدموا نفس التقنيات لإخفاء منطقهم الخبيث من الماسحات والمحللين.</li></ul>
+<blockquote class="w"><p>للمحلل: نفس التقنيات بتظهر في التطبيقات الشرعية والـ malware — التعتيم وحده مش حكم.</p></blockquote>
+<h3>تقنيات تعتيم الـ Strings</h3>
+<div class="tw"><table>
+<tr><th>التقنية</th><th>الوصف</th></tr>
+<tr><td>XOR Encryption</td><td>دمج كل حرف مع مفتاح بعملية XOR؛ متماثل، وسهل عكسه لما المفتاح يُعرف</td></tr>
+<tr><td>Base64 Encoding</td><td>مش تشفير — ترميز نصي قابل للعكس، غالبًا بيتطبّق فوق تشفير حقيقي لزيادة التمويه</td></tr>
+<tr><td>String Splitting &amp; Concatenation</td><td>تقسيم نص حساس لأجزاء متخزنة منفصلة، وتجميعها بس وقت التشغيل</td></tr>
+</table></div>
+<h3>تشفير XOR: إيه اللي بيحصل</h3>
+<p>XOR بيقلب كل bit في النص الصريح باستخدام الـ bit المقابل في المفتاح.</p>
+<pre><code>Plaintext (A): 01000001
+Key:           01001010
+Encrypted:     00001011   (XOR بت-ببت)</code></pre>
+<p>خاصية المفتاح: XOR متماثل — تشفير الـ ciphertext بنفس المفتاح بيرجّع النص الصريح، وده بالظبط إزاي فك التشفير بيشتغل.</p>
+<h3>تقنيات تعتيم تدفق التحكم</h3>
+<ul><li><b>Opaque Predicates:</b> شروط دايمًا بتدّي نفس النتيجة، لكن بتبان معتمدة على بيانات للقارئ أو الـ decompiler. <b>Dead Code Insertion:</b> كود غير قابل للوصول أو بلا معنى مخلوط عشان يضيّع وقت المحلل ويلخبط الأدوات الآلية. <b>Exception-Based Control Flow:</b> استخدام try/catch لإعادة توجيه التنفيذ بطرق تخفي تدفق التحكم الحقيقي. <b>Reflection-Based Obfuscation:</b> استدعاء الدوال بالاسم وقت التشغيل بدل مباشرة، يخفي النداء من الـ static analysis.</li></ul>
+<h3>التعتيم بالـ Reflection: قبل وبعد</h3>
+<pre><code>// نداء مباشر — ظاهر لأي decompiler
+myObject.sensitiveMethod();
+
+// نداء بالـ reflection — اسم الدالة عمره ما يظهر كنداء مباشر
+Class&lt;?&gt; clazz = Class.forName("com.example.MyClass");
+Method method = clazz.getDeclaredMethod("sensitiveMethod");
+method.invoke(myObject);</code></pre>
+<h3>اكتشاف تعتيم الـ Reflection</h3>
+<p>الـ static analysis مستحيل تتبع نداء ما بتشوفهوش مباشرة. دوّر على التلاتة دول مع بعض: <code>Class.forName()</code>، <code>getDeclaredMethod()</code>، <code>method.invoke()</code>.</p>
+<pre><code>// مزدوج الطبقة: Base64 + reflection يخفي httpClient.sendUserData(userData)
+String className = decrypt("aHR0cENsaWVudA==");
+String methodName = decrypt("c2VuZFVzZXJEYXRh");
+Class&lt;?&gt; clazz = httpClient.getClass();
+Method method = clazz.getDeclaredMethod(methodName, String.class);
+method.invoke(httpClient, userData);</code></pre>
+<p>قاعدة عامة: لما تشوف التلاتة نداءات دول مع بعض، الهدف الحقيقي غالبًا نص مفكوك أو مفكّك تشفيره جنبهم.</p>
+<h3>تقنيات حماية متقدّمة</h3>
+<ul><li><b>Packing &amp; Compression:</b> ضغط أو تشفير الـ binary كله؛ بيفك نفسه في الذاكرة بس وقت التشغيل. <b>Symbol Stripping:</b> استبدال الأسماء ذات المعنى بأسماء بلا معنى، مثل <code>validatePassword</code> → <code>func_234</code>.</li></ul>
+<h3>ما يعتمد عليه المحللون (Pattern Recognition)</h3>
+<ul><li>Cross-referencing: ربط دوال بلا اسم بسلوك مكتبة معروف. Entropy analysis: مناطق عالية الـ entropy بتوحي ببيانات معبّأة أو مشفّرة. Data flow analysis: تتبّع القيم حتى لما الأسماء تختفي. Runtime monitoring &amp; memory dumping: ملاحظة السلوك الحقيقي واسترجاع كود مفكوك أو مفاتيح من الذاكرة.</li></ul>
+<h3>حماية Static وDynamic وHybrid</h3>
+<div class="tw"><table>
+<tr><th>النوع</th><th>الوصف</th></tr>
+<tr><td>Static Transformation</td><td>تُطبَّق وقت الترجمة أو التعبئة؛ التعتيم مخبوز جوه الـ binary المشحون</td></tr>
+<tr><td>Dynamic Protection</td><td>تُطبَّق وقت التشغيل، زي فك تشفير الـ strings بس وقت الحاجة ليها</td></tr>
+<tr><td>Hybrid Approaches</td><td>جمع التقنيات الـ static والـ dynamic لحماية طبقية أكتر صمودًا</td></tr>
+</table></div>
+<p>خلاصة المحلل: كل ما الحماية تكون ديناميكية أكتر، كل ما بتكشف نفسها أكتر لجولة تحليل ديناميكي.</p>
+
+<h2 id="s12"><span class="n">12</span>كسر التشفير الضعيف وفكّ التعتيم</h2>
+<h3>كسر XOR الضعيف: هجوم بالنص الصريح المعروف</h3>
+<p>لو التطبيق دايمًا بيعمل XOR بنفس المفتاح، وتقدر تخمّن جزء من النص الصريح، تقدر تسترجع المفتاح.</p>
+<pre><code>Known plaintext: "https://"
+Encrypted data:  "AQU6AuLW"
+# استرجاع المفتاح: XOR النص الصريح المعروف مع بايتات الـ ciphertext المقابلة = المفتاح، قابل لإعادة الاستخدام لفك كل حاجة تانية بيحميها</code></pre>
+<blockquote class="w"><p>إعادة استخدام المفتاح مع نص صريح معروف هو أشيع ضعف في تشفير الموبايل المحلي الصنع. تاريخيًا، نفس الفكرة كسرت ترافيك Enigma في الحرب العالمية الثانية: نص صريح معروف أو قابل للتخمين كشف الـ key stream.</p></blockquote>
+<h3>التحليل الإحصائي لـ Repeating-Key XOR</h3>
+<ul><li>XOR بمفتاح متكرر بيحافظ على بعض الخواص الإحصائية للنص الصريح. بايتات متطابقة في النص الصريح بمواضع i وi+keylength بتطلع بايتات ciphertext متطابقة.</li>
+<li><b>تحديد طول المفتاح:</b> جرّب أطوال مفاتيح مرشّحة مختلفة ضد الـ ciphertext، ودوّر على أنماط متكررة عند كل طول — معدل تطابق أعلى عند طول معيّن بيوحي إنه الطول الصحيح.</li></ul>
+<h3>أخطاء التشفير الضعيف الشائعة</h3>
+<div class="tw"><table>
+<tr><th>الخطأ</th><th>الوصف</th></tr>
+<tr><td>Hardcoded Key in Source</td><td>المفتاح بيتشحن جوه التطبيق، فـ decompile التطبيق بيسترجعه مباشرة</td></tr>
+<tr><td>No Key Derivation</td><td>المفتاح الخام يُستخدم كما هو، من غير دالة تبطّئ أو تملّح استخدامه</td></tr>
+<tr><td>No Integrity Verification</td><td>فك التشفير دايمًا "بينجح"، حتى بمفتاح غلط — مفيش فحص إن المخرج صالح</td></tr>
+<tr><td>Weak Key Length or Reuse</td><td>مفاتيح قصيرة أو معاد استخدامها بتخلي الـ brute force والنص الصريح المعروف عمليين</td></tr>
+</table></div>
+<h3>استراتيجيات استرجاع المفاتيح</h3>
+<ul><li>تحليل تردد إحصائي (مقارنة ترددات الحروف/البايتات بجداول اللغة المعروفة). هجوم قاموس (كلمات شائعة متوقعة في النص الصريح زي http، https، api، key، secret، token). اختبار عبر النص بالكامل (تأكيد المفتاح المرشّح بيعطي مخرج منطقي على كل الـ ciphertext مش بس جزء). Brute Force (للمفاتيح القصيرة، جرّب كل الاحتمالات؛ مساحة المفتاح الصغيرة بتخليها عملية).</li></ul>
+<h3>سير عمل فكّ التعتيم: أربع مراحل</h3>
+<pre class="flow"><code>Phase 1: Recon &amp; Pattern Analysis → Phase 2: String De-obfuscation → Phase 3: Control Flow Reconstruction → Phase 4: Reflection De-obfuscation</code></pre>
+<p>الترتيب مهم: مخرج كل مرحلة بيغذّي اللي بعدها — الـ strings المفكوكة غالبًا بتكشف أسماء الكلاسات والدوال اللي المرحلة 4 محتاجاها.</p>
+<h4>المرحلة 1: الاستطلاع وتحليل الأنماط</h4>
+<pre><code>Base64 strings:   [A-Za-z0-9+/]{20,}={0,2}
+Hex-encoded:      [0-9a-fA-F]{16,}
+XOR/crypto hints: XOR, xor, javax, crypto, security
+De-obfuscation hints: decode, decrypt, deobfuscate</code></pre>
+<h4>المرحلة 2: استراتيجيات فكّ تعتيم الـ Strings</h4>
+<ul><li>تنفيذ فك تشفير XOR (إعادة تنفيذ روتين التطبيق بالمفتاح المسترجَع لفك كل الـ strings المطابقة دفعة واحدة). مفاتيح معتمدة على السياق (تمييز لما المفتاح الحقيقي يُشتق من بيئة الـ runtime مش hardcoded). سلسلة فك تشفير متعددة المراحل (تقشير طبقات متعددة بالترتيب). تجميع Strings مقسّمة (تحديد أجزاء نص موزعة على متغيرات متعددة وتجميعها بالترتيب الصحيح).</li></ul>
+<h4>المرحلة 3: إعادة بناء تدفق التحكم</h4>
+<p>أكبر تحدي: إزالة الـ Opaque Predicates. المنهج: حدّد الشروط اللي ما بتتغيرش نتيجتها مهما كان المدخل، أكّد بتنفيذ رمزي أو اختبار بسيط مش مجرد تخمين، وشيل الفرع الدايم-صح/دايم-غلط وبسّط الكود المحيط لمنطقه الحقيقي.</p>
+<h4>المرحلة 4: فكّ تعتيم الـ Reflection</h4>
+<p>أكبر تحدي: أسماء الكلاسات والدوال الحقيقية عمرها ما تظهر وقت الـ static analysis — الـ reflection بتستدعيهم بالاسم وقت التشغيل. حلّه: اجمع الـ strings المفكوكة من المرحلة 2 مع التتبّع الديناميكي (Frida) عشان تشوف أي كلاس ودالة فعليًا بيتناديوا.</p>
+<h3>حقيبة أدوات فكّ التعتيم</h3>
+<div class="tw"><table>
+<tr><th>الفئة</th><th>الأدوات</th></tr>
+<tr><td>Java Decompilers</td><td>jadx, cfr, procyon, fernflower</td></tr>
+<tr><td>Dex Analyzers</td><td>baksmali, dex2jar, enjarify</td></tr>
+<tr><td>String Extractors</td><td>strings, binwalk, مستخرجات مخصصة</td></tr>
+<tr><td>Control Flow Analyzers</td><td>Ghidra, IDA Pro, radare2</td></tr>
+<tr><td>Crypto Analyzers</td><td>cryptography, pycrypto, سكريبتات تشفير مخصصة</td></tr>
+</table></div>
+
+<h2 id="s13"><span class="n">13</span>معماريات التطبيقات الهجينة واختبارها</h2>
+<h3>ثلاثة نماذج تطوير</h3>
+<div class="tw"><table>
+<tr><th>النموذج</th><th>الوصف</th></tr>
+<tr><td>Native Apps</td><td>تطوير خاص بالمنصة: Java/Kotlin لـ Android، Swift/Objective-C لـ iOS</td></tr>
+<tr><td>Hybrid Apps</td><td>تقنيات ويب (HTML, CSS, JavaScript) ملفوفة جوه حاوية native</td></tr>
+<tr><td>Cross-Platform</td><td>codebase واحد مترجَم أو مربوط عبر bridge لمنصات متعددة، زي React Native وFlutter</td></tr>
+</table></div>
+<h3>جسر الـ WebView جوه التطبيق الهجين</h3>
+<p>تطبيق هجين (زي Cordova) بيلف تطبيق ويب جوه مكوّن WebView داخل غلاف native. كود JavaScript بيشتغل جوه الـ WebView ده، زي ما هو صفحة ويب عادية.</p>
+<pre class="flow"><code>JavaScript in WebView → Bridge → Native feature (camera, GPS)</code></pre>
+<p>الجسر: لما JavaScript يحتاج ميزة native زي الكاميرا أو GPS، بيتواصل عبر الجسر ده. الفكرة الأساسية: كود الويب عمره ما يلمس الـ native APIs مباشرة — كل حاجة متعلقة بـ native بتمر عبر الجسر.</p>
+<h3>React Native وFlutter وXamarin</h3>
+<div class="tw"><table>
+<tr><th>الإطار</th><th>الخصائص</th></tr>
+<tr><td>React Native</td><td>مفيش WebView. JavaScript بيتترجم لمكونات واجهة native حقيقية. لسه فيه bridge، بس لتواصل JS-to-native مش للعرض</td></tr>
+<tr><td>Flutter</td><td>بيترجم كود Dart مباشرة لكود آلة native. بيعرض واجهته الخاصة بمحركه الخاص، متخطّي مكونات الواجهة الـ native تمامًا</td></tr>
+<tr><td>Xamarin</td><td>بيشغّل كود .NET (C#) عبر طبقة runtime على كل منصة. بيشارك منطق العمل مع ندائه لـ native APIs</td></tr>
+</table></div>
+<h3>سطح الهجوم حسب نوع التطبيق</h3>
+<div class="tw"><table>
+<tr><th>النوع</th><th>سطح الهجوم</th></tr>
+<tr><td>Native Apps</td><td>الكود الـ native نفسه</td></tr>
+<tr><td>Web Apps</td><td>تقنيات الويب: HTML وCSS وJavaScript</td></tr>
+<tr><td>Hybrid Apps</td><td>الكود الـ native والطبقة الويب معًا، زائد جسر التواصل بينهم</td></tr>
+</table></div>
+<blockquote><p>الخلاصة: التطبيقات الهجينة مش بس بتزوّد الخطر، بتضيف فئة خطر كاملة جديدة في الجسر نفسه.</p></blockquote>
+<h3>بصمة الإطار</h3>
+<div class="tw"><table>
+<tr><th>الإطار</th><th>العلامة</th></tr>
+<tr><td>Cordova</td><td>مجلد <code>www/</code> يحمل مصدر HTML/CSS/JS للتطبيق</td></tr>
+<tr><td>React Native</td><td><code>index.android.bundle</code> أو <code>main.jsbundle</code></td></tr>
+</table></div>
+<p>ليه ده مهم: تحديد الإطار الأول بيقولّك أي جسر ونموذج تخزين وأدوات تنطبق. (المصدر: OWASP MASTG, MASTG-TEST-0033)</p>
+<h3>نماذج التخزين مقارنة</h3>
+<div class="tw"><table>
+<tr><th>النوع</th><th>الوصف</th></tr>
+<tr><td>Web Apps</td><td><code>localStorage</code>/<code>sessionStorage</code> موجودة جوه المتصفح بس، متاحة من JavaScript فقط، ومحمية بـ same-origin policy</td></tr>
+<tr><td>Native Apps</td><td>SharedPreferences (Android) أو NSUserDefaults (iOS)، متاحة لكود التطبيق native بس ومحمية بـ sandboxing مستوى النظام</td></tr>
+<tr><td>Hybrid Apps</td><td>عندها التخزينين (ويب وnative)، والجسر بينهم يقدر يوصل للطبقتين</td></tr>
+</table></div>
+<p>المشكلة: مسارات وصول مزدوجة تعني بيانات حساسة متخزنة في أي جانب ممكن توصل من الجانب التاني.</p>
+<h3>سيناريو هجوم: اختراق الجسر</h3>
+<pre class="flow"><code>1. Inject: المهاجم بيحقن JavaScript عبر XSS أو WebView مخترق
+2. Call the bridge: السكريبت المحقون بينادي الجسر الـ native مباشرة من سياق الويب
+3. Reach native storage: نداء الجسر بيوصل لبيانات المفروض native-only
+4. Escalate: اختراق طبقة الويب بيتحول لوصول بيانات على مستوى native</code></pre>
+<pre><code>NativeBridge.getSecureData('encryption_key')</code></pre>
+<p>ليه ده بيشتغل: الجسر اتبنى عشان يسمح لـ JS موثوق يوصل لبيانات native — مش قادر يفرّق بين كود موثوق وكود محقون.</p>
+<h3>منهجية اختبار التطبيقات الهجينة</h3>
+<pre class="flow"><code>1. تحديد الإطار → 2. استخراج وتحليل أصول الويب → 3. اختبار ضوابط أمان WebView → 4. اكتشاف واستغلال الجسور → 5. تحليل أمان التخزين المحلي → 6. توثيق بإثبات (PoC)</code></pre>
+<h3>إيه اللي تفحصه</h3>
+<ul><li>حاويات WebView ومحركات JS (إزاي العرض مضبوط وأي محرك بيشغّل السكريبت). طبقات الجسر الـ native (أي سطح API الجسر بيكشفه لـ JavaScript). بيئات الإضافات (plugins طرف تالت والتكاملات اللي بتضيفها). تعبئة الأصول (إزاي الكود والموارد منظّمة ومشحونة).</li></ul>
+<h3>اختبار أمان Cordova/PhoneGap</h3>
+<div class="tw"><table>
+<tr><th>إيه تراجع</th><th>ثغرات شائعة</th></tr>
+<tr><td>تحليل إعدادات <code>config.xml</code></td><td>وصول شبكة غير مقيَّد</td></tr>
+<tr><td>صلاحيات وقدرات الـ plugins</td><td>صلاحيات plugins زايدة</td></tr>
+<tr><td>تنفيذ Content Security Policy (CSP)</td><td>سياسات CSP ضعيفة</td></tr>
+<tr><td>ضوابط الوصول لنظام الملفات</td><td>وصول ملفات محلي غير آمن</td></tr>
+</table></div>
+<h3>تقييم إطار Ionic</h3>
+<div class="tw"><table>
+<tr><th>إيه تراجع</th><th>منهج الاختبار</th></tr>
+<tr><td>أمان مكونات Angular/React/Vue</td><td>تحليل كود TypeScript/JavaScript المصدري</td></tr>
+<tr><td>استخدام Capacitor مقابل Cordova plugins</td><td>اعتراض ترافيك الشبكة</td></tr>
+<tr><td>HTTP interceptors ونداءات الـ API</td><td>فحص التخزين المحلي</td></tr>
+<tr><td>ثغرات إدارة الحالة</td><td>تقييم ثغرات الـ plugins</td></tr>
+</table></div>
+<h3>تحليل أمان React Native</h3>
+<pre class="flow"><code>JS Thread (منطق العمل، الحالة، نداءات API) ⇄ Bridge (طبقة تواصل غير متزامنة) ⇄ UI Thread (عرض native، تفاعلات المستخدم، أحداث النظام)</code></pre>
+<p>التبعات الأمنية: ثغرات تسلسل البيانات، هجمات توقيت، تخطّي عزل الـ threads، فساد الذاكرة. (مرجع: codeshare.frida.re — hook لمحرك Hermes لنداءات دوال React Native)</p>
+<h3>اختبار تطبيقات Flutter</h3>
+<p>خاصية فريدة: Dart بيتترجم لكود آلة native، فمفيش JavaScript bundle أو bytecode يتفكّك بالطريقة المعتادة. ده بيخلّي تطبيقات Flutter أصعب بشكل ملحوظ في الهندسة العكسية بأدوات RE القياسية.</p>
+<p>مع ذلك، تحليل الـ strings والذاكرة للـ binary المترجَم ممكن يكشف أسرار كـ strings عادية:</p>
+<pre><code>https://api.secret-server.com/v1/
+sk-1234567890abcdef
+production-database-key</code></pre>
+<p>الدرس: الترجمة لكود native بتخفي المنطق، لكن مش بتشفّر الـ strings الـ hardcoded تلقائيًا.</p>
+<h3>آليات حماية WebView</h3>
+<ul><li><b>Same-Origin Policy:</b> إنفاذ بيمنع سكريبت من origin من قراءة بيانات origin تاني. <b>JavaScript Interface Restrictions:</b> تقييد أي كائنات ودوال native يقدر JS يوصلها عبر الجسر. <b>File Access Limitations:</b> تقييد الـ WebView من قراءة ملفات محلية عشوائية. <b>SSL Certificate Pinning:</b> ضمان إن الـ WebView بيثق بس في شهادة السيرفر المتوقعة.</li></ul>
+<h3>التخزين في التطبيقات الهجينة وثغراته الشائعة</h3>
+<p>آليات التخزين المستخدمة: HTML5 Local/Session Storage، WebSQL وIndexedDB، تخزين ملفات Cordova/PhoneGap، وحلول تخزين خاصة بالإطار. ثغرات شائعة: تعرّض بيانات حساسة عبر طبقات التخزين، توكنز login باقية في التخزين، بيانات مستخدم غير مشفّرة at rest.</p>
+<p>تقنية تحليل: اربط WebView بـ Frida لمراقبة قراءات وكتابات التخزين وهي بتحصل.</p>
+
+<h2 id="s14"><span class="n">14</span>تحليل Malware الموبايل</h2>
+<h3>الأهداف الأساسية</h3>
+<ul><li>بيانات شخصية (جهات اتصال، صور، رسائل، ملفات خاصة). اعتمادات (باسوردات محفوظة، session tokens، أسرار مصادقة). معلومات الجهاز (IMEI، إصدار النظام، تطبيقات مثبّتة، بيانات بصمة). بيانات الشركة (إيميل العمل، مستندات داخلية، وصول لأنظمة الشركة عبر الجهاز).</li></ul>
+<h3>طرق تسريب البيانات</h3>
+<div class="tw"><table>
+<tr><th>الطريقة</th><th>الوصف</th></tr>
+<tr><td>HTTP/HTTPS POST لسيرفرات C2</td><td>القناة الأشيع: إرسال البيانات المسروقة لسيرفر تحكم وسيطرة</td></tr>
+<tr><td>SMS لأرقام مميزة</td><td>تسريب كميات صغيرة من البيانات، أو توليد رسوم احتيالية مباشرة</td></tr>
+<tr><td>مرفقات إيميل</td><td>تعبئة وإرسال البيانات المسروقة كمرفق إيميل من الجهاز المخترق</td></tr>
+<tr><td>رفع لتخزين سحابي</td><td>إساءة استخدام حساب سحابي للضحية أو للمهاجم كـ "صندوق إسقاط"</td></tr>
+<tr><td>Bluetooth/NFC</td><td>نادر، لكن يُستخدم لنقل قصير المدى وأقل وضوحًا في سيناريوهات مستهدفة</td></tr>
+</table></div>
+<h3>قدرات المراقبة</h3>
+<ul><li>تسجيل صوتي (التقاط صوت محيط وتسجيل مكالمات، غالبًا من غير أي مؤشر ظاهر). التقاط فيديو (الوصول للكاميرا وتسجيل الشاشة). تتبّع الموقع (GPS وأبراج الخلوي وWi-Fi). مراقبة الاتصالات (قراءة SMS وتطبيقات المراسلة والإيميل). تسجيل ضربات المفاتيح (التقاط الباسورد والنص وهو بيتكتب، حتى برّه التطبيق الخبيث).</li></ul>
+<h3>تقنيات الاحتيال المالي</h3>
+<ul><li><b>Banking Trojans:</b> هجمات overlay برسم شاشة login مزيفة فوق تطبيق بنكي حقيقي لسرقة الاعتمادات. <b>SMS Interception:</b> قراءة SMS الواردة للقبض على OTP وتخطّي الـ 2FA. <b>Cryptocurrency Theft:</b> سرقة اعتمادات المحفظة وseed phrases لتفريغ محافظ العملة المشفّرة. <b>Premium Service Fraud:</b> اشتراك صامت في خدمات مميزة أو رسوم غير مصرَّح بيها.</li></ul>
+<h3>التوزيع: متجهات قائمة على التطبيقات</h3>
+<ul><li>تطبيقات خبيثة (أدوات أو ألعاب مزيفة مبنية لتبدو مفيدة). تطبيقات شرعية معاد تعبئتها بكود خبيث. اختراق حساب مطوّر (نشر malware عبر حساب مطوّر شرعي وثقته القائمة). تسميم التحديثات (تطبيق شرعي بيشحن تحديث خبيث بعد بناء ثقة بنسخ نظيفة).</li></ul>
+<blockquote><p>القاسم المشترك: الهندسة الاجتماعية — كل متجه بيعتمد على إن الضحية يثق في حاجة بتبان شرعية.</p></blockquote>
+<h3>التوزيع: متجهات فيزيائية وشبكية</h3>
+<ul><li><b>USB Charging Stations ("Juice Jacking"):</b> منفذ شحن عام بيشتغل كمان كاتصال بيانات بيثبّت malware. <b>QR Codes خبيثة:</b> مسح كود QR بيشغّل تحميل APK مباشر بدل الرابط المتوقع. <b>Bluetooth Exploitation:</b> هجمات زي BlueBorne بتخترق الجهاز من غير أي إقران. <b>Wi-Fi Network Attacks:</b> captive portal على hotspot خبيث لتوزيع malware متنكّر كخطوة تسجيل دخول.</li></ul>
+<h3>هجمات سلسلة الإمداد</h3>
+<ul><li>مكتبات طرف تالت (SDKs وframeworks خبيثة مسحوبة جوه تطبيقات شرعية). أدوات تطوير (بيئات تطوير مخترقة بتحقن كود خبيث وقت البناء). شبكات توزيع (اختراق CDN بيبدّل تطبيق أو تحديث نظيف بواحد خبيث أثناء النقل). تثبيت مسبق على الهاردوير (malware مثبّت من المصنع قبل وصول الجهاز للمستخدم).</li></ul>
+<h3>إرشادات عملية لتحليل Malware</h3>
+<p>تحليل الـ malware أسهل لما تعرف بتدوّر على إيه. استخدم كل حاجة في الكورس ده — الأهداف وطرق التسريب ومتجهات التوزيع — كـ checklist. تدرّب على عينات حقيقية (راجع androzoo.uni.lu). توقّع تقنيات مكافحة التحليل (العينات ممكن تكتشف وتقاوم بيئة التحليل بتاعتك). اجمع بين الـ static والـ dynamic analysis (ولا واحدة لوحدها بتحكي القصة كاملة). استمر في التعلّم (تقنيات malware الموبايل بتتطور باستمرار).</p>
+
+<h2 id="s15"><span class="n">15</span>أسطح هجوم Smart TV وIoT</h2>
+<h3>ضوابط أمان منصة التلفزيون</h3>
+<ul><li>سياسات SELinux (ضوابط وصول إجبارية تحدد العمليات المسموحة لعمليات التلفزيون الخاصة). صلاحيات Android معدّلة (نموذج صلاحيات مخصص للتلفزيون، مختلف عن افتراضيات الهاتف والتابلت). Package Manager (بيتولى تثبيت والتحقق من الـ APK على منصة التلفزيون). Content Providers (الآلية اللي تطبيقات التلفزيون بتشارك بيها البيانات مع بعض).</li></ul>
+<h3>سطح الهجوم الفريد لأجهزة Smart TV</h3>
+<ul><li><b>طرق إدخال خاصة بالتلفزيون:</b> الريموت والإدخال الصوتي بيضيفوا منطق تعامل مع المدخلات مش موجود في الهواتف. <b>واجهات تحكم HDMI-CEC:</b> بتسمح لأجهزة HDMI متصلة ببعت أوامر تحكم للتلفزيون — قناة كتير تطبيقات ما بتتوقعهاش. <b>بروتوكولات Cast/Screen Mirroring:</b> بروتوكولات بتقبل stream أو أوامر تحكم من أجهزة تانية على الشبكة. <b>معالجة إشارة البث والـ Tuner:</b> بتحلل مدخل البث والـ tuner، سطح مالوش مثيل في الهاتف.</li></ul>
+<h3>الوصول على مستوى الهاردوير</h3>
+<div class="tw"><table>
+<tr><th>الواجهة</th><th>الوصف</th></tr>
+<tr><td>UART/Serial Console</td><td>كونسول debug تسلسلي مكشوف على اللوحة، غالبًا يُوصل بلحام بضع pins — بيدّي غالبًا root shell وقت الـ boot</td></tr>
+<tr><td>JTAG Debugging</td><td>واجهة debug هاردوير تقدر توقف الـ CPU وتقرا الذاكرة وتفلش الـ firmware مباشرة — متخطّية الحمايات السوفت وير تمامًا</td></tr>
+</table></div>
+<p>ليه ده مهم: الواجهتين شغّالين تحت النظام، فالدفاعات السوفت وير بس (كشف root، تعتيم) مش بتنطبق عليهم خالص.</p>
+<h3>الحصول على الـ Firmware وبنيته</h3>
+<pre><code>wget http://firmware.samsung.com/[MODEL]/[VERSION]/firmware.zip</code></pre>
+<p>بعد فك التعبئة، كل جزء هدف تحليل منفصل: Bootloader (U-Boot)، Kernel (Linux)، binaries النظام، إطارات التطبيقات، ملفات config، تطبيقات افتراضية، قسم التطبيقات، وقسم بيانات المستخدم — static analysis على الـ binaries، مراجعة الـ config، واستخراج بيانات على مستوى الأقسام.</p>
+<h3>سطوح هجوم متجاهَلة</h3>
+<ul><li><b>متجاهَل: تحليل الـ Firmware</b> — غالبًا فين الاعتمادات الـ hardcoded والـ backdoors موجودة. <b>متجاهَل: هجمات الشبكة</b> — التلفزيونات بتشغّل stacks وخدمات شبكة كاملة ما حد بيفحصها. <b>متجاهَل: هجمات واجهة الويب</b> — كتير تلفزيونات بتكشف سيرفر ويب محلي للإعداد أو التحكم عن بُعد. <b>متجاهَل: البحث في التلفزيون نفسه</b> — أسطح هجوم وثغرات متعددة موجودة، والجهاز يستحق نفس عمق البحث زي الهاتف.</li></ul>
+
+<h2 id="s16"><span class="n">16</span>التطوير الآمن وDevSecOps</h2>
+<h3>ليه DevSecOps الموبايل مختلف</h3>
+<ul><li><b>توزيع عبر الـ Stores:</b> التطبيقات بتتوزع عبر متاجر بمراجعة، مش زي تطبيق ويب تتحكم فيه كامل. <b>مفيش نشر فوري:</b> التحديثات ما ينفعش تتدفع فورًا زي الـ backend. <b>تحديث مستخدمين متأخر:</b> المستخدمين ممكن ما يحدّثوش فورًا، فتفضل نسخ قديمة معرّضة منتشرة. <b>أجهزة غير متحكَّم فيها:</b> مشاكل الأمان في التطبيقات المنشورة بتأثر على أجهزة مش تحت سيطرتك.</li></ul>
+<h3>المبدأ 1: عمرك ما تثق في الـ Client</h3>
+<p>القاعدة: دايمًا طبّق تحقق server-side، حتى للفحوصات اللي التطبيق أصلًا بيعملها. التطبيق لازم يبعت معرّفات بس (زي <code>itemId</code>) — عمره ما يبعت قيم حساسة زي الأسعار أو الصلاحيات أو قرارات منطق العمل. ليه: أي حاجة متحسوبة أو متقرر على الـ client ممكن تتعترض أو تتعدّل أو تتعاد — السيرفر هو الوحيد اللي يقدر يفرض القرار.</p>
+<h3>المبدأ 2: التحقق من المدخلات خط دفاعك الأول</h3>
+<ul><li>Format Validation: هل البيانات بالصيغة المتوقعة (النوع والطول والبنية الصح)؟ Range Validation: هل البيانات جوه الحدود المقبولة (كمية أو مبلغ)؟ Business Logic Validation: هل البيانات دي منطقية في سياق تطبيقك، مش بس شكلها صح؟</li></ul>
+<p>التلاتة كلهم، كل مرة: بيانات ممكن تكون بالصيغة الصح وجوه المدى ولسه ما لهاش معنى لمنطق العمل — كل طبقة بتمسك إيه اللي التانية بتفوّته.</p>
+<h3>المبدأ 3: قنوات اتصال آمنة</h3>
+<p>بدل ما تثق في أي Certificate Authority، تضمّن بصمة شهادة سيرفرك مباشرة جوه تطبيق الموبايل — ده هو الـ Certificate Pinning: التطبيق بيثق بس في الشهادة الواحدة اللي اتبنى على توقّعها.</p>
+<div class="tw"><table>
+<tr><th>من غير Pinning</th><th>مع Pinning</th></tr>
+<tr><td>التطبيق بيثق في أي شهادة موقّعة من CA موثوق — شهادة متاحة بغلط أو حصل عليها المهاجم تقدر تعترض الترافيك</td><td>الـ MITM محتاج بالظبط الشهادة أو المفتاح المثبّت — شهادة صحيحة من أي CA تاني مرفوضة</td></tr>
+</table></div>
+<h3>طيف أمان التخزين</h3>
+<div class="tw"><table>
+<tr><th>المستوى</th><th>الوصف</th><th>Android</th><th>iOS</th></tr>
+<tr><td>الأقل أمانًا</td><td>ملفات نص عادي، SharedPreferences، UserDefaults — مقروءة من أي حاجة عندها وصول للملف</td><td>—</td><td>—</td></tr>
+<tr><td>أكتر أمانًا</td><td>Sandbox التطبيق والمجلدات الخاصة — محمية بعزل التطبيق مستوى النظام</td><td>—</td><td>—</td></tr>
+<tr><td>الأكتر أمانًا</td><td>تخزين مشفّر وkeystores مدعومة بالهاردوير — غير قابلة للقراءة حتى بوصول خام للملف</td><td><code>EncryptedSharedPreferences</code> وEncryptedFile بتتولى التشفير تلقائيًا</td><td>Keychain بيوفّر تخزين آمن مدعوم بالهاردوير مكافئ</td></tr>
+</table></div>
+<h3>مكدّس الأمان (Security Stack)</h3>
+<div class="tw"><table>
+<tr><th>الطبقة</th><th>الوصف</th></tr>
+<tr><td>Application Layer</td><td>إجراءات أمان التطبيق نفسه: تحقق، نداءات تشفير، كود آمن</td></tr>
+<tr><td>Operating System</td><td>ميزات أمان المنصة: sandboxing وصلاحيات وحمايات مستوى النظام</td></tr>
+<tr><td>Trusted Execution Environment</td><td>بيئة آمنة ومعزولة جوه الشريحة للعمليات الحساسة، مثل ARM TrustZone أو Secure Enclave من Apple</td></tr>
+<tr><td>Hardware Security Module</td><td>شريحة أمان مخصصة بأقوى ضمانات، مثل Google Titan M أو Samsung Knox Vault</td></tr>
+</table></div>
+<p>اقرأها من تحت لفوق: كل طبقة تحت أصعب في الهجوم من اللي فوقها، من الأقل للأكتر أمانًا.</p>
+<h3>أنماط مضادة شائعة</h3>
+<ul><li><b>النمط المضاد 1 — أسرار Hardcoded:</b> API keys أو باسوردات أو مفاتيح تشفير مضمّنة مباشرة في كود أو موارد التطبيق. <b>النمط المضاد 2 — تحقق أمان على الـ Client:</b> الثقة في فحص يحصل بس على الجهاز، من غير إنفاذ server-side. <b>النمط المضاد 3 — إدارة Session ضعيفة:</b> sessions ما بتنتهيش صح، أو توكنز يمكن التنبؤ بيها أو معاد استخدامها.</li></ul>
+<h3>Threat Modeling: إطار STRIDE</h3>
+<div class="tw"><table>
+<tr><th>الحرف</th><th>الفئة</th><th>الوصف</th></tr>
+<tr><td>S</td><td>Spoofing</td><td>انتحال هوية مستخدم أو جهاز أو مكوّن نظام</td></tr>
+<tr><td>T</td><td>Tampering</td><td>تعديل بيانات أو كود من غير تصريح</td></tr>
+<tr><td>R</td><td>Repudiation</td><td>مستخدم بينكر فعل، من غير طريقة لإثبات العكس</td></tr>
+<tr><td>I</td><td>Information Disclosure</td><td>كشف بيانات لحد مش مصرَّح له يشوفها</td></tr>
+<tr><td>D</td><td>Denial of Service</td><td>تعطيل أو حجب الوصول الشرعي للتطبيق أو خدماته</td></tr>
+<tr><td>E</td><td>Elevation of Privilege</td><td>الحصول على قدرات أكتر من المسموح</td></tr>
+</table></div>
+<h3>قالب نموذج التهديد</h3>
+<ul><li><b>Feature:</b> اسم الميزة أو التدفق المُنمذَج. <b>Assets:</b> البيانات والوظائف القيّمة اللي الميزة بتلمسها. <b>Entry Points:</b> كل طرق دخول البيانات للنظام عبر الميزة دي. <b>Trust Levels:</b> مستويات صلاحيات المستخدمين المختلفة المعنية. <b>STRIDE Analysis:</b> لكل حرف من S/T/R/I/D/E، سجّل Threat وMitigation وTest للتحقق من الحماية. <b>Risk Assessment:</b> رتّب التهديدات High/Medium/Low، واسرد الإجراءات الموصى بيها.</li></ul>
+<h3>خط أنابيب DevSecOps: أربع مراحل</h3>
+<pre class="flow"><code>Phase 1: Code Commit Security Checks → Phase 2: Build-Time Security Validation → Phase 3: Pre-Production Security Testing → Phase 4: Continuous Security Monitoring</code></pre>
+<p>بوابات الأمان بتقف بين المراحل دي: نقاط تفتيش آلية بتوقف الكود غير الآمن من التقدّم.</p>
+<h4>المرحلة 1: فحوصات أمان وقت الـ Commit</h4>
+<pre><code># فحص أسرار hardcoded
+grep -r "api_key\|password\|secret" src
+
+# فحص صلاحيات خطرة في الـ manifest
+grep -i "dangerous" app/src/main/AndroidManifest.xml</code></pre>
+<p>بتمسك: أسرار وصلاحيات واسعة جدًا اتعمّلها commit بالغلط، قبل ما توصل لأي بناء. هدف المرحلة: مسك أرخص وأشيع الأخطاء بأسرع وأوتوماتيكي طريقة ممكنة.</p>
+<h4>المرحلة 2: التحقق الأمني وقت البناء</h4>
+<ul><li>فحص ثغرات الاعتماديات (كل مكتبة التطبيق بيسحبها). فشل البناء لو اتلاقت ثغرات حرجة (البناء بيتوقف، مش بس بيحذّر). تحليل أمان آلي على الـ APK المبني نفسه، مش بس الكود المصدري. التحقق من التوقيع قبل ما يتقدّم.</li></ul>
+<h4>المرحلة 3: اختبار أمان ما قبل الإنتاج</h4>
+<p>إيه اللي بيتختبر: endpoints الـ API عن ثغرات شائعة، أمان الـ API العام، أمان تطبيق الموبايل العام، تخطّي المصادقة، عيوب التفويض. المعيار المرجعي: استخدم OWASP MASVS ودليله MASTG لتنظيم المرحلة دي — checklist قابل للتكرار ما يعتمدش على ذاكرة شخص واحد.</p>
+<h4>المرحلة 4: مراقبة أمنية مستمرة</h4>
+<p>المراقبة الأمنية وقت الـ runtime بتعيش جوه التطبيق المشحون نفسه، مش بس في لوجات الـ backend. راقب محاولات العبث (كشف تعديل في الـ binary أو الـ runtime). راقب أنماط استخدام الـ API (إساءة استخدام أو أتمتة ما بتبانش زي مستخدم حقيقي). راقب محاولات الـ debugging (debugger متصل أو إطار instrumentation). افحص وضع أمان الجهاز (هل الجهاز نفسه rooted أو jailbroken أو مخترق).</p>
+<h3>قواعد Static Analysis الخاصة بـ Android</h3>
+<ul><li>كشف exported activities من غير فحص صلاحيات. فحص intent handling غير آمن (implicit intents بتحمل بيانات حساسة). تحديد تحقق SSL غير صحيح. فحص صلاحيات ملفات غير كافية. كشف استخدام shared preferences غير آمن. فحص debug flags متروكة مفعّلة في بناء الإنتاج.</li></ul>
+<h3>قواعد Static Analysis الخاصة بـ iOS</h3>
+<ul><li>تحديد استخدام Keychain غير آمن. كشف تعامل URL scheme غير صحيح. فحص تعطيل ATS. فحص تضمين backup غير آمن. كشف logging لمعلومات حساسة. فحص تنفيذ مصادقة بيومترية غير صحيح.</li></ul>
+<h3>قواعد Static Analysis عبر المنصات</h3>
+<ul><li>مفاتيح وباسوردات تشفير hardcoded. خوارزميات تشفير ضعيفة (MD5, SHA1, DES). توليد أرقام عشوائية غير آمن. ثغرات SQL injection في قواعد بيانات محلية. أنماط اتصال شبكة غير آمنة.</li></ul>
+<h3>دمج Static Analysis في سير العمل</h3>
+<ul><li>تكامل الـ IDE (يمسك المشاكل قبل حتى ما تتعمل commit). Pre-Commit Hooks (تمنع كود معرّض من دخول الـ codebase أصلًا). تكامل Pull Request (يوفّر سياق مراجعة أمنية مباشرة لمراجعي الكود). تكامل خط أنابيب البناء (يضمن إن مفيش ثغرة تفلت بغض النظر عما فاتته الخطوات السابقة).</li></ul>
+<h3>بوابات الأمان</h3>
+<div class="tw"><table>
+<tr><th>النوع</th><th>الوصف</th></tr>
+<tr><td>Block</td><td>ثغرات حرجة بإثبات استغلال مؤكّد — الخط بيتوقف، من غير استثناءات</td></tr>
+<tr><td>Warn</td><td>قضايا عالية ومتوسطة الخطورة — ظاهرة، لكن ما بتوقفش الخط تلقائيًا</td></tr>
+<tr><td>Track</td><td>كل النتائج، محفوظة لتأسيس خط أساس ومتابعة الاتجاه مع الوقت</td></tr>
+</table></div>
+<h3>بناء ثقافة أمان: تدريبات شهرية</h3>
+<div class="tw"><table>
+<tr><th>الشهر</th><th>الموضوع</th></tr>
+<tr><td>1</td><td>أساسيات الكود الآمن</td></tr>
+<tr><td>2</td><td>أمان منصة الموبايل</td></tr>
+<tr><td>3</td><td>أمان الـ API</td></tr>
+<tr><td>4</td><td>ورشة Threat Modeling</td></tr>
+</table></div>
+<p>الفكرة: دورة أربع شهور بتخلّي معرفة الأمان محدّثة من غير ما تحتاج فريق تدريب مخصص.</p>
+
+<h2 id="s17"><span class="n">17</span>اتجاهات مستقبل أمان الموبايل</h2>
+<h3>تطوّر كشف Malware</h3>
+<div class="tw"><table>
+<tr><th>النوع</th><th>الفكرة</th><th>التقييم</th></tr>
+<tr><td>Signature-Based</td><td>"هذا النمط الكودي بالظبط خبيث"</td><td>سريع ودقيق، لكن أعمى عن أي حاجة ما شافهاش قبل كده</td></tr>
+<tr><td>Heuristic-Based</td><td>"كود بيعمل X وY وZ ممكن يكون خبيث"</td><td>بيمسك متغيرات غير معروفة بالسلوك، بتكلفة false positives أكتر</td></tr>
+<tr><td>AI-Based</td><td>"نمط السلوك ده شبيه إحصائيًا بالـ malware"</td><td>بيتعلم من البيانات مباشرة، ويتكيّف مع تطوّر الـ malware نفسه</td></tr>
+</table></div>
+<p>التحوّل الحالي: الكشف التقليدي بالـ signatures بيخسر أرضية قدام malware متعدد الأشكال (polymorphic) ومتحوّل (metamorphic) بيعيد كتابة نفسه عشان يتفاداه.</p>
+<h3>تقنيات الكشف المدعومة بالـ AI</h3>
+<ul><li>نمذجة سلوكية ديناميكية (بناء نموذج للسلوك الطبيعي والخبيث، وترصد الانحرافات وقت التشغيل). Graph Neural Networks (تمثيل نداءات وتدفق بيانات التطبيق كـ graph، يخلّي النموذج يستنتج من بنيته). طرق Ensemble (دمج خصائص static وdynamic من نماذج متعددة لحكم أمتن). استخبارات تهديد لحظية (تغذية بيانات تهديد حية للكشف، فالنموذج بيتفاعل مع اللي بيحصل دلوقتي).</li></ul>
+<h3>تكيّفات المهاجمين: AI خصومية (Adversarial AI)</h3>
+<ul><li>أمثلة خصومية (مدخلات مصمَّمة للإفلات من نموذج الكشف مع بقائها خبيثة وظيفيًا). كود خبيث مولَّد بـ GAN (نماذج توليدية تنتج متغيرات malware جديدة أوتوماتيكيًا). استخراج/عكس النموذج (مهاجمة نموذج الكشف نفسه لسرقة أو هندسة عكسية لطريقة قراره). استغلال الانحراف المفاهيمي (استغلال الفجوة بين بيانات تدريب النموذج وتطوّر التهديدات مع الوقت).</li></ul>
+<h3>آليات الدفاع ضد الـ AI الخصومية</h3>
+<ul><li><b>Adversarial Training:</b> تدريب نموذج الكشف على الأمثلة الخصومية نفسها عشان يتعلم يقاومها. <b>Model Ensemble Diversity:</b> استخدام نماذج متعددة مبنية بطرق مختلفة، فمفيش خدعة خصومية واحدة تخدعهم كلهم. <b>Federated Learning:</b> تدريب عبر أجهزة كتير من غير تمركز البيانات الخام، بيحسّن الكشف مع الحفاظ على الخصوصية.</li></ul>
+<h3>مصادقة سلوكية ناشئة</h3>
+<ul><li>Gait Analysis (استخدام بيانات الـ accelerometer والـ gyroscope للتعرّف على المستخدم من طريقة مشيه). Touch Dynamics &amp; Pressure (التعرّف من إيقاع وضغط لمسه الفريد). Voice with Emotional Context (مصادقة صوتية بتاخد في الاعتبار النبرة العاطفية كمان). Eye Movement Tracking (استخدام أنماط الانتباه والنظر كإشارة سلوكية إضافية).</li></ul>
+<h3>أنظمة المصادقة المستمرة</h3>
+<ul><li>تسجيل خطر قائم على المخاطر باستمرار بدل لحظة نجاح/فشل واحدة. دمج بيومتري متعدد الأنماط (دمج إشارات بيومترية متعددة لقرار أقوى وأصعب تزويرًا). محفّزات واعية بالسياق (إعادة مصادقة بس لما السياق يتغيّر بشكل ملموس — موقع جديد، شبكة جديدة، سلوك جديد). قوالب حافظة للخصوصية (تخزين قوالب بيومترية بشكل يتحقق من الهوية من غير كشف البيانات البيومترية الخام).</li></ul>
+<h3>التشفير ما بعد الكمّي: التهديد القادم</h3>
+<p>RSA وECC كلاهما عرضة رياضيًا لخوارزمية Shor، لو اتشغّلت على حاسوب كمّي قوي بما فيه الكفاية. ده بيكسر التشفير غير المتماثل اللي معظم تطبيقات الموبايل بتعتمد عليه حاليًا لتبادل المفاتيح والتوقيعات.</p>
+<div class="tw"><table>
+<tr><th>السؤال</th><th>الإجابة</th></tr>
+<tr><td>إمتى ده بيبقى حقيقي؟</td><td>تقديرات الجدول الزمني للحواسيب الكمية ذات الصلة التشفيرية متفاوتة، لكن عمل الانتقال لازم يبدأ قبل الموعد بكتير</td></tr>
+<tr><td>استجابة التوحيد القياسي</td><td>عملية NIST للتشفير ما بعد الكمّي وحّدت فعليًا خوارزميات حقيقية: ML-KEM (مبني على CRYSTALS-Kyber) لتبادل المفاتيح، وML-DSA (CRYSTALS-Dilithium) وSLH-DSA (SPHINCS+) للتوقيعات</td></tr>
+</table></div>
+<h3>التشفير ما بعد الكمّي على الموبايل: التكلفة العملية</h3>
+<ul><li>تبعات حجم المفتاح (خوارزميات ما بعد الكمّي غالبًا محتاجة مفاتيح أكبر، بتبعات تخزين حقيقية على الموبايل). عبء حسابي (رياضيات أكتر تطلبًا تعني شغل CPU أكتر من التشفير الكلاسيكي). تأثير عمر البطارية (عمليات تشفير أثقل بتستهلك طاقة أكتر، مقايضة مباشرة لعمر البطارية). عرض نطاق الشبكة (مفاتيح وتوقيعات أكبر تعني بيانات أكتر مرسلة على الشبكة لنفس العملية).</li></ul>
+<h3>أمان ألعاب الموبايل: تهديدات خاصة بالمعمارية</h3>
+<ul><li>اعتراض وتلاعب بـ stream اللعبة. هجمات توقيت قائمة على الـ latency (استغلال توقيت يمكن التنبؤ به لميزة غير عادلة). تلاعب بحفظ اللعبة على السحابة بدل الجهاز. استغلال تأخّر الإدخال (input lag) للغش التنافسي.</li></ul>
+<h3>أمان ألعاب الموبايل: الدفاعات</h3>
+<ul><li>تشفير كامل للـ stream (End-to-End). تحقق من المدخلات مبكرًا قدر الإمكان لمسك أفعال غير صالحة واضحة. مزامنة حالة آمنة (الحفاظ على حالة اللعبة متسقة ومتحقق منها بين الـ client والسيرفر). تكامل نظام anti-cheat مخصص.</li></ul>
+<h3>5G: أسطح هجوم جديدة</h3>
+<ul><li>ثغرات تقسيم الشبكة (Network Slicing) — شرائح 5G منفصلة منطقيًا ممكن ما تكونش معزولة بقد ما مفترَض. فجوات أمان Edge Computing — المعالجة الأقرب للمستخدم بتقرّب وتوسّع سطح الهجوم كمان. إدارة أجهزة IoT الضخمة على مقياس 5G. latency فائقة الانخفاض مقابل الأمان — متطلبات أداء ممكن تغري الفرق بقطع زوايا أمنية.</li></ul>
+<h3>تحسينات أمان 5G</h3>
+<ul><li>بروتوكولات مصادقة معزّزة (معمارية أمان 5G الخاصة في 3GPP TS 33.501). أمان افتراضية وظائف الشبكة. حوسبة Edge متعددة الوصول آمنة. خدمات موقع حافظة للخصوصية (تصميم ميزات موقع تقلل ما بتكشفه عن المستخدم).</li></ul>
+<h3>Blockchain وWeb3 على الموبايل: مخاطر</h3>
+<ul><li>ثغرات العقود الذكية اللي واجهة موبايل بتتعامل معاها. إدارة مفاتيح خاصة على الموبايل (الجهاز بيبقى حارس مفاتيح، ولو ضاعت أو اتسرقت يعني فقدان كامل للأموال). أمان الجسور عبر السلاسل (هدف متكرر وعالي القيمة). هجمات MEV عبر تطبيقات الموبايل.</li></ul>
+<h3>Blockchain وWeb3: أطر أمان</h3>
+<ul><li>دمج Hardware Security Module (هاردوير مخصص لحماية المفاتيح الخاصة، مش تخزين على مستوى التطبيق بس). تنفيذات محافظ متعددة التوقيع (موافقات متعددة مطلوبة للمعاملة). إدارة هوية لامركزية (المستخدمين بيتحكموا في بيانات هويتهم من غير سلطة مركزية). تطبيقات Zero-Knowledge Proof (إثبات حقيقة حاجة من غير كشف البيانات الأساسية).</li></ul>
+<h3>Zero Trust للموبايل: مبادئ أساسية</h3>
+<ul><li>عمرك ما تثق، دايمًا تحقق (مفيش جهاز أو مستخدم أو تطبيق موثوق افتراضيًا). افتراض الاختراق (صمّم كأن مهاجم موجود بالفعل جوه، لتحديد إيه اللي اختراق واحد يقدر يوصله). أقل صلاحية ممكنة. مراقبة وتحقق مستمر (الثقة عمرها ما دائمة — بتتقيّم باستمرار مش بس وقت الـ login). (مرجع: NIST SP 800-207)</li></ul>
+<h3>Zero Trust: تكييفات خاصة بالموبايل</h3>
+<ul><li>تصديق صحة الجهاز (التحقق من وضع أمان الجهاز نفسه قبل الثقة بأي حاجة بيبعتها). خطوط أساس سلوك التطبيق. تقسيم شبكة دقيق (micro-segmentation بيحدد الحركة الجانبية حتى بعد الاختراق). سياسات أمان محورها الهوية.</li></ul>
+<h3>Zero Trust: مكوّنات المعمارية</h3>
+<ul><li>درجات ثقة جهاز الموبايل (محدّثة باستمرار). سياسات وصول شرطية (تتكيف مع الموقع وحالة الجهاز والسلوك). أمان API Gateway (نقطة تفتيش واحدة منفَّذة لكل نداء API). وصول شبكة مجزّأ بدقة.</li></ul>
+<h3>Zero Trust: تحديات التكامل</h3>
+<ul><li>توازن تجربة المستخدم (التحقق المستمر ما ينفعش يبقى احتكاك دائم للمستخدمين الشرعيين). تقليل تأثير الأداء (كل فحص إضافي له تكلفة، لازم يفضل سريع بما يكفي ليكون غير مرئي). توافق التطبيقات القديمة (تطبيقات قديمة ما اتبنتش بفكرة zero trust لسه محتاجة تشتغل). التعامل مع سيناريوهات الـ Offline.</li></ul>
+
+<h2 id="s18"><span class="n">18</span>دراسات حالة واقعية</h2>
+<h3>Pegasus — برمجية تجسس</h3>
+<p>spyware بيجاسوس من NSO Group، اتكشف لأول مرة علنًا سنة 2016 عن طريق Citizen Lab وLookout، استخدم 3 ثغرات iOS من نوع zero-day بالاسم المستعار "Trident" (CVE-2016-4655, -4656, -4657) لاختراق الهواتف المستهدَفة بصمت، في بعض الحالات من غير أي تفاعل من الضحية خالص.</p>
+<p>بعد التثبيت، قدر يقرا الرسائل، يتتبّع الموقع، يفعّل المايكروفون والكاميرا، ويسرّب البيانات — تقريبًا كل قدرة مراقبة اتغطت، منفَّذة مع بعض ضد هدف واحد عالي القيمة.</p>
+<blockquote><p>الدرس: حملات التجسس المستهدَفة بتبرر عمق الـ forensics وتحليل الـ runtime — الاختراق ممكن يكون غير مرئي للضحية ويسيب آثار خفيفة بس.</p></blockquote>
+<h3>XcodeGhost — سلسلة إمداد</h3>
+<p>سنة 2015، مطوّرين في الصين حمّلوا نسخة مزيفة مليانة malware من Xcode بتاع Apple من mirror محلي، أسرع من سيرفرات Apple نفسها. الأداة المخترَقة حقنت كود خبيث بصمت جوه كل تطبيق بنته.</p>
+<p>حوالي 4000 تطبيق iOS اتشحنوا على الـ App Store الرسمي حاملين الكود المحقون ده، بما فيهم تطبيقات مشهورة جدًا — الاختراق حصل على مستوى أداة التطوير، مش كود التطبيق نفسه.</p>
+<blockquote><p>الدرس: compiler أو أداة بناء مخترَقة بتسمّم كل حاجة بتلمسها — التحقق من سلسلة أدواتك مهم زي مراجعة كودك.</p></blockquote>
+<h3>Triada — تثبيت مسبق على الهاردوير</h3>
+<p>Triada، اتكشف سنة 2016 ولاحقًا اتلاقى مضمّن في firmware بعض أجهزة Android الاقتصادية، كان حصان طروادة متطور بوصول modular على مستوى root مخبوز قبل ما الهاتف حتى يوصل لرف المتجر.</p>
+<p>اشتغل أغلبه في الذاكرة، بيعدّل عمليات النظام مباشرة ويمنح modules خبيثة تانية وصول عميق — دفاعات وقت التثبيت وفحص المتجر عمرها ما كان عندها فرصة، لأن الجهاز نفسه كان أصلًا مخترَق.</p>
+<blockquote><p>الدرس: هجمات التثبيت المسبق على الهاردوير بتهزم كل فحص متجر وruntime — أصل الجهاز مهم زي أصل التطبيق.</p></blockquote>
+<h3>FluBot — هندسة اجتماعية وتوزيع</h3>
+<p>FluBot انتشر عبر أوروبا خلال 2021 برسائل SMS بتتنكّر كإشعارات توصيل طرود، بتقنع الضحايا يثبّتوا تطبيق تتبّع مزيف كان فعليًا malware بنكي لـ Android.</p>
+<p>كل هاتف مصاب كان بيبعت تلقائيًا نفس رسالة الطعم لجهات اتصال الضحية، بيدّي للدودة انتشار ذاتي متفجّر لحد ما عمليات بقيادة Europol عطّلت بنيته التحتية سنة 2022.</p>
+<blockquote><p>الدرس: طعم مقنع واحد، مع قائمة اتصال الضحية نفسها كقناة توزيع، يقدر يتفوّق على أي دفاع مراجعة متجر تقريبًا.</p></blockquote>
+<h3>Judy وتطبيقات احتيال الإعلانات</h3>
+<p>سنة 2017، الباحثين لقوا عائلة تطبيقات Android — أغلبها ألعاب بسيطة — على الـ Play Store الرسمي، اتثبّتت تقديريًا عشرات الملايين من المرات، كانت بتولّد نقرات إعلانات احتيالية بصمت.</p>
+<p>التطبيقات عدّت مراجعة المتجر الأولية بالتصرف الطبيعي في البداية، وبعدين بتجيب payload خبيث بعد التثبيت لتنفيذ سلوك احتيال الإعلانات، برّه نظر المراجعين والمستخدمين.</p>
+<blockquote><p>الدرس: "متجر رسمي" مش نفس حاجة "آمن" — payloads متأخرة أو مجلوبة عن بُعد مبنية خصيصًا للإفلات من المراجعة.</p></blockquote>
+<h3>Goldoson SDK — سلسلة إمداد عبر مكتبة</h3>
+<p>سنة 2023، باحثو أمان حددوا SDK ثالث خبيث لـ Android، اتسمى لاحقًا Goldoson، مضمّن جوه عشرات التطبيقات الشرعية اللي اتحمّلت مجتمعة أكتر من 100 مليون مرة.</p>
+<p>مطوّرو التطبيقات كانوا ضمّنوا الـ SDK لوظيفة إعلانات أو أداة شرعية، من غير ما يعرفوا إنه كمان بيجمع بيانات عن التطبيقات المثبّتة وأجهزة Wi-Fi وBluetooth القريبة، وبيرتكب احتيال إعلانات بهدوء في الخلفية.</p>
+<blockquote><p>الدرس: كل SDK طرف تالت هو كود بتشحنه لمستخدميك — تدقيق الاعتماديات مهم زي تدقيق كودك الخاص.</p></blockquote>
+<h3>BlueBorne — استغلال Bluetooth</h3>
+<p>اتكشف من Armis Labs سنة 2017، BlueBorne كان سلسلة ثغرات في تنفيذات Bluetooth أثّرت على مليارات أجهزة Android وiOS وWindows وLinux — بما فيها هواتف كتير.</p>
+<p>مهاجم جوه مدى Bluetooth قدر يخترق جهاز من غير إقران ومن غير أي تفاعل مستخدم خالص، بمجرد ما البلوتوث يكون مفعّل، وبعدين ينتشر لأجهزة قريبة تانية معرّضة.</p>
+<blockquote><p>الدرس: بروتوكول ما حد بيفكر فيه ممكن يبقى متجه اختراق كامل — هجمات قائمة على القرب تستحق نفس الفحص زي القائمة على الشبكة.</p></blockquote>
+<h3>أبحاث Juice Jacking العامة</h3>
+<p>باحثو أمان أثبتوا مرارًا في مؤتمرات زي DEF CON إن محطة شحن USB عامة معدَّلة تقدر تثبّت malware أو تسرّب بيانات من هاتف جاي بس عشان يشحن بصمت.</p>
+<p>الهجوم بيشتغل لأن كابل USB العادي بيحمل طاقة وبيانات مع بعض — منفذ شحن خبيث يقدر يكلّم واجهة بيانات الهاتف لحظة ما يتوصّل، من غير أي علامة ظاهرة للمستخدم.</p>
+<blockquote><p>الدرس: بنية الشحن الفيزيائية جزء من سطح هجوم الموبايل — الحل (كابل طاقة بس أو USB data blocker) بسيط، بس لو الناس عارفة تستخدمه.</p></blockquote>
+<h3>أسرار Hardcoded على نطاق واسع</h3>
+<p>مسوحات بحثية مستقلة متعددة لتطبيقات على Google Play وApple App Store، عبر عدة سنين، لقت مرارًا آلاف التطبيقات المنشورة بتشحن مفاتيح تخزين سحابي أو API أو قاعدة بيانات hardcoded.</p>
+<p>الباحثين ببساطة عملوا decompile لـ APKs متاحة عامة ودوّروا في الـ strings والموارد المستخرَجة عن أنماط تطابق صيغ مفاتيح واعتمادات معروفة — بالظبط منهج الـ static analysis.</p>
+<blockquote><p>الدرس: ده النمط المضاد "الأسرار الـ Hardcoded" على نطاق هائل — فحص أسرار آلي في الـ CI كان هيمسك تقريبًا كل الحالات دي قبل النشر.</p></blockquote>
+<h3>Cerberus وعائلة Banking Trojans</h3>
+<p>Cerberus، وعائلة الـ malware المرتبطة Anubis وAlien، انتشروا خلال 2019-2020 كـ banking trojans لـ Android بتتباع كخدمة (malware-as-a-service)، بيدّوا لمشترين قليلي المهارة عدة هجوم overlay جاهزة.</p>
+<p>بعد التثبيت، الـ malware كان بيراقب لحد ما الضحية يفتح تطبيق بنكي حقيقي، وبعدين يرسم فورًا شاشة login مزيفة مطابقة بكسل فوقه، مع اعتراض SMS OTP اللازم لإكمال تحويل احتيالي.</p>
+<blockquote><p>الدرس: هجمات overlay واعتراض SMS، متعلّمين منفصلين عادة، بيتجمعوا بشكل روتيني في قطعة malware حقيقية واحدة — الدفاعات محتاجة تفترض إن المهاجمين بيسلسلوا التقنيات كمان.</p></blockquote>
+<h3>القاسم المشترك بين كل الحالات</h3>
+<ul><li>الثقة هي الهدف: كل حالة أساءت استخدام حاجة المستخدم أو المطوّر أو النظام كان بيثق فيها افتراضيًا — أداة، SDK، منفذ شحن، رسالة نصية.</li>
+<li>أضعف حلقة نادرًا ما تكون التطبيق الرئيسي: أدوات البناء وSDKs طرف تالت والـ firmware والبنية التحتية الفيزيائية سببوا ضرر بقد أي كود تطبيق بذاته.</li>
+<li>الحجم بيفيد المهاجم: SDK أو أداة بناء واحدة مخترقة تقدر توصل بصمت لعشرات الملايين من الأجهزة مرة واحدة.</li>
+<li>النظافة الأساسية لسه الأهم: أسرار hardcoded وتحقق ناقص ظهروا مرارًا، بفاصل سنين، عبر حوادث غير مرتبطة.</li>
+<li>كل تقنية في الكورس ده بترتبط بحادثة حقيقية — دول مش مخاطر افتراضية، دول تاريخ موثّق.</li>
+</ul>
+
+<div class="eof">-- EOF: mobile-re-security/course-notes.md --</div>
+</main>
+</body>
+</html>

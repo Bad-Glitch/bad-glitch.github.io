@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>eMAPT · Module 2: منهجيات الاختبار، الهجوم الديناميكي، والـ MASVS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+:root{--bg:#0b1014;--panel:#121a21;--line:#22303b;--tx:#d5dee6;--mut:#8a9aa8;--ac:#3ddc97;--ac2:#f5b942;--bad:#ff6b6b;--code:#0a0f13;color-scheme:dark;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:light){:root:not([data-theme="dark"]){--bg:#f4f7f9;--panel:#fff;--line:#d3dde5;--tx:#1b2832;--mut:#586a78;--ac:#0b7a4b;--ac2:#9a6400;--bad:#c0392b;--code:#eaf0f4;color-scheme:light}}
+:root[data-theme="dark"]{--bg:#0b1014}
+html{scroll-padding-top:env(safe-area-inset-top,0px);scroll-behavior:smooth}
+*,*::before,*::after{box-sizing:inherit}
+body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.9 Cairo,"Segoe UI",Tahoma,sans-serif}
+main{max-width:860px;margin:0 auto;padding:24px 18px 64px;counter-reset:sec}
+.mono,code,pre,.prompt,.tag,.eyebrow{font-family:"JetBrains Mono",ui-monospace,Consolas,monospace;direction:ltr;unicode-bidi:isolate}
+.prompt{color:var(--ac);font-size:14px;text-align:left}
+.eyebrow{color:var(--ac2);font-size:13px;text-align:left;margin-top:18px}
+h1{font-size:clamp(26px,5vw,40px);line-height:1.35;margin:6px 0 10px}
+h2{font-size:24px;margin:52px 0 6px;padding-top:18px;border-top:1px solid var(--line);counter-increment:sec;counter-reset:sub}
+h2 .n{font-family:"JetBrains Mono",monospace;color:var(--ac);margin-inline-end:10px;font-size:18px}
+h3{counter-increment:sub;font-size:19px;margin:30px 0 8px;color:var(--ac)}
+h3::before{content:counter(sec,decimal-leading-zero) "." counter(sub);font-family:"JetBrains Mono",monospace;font-size:13px;color:var(--ac2);margin-inline-end:10px;direction:ltr;unicode-bidi:isolate;display:inline-block}
+h4{font-size:16px;margin:20px 0 4px;color:var(--ac2)}
+p{margin:8px 0}
+.lead{color:var(--mut);max-width:70ch}
+.tags{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0;direction:ltr}
+.tag{font-size:12px;border:1px solid var(--line);background:var(--panel);color:var(--mut);padding:2px 10px;border-radius:4px}
+nav ol{list-style:none;margin:8px 0;padding:0;display:grid;gap:6px}
+nav a{display:block;padding:8px 14px;background:var(--panel);border:1px solid var(--line);border-radius:6px;color:var(--tx);text-decoration:none}
+nav a:hover,nav a:focus-visible{border-color:var(--ac);outline:none}
+nav a b{font-family:"JetBrains Mono",monospace;color:var(--ac);margin-inline-end:10px}
+nav a small{color:var(--mut);font-family:"JetBrains Mono",monospace;direction:ltr;unicode-bidi:isolate}
+blockquote{margin:14px 0;padding:10px 16px;background:var(--panel);border-inline-start:3px solid var(--ac);border-radius:4px}
+blockquote.w{border-inline-start-color:var(--ac2)}
+blockquote.b{border-inline-start-color:var(--bad)}
+blockquote p{margin:4px 0}
+.tw{overflow-x:auto;margin:14px 0;border:1px solid var(--line);border-radius:6px}
+table{border-collapse:collapse;width:100%;font-size:14.5px;line-height:1.7}
+th,td{padding:8px 12px;text-align:start;border-bottom:1px solid var(--line);vertical-align:top}
+th{background:var(--panel);color:var(--ac);white-space:nowrap}
+tr:last-child td{border-bottom:0}
+td:first-child{font-weight:600;white-space:nowrap}
+code{background:var(--code);padding:1px 6px;border-radius:3px;font-size:.88em;color:var(--ac2)}
+pre{background:var(--code);border:1px solid var(--line);border-radius:6px;padding:12px 16px;overflow-x:auto;font-size:13px;line-height:1.7;text-align:left;margin:12px 0}
+pre code{background:none;padding:0;color:var(--tx)}
+ul{padding-inline-start:22px;margin:8px 0}li{margin:3px 0}
+.flow{direction:ltr;text-align:left}
+.eof{margin-top:56px;color:var(--mut);font-size:13px;text-align:left}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+<main>
+<div class="prompt">root@emapt:~/module-02$</div>
+<div class="eyebrow">eMAPT · Mobile Application Penetration Testing · Module 02</div>
+<h1>منهجيات اختبار الموبايل، الهجوم الديناميكي، والمحاكاة على معيار MASVS</h1>
+<p class="lead">خريطة الكورس كاملة: من عقلية "التفكير كمختبر موبايل" للـ Backend وAuth، التهديدات والحدود القانونية، بيئات الاختبار، كل مخاطر OWASP Mobile (سرقة الاعتمادات، سلسلة الإمداد، التفويض، التحقق، الاتصال، الخصوصية، الحماية الثنائية، الإعدادات، التخزين، التشفير)، أدوات الـ Dynamic Testing وFrida، أساسيات واكتشاف الـ API، التوكنز والـ Sessions، الـ Biometrics، الـ Brute Force، ودورة حياة الاشتباك الكاملة من التخطيط للتقرير.</p>
+<div class="tags"><span class="tag">masvs</span><span class="tag">dynamic-testing</span><span class="tag">frida</span><span class="tag">api-security</span><span class="tag">owasp-mobile-top-10</span><span class="tag">engagement-lifecycle</span></div>
+
+<div class="prompt">$ ls sections/</div>
+<nav><ol>
+<li><a href="#s1"><b>01</b>خريطة الكورس ومتطلباته <small>(Roadmap)</small></a></li>
+<li><a href="#s2"><b>02</b>عقلية الأمان مع الموبايل أولًا <small>(Mobile-First Mindset)</small></a></li>
+<li><a href="#s3"><b>03</b>الـ Backend والـ Authentication <small>(Tokens)</small></a></li>
+<li><a href="#s4"><b>04</b>التهديدات والحدود القانونية <small>(Threats &amp; Legal)</small></a></li>
+<li><a href="#s5"><b>05</b>بيئات اختبار الأجهزة <small>(Device Labs)</small></a></li>
+<li><a href="#s6"><b>06</b>سرقة الاعتمادات <small>(Credential Harvesting)</small></a></li>
+<li><a href="#s7"><b>07</b>أمان سلسلة الإمداد <small>(Supply Chain)</small></a></li>
+<li><a href="#s8"><b>08</b>التحقق والتفويض <small>(AuthN &amp; AuthZ)</small></a></li>
+<li><a href="#s9"><b>09</b>التحقق من المدخلات والمخرجات <small>(Input/Output)</small></a></li>
+<li><a href="#s10"><b>10</b>الاتصال غير الآمن <small>(Insecure Communication)</small></a></li>
+<li><a href="#s11"><b>11</b>الخصوصية في تطبيقات الموبايل <small>(Privacy)</small></a></li>
+<li><a href="#s12"><b>12</b>ضعف الحماية الثنائية <small>(Binary Protections)</small></a></li>
+<li><a href="#s13"><b>13</b>الإعدادات غير الآمنة <small>(Insecure Config)</small></a></li>
+<li><a href="#s14"><b>14</b>التخزين غير الآمن <small>(Insecure Storage)</small></a></li>
+<li><a href="#s15"><b>15</b>ضعف التشفير <small>(Insufficient Crypto)</small></a></li>
+<li><a href="#s16"><b>16</b>الاختبار الديناميكي وأدوات Android <small>(Frida &amp; Pinning)</small></a></li>
+<li><a href="#s17"><b>17</b>أساسيات الـ API <small>(REST vs GraphQL)</small></a></li>
+<li><a href="#s18"><b>18</b>اكتشاف الـ Endpoints والـ Parameters</a></li>
+<li><a href="#s19"><b>19</b>عيوب التفويض، التوكنز، والـ Sessions <small>(IDOR / BOLA / JWT)</small></a></li>
+<li><a href="#s20"><b>20</b>اختبار الـ Biometric Authentication</a></li>
+<li><a href="#s21"><b>21</b>Brute Force وبصمة الجهاز والحماية من العبث</a></li>
+<li><a href="#s22"><b>22</b>التخطيط وتحديد نطاق الاشتباك <small>(Scoping)</small></a></li>
+<li><a href="#s23"><b>23</b>تجهيز المعمل والـ Recon</a></li>
+<li><a href="#s24"><b>24</b>Static Analysis وسطح الهجوم وThreat Modeling</a></li>
+<li><a href="#s25"><b>25</b>دورة حياة الاشتباك الكاملة <small>(Engagement Lifecycle)</small></a></li>
+</ol></nav>
+
+<blockquote><p><b>ملاحظة:</b> الموديول ده هو خريطة الكورس كله (eMAPT) بتفاصيله الـ 25، من المبادئ للتقرير النهائي. كل الأمثلة والأدوات للاستخدام جوه نطاق مصرَّح بيه بس.</p></blockquote>
+
+<h2 id="s1"><span class="n">01</span>خريطة الكورس ومتطلباته</h2>
+<h3>الخريطة العامة</h3>
+<div class="tw"><table>
+<tr><th>#</th><th>المحور</th><th>التركيز</th></tr>
+<tr><td>1</td><td>Pentest Methodologies</td><td>منهجيات منظّمة لاختبار الموبايل من البداية للنهاية</td></tr>
+<tr><td>2</td><td>Dynamic Testing</td><td>اختبار Android وiOS وقت التشغيل الفعلي</td></tr>
+<tr><td>3</td><td>Attack Simulation &amp; MASVS</td><td>محاكاة هجوم حقيقي ومواءمة النتائج مع معيار MASVS</td></tr>
+<tr><td>4</td><td>API &amp; Backend Testing</td><td>اختبار الخدمات والـ APIs اللي التطبيق بيعتمد عليها</td></tr>
+<tr><td>5</td><td>Reporting &amp; Remediation</td><td>توثيق النتائج والتوصية بالإصلاحات</td></tr>
+</table></div>
+<h3>مخرجات التعلّم</h3>
+<ul>
+<li>تكتشف وتستغل ثغرات حقيقية بأدوات فعلية.</li>
+<li>تربط النتائج بمعيار MASVS ومعايير الصناعة.</li>
+<li>تنفّذ اختبار ديناميكي متقدّم على Android وiOS.</li>
+<li>تدير وتوثّق اشتباك اختبار اختراق كامل.</li>
+</ul>
+<h3>المتطلبات المسبقة</h3>
+<ul><li><b>إلمام بأنظمة الموبايل:</b> التطبيقات، الصلاحيات، نظام الملفات، والـ sandbox.</li>
+<li><b>أساسيات أمان وشبكات:</b> ثغرات شائعة، HTTP وTLS، IP، DNS، وإزاي الـ proxies بتشتغل.</li></ul>
+
+<h2 id="s2"><span class="n">02</span>عقلية الأمان مع الموبايل أولًا</h2>
+<h3>ليه الموبايل مختلف</h3>
+<div class="tw"><table>
+<tr><th>السبب</th><th>المثال</th></tr>
+<tr><td>اتصال دائم</td><td>تطبيق مراسلة بيكمّل sync في الخلفية حتى على شبكة مطار غير موثوقة، عكس تطبيق Desktop اللي بيتصل بس وهو مفتوح</td></tr>
+<tr><td>جهاز شخصي</td><td>تطبيق بنك، إيميل الشغل، وصور العيلة على نفس الجهاز — اختراقه معناه اختراق التلاتة مع بعض</td></tr>
+<tr><td>حدود الثقة</td><td>الـ client شغّال على جهاز المستخدم (أو المهاجم) فمينفعش نثق فيه أبدًا</td></tr>
+<tr><td>سطح هجوم أوسع</td><td>التطبيق، النظام، الشبكة، الـ backend، الـ SDKs، والهاردوير كلهم أهداف محتملة</td></tr>
+</table></div>
+<h3>التفكير كمختبر موبايل</h3>
+<ul>
+<li><b>الاستخدام مقابل الأمان:</b> كل ضابط أمان بيضيف احتكاك، فالمطوّرين أحيانًا بيضعّفوا الحماية عشان يفضل التطبيق سلس.</li>
+<li><b>دوافع الخصم:</b> مكسب مالي، سرقة بيانات، احتيال، تجسس، وضرر سمعة.</li>
+<li><b>أخطاء المطوّرين الشائعة:</b> secrets hardcoded، تخزين غير آمن، الثقة في الـ client، غياب فحوصات server-side.</li>
+<li><b>عقلية "التطبيق + البيئة":</b> اختبر التطبيق مع الجهاز والشبكة والـ backend والأطراف التالتة مع بعض.</li>
+</ul>
+<h3>حالة دراسية: RewardsNow</h3>
+<p>تطبيق ولاء بيتجاهل إعادة الـ login لمدة 30 يوم (usability)، ورصيد النقاط بيتحسب جوه التطبيق مش على السيرفر (خطأ مطوّر). الدافع: استبدال نقاط وهمية بمنتجات حقيقية (احتيال مباشر). فهم الثغرة محتاج فحص الجهاز والتطبيق والشبكة والسيرفر مع بعض.</p>
+<pre class="flow"><code>1. Root الجهاز → 2. تعديل التطبيق (تخطي فحص الرصيد) → 3. إعادة إرسال طلب نقاط وهمية → 4. السيرفر يقبله لغياب التحقق</code></pre>
+<blockquote><p>حلقة ضعف واحدة — endpoint على السيرفر من غير تحقق — حوّلت ثغرة جوه التطبيق لخسارة مالية حقيقية.</p></blockquote>
+<h3>الويب مقابل الموبايل في الاختبار</h3>
+<div class="tw"><table>
+<tr><th>الجانب</th><th>Web Pentesting</th><th>Mobile Pentesting</th></tr>
+<tr><td>التركيز</td><td>السيرفر</td><td>الـ client</td></tr>
+<tr><td>مكان التطبيق</td><td>داخل المتصفح</td><td>Binaries (.ipa / .apk)</td></tr>
+<tr><td>أبرز الهجمات</td><td>هجمات الشبكة</td><td>هجمات محلية</td></tr>
+<tr><td>الـ Proxy</td><td>سهل اعتراضه</td><td>ممكن يكون صعب أو مستحيل (pinning)</td></tr>
+</table></div>
+<p><b>نفس الثغرة بشكل مختلف:</b> Broken Access Control على الويب غالبًا بتعديل parameter في الرابط، وعلى الموبايل زر مخفي في الواجهة بس الـ endpoint خلفه مش بيتحقق من حاجة. والـ Injection على الويب SQLi في فورم، وعلى الموبايل JavaScript بيتحقن عبر WebView bridge ويوصل لكود native — مسار مالهوش مثيل في الويب.</p>
+<h3>خصائص الموبايل الفريدة</h3>
+<ul>
+<li><b>الحساسات والهاردوير:</b> كاميرا وGPS ومايكروفون وBluetooth وNFC ممكن تسرّب بيانات لو اتساء استخدامها (فلاشلايت بيطلب مايك من غير سبب وظيفي).</li>
+<li><b>اتصال بين التطبيقات:</b> Intents وdeep links وURL schemes ممكن تتستغل (deep link بيسجّل دخول صامت لحساب المهاجم).</li>
+<li><b>الأمان المادي:</b> جهاز مفقود أو مسروق بيكشف البيانات المحلية.</li>
+<li><b>العمل Offline:</b> البيانات الـ cached لازم تتحمي من غير سيرفر.</li>
+<li><b>ثغرات خاصة بالمنصة:</b> Android وiOS كل واحد له نقاط ضعفه (backdoor debug مش متاح إلا عبر ADB لسه خطر على جهاز مخترق).</li>
+</ul>
+
+<h2 id="s3"><span class="n">03</span>الـ Backend والـ Authentication</h2>
+<h3>تدفق المصادقة</h3>
+<pre class="flow"><code>Sign In → Server يتحقق من creds + MFA → Access Token (قصير العمر) + Refresh Token (طويل العمر) → App يستخدم Access Token مع كل API call عبر TLS → لما ينتهي: Refresh Token يجيب Access Token جديد</code></pre>
+<p>الـ Access Token قصير العمر يقلّل الضرر لو اتسرق، والـ Refresh Token طويل العمر فلازم يتخزن بأمان ويكون قابل للإلغاء من السيرفر.</p>
+<h3>أنماط دفاع الـ API</h3>
+<ul>
+<li>TLS مفروض على كل الترافيك. مفيش Auth بالـ Cookies (التوكنز في الـ headers فـ CSRF التقليدي ملوش معنى هنا). App Attestation للتأكد إن الطلب جاي من تطبيق أصلي على جهاز موثوق. MFA يتحقق منه السيرفر مش التطبيق. إلغاء فوري للتوكنز المسروقة. فتح بالـ Biometric بيفك توكن مخزّن بدل ما يبعت بيانات خام.</li>
+</ul>
+<h3>ضعف التوكنز</h3>
+<div class="tw"><table>
+<tr><th>الفئة</th><th>المشكلة</th><th>الوصف</th></tr>
+<tr><td rowspan="4">تخزين وتسريب</td><td>Insecure storage</td><td>توكنز في SharedPreferences أو plist قابلة للقراءة من الجهاز</td></tr>
+<tr><td>تسريب بالـ logs/crashes</td><td>توكنز مطبوعة في logs أو مبعوتة في crash reports</td></tr>
+<tr><td>Reverse engineering</td><td>الـ decompile بيكشف API keys وصيغ التوكنز</td></tr>
+<tr><td>Hardcoded secrets</td><td>أسرار داخل عملية الـ auth قابلة للاستخراج وإعادة الاستخدام</td></tr>
+<tr><td rowspan="3">منطق البروتوكول</td><td>JWT tampering</td><td>هجوم على الـ algorithm "none" أو كسر مفتاح توقيع ضعيف</td></tr>
+<tr><td>Refresh flow خاطئ</td><td>Refresh tokens ما بتتجددش أو ما بتنتهيش ممكن تتعاد (replay)</td></tr>
+<tr><td>إعادة استخدام الـ session</td><td>توكن مسروق بيشتغل من جهاز تاني لأنه مش مربوط بجهاز واحد</td></tr>
+</table></div>
+<h3>تحليل الترافيك ونقاط الـ API الخاصة بالموبايل</h3>
+<ul>
+<li><b>Certificate pinning:</b> التطبيق بيرفض شهادة الـ proxy بتاعتك. <b>تطبيقات مش واعية بالـ proxy:</b> بعض التطبيقات بتتجاهل إعدادات النظام. <b>بروتوكولات مش HTTP:</b> TCP مخصص أو MQTT أو WebSocket محتاجة أدوات تانية. <b>Payloads موقّعة/مشفّرة:</b> محمية فوق الـ TLS فمينفعش تعدّلها مباشرة.</li>
+<li><b>Endpoints خاصة بالموبايل:</b> تسجيل الجهاز (ربط جهاز/push token بحساب)، نسخ قديمة من الـ API لسه بتنادي endpoints أضعف، endpoints الـ attestation، وendpoints الـ sync اللي ممكن تكشف بيانات أكتر من الواجهة.</li>
+</ul>
+<h3>أمثلة من الواقع</h3>
+<ul>
+<li>تطبيق مشاركة ركوب: Refresh Token عمره 90 يوم من غير إلغاء — سرقة الموبايل معناها سرقة الحساب شهور.</li>
+<li>تطبيق بنكي: MFA بيتفحص جوه الواجهة بس، فيتخطّى بنداء الـ login API مباشرة.</li>
+<li>تطبيق توصيل أكل: API key hardcoded في الـ APK، اتلاقى بدقايق بالـ decompiler.</li>
+<li>تطبيق لياقة: endpoint الـ sync بيتجاهل انتهاء صلاحية التوكن، فتوكن قديم مسروق لسه بيشتغل.</li>
+<li>تطبيق تسوق: توكن الـ session في الـ query string، فبيتسجل في كل اللوجات.</li>
+</ul>
+
+<h2 id="s4"><span class="n">04</span>التهديدات والحدود القانونية</h2>
+<h3>مين بيهاجم تطبيقات الموبايل</h3>
+<div class="tw"><table>
+<tr><th>الفاعل</th><th>الوصف</th></tr>
+<tr><td>Malicious Applications</td><td>تطبيقات تانية على الجهاز بتحاول تقرا بيانات أو تسيء استخدام مكونات مكشوفة</td></tr>
+<tr><td>Network Attackers</td><td>Wi-Fi مزوّر ومواقع MITM لاعتراض أو تعديل الترافيك</td></tr>
+<tr><td>Physical Access Attackers</td><td>اللي ماسك الجهاز فعليًا يستخرج بيانات أو يتخطى القفل</td></tr>
+<tr><td>Cloud Service Attackers</td><td>بيستهدفوا الـ backend والتخزين وخدمات الطرف التالت</td></tr>
+<tr><td>Insider Threats</td><td>موظف أو شريك بيسيء استخدام وصوله الشرعي</td></tr>
+<tr><td>APTs</td><td>مجموعات ممولة وصبورة بتشغّل حملات مستهدفة طويلة</td></tr>
+</table></div>
+<h3>اعتبارات قانونية وامتثال</h3>
+<ul>
+<li><b>CFAA:</b> حدود الوصول المصرَّح بيه قانونيًا (أمريكا). <b>DMCA:</b> قانونية الـ reverse engineering. <b>EULA:</b> اتفاقيات ترخيص المستخدم ممكن تقيّد اللي تقدر تعمله وقت الاختبار.</li>
+<li><b>الاختبار الدولي:</b> الأطر القانونية بتختلف بين الدول. <b>لوائح الاتصالات:</b> اختبار وظائف شركات الاتصالات ليه جانب قانوني خاص. <b>قوانين حماية البيانات:</b> GDPR وCCPA وغيرها بتأثر على إزاي تتعامل مع البيانات أثناء الاختبار.</li>
+</ul>
+<blockquote class="b"><p>اختبر بس بتصريح مكتوب وجوه الحدود القانونية. تطبيق فلاشلايت "بريء" بيقرا بيانات clipboard من تطبيق بنكي، أو مقاول عنده صلاحيات admin بيصدّر أرقام تليفونات المستخدمين بهدوء — كلها سيناريوهات تهديد حقيقية لازم الـ threat model يغطيها.</p></blockquote>
+
+<h2 id="s5"><span class="n">05</span>بيئات اختبار الأجهزة</h2>
+<h3>جهاز حقيقي مقابل Emulator</h3>
+<div class="tw"><table>
+<tr><th>المعيار</th><th>جهاز حقيقي</th><th>Emulator</th></tr>
+<tr><td>الأداء</td><td>حقيقي</td><td>ممكن يكون غير دقيق</td></tr>
+<tr><td>Root/Jailbreak</td><td>ممكن</td><td>أسهل</td></tr>
+<tr><td>اختبار الهاردوير</td><td>كامل</td><td>محدود</td></tr>
+<tr><td>تكامل الـ App Store</td><td>كامل</td><td>ممكن يكون محدود</td></tr>
+<tr><td>تخطي Cert Pinning</td><td>صعب بس واقعي</td><td>أسهل</td></tr>
+</table></div>
+<h3>تجهيز المعمل</h3>
+<p>الاختيار الصح بيعتمد على هدف الاختبار. <b>Android Lab:</b> Android Studio مع أدوات الـ CLI لتشغيل أجهزة حقيقية أو emulators والوصول لـ ADB. <b>iOS Lab:</b> Mac، آيفون قديم (يفضّل قابل للـ jailbreak)، وأدوات Apple's CLI.</p>
+<ul>
+<li>تطبيق بنكي بيكتشف الـ emulator ويعرض بيانات وهمية. سكريبت تخطي الـ pinning اللي بيشتغل على root بيفشل قدام فحوصات تستهدف الـ emulator تحديدًا. أداة jailbreak بتدعم إصدار iOS واحد بس مش بيتباع جديد. مفاتيح Secure Enclave وKeystore ممكن تتختبر فعليًا على جهاز حقيقي بس.</li>
+</ul>
+
+<h2 id="s6"><span class="n">06</span>سرقة الاعتمادات (Credential Harvesting)</h2>
+<h3>ليه الاعتمادات مهمة</h3>
+<p>إدارة سيئة لجمع وتخزين ونقل اعتمادات المصادقة بتسمح بـ: سرقة الهوية، اختطاف الـ session أو الوصول لـ APIs، تصعيد صلاحيات، والاستمرار طويل المدى على خدمات الـ backend.</p>
+<h3>أنواع الاعتمادات وإساءة الاستخدام الشائعة</h3>
+<div class="tw"><table>
+<tr><th>النوع</th><th>إساءة الاستخدام الشائعة</th></tr>
+<tr><td>Username/Password</td><td>مخزّنة plaintext، hardcoded، أو مبعوتة عبر HTTP</td></tr>
+<tr><td>Session Tokens</td><td>JWTs وOAuth وcookies بتتسجّل أو تتكاش أو ما بتتجددش</td></tr>
+<tr><td>API Keys/Secrets</td><td>hardcoded أو تتكشف بالـ reverse engineering</td></tr>
+<tr><td>Biometric Data</td><td>فحص محلي بس، سهل تخطّيه</td></tr>
+<tr><td>Device Identifiers</td><td>تُستخدم كتوكن مصادقة غير آمن</td></tr>
+</table></div>
+<h3>حماية المنصة: Android مقابل iOS</h3>
+<div class="tw"><table>
+<tr><th>Android</th><th>iOS</th></tr>
+<tr><td>Sandboxing: كل تطبيق UID فريد</td><td>Sandboxing &amp; Code Signing: عزل قوي للعملية والملفات</td></tr>
+<tr><td>Internal storage محمي إلا بروت</td><td>Keychain Services: تخزين مشفّر مربوط بالـ passcode/FaceID</td></tr>
+<tr><td>Keystore: مفاتيح مربوطة بهاردوير</td><td>Secure Enclave: معالج منفصل للعمليات الآمنة</td></tr>
+<tr><td>SELinux: Mandatory Access Control</td><td>Data Protection Classes: تشفير بمستويات وصول مختلفة</td></tr>
+</table></div>
+<h3>ثغرات التخزين والكود</h3>
+<ul><li>Hardcoded credentials. SharedPreferences / NSUserDefaults كمخزن key-value بسيط. قواعد بيانات SQLite أو Realm. ملفات غير مشفّرة.</li></ul>
+<h3>ثغرات النقل والـ Logs والـ Sessions</h3>
+<ul><li>نقل غير آمن (HTTP أو TLS ناقص). تسريب عبر logs وIntents وإشعارات. Fallback بيومتري أو PIN محلي بس (<code>isFingerprintValid()</code> بترجع true من غير إعادة تحقق سيرفر). توكنز طويلة العمر ومش مربوطة بجهاز وغير قابلة للإلغاء.</li></ul>
+<h3>خريطة ثغرات الاعتمادات</h3>
+<div class="tw"><table>
+<tr><th>Client-Side</th><th>النقل</th><th>Backend</th></tr>
+<tr><td>API keys hardcoded</td><td>HTTP بدل HTTPS</td><td>سياسات باسورد ضعيفة</td></tr>
+<tr><td>Debug flags مفعّلة</td><td>MITM</td><td>غياب حماية brute-force</td></tr>
+<tr><td>Biometric ضعيف</td><td>تخطي Cert pinning</td><td>Session management ضعيف</td></tr>
+<tr><td>ثغرات الـ Clipboard</td><td>—</td><td>آلية إعادة تعيين باسورد ضعيفة</td></tr>
+</table></div>
+<h3>تقنيات سرقة الاعتمادات</h3>
+<div class="tw"><table>
+<tr><th>التقنية</th><th>الهدف</th></tr>
+<tr><td>APK Decompilation</td><td>تحليل كود Java/Kotlin عن secrets hardcoded</td></tr>
+<tr><td>Frida Runtime Hooking</td><td>تخطّي الـ biometric أو اعتراض تدفق الاعتمادات</td></tr>
+<tr><td>Logcat Monitoring</td><td>التقاط توكنز وباسوردات اتسجلت وقت الـ login</td></tr>
+<tr><td>Memory Dumping</td><td>البحث عن توكنز في الذاكرة</td></tr>
+<tr><td>Traffic Interception</td><td>Burp مع تخطي SSL pinning للقبض على اعتمادات نص عارية</td></tr>
+<tr><td>Local Storage Analysis</td><td>البحث في تخزين الجهاز عن بيانات غير مشفّرة</td></tr>
+<tr><td>Intent Hijacking</td><td>التقاط بيانات حساسة بتتبادل بين مكونات التطبيق</td></tr>
+</table></div>
+<p><b>أمثلة:</b> Firebase key hardcoded في كود Java decompiled بلا obfuscation. Session token نص عاري في SharedPreferences مقروء فورًا على جهاز rooted. سكريبت Frida سطر واحد يخلّي فحص البصمة يرجع true دايمًا. Crash report بيرفع الـ access token كامل. Refresh token لسه شغّال بعد سنتين وتلات أجهزة.</p>
+
+<h2 id="s7"><span class="n">07</span>أمان سلسلة الإمداد (Mobile Supply Chain)</h2>
+<p>سلسلة الإمداد بتشمل كل حاجة في تطوير وبناء وتوزيع وصيانة التطبيق: SDKs ومكتبات (analytics, ads, auth)، APIs موردين، أدوات بناء (Gradle, CocoaPods, npm)، وخدمات cloud/CI-CD.</p>
+<div class="tw"><table>
+<tr><th>الرقم</th><th>المعنى</th></tr>
+<tr><td>20-30</td><td>مكوّن طرف تالت في التطبيق العادي</td></tr>
+<tr><td>+15</td><td>خدمة backend منفصلة لكل تطبيق في المتوسط</td></tr>
+<tr><td>80%+</td><td>من كود التطبيق العادي مصدره طرف تالت</td></tr>
+</table></div>
+<p>مع صعوبة الاختراق المباشر، المهاجمين بيستهدفوا سلسلة الإمداد بدل ما يهاجموا التطبيق مباشرة، وده اتجاه في تزايد.</p>
+<h3>متجهات هجوم سلسلة الإمداد</h3>
+<ul><li>SDKs قديمة أو بها ثغرات. تسريب بيانات صامت (SDK بيبعت بيانات بهدوء). كود طرف تالت من غير sandbox. Binaries غير موثّقة وبدون SBOM.</li></ul>
+<h3>خريطة MITRE ATT&CK</h3>
+<div class="tw"><table>
+<tr><th>التقنية</th><th>Tactic</th></tr>
+<tr><td>T1476 — Supply Chain Compromise</td><td>Initial Access</td></tr>
+<tr><td>T1444 — Credential Storage via 3rd-Party Keychain</td><td>Collection</td></tr>
+<tr><td>T1456 — Input Capture via 3rd-Party Keyboard</td><td>Collection</td></tr>
+<tr><td>T1437 — App Behavior Modification</td><td>Defense Evasion</td></tr>
+<tr><td>T1430 — Side-loaded/Third-Party App Abuse</td><td>Credential Access</td></tr>
+</table></div>
+<h3>مؤشرات خطر يتم رصدها</h3>
+<ul><li>غياب version pinning (بيسحب آخر إصدار تلقائيًا حتى لو مخترق). SDK متعتّم مستحيل تدقيقه. JS خارجي يتحمّل في WebView عرضة للحقن. صلاحيات غير مبررة. غياب privacy policy أو كود مفتوح. غياب SBOM/قائمة اعتماديات.</li></ul>
+<h3>أربع ركائز لمخاطر سلسلة الإمداد</h3>
+<div class="tw"><table>
+<tr><th>الركيزة</th><th>التفاصيل</th></tr>
+<tr><td>Library Vulnerabilities</td><td>مكتبات قديمة، كود خبيث مضاف، typosquatting، حزم غير مصانة</td></tr>
+<tr><td>Build Process Compromises</td><td>سيرفرات CI/CD مخترقة، أدوات بناء بها backdoor، manifests معدّلة</td></tr>
+<tr><td>Distribution Platform Issues</td><td>تخطّي أمان الـ store، تطبيقات مكررة أو مزيفة، حسابات مخترقة</td></tr>
+<tr><td>Update Mechanism Flaws</td><td>تحقق تحديثات ضعيف، MITM وقت التحديث، هجمات downgrade</td></tr>
+</table></div>
+<p><b>أمثلة:</b> SDK طقس بيطلب وصول للـ contacts من غير مبرر وظيفي. SDK إعلانات بيعمل تحديث صامت وإصدار بيسرّب معرّفات الجهاز. سكريبت WebView من غير integrity check قابل للحقن من CDN مخترق. مكتبة open-source مشهورة اتستولى عليها وتحديث خبيث اتنشر قبل ما حد يلاحظ.</p>
+
+<h2 id="s8"><span class="n">08</span>التحقق والتفويض (Authentication &amp; Authorization)</h2>
+<h3>المفاهيم الأساسية</h3>
+<ul><li><b>Authentication:</b> التحقق من هوية المستخدم. <b>Authorization:</b> تحديد صلاحيات وصوله. <b>Session Management:</b> الحفاظ على الجلسة وحمايتها. <b>عوامل المصادقة:</b> حاجة تعرفها، تملكها، أو تمثّلك. <b>Trust Boundaries:</b> نقاط بتتغير فيها متطلبات المصادقة.</li></ul>
+<h3>تحديات الموبايل الخاصة</h3>
+<ul><li>منطق على الـ client (فحوصات auth جوه الجهاز). قدرات Offline (تخزين اعتمادات أو توكنز). SDKs طرف تالت (OAuth/SSO ممكن ما تتحققش بالكامل). استمرار الجلسة طويل المدى. تخزين التوكن محليًا غالبًا بشكل غير آمن.</li></ul>
+<h3>الموبايل مقابل الويب في الـ Auth</h3>
+<div class="tw"><table>
+<tr><th>الجانب</th><th>Mobile</th><th>Web</th></tr>
+<tr><td>تخزين الـ Session</td><td>Local storage، SharedPreferences، Keychain</td><td>Cookies</td></tr>
+<tr><td>واجهة الـ Auth</td><td>Native أو WebView</td><td>HTML</td></tr>
+<tr><td>استخدام التوكن</td><td>OAuth2, JWT, Firebase</td><td>Sessions أو cookies</td></tr>
+<tr><td>Biometric</td><td>مدمج مع النظام (Keychain/Keystore)</td><td>نادر</td></tr>
+<tr><td>نقاط الإنفاذ</td><td>ممكن تتوزع بين client وbackend</td><td>مركزية</td></tr>
+</table></div>
+<h3>إدارة اعتمادات ضعيفة</h3>
+<ul><li>سياسات باسورد ضعيفة. غياب حماية brute-force. مسارات استرجاع يمكن تخمينها. تخزين اعتمادات غير آمن. نقل اعتمادات نص عاري.</li></ul>
+<h3>مصادقة Client-Side مكسورة</h3>
+<ul><li>اعتمادات hardcoded. قرارات مصادقة على الجهاز. تطبيق biometric غير آمن. تخطّي فحوصات بالتلاعب بالـ client. MFA معيب يمكن تخطّيه.</li></ul>
+<h3>إدارة Session غير آمنة</h3>
+<ul><li>حماية توكن غير كافية. غياب انتهاء صلاحية. توليد توكن ضعيف. إبطال session غير صحيح وقت الخروج. مشاكل الـ session عبر أجهزة متعددة.</li></ul>
+<h3>ثغرات JWT وOAuth</h3>
+<div class="tw"><table>
+<tr><th>JWT</th><th>OAuth</th></tr>
+<tr><td>غياب التحقق من التوقيع</td><td>Redirect غير موثّق أو مفتوح</td></tr>
+<tr><td>خوارزميات توقيع ضعيفة</td><td>غياب التحقق من الـ state (CSRF)</td></tr>
+<tr><td>كشف معلومات داخل الـ payload</td><td>تسريب التوكن في logs أو الروابط</td></tr>
+</table></div>
+<blockquote><p>OAuth بروتوكول تفويض، وJWT صيغة توكن — مش نفس الحاجة.</p></blockquote>
+<h3>الطبقة الشبكية والمشاكل الشبكية</h3>
+<ul><li>غياب أو سوء إعداد TLS. تخطّي التحقق من الشهادة. هجمات Downgrade. اتصال backend غير آمن.</li></ul>
+<h3>كسر التفويض على مستوى الوظيفة</h3>
+<ul><li>Horizontal Escalation (الوصول لبيانات مستخدمين تانيين). Vertical Escalation (الوصول لوظائف أعلى صلاحية). غياب فحص الصلاحية على بعض الـ endpoints. IDOR بمعرّفات متوقعة. Race Conditions تتخطى فحص الصلاحية.</li></ul>
+<h3>عيوب التفويض من جهة الـ Client</h3>
+<ul><li>منطق التفويض جوه الكود. عناصر واجهة مخفية بدل الحجب الحقيقي. التلاعب بفحوصات الجهاز. Deep links وIntent redirection. مكونات مكشوفة بحماية ضعيفة.</li></ul>
+<h3>مخاطر الـ Content Provider وBroadcast Receiver</h3>
+<ul><li>Providers متساهلة بتكشف بيانات أكتر من المطلوب. Receivers بتقبل broadcasts من أي تطبيق. هجمات عبر الـ Intents. مشاركة بيانات غير آمنة بين التطبيقات. غياب فحوصات الصلاحية.</li></ul>
+<h3>نتائج حقيقية من الاختبار الديناميكي</h3>
+<ul><li>تخطّي الـ Login عبر Frida أو تعديل الـ payload. تغيير <code>userId</code> ولسه بتتقبل البيانات. إنفاذ على الواجهة بس مش السيرفر. إعادة استخدام توكن طويل العمر عبر أجهزة متعددة. غياب تحقق من الـ access token في الطلبات المعترَضة. إعدادات OAuth خاطئة بتسرّب توكنز.</li></ul>
+
+<h2 id="s9"><span class="n">09</span>التحقق من المدخلات والمخرجات</h2>
+<p><b>Input Validation:</b> التأكد إن البيانات القادمة صحيحة وآمنة ومتوقعة قبل استخدامها. <b>Output Validation:</b> التأكد إن البيانات الخارجة من التطبيق متنقّاة عشان ما تستغلش الأنظمة اللي بتستقبلها (WebViews وAPIs وnative calls).</p>
+<h3>سطح هجوم المدخلات في الموبايل</h3>
+<ul><li>حقول الواجهة. Deep links وURI schemes (<code>myapp://login?token=...</code>). ملفات خارجية ومحتوى يتم تحليله (PDF, XML, JSON). Intents وIPC. WebViews. بيانات الحساسات (GPS spoofing، microphone). Cloud sync (بيانات offline معدّلة بترجع للسيرفر). Clipboard. اللوجات ورسائل الخطأ.</li></ul>
+<h3>متجهات خاصة بالمنصة</h3>
+<div class="tw"><table>
+<tr><th>Android</th><th>iOS</th></tr>
+<tr><td>التواصل عبر Intents</td><td>URL Schemes وUniversal Links</td></tr>
+<tr><td>التحقق من بيانات الـ Bundle/Extra</td><td>أمان UIPasteboard</td></tr>
+<tr><td>أمان الـ Content Provider</td><td>تفاعلات App Extension</td></tr>
+</table></div>
+<h3>ثغرات الحقن في الموبايل</h3>
+<ul><li>SQL Injection على قواعد بيانات محلية. NoSQL Injection. XML Injection (بما فيها entity expansion). Command Injection في native code. JavaScript Injection جوه WebViews غالبًا توصل لجسر native.</li></ul>
+<h3>XSS وتقنيات التخطّي</h3>
+<ul><li>Stored / Reflected / DOM-based XSS جوه الـ WebView. استغلال الـ JavaScript Bridge. تخطّي الفحص: ترميز وأحرف خاصة، تلاعب في طول المدخل، تزوير نوع MIME، هجمات بنيوية على JSON/XML.</li></ul>
+<h3>الحقن حسب المنصة</h3>
+<div class="tw"><table>
+<tr><th>Android (Intents)</th><th>iOS (URL Schemes)</th></tr>
+<tr><td>Intent Spoofing</td><td>URL Scheme Hijacking</td></tr>
+<tr><td>Extras غير متحقق منها</td><td>Parameter Pollution</td></tr>
+<tr><td>اعتراض Implicit Intent</td><td>ضعف التحقق من Universal Links</td></tr>
+<tr><td>إساءة استخدام PendingIntent</td><td>إعادة توجيه عبر Deep Link</td></tr>
+</table></div>
+<h3>فشل التحقق من المخرجات</h3>
+<ul><li>فشل ترميز HTML entities. ترميز JavaScript ناقص جوه WebViews. ترميز قيم SQL غير آمن. ترميز XML معيب. كشف تفاصيل في رسائل الخطأ. Logging حساس مفصّل.</li></ul>
+<h3>التعرّف على عيوب I/O أثناء الاختبار</h3>
+<div class="tw"><table>
+<tr><th>العلامة</th><th>تدل على</th></tr>
+<tr><td>تعطّل التطبيق بمدخل معدّ</td><td>Path traversal، SSRF، وصول ملفات غير آمن</td></tr>
+<tr><td>بيانات تظهر في الواجهة/اللوجات/الإشعارات</td><td>DOM injection أو XSS محلي</td></tr>
+<tr><td>مسارات URL/ملفات مبنية من مدخل مستخدم</td><td>حقن محتمل</td></tr>
+<tr><td>WebView بيعرض مدخل ديناميكي</td><td>مدخل عبر URI وNFC وQR وBLE</td></tr>
+<tr><td>مدخل غير منقّى يوصل لـ API</td><td>تزوير الحساسات أو قناة حقن</td></tr>
+</table></div>
+<h3>تقنيات الاختبار</h3>
+<ul><li>Mobile Fuzzing. اعتراض وتعديل الترافيك. كشف تخطّي التحقق وقت الـ runtime. Instrumentation لمراقبة فعلية لما بيتحقق منه الكود. أدوات fuzzing مخصصة للموبايل.</li></ul>
+<p><b>أمثلة:</b> <code>myapp://login?token=...</code> بيسجّل دخول أي حد بيضغط على رابط مصمّم ومبعوت بـ SMS. PDF مرفوع غير منقّى بيعطّل التطبيق ويسرّب الذاكرة. رسالة chat غير منقّاة في WebView بتنفّذ JS ضد جسر التطبيق نفسه. شاشة خطأ بترجّع نفس اللي كتبه المهاجم. موقع GPS مزوّر بيفتح مكافأة "صالة قريبة" وهمية.</p>
+
+<h2 id="s10"><span class="n">10</span>الاتصال غير الآمن</h2>
+<p>أجهزة الموبايل بتعيش على شبكات معادية، فالترافيك محتاج نفس حماية التخزين المحلي.</p>
+<h3>الشهادة الرقمية والتحقق من TLS</h3>
+<p>الشهادة ملف من CA بيثبت هوية السيرفر، وبتحتوي على: المفتاح العام، اسم النطاق، معلومات المُصدِر، تاريخ الانتهاء، والتوقيع الرقمي.</p>
+<pre class="flow"><code>Connect over HTTPS → Server presents certificate → App verifies issuer/domain/validity → Secure session established</code></pre>
+<h3>أخطاء شائعة في التحقق من الشهادة</h3>
+<ul><li>قبول كل الشهادات. السماح بشهادات self-signed. تعطيل hostname verification. استخدام شهادات منتهية أو ضعيفة. نسيان إعادة تفعيل التحقق بعد الـ debug.</li></ul>
+<h3>Certificate Pinning</h3>
+<p>بيثق بس في شهادة أو مفتاح عام محدد، فحتى شهادة صحيحة من CA مزوّر (rogue CA MITM) بترفض. بيتنفّذ عبر شهادات/مفاتيح hardcoded، Android Network Security Config، أو iOS ATS + مكتبات SSL pinning.</p>
+<div class="tw"><table>
+<tr><th>الحالة</th><th>مع Pinning</th><th>من غير Pinning</th></tr>
+<tr><td>MITM بـ rogue CA</td><td>مرفوض</td><td>مقبول</td></tr>
+<tr><td>تجديد شهادة شرعي</td><td>محتاج تحديث للتطبيق</td><td>مقبول</td></tr>
+<tr><td>إعداد Pinning خاطئ</td><td>الاتصال بيتكسر</td><td>—</td></tr>
+</table></div>
+<h3>iOS App Transport Security (ATS)</h3>
+<ul><li>التطبيق الافتراضي: TLS 1.2+، forward secrecy، cipher suites قوية بس. <code>NSAllowsArbitraryLoads: true</code> أخطر override، بيلغي ATS تقريبًا بالكامل. <code>NSExceptionDomains</code> استثناءات لنطاقات معينة، دايمًا تستحق المراجعة. أول فحص static: افتح <code>Info.plist</code> وشوف المفتاح ده قبل أي اعتراض ترافيك.</li></ul>
+<h3>علامات الاتصال غير الآمن</h3>
+<ul><li>ترافيك ظاهر في Burp من غير مجهود (مفيش pinning). اعتمادات/توكنز عبر HTTP. نطاقات غير متوقعة (SDK طرف تالت بيسرّب). توكنز المصادقة في الـ query string. غياب أخطاء TLS مع شهادات غير صالحة. قيم نص عاري في اللوجات.</li></ul>
+<h3>تقنيات الهجوم على ترافيك الموبايل</h3>
+<ul><li>MITM (Burp, mitmproxy). TLS Downgrade. حقن شهادة مزيفة على جهاز rooted أو emulator. DNS Spoofing. تحليل البروتوكول (API وBLE). سرقة توكن/session.</li></ul>
+<p><b>أمثلة:</b> تطبيق بنكي بيقبل أي شهادة لأن bypass الـ debug ما اتشالش. تطبيق تسوق بيظهر ترافيكه في Burp من غير أي مجهود (مفيش pinning خالص). تجديد شهادة روتيني بيكسر التطبيق لكل المستخدمين لحد ما يطلع تحديث طارئ (pinning متشدد جدًا). تطبيق سفر بيرجع لـ HTTP plaintext بدل ما يرفض الاتصال.</p>
+
+<h2 id="s11"><span class="n">11</span>الخصوصية في تطبيقات الموبايل</h2>
+<blockquote class="w"><p>الخصوصية مش هي الأمان — تطبيق ممكن يكون آمن تقنيًا ولسه بينتهك خصوصية المستخدم.</p></blockquote>
+<h3>القوانين المؤثرة</h3>
+<ul><li>GDPR (الاتحاد الأوروبي). CCPA/CPRA (كاليفورنيا). PIPEDA (كندا). قواعد الخصوصية الخاصة بالـ App Stores (Apple وGoogle). لوائح قطاعية مثل HIPAA وGLBA. COPPA (خصوصية الأطفال).</li></ul>
+<h3>فئات البيانات الشخصية الحساسة</h3>
+<ul><li>معرّفات شخصية (اسم، إيميل). اعتمادات الحساب. بيانات مالية. بيانات بيومترية/صحية. معرّفات الجهاز (IMEI، advertising ID). بيانات الموقع. بيانات سلوكية.</li></ul>
+<h3>أماكن تركّز مخاطر الخصوصية</h3>
+<ul><li>جمع البيانات والـ minimization. التعريف والتتبع (fingerprinting وadvertising IDs). الاحتفاظ والحذف. المشاركة والتكامل مع طرف تالت. الموافقة والشفافية.</li></ul>
+<h3>ثغرات خصوصية شائعة</h3>
+<ul><li>استخدام صلاحيات زايد عن اللزوم. نقل بيانات غير آمن. معرّفات دائمة وfingerprinting. تجهيل بيانات غير كافٍ (خطر إعادة التعريف). تحليلات تنتهك الخصوصية (تسجيل الجلسة بالكامل). تسريب بيانات وصفية (EXIF في الصور).</li></ul>
+<h3>رصد مشاكل الخصوصية أثناء الاختبار</h3>
+<div class="tw"><table>
+<tr><th>العلامة</th><th>تدل على</th></tr>
+<tr><td>وصول كاميرا/مايك عند فتح التطبيق</td><td>SDK طرف تالت بيسرّب بيانات</td></tr>
+<tr><td>بيانات GPS بتتبعت باستمرار</td><td>خطر تعرّض على جهاز مفقود</td></tr>
+<tr><td>نطاقات غير متوقعة في Burp</td><td>ضعف شفافية وموافقة</td></tr>
+<tr><td>Logs أو ملفات محلية فيها PII</td><td>تسجيل خاطئ لمعلومات حساسة</td></tr>
+</table></div>
+<h3>منهجية اختبار الخصوصية</h3>
+<ul><li>تحليل خصوصية ديناميكي (تتبع الترافيك وتدفق البيانات). تحليل سلوكي (مقارنة الممارسة الفعلية بالمُعلنة). خرائط وجرد البيانات. اختبار الموافقة والشفافية.</li></ul>
+<p><b>أمثلة:</b> فلاشلايت بيطلب صلاحية موقع في الخلفية "لتحسين الإعلانات". تحليلات بتسجّل كل ضغطة بما فيها حقل "الأعراض" في تطبيق صحي. صور إجازة فيها EXIF location بتكشف عنوان البيت. معرّف جهاز فريد ملصق بكل حدث بيلغي أي "تجهيل" مزعوم.</p>
+
+<h2 id="s12"><span class="n">12</span>ضعف الحماية الثنائية (Insufficient Binary Protections)</h2>
+<p>أي حد يقدر يحمّل التطبيق ويعمله decompile ويحلله. الحماية الثنائية بتصعّب: فك التحليل، فهم المنطق الداخلي، تعديل فحوصات الأمان، حقن أو hook كود، واستخراج الأسرار.</p>
+<h3>ليه الـ Binaries معرّضة</h3>
+<ul><li>سهلة الوصول (تحميل وdecompile). منطق الـ client ظاهر (أسرار ومنطق وتوكنز). العبث شائع (patching وrepackaging وتضمين malware). تهديد الـ repackaging (نسخ معدّلة توزّع malware). Runtime Hooking عبر Frida وXposed.</li></ul>
+<h3>افتراضات خطيرة عن أمان الـ Binary</h3>
+<ul><li>"Obfuscation = Security" — بس بيضيف احتكاك، مش بيشيل الثغرة. "APIs عندنا محمية" — حماية الـ API مستقلة عن حماية الـ binary. "محدش هيدوّر يعمل decompile" — أدوات الـ decompile مجانية وناضجة. "Anti-root = آمن" — فحص root وحده مش بيحمي الباقي.</li></ul>
+<h3>إزاي المهاجم يستهدف الـ Binary</h3>
+<ul><li>تعديل سلوك وقت التشغيل. Memory dumping. Method hooking/swizzling. اعتراض استدعاءات الدوال. حقن مكتبة native. إزالة obfuscation والـ instrumentation الديناميكي (Frida).</li></ul>
+<h3>أدوات تحليل iOS</h3>
+<div class="tw"><table>
+<tr><th>الأداة</th><th>الاستخدام</th></tr>
+<tr><td>class-dump</td><td>استخراج تعريفات الكلاسات ومعلومات Objective-C runtime</td></tr>
+<tr><td>Hopper Disassembler</td><td>فك تجميع كود Arm64 لتجميع مقروء ومعلّق</td></tr>
+<tr><td>otool -L</td><td>سرد كل مكتبة ديناميكية مربوطة بالـ binary</td></tr>
+<tr><td>strings</td><td>استخراج نصوص hardcoded — روابط API ومفاتيح منسية</td></tr>
+<tr><td>dyld Shared Cache Analysis</td><td>فهم إزاي المكتبات بتتحمّل فعليًا وقت التشغيل</td></tr>
+</table></div>
+<p><b>أمثلة:</b> منطق login لتطبيق بنكي مقروء بالكامل بأداة decompile مجانية في 10 دقايق. فحص root لتطبيق ولاء بيتعطّل بسطر Frida واحد بشكل دائم. لعبة اتعاد تعبئتها بمكتبة حقن إعلانات على متجر طرف تالت. طالب بيعمل decompile لتطبيق fintech كمشروع نهاية أسبوع ويلاقي API keys hardcoded.</p>
+
+<h2 id="s13"><span class="n">13</span>الإعدادات غير الآمنة (Insecure Configuration)</h2>
+<h3>الأسباب الشائعة</h3>
+<ul><li>إعدادات افتراضية متسابة. ميزات خطيرة شغّالة في الإنتاج. قيم غير آمنة في config/manifest. صلاحيات زايد عن اللزوم. تشديد غير مكتمل.</li></ul>
+<h3>ليه بتحصل كتير</h3>
+<ul><li>التطبيقات بتيجي مع ملفات config كتير (مساحة أكبر لقيمة خاطئة). إعدادات الـ debug بتتنقل للإنتاج. Platform APIs قوية ومعقدة. SDKs طرف تالت بتجيب إعداداتها الخاصة. السلوك بيتغير بين بيئات dev/staging/production.</li></ul>
+<h3>صلاحيات زايدة وإعدادات اتصال غير آمنة</h3>
+<div class="tw"><table>
+<tr><th>صلاحيات زايدة</th><th>اتصال غير آمن</th></tr>
+<tr><td>تطبيقات بصلاحيات زايدة عن الحاجة</td><td>غياب Network Security Config</td></tr>
+<tr><td>صلاحية مطلوبة من غير تبرير</td><td>تعطيل التحقق من الشهادة</td></tr>
+<tr><td>تركيبات صلاحيات خطيرة مع بعض</td><td>السماح بـ cleartext traffic</td></tr>
+<tr><td>تصعيد عبر misconfiguration</td><td>محتوى مختلط في WebViews</td></tr>
+</table></div>
+<h3>سوء إعداد التخزين والبناء والمكونات</h3>
+<ul><li>ملفات قابلة للقراءة/الكتابة من أي حد. تخزين خارجي غير آمن. قواعد SQLite غير محمية. SharedPreferences غير آمنة. ملفات cache/temp متروكة. Debug flags شغّالة. خيارات compiler ضعيفة. Backdoors للمطوّر في الإنتاج. Logging زايد ومشاكل التوقيع. مكونات exported غير محمية. Content Providers وDeep Links سيئة الإعداد.</li></ul>
+<h3>أدوات واختبار الإعدادات</h3>
+<div class="tw"><table>
+<tr><th>مستوى التطبيق</th><th>مستوى الـ Backend</th></tr>
+<tr><td>MobSF (static/dynamic)</td><td>فحص أمان الـ endpoints</td></tr>
+<tr><td>Drozer (مكونات Android)</td><td>فحص إعدادات الـ auth على السيرفر</td></tr>
+<tr><td>استخراج وفحص الخصائص</td><td>مراجعة إعدادات الـ cloud</td></tr>
+<tr><td>سكريبتات اختبار مخصصة</td><td>اختبار الـ API gateway وpush notifications</td></tr>
+</table></div>
+<p><b>أمثلة:</b> تطبيق صحي قواعد قاعدة بياناته مفتوحة بالكامل، كل سجلات المرضى مكشوفة. Logging الإنتاج ما اتعطّلش، فبيسجل أرقام حسابات كاملة. Activity مكشوفة من غير فحص بتخلي أي تطبيق مثبّت يشغّل تدفق إعادة تعيين الباسورد مباشرة. Cleartext traffic لسه مسموح من بناء تجريبي قديم.</p>
+
+<h2 id="s14"><span class="n">14</span>التخزين غير الآمن (Insecure Data Storage)</h2>
+<p>الأجهزة شخصية ومادية وغالبًا بتتفقد أو تتسرق، والتطبيقات الـ offline محتاجة تخزين محلي، ومعظم المستخدمين ما بيشفّروش أجهزتهم، وأدوات الروت/الجيلبريك متاحة بسهولة، والتخزين المحلي بيأثر على التعرّض في الـ cloud كمان.</p>
+<h3>تخزين بيانات حساسة بنص عاري</h3>
+<ul><li>اعتمادات نص عاري. تعرّض PII. بيانات دفع. بيانات صحية. توكنز مصادقة نص عاري. بيانات الموقع الجغرافي.</li></ul>
+<h3>خريطة أماكن التخزين على الجهاز</h3>
+<div class="tw"><table>
+<tr><th>المكان</th><th>الخطر</th></tr>
+<tr><td>Logs &amp; Clipboard</td><td>أسهل مكان للتسريب، غالبًا من غير قصد</td></tr>
+<tr><td>External / SD Card</td><td>قابل للقراءة من أي تطبيق مثبّت</td></tr>
+<tr><td>Local Databases (SQLite/CoreData)</td><td>غير مشفّرة افتراضيًا</td></tr>
+<tr><td>Internal App Storage (SharedPreferences)</td><td>محتاج جهاز rooted ليتقرأ</td></tr>
+<tr><td>Keychain / Keystore</td><td>مربوط بالهاردوير — الأأمن تصميمًا</td></tr>
+</table></div>
+<h3>أماكن تخزين غير آمنة ومشاركة غير آمنة</h3>
+<ul><li>ملفات/مجلدات قابلة للقراءة من أي حد. تخزين خارجي لبيانات حساسة. ملفات قاعدة بيانات غير محمية. ملفات مؤقتة محتواها حساس. نسخ احتياطية غير آمنة. أما المشاركة: سوء إعداد Content Provider، ثغرات مشاركة عبر Intent، تعرّض بيانات الـ Pasteboard، تسريب عبر URL scheme، تعرّض بيانات عبر التطبيقات.</li></ul>
+<h3>مشاكل استمرارية البيانات</h3>
+<ul><li>احتفاظ زايد بالبيانات. حذف غير مكتمل. استمرار البيانات بعد إزالة التثبيت. سوء إدارة الـ cache والنسخ الاحتياطية.</li></ul>
+<h3>استخراج البيانات: Android مقابل iOS</h3>
+<div class="tw"><table>
+<tr><th>Android</th><th>iOS</th></tr>
+<tr><td>استكشاف هيكل مجلد بيانات التطبيق</td><td>خريطة الـ App Sandbox</td></tr>
+<tr><td>قراءة SharedPreferences مباشرة</td><td>استخراج وتحليل ملفات plist</td></tr>
+<tr><td>استخراج وتحليل SQLite</td><td>الوصول لـ Core Data / Realm</td></tr>
+<tr><td>فحص صلاحيات الملفات</td><td>استخراج الـ Keychain</td></tr>
+</table></div>
+<p><b>أمثلة:</b> قاعدة بيانات محلية غير مشفّرة فيها سجل تحويلات كامل لتطبيق بنكي، مقروء على جهاز rooted. نسخة iCloud احتياطية فيها معاينات رسائل غير محمية. فواتير محفوظة على تخزين خارجي، ظاهرة لكل تطبيق تاني. توكن لسه موجود في crash log قديم اتلقط بعد شهور من تقرير الباج الأصلي.</p>
+
+<h2 id="s15"><span class="n">15</span>ضعف التشفير (Insufficient Cryptography)</h2>
+<blockquote class="w"><p>التشفير الضعيف أسوأ من عدم التشفير — بيدّي ثقة زائفة.</p></blockquote>
+<h3>أسباب فشل التشفير</h3>
+<ul><li>خوارزميات ضعيفة أو مكسورة (MD5, RC4, ECB). تنفيذ غلط (غياب IV، salt ثابت). تشفير homegrown بدل المعايير المثبَتة. توليد مفاتيح ضعيف (بما فيها hardcoded). عدم التشفير أصلًا لما يكون مطلوبًا.</li></ul>
+<h3>خوارزميات ضعيفة ومشاكل التنفيذ</h3>
+<div class="tw"><table>
+<tr><th>النوع</th><th>التفاصيل</th></tr>
+<tr><td>خوارزميات قديمة</td><td>MD5, SHA-1, DES</td></tr>
+<tr><td>مفاتيح قصيرة</td><td>مش كافية لمقاومة الهجمات الحديثة</td></tr>
+<tr><td>وضع ECB</td><td>بيكشف أنماط البيانات المشفّرة</td></tr>
+<tr><td>Hardcoded keys</td><td>مضمّنة مباشرة في التطبيق</td></tr>
+<tr><td>IVs يمكن التنبؤ بها</td><td>بتلغي عشوائية حقيقية</td></tr>
+<tr><td>غياب Salt</td><td>hashes عرضة للهجوم المسبَق الحساب</td></tr>
+</table></div>
+<h3>ثغرات إدارة المفاتيح</h3>
+<ul><li>تخزين مفاتيح غير آمن. تدوير مفاتيح غير كافٍ. مفتاح واحد مشترك عبر كل التثبيتات. إمكانية استخراج المفتاح. نقل مفاتيح غير آمن عبر الشبكة.</li></ul>
+<h3>الـ Oracles التشفيرية والقنوات الجانبية</h3>
+<ul><li>هجمات Timing. تسريب معلومات عبر رسائل الخطأ. هجمات Cache-based. Padding Oracle Attacks.</li></ul>
+<h3>علامات التشفير الضعيف أثناء الاختبار</h3>
+<div class="tw"><table>
+<tr><th>العلامة</th><th>تدل على</th></tr>
+<tr><td>بيانات تنفك بسهولة من memory dump</td><td>وضع ECB أو غياب IV عشوائي</td></tr>
+<tr><td>نفس المدخل بيدّي نفس المخرج (predictable)</td><td>غياب عشوائية (مفيش salt)</td></tr>
+<tr><td>فك التشفير ممكن بـ Frida/Objection</td><td>مفاتيح ثابتة أو ضعيفة</td></tr>
+<tr><td>منطق تشفير مخصص في الكود decompiled</td><td>تشفير homegrown عرضة للكسر</td></tr>
+</table></div>
+<p><b>أمثلة:</b> مفتاح الخزنة في مدير باسوردات نفسه في كل تثبيتة. سجلات مرضى مشفّرة بـ ECB فأنماط الأسماء المكررة ظاهرة مباشرة في الـ ciphertext. cache تطبيق بنكي يتفك فورًا لما خاصية الجهاز معروفة (مفتاح مشتق يمكن التنبؤ به). hashes MD5 من غير salt، فمستخدمين بنفس الباسورد بيطلعوا بنفس الـ hash.</p>
+
+<h2 id="s16"><span class="n">16</span>الاختبار الديناميكي وأدوات Android</h2>
+<blockquote><p>مختبر قضى أيام في static analysis لتطبيق مالي متعتّم من غير نتيجة — التحول للـ dynamic كشف 3 ثغرات حرجة في أول ساعة، بمجرد مراقبة سلوك التطبيق وقت معاملات محددة.</p></blockquote>
+<h3>ليه الاختبار الديناميكي</h3>
+<ul><li>مراقبة السلوك الفعلي وقت التشغيل. ثغرات بتظهر في حالات محددة بس. تخطّي الـ obfuscation اللي بيعطّل الـ static. التحقق من الثغرات باستغلالها فعليًا.</li></ul>
+<h3>نموذج أمان Android</h3>
+<ul><li>Sandboxing (كل تطبيق بـ UID فريد). نموذج الصلاحيات. تعرّض المكونات (Activities, Services, Receivers, Providers). آليات IPC (Intents, AIDL, binders). أمان WebView (JS interfaces). أمان الشبكة (pinning وTLS).</li></ul>
+<h3>حقيبة أدوات الاختبار الديناميكي</h3>
+<div class="tw"><table>
+<tr><th>الأداة</th><th>الاستخدام</th></tr>
+<tr><td>جهاز rooted / Emulator</td><td>بيئة الاختبار نفسها</td></tr>
+<tr><td>ADB</td><td>التفاعل مع الجهاز</td></tr>
+<tr><td>Burp Suite</td><td>proxy لاعتراض الترافيك</td></tr>
+<tr><td>Frida</td><td>تعديل ومراقبة وقت التشغيل</td></tr>
+<tr><td>Drozer &amp; MobSF</td><td>تحليل خاص بـ Android</td></tr>
+<tr><td>Wireshark</td><td>تحليل الشبكة</td></tr>
+</table></div>
+<h3>طرق كشف الـ Root</h3>
+<ul><li>فحص ملفات (SU binary، Superuser.apk). فحص خصائص النظام. فحص حزم (تطبيقات إدارة root مثبّتة). فحص صلاحيات. تشغيل أوامر بـ <code>su</code> للتأكد من الوصول المرتفع.</li></ul>
+<h3>نموذج أمان iOS</h3>
+<ul><li>App Sandboxing (حاوية معزولة لكل تطبيق). Code Signing &amp; Provisioning (بس binaries موقّعة من مطوّر موثوق). Entitlements (قدرات محدَّدة بدقة). ATS (تشفير نقل قوي افتراضيًا). Secure Enclave (معالج منعزل للمفاتيح والبصمة).</li></ul>
+<h3>حقيبة اختبار iOS</h3>
+<ul><li>جهاز Jailbroken (checkra1n/palera1n مع Cydia/Sileo وSSH). class-dump/class-dump-z. Frida &amp; Objection. Cycript (تفاعل مباشر مع كائنات Objective-C). otool وMachOView وlibimobiledevice.</li></ul>
+<h3>طرق كشف الـ Jailbreak وتخطّيها</h3>
+<div class="tw"><table>
+<tr><th>طريقة الكشف</th><th>طريقة التخطّي</th></tr>
+<tr><td>فحص ملفات (Cydia.app, /bin/bash)</td><td>Hooking بـ Frida لإجبار النتيجة تكون سلبية دايمًا</td></tr>
+<tr><td>فحص sandbox (الكتابة برّه الحاوية)</td><td>أدوات جاهزة: Liberator أو Flex tweaks</td></tr>
+<tr><td>فحص URL scheme (<code>cydia://</code>)</td><td>فحوصات إشارة واحدة بتنهار لما الإشارة تتزوّر</td></tr>
+<tr><td>فحص مكتبات مشبوهة (Substrate)</td><td>—</td></tr>
+</table></div>
+<h3>ليه التحقق القياسي من الشهادة مش كفاية</h3>
+<p>بيتحقق من سلسلة الثقة بس، مش هوية الشهادة المحددة. أي شهادة موقّعة من CA موثوق بتتقبل حتى لو من CA غير متوقع. متجر الثقة العادي فيه 150+ CA جذري موثوق ضمنيًا، وأي واحد منهم نقطة فشل واحدة. CA مخترق يقدر يصدر شهادات مزوّرة. الـ Pinning بيقيّد الثقة لشهادة أو مفتاح محدد بس.</p>
+<h3>ثلاث طرق لعمل Pinning</h3>
+<div class="tw"><table>
+<tr><th>الطريقة</th><th>الوصف</th><th>التقييم</th></tr>
+<tr><td>Pin Certificate</td><td>تخزين الشهادة كاملة</td><td>الأكتر تقييدًا، محتاج تحديث عند انتهاء الشهادة</td></tr>
+<tr><td>Pin Public Key</td><td>تخزين hash المفتاح العام</td><td>بينجو من التجديد لو نفس زوج المفتاح اتكرر — أكتر مرونة</td></tr>
+<tr><td>Pin CA Certificate</td><td>تثبيت الـ CA المُصدر</td><td>الأكتر مرونة لكن الأقل أمانًا — أي شهادة من نفس CA مقبولة</td></tr>
+</table></div>
+<h3>تقنيات تخطّي Certificate Pinning</h3>
+<ul><li>Dynamic Instrumentation (Frida, Objection). Xposed Modules (JustTrustMe, SSLUnpinning). تعديل الكود يدويًا (smali أو Java). إعادة تجميع التطبيق بإزالة منطق الـ pinning.</li></ul>
+<p>بيصعب التخطّي لما يكون فيه طبقات متعددة من الـ pinning: فحوصات متعددة مش واحد، على مستويات كود مختلفة (native وJava)، في وقت الإطلاق وكل طلب، مع كشف تلاعب وanti-hooking وفحص root/emulator مدمج مع الـ pinning.</p>
+<h3>إزاي Frida بيشتغل</h3>
+<p><b>Frida Server</b> بيشتغل على الجهاز، و<b>Frida Client</b> بيشتغل على جهاز المختبر ويحقن JavaScript في العمليات المستهدفة. القدرات: Hooking للدوال والطرق، قراءة وتعديل الذاكرة، تتبّع التنفيذ، سرد الكلاسات والموديولات المحمّلة، استدعاء الدوال مباشرة، والتلاعب بكائنات Java/Kotlin/Objective-C وقت التشغيل.</p>
+<p><b>أمثلة:</b> حساب خصم ولاء وقت التشغيل بس — غير مرئي للمراجعة الـ static، اتلاقى بـ Frida في دقايق. إعادة تسمية binary الـ "su" بس كفاية لتخطّي فحص root من ملف واحد. Pinning على المفتاح العام فضل شغّال طول تجديد شهادة كامل من غير أي تحديث. WebView بتقبل JavaScript عشوائي بمجرد ما Frida يتخطّى فحص الـ integrity بتاعه.</p>
+
+<h2 id="s17"><span class="n">17</span>أساسيات الـ API</h2>
+<p>الـ API جسر بين التطبيق والخدمات الخلفية، وبيمكّن تبادل البيانات وتنفيذ الميزات والتفاعل عن بُعد. 83% من ترافيك تطبيقات الموبايل مدفوع بالـ APIs (Gartner, 2023).</p>
+<h3>ليه التطبيقات بتعتمد على الـ APIs</h3>
+<ul><li>تفريغ المعالجة الثقيلة (auth والمنطق على الـ backend). تحديثات لحظية (مراسلة وإشعارات بتفضل حديثة). تطبيق أخف (منطق أقل على الجهاز = استجابة أسرع). قابلية التوسّع (إدارة بيانات مركزية).</li></ul>
+<h3>أنواع الـ APIs</h3>
+<ul><li><b>Backend APIs:</b> RESTful (الأشيع)، GraphQL (بتكسب شعبية)، gRPC وWebSockets. <b>Platform-Specific:</b> iOS (UIKit, SwiftUI, Core Location, HealthKit) وAndroid (Google Play Services, Jetpack, Firebase). <b>Third-Party:</b> دفع (Stripe, PayPal)، سوشيال ميديا، خرائط، تحليلات.</li></ul>
+<h3>عوامل خطر خاصة بالـ API في الموبايل</h3>
+<ul><li>الـ endpoints وآليات الـ auth موجودة جوه كود التطبيق نفسه. خطر reverse engineering أعلى من الويب. التوكنز بتفضل صالحة لفترة أطول بكتير. ثغرات خاصة بالمنصة: Android (deep linking وintent-based attacks) وiOS (URL scheme manipulation ومشاكل shared keychain).</li></ul>
+<h3>مشاكل أمان الـ API الشائعة</h3>
+<ul><li>فحوصات تفويض غير كافية (BOLA/IDOR). كشف بيانات زايد (الرد بيرجّع أكتر من المطلوب للواجهة). مراجع كائن مباشرة غير آمنة (تغيير معرّف يكفي). تسريب وسوء إدارة التوكنز.</li></ul>
+<h3>معمارية الـ API</h3>
+<pre class="flow"><code>Mobile App (presentation) → API Gateway (routing, auth, rate limiting, validation) → Backend Server (logic + storage) → response JSON</code></pre>
+<h3>REST مقابل GraphQL</h3>
+<div class="tw"><table>
+<tr><th>REST</th><th>GraphQL</th></tr>
+<tr><td>Stateless، URLs قائمة على الموارد، طرق HTTP قياسية</td><td>endpoint واحد <code>/graphql</code>، الـ client بيطلب بالظبط اللي محتاجه</td></tr>
+<tr><td>قوة: انتشار واسع، أدوات ناضجة، caching، قابل للتوسّع</td><td>قوة: بيقلل over/under-fetching — ممتاز لمحدودية bandwidth الموبايل</td></tr>
+<tr><td>ضعف: رحلات متعددة، over/under-fetching، مشاكل versioning</td><td>ضعف: سطح introspection معقد، تحكم وصول ضعيف ممكن يكشف حقول مخفية</td></tr>
+</table></div>
+<pre><code>// REST: GET /user/123 بيرجّع الكائن كامل (اسم، صورة، عنوان، تليفون، ميلاد) سواء الشاشة محتاجاه أو لأ
+// GraphQL: { user(id: 123) { username avatarUrl latestPosts } } بيرجّع 3 حقول بس
+// الخطر: فحص صلاحية ضعيف على مستوى الحقل بيسمح بنفس الاستعلام يطلب internalNotes أو إيميل مستخدم تاني</code></pre>
+<h3>Backend-as-a-Service (BaaS)</h3>
+<div class="tw"><table>
+<tr><th>الخيار</th><th>الوصف</th></tr>
+<tr><td>Firebase</td><td>بسيط بس تحكّم دقيق محدود محتمل</td></tr>
+<tr><td>Parse</td><td>مرن لكن محتاج تنفيذ سليم</td></tr>
+<tr><td>AWS API Gateway</td><td>مستوى مؤسسي لكن إعداده معقّد</td></tr>
+</table></div>
+<p>اعتبارات الأمان: تخزين ونقل API keys، إدارة توكن المصادقة (إصدار وتخزين وإلغاء)، ضوابط وصول البيانات لكل مورد (مش بس عند الـ login)، rate limiting.</p>
+<p><b>أمثلة:</b> استعلام introspection بسيط بيكشف حقول admin مخفية (تحكم وصول ضعيف). تطبيق Firebase بقواعد افتراضية مفتوحة (realtime database). تطبيق بنكي محتاج عدة رحلات REST بس عشان يعرض شاشة واحدة. API key لمزوّد دفع طرف تالت قاعد جوه التطبيق بدل الـ backend.</p>
+
+<h2 id="s18"><span class="n">18</span>اكتشاف الـ Endpoints والـ Parameters</h2>
+<h3>طريقتان للاكتشاف</h3>
+<div class="tw"><table>
+<tr><th>Static Analysis</th><th>Dynamic Analysis</th></tr>
+<tr><td>أدوات: jadx, apktool, class-dump, MobSF</td><td>طرق: مراقبة نداءات الـ API وقت الاستخدام، hook مكتبات الشبكة، تحليل ترافيك WebView</td></tr>
+<tr><td>بيدوّر على: base URLs، endpoints hardcoded، مفاتيح وSDKs طرف تالت</td><td>بيُظهر: السلوك الفعلي وقت التشغيل، مش بس الكود</td></tr>
+<tr><td>القيد: الـ obfuscation ممكن يحد من الفاعلية</td><td>القيد: ممكن يفوّت منطق غير مستخدَم أو شرطي</td></tr>
+</table></div>
+<h3>مثال عملي</h3>
+<p><b>كشف static:</b> <code>api.bank.com/v1/internal/debug</code>. <b>كشف dynamic:</b> <code>/api/transfer/funds</code>، ووصول غير مصادَق لـ <code>/api/user/export</code>.</p>
+<pre class="flow"><code>1. Static analysis للـ endpoints المعروفة → 2. Dynamic traffic للتأكيد والتوسيع → 3. Enumeration مستهدف من الأنماط المكتشفة → 4. توثيق وتصنيف الـ endpoints → 5. التحقق من التغطية بالفحص الآلي</code></pre>
+<h3>بناء جرد الـ API</h3>
+<ul><li>جرد endpoints منظّم حسب الوظيفة. توثيق الـ parameters (الأنواع والقيود). متطلبات المصادقة لكل endpoint على حدة. خريطة تدفق البيانات بين الـ endpoints المرتبطة. تصنيف الخطر حسب الوظيفة وحساسية البيانات.</li></ul>
+<h3>أنواع الـ Parameters</h3>
+<div class="tw"><table>
+<tr><th>النوع</th><th>مثال</th></tr>
+<tr><td>Query</td><td><code>?key=value&amp;key2=value2</code></td></tr>
+<tr><td>Path</td><td><code>/users/{id}/profile</code></td></tr>
+<tr><td>Header</td><td><code>X-API-Key</code></td></tr>
+<tr><td>Body</td><td><code>{ "email": "test@domain.com" }</code></td></tr>
+</table></div>
+<h3>هجمات قائمة على الـ Parameters</h3>
+<ul><li>Injection (SQL, NoSQL, LDAP, OS command). Parameter Tampering. Mass Assignment (overposting). Type Confusion. Parameter Pollution (إرسال نفس الـ parameter أكتر من مرة).</li></ul>
+<h3>تعرّض الـ Parameters خاص بالموبايل</h3>
+<ul><li>تخطّي فحوصات الـ client-side بسهولة. Reverse engineering بيكشف أنماط الـ parameters مباشرة. نص عاري في logs أو caches. IPC غير آمن بيكشف parameters. سوء تعامل SDKs مع الـ parameters.</li></ul>
+<h3>تقنيات Fuzzing</h3>
+<ul><li>Fuzzing حسب نوع الـ parameter. اختبار الحدود (min/max، buffer sizes). حقن أحرف خاصة (Unicode، control characters، wildcards). Fuzzing واعٍ بالسياق (حالات اختبار خاصة بالمنصة).</li></ul>
+<p><b>أمثلة:</b> Debug endpoint منسي اتلاقى بالـ static analysis بس. <code>GET /api/order?id=1005</code> — غيّر الرقم وشوف طلب حد تاني. حقل <code>"role":"admin"</code> زيادة اتقبل بهدوء على endpoint تحديث البروفايل. إرسال نفس الـ parameter مرتين بيطبّق القيمتين على كود خصم.</p>
+
+<h2 id="s19"><span class="n">19</span>عيوب التفويض، التوكنز، والـ Sessions</h2>
+<h3>IDOR وBOLA وBFLA</h3>
+<div class="tw"><table>
+<tr><th>المصطلح</th><th>الوصف</th></tr>
+<tr><td>IDOR</td><td>الوصول لموارد بالتلاعب في معرّف، مثل <code>/user/123</code></td></tr>
+<tr><td>BOLA</td><td>مصطلح OWASP API Top 10 لنفس الـ IDOR على مستوى الكائن في الـ API</td></tr>
+<tr><td>BFLA</td><td>الوصول لوظائف أو endpoints غير مصرَّح بيها</td></tr>
+<tr><td>Horizontal Escalation</td><td>الوصول لبيانات مستخدمين تانيين بنفس مستوى الصلاحية</td></tr>
+<tr><td>Vertical Escalation</td><td>الوصول لوظائف أعلى صلاحية من المفروض</td></tr>
+</table></div>
+<pre class="flow"><code>GET /api/invoice/1001 (طلبك) → السيرفر يرجّع فاتورتك
+GET /api/invoice/1002 (نفس التوكن، رقم مختلف) → غياب فحص الملكية يرجّع فاتورة حد تاني بالكامل</code></pre>
+<blockquote><p>الحاجة الوحيدة الناقصة كانت فحص ملكية واحد على السيرفر.</p></blockquote>
+<h3>التعرّف على عيوب التفويض واختبارها</h3>
+<div class="tw"><table>
+<tr><th>تقنيات التعرّف</th><th>طرق الاختبار</th></tr>
+<tr><td>Parameter Mapping (كل المعرّفات: IDs, UUIDs, slugs)</td><td>استبدال ID بمورد مستخدم تاني</td></tr>
+<tr><td>Request Tracking (علاقة endpoint-parameter-object)</td><td>CRUD Matrix Testing</td></tr>
+<tr><td>Response Analysis (معرّفات مضمّنة في الرد)</td><td>تغيير طريقة HTTP</td></tr>
+<tr><td>Access Pattern Analysis (توثيق مسارات الوصول العادية)</td><td>اختبار عبر حسابات متعددة</td></tr>
+</table></div>
+<pre><code>for id in {1000..1050}; do curl /api/user/$id; done
+# افحص: فروق status codes، فروق التوقيت، بيانات وصفية مسرّبة (أسماء مستخدمين، إيميلات)
+
+# تصعيد: جرّب الوصول لـ /admin أو /manage أو /config
+# أضف أو عدّل حقول: "role": "admin" أو "is_admin": true</code></pre>
+<h3>تخطّي دفاعات أثناء الاختبار</h3>
+<ul><li>تخطّي Rate Limiting (طلبات موزّعة وتقنيات توقيت). تخطّي WAF (ترميز parameters وتجزئة الطلب). تخطّي Anti-Automation (تلاعب بـ cookies/headers وبصمة الجهاز). تخطّي قيود الـ IP (تدوير proxy واستخدام IP سحابي).</li></ul>
+<h3>تسلسل الثغرات لتأثير حقيقي</h3>
+<ul><li>IDOR + XSS لسرقة الجلسة. Auth Bypass + Privilege Escalation. Info Disclosure + Enumeration + IDOR للوصول لبيانات حساسة على نطاق واسع.</li></ul>
+<h3>أنواع التوكنز وتحديات الموبايل الخاصة</h3>
+<ul><li>Session IDs، JWT (موقّع ذاتيًا)، OAuth Access/Refresh Tokens. تحديات الموبايل: sessions أطول عمرًا من الويب، معالجة خلفية تحتاج مصادقة مستمرة، أجهزة متعددة بنفس سياق المصادقة، قدرات offline تتطلب تخزين التوكن محليًا.</li></ul>
+<h3>بنية JWT وثغراتها</h3>
+<pre class="flow"><code>Header.Payload.Signature</code></pre>
+<ul><li>Algorithm Confusion / None — تخطّي التحقق من التوقيع بالكامل. مفاتيح توقيع ضعيفة — brute-force على HMAC secret. غياب التحقق من التوقيع. كشف معلومات في الـ payload. غياب التحقق من claims — قبول توكنز منتهية أو غير صالحة.</li></ul>
+<h3>ممارسات JWT غير آمنة</h3>
+<ul><li>مفاتيح تحقق hardcoded جوه الـ binary. تحقق من JWT على الـ client (الـ client نفسه مش موثوق). تخزين JWT في أماكن غير آمنة. انتهاء صلاحية طويل للاستخدام offline بيوسّع نافذة الخطر.</li></ul>
+<h3>Session Fixation</h3>
+<pre class="flow"><code>1. المهاجم يجهّز Session ID معروف → 2. الضحية يُستدرج لاستخدامه → 3. الضحية يعمل login بنفس الـ session → 4. المهاجم يمتلك session مصادَق عليه بالكامل</code></pre>
+<p>طرق التوصيل: Deep links بـ parameter session (<code>myapp://login?session=KNOWN_ID</code>)، QR codes خبيثة، Cross-App Request Forgery، MITM، وروابط phishing عبر SMS/إيميل.</p>
+<p><b>أمثلة:</b> تغيير claim ID في الرابط بيكشف مطالبة طبية كاملة لمريض تاني. حقل <code>"is_admin": true</code> متقبول بيحوّل مستخدم عادي لـ admin فورًا. JWT موقّع بـ "none" يتقبل من السيرفر كتذكرة مزوّرة. Session ثابت في إيميل تسويقي — الضغط عليه بيسجّل دخول لحساب المهاجم أصلًا متحكم فيه.</p>
+
+<h2 id="s20"><span class="n">20</span>اختبار الـ Biometric Authentication</h2>
+<p>النظام نفسه (LocalAuthentication على iOS مع Secure Enclave، أو BiometricPrompt/FingerprintManager على Android) بيتولى التحقق الفعلي من البصمة، والتطبيق بيستقبل بس نجاح/فشل — عمره ما بيوصله البيانات البيومترية نفسها.</p>
+<h3>حدود الثقة البيومترية</h3>
+<pre class="flow"><code>Fingerprint/Face → Secure Enclave / TEE+Keystore (المطابقة هنا، البيانات متعديش) → App: success/failure فقط</code></pre>
+<p>السؤال الحقيقي: التطبيق بيثق في الإشارة البسيطة دي ويتصرف فورًا، ولا بيعيد التحقق مع السيرفر الأول؟</p>
+<h3>قبل الاختبار: افهم الاستخدام</h3>
+<ul><li>هل بيفتح التطبيق بس ولا حاجة أحسّ؟ هل بيفوّض فعل محدد (تحويل بنكي)؟ هل فيه fallback زي PIN؟ هل مربوط بـ session آمنة أصلًا ولا مجرد اختصار؟</li></ul>
+<h3>"مربوط بـ Session آمنة" يعني إيه فعلًا</h3>
+<div class="tw"><table>
+<tr><th>قوي: مربوط بالتشفير</th><th>ضعيف: Boolean بس</th></tr>
+<tr><td>Android: مفتاح Keystore يُستخدم بس عبر CryptoObject مربوط بنجاح مصادقة محدد</td><td>الدالة بترجّع true/false بس، والتطبيق بيثق في القيمة دي لفتح session أو فعل</td></tr>
+<tr><td>iOS: عنصر Keychain بسياسة وصول تتطلب نجاح LAContext حقيقي، مش قابل لإعادة الاستخدام بعد الانتهاء</td><td>hook القيمة المرتجعة كفاية للتخطّي</td></tr>
+<tr><td>إجبار callback true/false بس مش كفاية لفتح المفتاح الفعلي</td><td>—</td></tr>
+</table></div>
+<h3>التحليل الـ Static: Android مقابل iOS</h3>
+<div class="tw"><table>
+<tr><th>Android</th><th>iOS</th></tr>
+<tr><td>أدوات: JADX أو MobSF للـ decompile</td><td>أدوات: class-dump وFrida وMobSF</td></tr>
+<tr><td>كلاسات: <code>BiometricPrompt</code>, <code>FingerprintManager</code>, <code>KeyguardManager</code></td><td>الرمز: <code>LAContext</code></td></tr>
+<tr><td>السؤال: بعد النجاح، فيه token يتجاب؟ session جديدة تبدأ؟ فحوصات تتفرض؟</td><td>الدالة الأساسية: <code>evaluatePolicy:localizedReason:reply:</code></td></tr>
+</table></div>
+<h3>علامات حمراء وتقنيات الاختبار الديناميكي</h3>
+<ul><li>غياب تحقق backend — نجاح بيومتري يوصل مباشرة لعمليات حساسة من غير فحص سيرفر. غياب تخزين آمن (Keychain/Keystore) للـ session الناتجة.</li>
+<li>Hook الـ callback البيومتري لإجباره يرجّع true دايمًا. إعادة أو التلاعب بتوكنز الـ session بعد نجاح البصمة. التلاعب بالـ fallback (PIN ضعيف مخزّن بشكل غير آمن). تعطيل البصمة وإعادة استخدام الـ session القديمة.</li></ul>
+<h3>Checklist الاختبار البيومتري</h3>
+<ul><li>هل النجاح البيومتري يتحقق منه السيرفر؟ هل ممكن تجبر النجاح عبر hooking؟ التوكنز والـ fallback PINs متخزّنة بأمان؟ هل البصمة بتؤدي لـ session صالحة فعليًا؟ الـ fallback ضعيف أو يمكن تخمينه؟</li></ul>
+<p><b>أمثلة:</b> سكريبت Frida بيجبر نجاح بيومتري وينقّل فلوس حقيقية من غير فحص سيرفر. Session token نص عاري في SharedPreferences بعد login بيومتري، مقروء على جهاز rooted. تعطيل البصمة من الإعدادات ما بيلغيش الـ session القديمة اللي لسه شغّالة.</p>
+
+<h2 id="s21"><span class="n">21</span>Brute Force وبصمة الجهاز والحماية من العبث</h2>
+<h3>رسم تدفق الـ Login</h3>
+<p>راقب نداءات الـ API الفعلية، حدّد الـ parameters (username/email، password/OTP، session/token)، وحدّد بالظبط فين حماية الـ brute-force مفروضة — client-side ولا server-side.</p>
+<h3>أنماط تسجيل الدخول الشائعة في الموبايل</h3>
+<ul><li>Username ← Password (التقليدي). Email/SMS OTP flows. Biometric مع fallback (PIN أو password احتياطي).</li></ul>
+<h3>أنواع هجمات Brute-Force</h3>
+<div class="tw"><table>
+<tr><th>النوع</th><th>الوصف</th></tr>
+<tr><td>Online مقابل Offline</td><td>مهاجمة النظام الحي مقابل نسخة محلية من البيانات</td></tr>
+<tr><td>Credential Stuffing</td><td>استخدام باسوردات مسرّبة من اختراقات تانية</td></tr>
+<tr><td>Password Spraying</td><td>استهداف حسابات كتير بباسورد شائع واحد</td></tr>
+<tr><td>Enumeration via Timing/Errors</td><td>ردود مفصّلة بتكشف هل الحساب موجود</td></tr>
+</table></div>
+<h3>علامات حماية Brute-Force ضعيفة</h3>
+<ul><li>محاولات login غير محدودة. غياب آلية lockout. غياب بصمة جهاز (مفيش إشارة إضافية لرصد محاولات مشبوهة). إعادة استخدام الـ session. غياب CAPTCHA.</li></ul>
+<h3>بصمة الجهاز (Device Fingerprinting)</h3>
+<ul><li>تحديد هوية الجهاز ومكان تسجيل الدخول. ربط الجهاز بالحساب/الـ session لمنع دخول غير مصرَّح أو هجمات replay. استخدامات شائعة: تطبيقات بنكية، توصيل OTP، تقييد استرجاع الباسورد. ممكن تكون دائمة (مربوطة بمستخدم) أو مؤقتة (مقتصرة على session واحدة).</li></ul>
+<h3>تحديد هوية الجهاز على iOS</h3>
+<ul><li><code>identifierForVendor</code> بيتصفّر لو كل تطبيقات نفس المطوّر اتمسحت، إلا لو اتحفظ في الـ Keychain. DeviceCheck وApp Attest: attestation موثّق من Apple نفسها — أصعب بكتير يتزوّر من معرّف محلي. حتى على آيفون jailbroken، الـ vendor identifier بيفضل ثابت إلا لو اتعدّل عمدًا. المعنى للاختبار: محاكاة "أجهزة" متعددة على iOS محتاج تلاعب مقصود بالمعرّف، مش بس تشغيل emulators أكتر.</li></ul>
+<h3>فحوصات البيئة والعبث اللي التطبيقات بتعملها</h3>
+<ul><li>كشف Debugger مرتبط. كشف Emulator. كشف Frida/hooking frameworks. فحوصات Root/Jailbreak. كشف Magisk/Xposed.</li></ul>
+<h3>اختبار بصمة الجهاز: Static وDynamic</h3>
+<ul><li><b>Static:</b> فين بيتقرا معرّف الجهاز (<code>Settings.Secure.ANDROID_ID</code> ومنطق تخزين UUID مخصص)، وأكواد كشف Emulator محددة (<code>Build.FINGERPRINT</code> أو <code>ro.hardware</code>).</li>
+<li><b>Dynamic:</b> Hook منطق البصمة بـ Frida، شغّل عدة emulators بمعرّفات مختلفة، حاكِ "أجهزة" منفصلة بالـ login، وراقب سلوك السيرفر (هل OTP اتمنع على الـ emulator التاني؟ هل التطبيق بيعمل logout أو error؟).</li></ul>
+<h3>ليه التطبيقات بتحمي نفسها من العبث</h3>
+<ul><li>حماية بيانات وتخزين حساس (Keychain/Keystore). منع تعديل الكود (instrumentation أو binary patching). حماية DRM وanti-cheat والملكية الفكرية. منع تخطّي منطق العمل (شراء مجاني أو تخطّي ترخيص). الامتثال لمتطلبات (مثل PCI DSS للتطبيقات البنكية).</li></ul>
+<p><b>أمثلة:</b> محاولات OTP غير محدودة بتخلي brute-force الكود مسألة دقايق. Emulatorين بمعرّفين مختلفين بيسجلوا دخول في نفس الوقت من غير إنذار. فحص Frida بيحصل عند الإطلاق بس، فحقن الأداة بعد ثواني من البدء بيتخطّاه بالكامل.</p>
+
+<h2 id="s22"><span class="n">22</span>التخطيط وتحديد نطاق الاشتباك</h2>
+<h3>التواصل الأولي مع العميل</h3>
+<ul><li>أصحاب المصلحة وجهات الاتصال التقنية. مكالمات scoping مبدئية. أهداف الاختبار وأولويات العمل. المتطلبات التنظيمية (GDPR, HIPAA, PCI DSS). مستوى نضج أمان العميل.</li></ul>
+<h3>تحليل التطبيق</h3>
+<ul><li>نوع التطبيق (native, hybrid, web-wrapper). المنصات المستهدَفة. الميزات والوظائف بالكامل. خدمات الـ backend والتكاملات. آليات المصادقة وحساسية البيانات.</li></ul>
+<h3>استبيان تحديد النطاق</h3>
+<ul><li>المعمارية والتقنيات. بيئات الاختبار المتاحة (إنتاج، staging، dev). متطلبات توفير الحسابات. توثيق ومواصفات الـ API. توفّر الكود المصدري (white/grey/black-box). تقييمات سابقة ومعالجة خاصة (PHI/PII/بيانات مالية).</li></ul>
+<h3>تحديد حدود الاختبار</h3>
+<div class="tw"><table>
+<tr><th>In-Scope</th><th>Out-of-Scope / مقيَّد</th></tr>
+<tr><td>Mobile client، APIs، Backends</td><td>خدمات طرف تالت، بنية تحتية سحابية غير مملوكة للعميل</td></tr>
+<tr><td>أنشطة اختبار متفق عليها بوضوح</td><td>طرق محظورة، ووظائف تحتاج تعامل خاص</td></tr>
+</table></div>
+<h3>تقدير الجهد والجدول الزمني</h3>
+<ul><li>نماذج مبنية على التعقيد. مناهج مبنية على الميزات. مقارنة تاريخية بمشاريع مشابهة. توزيع موارد حسب الخطر. معالم ومخرجات رئيسية، جدول قابل للتنفيذ بوقت احتياطي، تنسيق مع دورات الإصدار، ونقاط تحديث حالة منتظمة.</li></ul>
+<h3>متطلبات الموارد وقواعد الاشتباك</h3>
+<ul><li>الهاردوير (أجهزة اختبار محددة)، السوفت وير والأدوات، وصول للبيئة، توفير حسابات اختبار، تكوين الفريق حسب تعقيد التطبيق.</li>
+<li><b>قواعد الاشتباك الموثّقة:</b> الجدول الزمني، بروتوكولات التواصل، إجراءات التصعيد، أرقام تواصل للطوارئ، تكرار وشكل التقارير، وآلية الإفصاح عن النتائج والتعامل معها.</li></ul>
+<p><b>أمثلة:</b> غياب قواعد اشتباك موثّقة — نتيجة حرجة في الإنتاج من غير مسار تصعيد واضح. متطلب تنظيمي (PCI DSS) اتكشف متأخر وأجبر إعادة كتابة التقرير. تقدير الجهد بعدد الميزات بس — ميزات منخفضة الخطر بتاخد وقت، والـ auth والدفع بتتزنق.</p>
+
+<h2 id="s23"><span class="n">23</span>تجهيز المعمل والـ Recon</h2>
+<h3>إعداد معمل أجهزة الموبايل</h3>
+<ul><li>جهاز فعلي مقابل emulator — لكل واحد مقايضاته لهذا الاشتباك. إصدارات ونسخ OS المطلوبة توافق مستخدمي العميل الفعليين. تجهيز وإدارة الأجهزة. تجهيز أجهزة rooted/jailbroken. إعداد أساسي ونظيف قابل للتكرار.</li></ul>
+<h3>تجهيز حقيبة الأدوات</h3>
+<ul><li>Proxy setup (Burp Suite, OWASP ZAP, Charles). أدوات static (MobSF, Insider). إطار dynamic (Frida, Objection). أدوات تحليل ترافيك (Wireshark, tcpdump). سكريبتات مخصصة لاحتياجات الاشتباك.</li></ul>
+<h3>البنية التحتية للشبكة وأنظمة التوثيق</h3>
+<div class="tw"><table>
+<tr><th>البنية التحتية</th><th>التوثيق والأدلة</th></tr>
+<tr><td>شبكة اختبار معزولة</td><td>تخزين أدلة آمن</td></tr>
+<tr><td>تركيب شهادات للاعتراض</td><td>قوالب توثيق النتائج</td></tr>
+<tr><td>إعداد VPN عند الحاجة</td><td>إجراءات لقطة شاشة وتسجيل</td></tr>
+<tr><td>التقاط ترافيك أساسي (baseline)</td><td>مساحات عمل تعاونية للفريق</td></tr>
+</table></div>
+<h3>تحليل المعلومات العامة</h3>
+<ul><li>بيانات App Store الوصفية. موقع ووثائق المطوّر. تحليل إعلانات الوظائف (تلميحات عن التقنية المستخدمة فعليًا). سوشيال ميديا ومستودعات عامة (غالبًا بتكشف أكتر مما تتوقع). إفصاحات ثغرات سابقة.</li></ul>
+<h3>الحصول على الـ Binary</h3>
+<ul><li>تحميل من الـ App Store. أسواق بديلة ونسخ قديمة (مفيدة للمقارنة التاريخية). APK/IPA مباشرة من العميل (خاصة للبنايات غير المنشورة). تطبيقات توزيع enterprise (تُعامل بشكل مختلف عن الإصدارات العامة). وصول TestFlight/Beta.</li></ul>
+<h3>مراجعة التوثيق الأولية</h3>
+<ul><li>توثيق الـ API الرسمي. إرشادات تنفيذ الـ SDK. ملاحظات الإصدار والـ changelogs. مشاكل ومحدوديات معروفة. تحديد المكونات من طرف تالت.</li></ul>
+<h3>تأسيس خط أساس للسلوك (Baseline)</h3>
+<ul><li>تدفق المستخدم العادي موثّق خطوة بخطوة. اختبار وظيفي لفهم تدفق التطبيق. خط أساس للأداء والاستجابة. أنماط ترافيك الشبكة وقت الاستخدام العادي. مراقبة سلوك المصادقة والـ session قبل أي هجوم.</li></ul>
+<p><b>أمثلة:</b> إعلانات وظائف بتكشف Firebase وGraphQL قبل ما التطبيق حتى يتثبّت. نسخة قديمة بها ثغرة لسه شغّالة، اتلاقت بمجرد مراجعة بيانات الـ store الوصفية. نطاق جديد بيبان مختلف بس لأن فيه baseline ترافيك نظيف للمقارنة معاه.</p>
+
+<h2 id="s24"><span class="n">24</span>Static Analysis وسطح الهجوم وThreat Modeling</h2>
+<h3>فك تجميع التطبيق</h3>
+<ul><li>فك وتحليل APK على Android. استخراج وتحليل IPA على iOS. فحص الـ Manifest / info.plist. مراجعة الصلاحيات والـ entitlements. تحديد المكونات ورسم المعمارية.</li></ul>
+<h3>التحليل الثابت للكود</h3>
+<ul><li>معلومات حساسة hardcoded. تحديد ضوابط الأمان الموجودة أصلًا. تحليل آلية المصادقة. مراجعة تنفيذ التشفير (مش بس وجوده). حصر endpoints الـ API من الكود.</li></ul>
+<h3>رسم اتصالات الشبكة</h3>
+<ul><li>التقاط وتحليل أولي للترافيك. جرد endpoints من الملاحظة الفعلية. توثيق تدفق المصادقة فعليًا عبر السلك. أنماط نقل البيانات (كمية، تكرار، طريقة). كشف Certificate Pinning ومدى تشدده.</li></ul>
+<h3>تحديد أنظمة الـ Backend</h3>
+<ul><li>بصمة تقنية السيرفر. تحديد خدمات الـ cloud. اكتشاف تكاملات API طرف تالت. تحديد سيرفر المصادقة فعليًا. كشف أنظمة قواعد البيانات والتخزين.</li></ul>
+<h3>ثلاث أسطح هجوم</h3>
+<div class="tw"><table>
+<tr><th>Client</th><th>Network</th><th>Backend</th></tr>
+<tr><td>نقاط التحقق من المدخلات</td><td>جرد endpoints الـ API</td><td>تنفيذ API على السيرفر</td></tr>
+<tr><td>آليات التخزين المحلي</td><td>آليات المصادقة</td><td>أنظمة المصادقة والتفويض</td></tr>
+<tr><td>قنوات IPC بين التطبيقات</td><td>إدارة الـ session</td><td>آليات تخزين البيانات</td></tr>
+<tr><td>تنفيذات WebView</td><td>بروتوكولات نقل البيانات</td><td>تنفيذ منطق العمل</td></tr>
+<tr><td>معالجات URL scheme مخصصة</td><td>تنفيذ التحقق من الشهادة</td><td>نقاط التكامل مع أنظمة تانية</td></tr>
+</table></div>
+<h3>Threat Modeling</h3>
+<ul><li>Data Flow Diagrams (تصوّر حركة البيانات). Trust Boundaries (نقاط تغيّر افتراضات الثقة). تحديد تهديدات بـ STRIDE. ترتيب أولوية الخطر للاختبار. تطوير Attack Trees للسيناريوهات متعددة الخطوات.</li></ul>
+<h3>تقييم الخطر والأولوية</h3>
+<ul><li>تحديد وتقييم قيمة الأصول. تطوير سيناريوهات تهديد واقعية. تقدير احتمالية الثغرة. تقييم التأثير لو كل متجه نجح. ترتيب وتصنيف الخطر لتحديد ترتيب الاختبار.</li></ul>
+<h3>ترتيب حالات الاختبار حسب الحرجية</h3>
+<ul><li>الوظائف عالية الخطورة أولًا. التركيز على المصادقة والتفويض (عادة أعلى قيمة). أولوية معالجة البيانات الحساسة. اهتمامات العميل المحددة. توازن بين الشمول والعمق.</li></ul>
+<h3>تطوير سيناريوهات الهجوم</h3>
+<ul><li>سرديات هجوم واقعية — قصة مش مجرد قائمة ثغرات. تسلسل ثغرات محتملة مع بعض. دوافع وقدرات المهاجم الواقعية. خطط PoC ملموسة للإثبات. تخطيط لإظهار التأثير للعميل.</li></ul>
+<p><b>أمثلة:</b> endpoint واحد يوصله من الشبكة والـ client والـ backend في نفس الوقت — أولوية فورية. STRIDE بيكشف مسار انتحال هوية كان غير مرئي في مراجعة سطحية. سيناريو متسلسل (IDOR + تخزين غير آمن) بيثبت خسارة مالية فعلية.</p>
+
+<h2 id="s25"><span class="n">25</span>دورة حياة الاشتباك الكاملة</h2>
+<pre class="flow"><code>1. Kickoff & Setup → CP1 → 2. Core Testing → CP2 → 3. Advanced Testing & Exploitation → CP3 → 4. Specialized Testing → CP4 → 5. Report Preparation & Delivery</code></pre>
+<p>أربع نقاط تفتيش — واحدة بعد كل مرحلة ما عدا الأخيرة — بتحافظ على الاشتباك في مساره.</p>
+<h3>المرحلة 1: الانطلاق والتجهيز</h3>
+<ul><li><b>اجتماع Kickoff:</b> تعريف الفريق، مراجعة النطاق والأهداف، تأكيد الجدول والمخرجات، توفير وصول أولي.</li>
+<li><b>Recon أولي:</b> تثبيت وضبط التطبيق، استخدام أولي ورسم خريطة، التقاط ترافيك مبدئي، تحقق من الأدوات والـ static analysis.</li></ul>
+<h4>Checkpoint 1: التحقق من النطاق وتحسين الخطة</h4>
+<p>تأكيد جاهزية البيئة، التحقق من إصدار وبناء التطبيق الصحيح، ضمان وصول الأنظمة المطلوبة، تحديد تعديلات النطاق مبكرًا، وتحسين خطة الاختبار بناءً على نتائج الـ Recon الفعلية.</p>
+<h3>المرحلة 2: الاختبار الأساسي</h3>
+<ul><li><b>المصادقة والتفويض:</b> تحليل آلية المصادقة، اختبار إدارة الـ session، التحقق من ضوابط التفويض، اختبار الوصول حسب الدور، تقييم MFA.</li>
+<li><b>التخزين والحماية:</b> أمان التخزين المحلي، التحقق من تنفيذ التشفير، التحقق من التعامل مع البيانات الحساسة، اختبار أمان النسخ الاحتياطي، اختبار تسريب البيانات.</li>
+<li><b>اتصال الشبكة:</b> التحقق من أمان النقل، اختبار أمان كل endpoint على حدة، التحقق من تنفيذ SSL/TLS، تقييم Certificate Pinning، أمان الاتصال مع الـ backend بالكامل.</li></ul>
+<h4>Checkpoint 2: مراجعة النتائج الحرجة</h4>
+<p>توثيق فوري للنتائج الحرجة (ما بتستناش التقرير النهائي)، تحقق أولي من الخطورة، إخطار العميل فورًا بالقضايا الكبيرة، تعديل تركيز الاختبار، وتقييم التقدم بصدق مقابل الخطة الأصلية.</p>
+<h3>المرحلة 3: اختبار متقدّم واستغلال</h3>
+<ul><li><b>تفاعل المنصة:</b> اختبار IPC، فحص معالجات URL scheme المخصصة، تقييم أمان الـ Clipboard، اختبار ثغرات Intent/Deep Link، أمان تنفيذ WebView.</li>
+<li><b>منطق العمل:</b> محاولات تخطّي سير العمل، التحقق من قواعد العمل، اختبار أمان المعاملات (حيث تتحرك الأموال أو القيمة)، اختبار Race Conditions، صيد العيوب المنطقية الدقيقة.</li>
+<li><b>الحقن من جهة الـ Client:</b> حقن عبر WebView، حقن التخزين المحلي، التلاعب بـ parsers XML/JSON، حقن عبر بروتوكولات مخصصة، محاولات تخطّي التحقق من المدخلات.</li></ul>
+<h4>Checkpoint 3: تقدّم الاستغلال</h4>
+<p>توثيق الاستغلال الناجح فور حدوثه، تقييم تسلسل الهجمات، جمع أدلة استغلال قوية (مش مجرد ادعاءات)، تجهيز لإظهار التأثير، والتحقق من تغطية الاختبار.</p>
+<h3>المرحلة 4: مجالات اختبار متخصصة</h3>
+<div class="tw"><table>
+<tr><th>Binary Protection</th><th>Privacy Testing</th><th>Backend API Security</th></tr>
+<tr><td>فعالية الـ obfuscation</td><td>تقييم جمع البيانات</td><td>تقييم ضوابط أمان الـ API</td></tr>
+<tr><td>ضوابط anti-tampering</td><td>التحقق من استخدام الصلاحيات</td><td>اختبار ثغرات الحقن</td></tr>
+<tr><td>مقاومة reverse engineering</td><td>تحديد آليات التتبع</td><td>اختبار المصادقة والتفويض</td></tr>
+<tr><td>تخطّي كشف root/jailbreak</td><td>الامتثال لسياسة الخصوصية</td><td>التحكم في Rate limiting والموارد</td></tr>
+<tr><td>منع التلاعب وقت التشغيل</td><td>كشف تعرّض بيانات غير ضروري</td><td>تحديد عيوب منطق العمل</td></tr>
+</table></div>
+<h4>Checkpoint 4: حالة الاختبار الشاملة</h4>
+<p>تقييم تغطية الاختبار، تصنيف وترتيب أولوية النتائج، تحديد احتياجات اختبار إضافية، تحديث العميل بصورة صادقة عن الوضع الأمني الحالي، ومناقشة خطة المعالجة مبكرًا.</p>
+<h3>المرحلة 5: إعداد التقرير</h3>
+<ul><li><b>التحقق من النتائج:</b> إعادة إثبات الثغرة، إزالة False Positives، تحديد تصنيف الخطر، تصنيف النتائج، تحسين إثبات الاستغلال.</li>
+<li><b>التقرير الفني:</b> توثيق تفصيلي للثغرات، وضوح خطوات إعادة الإنتاج، إدراج أدلة فنية، تحليل السبب الجذري، توصيات معالجة مفصّلة.</li>
+<li><b>الملخص التنفيذي:</b> تقييم الخطر الكلي، أبرز النتائج، خريطة طريق استراتيجية للمعالجة، وضع أمني مقارن، شرح التأثير على العمل.</li></ul>
+<h4>Checkpoint الأخير: تسليم ومراجعة التقرير</h4>
+<p>عرض التقرير مباشرة للفريق التقني، شرح وتوضيح النتائج، مناقشة استراتيجية المعالجة، تخطيط وجدولة إعادة الاختبار (retest) للتأكد من فعالية الإصلاح، وإغلاق الاشتباك بصورة منظمة مع جمع الـ feedback.</p>
+<p><b>أمثلة:</b> تغيّر إصدار التطبيق اتلاقى مبكرًا عند Checkpoint 1 مش وقت التقرير. ثغرة حرجة في تحويل الأموال وصلت للعميل خلال أيام في Checkpoint 2 مش أسابيع. ملخص تنفيذي بيربط ثغرة تخزين بتأثير امتثال حقيقي يفهمه صاحب القرار.</p>
+
+<div class="eof">-- EOF: module-02/pentest-methodologies-dynamic-testing-masvs.md --</div>
+</main>
+</body>
+</html>

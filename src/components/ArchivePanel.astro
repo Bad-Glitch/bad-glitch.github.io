@@ -7,9 +7,9 @@ import { getSortedPosts } from "../utils/content-utils";
 import { url, getPostUrlBySlug } from "../utils/url-utils";
 
 interface Props {
-        keyword?: string;
-        tags?: string[];
-        categories?: string[];
+    keyword?: string;
+    tags?: string[];
+    categories?: string[];
 }
 
 const { tags, categories } = Astro.props;
@@ -17,116 +17,119 @@ const { tags, categories } = Astro.props;
 let posts = await getSortedPosts();
 
 if (Array.isArray(tags) && tags.length > 0) {
-        posts = posts.filter(
-                (post) =>
-                        Array.isArray(post.data.tags) &&
-                        post.data.tags.some((tag) => tags.includes(tag)),
-        );
+    posts = posts.filter(
+        (post) =>
+            Array.isArray(post.data.tags) &&
+            post.data.tags.some((tag) => tags.includes(tag)),
+    );
 }
 
 if (Array.isArray(categories) && categories.length > 0) {
-        posts = posts.filter(
-                (post) =>
-                        (post.data.category && categories.includes(post.data.category)) ||
-                        (!post.data.category && categories.includes(UNCATEGORIZED)),
-        );
+    posts = posts.filter(
+        (post) =>
+            (post.data.category && categories.includes(post.data.category)) ||
+            (!post.data.category && categories.includes(UNCATEGORIZED)),
+    );
 }
 
 /*
  * Courses
  * -------
  * Course cards are displayed in the Courses Notes category.
- * eAIS modules come from the posts collection.
- * OSCP+, CEHv13, and eWPTXv3 modules are served from standalone HTML files.
+ * eAIS and eMAPT modules come from the posts collection.
+ * Course content is served from standalone HTML files.
  */
 
 const coursePosts = posts.filter(
-        (post) => post.data.category === "Courses Notes" && post.data.course,
+    (post) => post.data.category === "Courses Notes" && post.data.course,
 );
 
 const standalonePosts = posts.filter(
-        (post) => !(post.data.category === "Courses Notes" && post.data.course),
+    (post) => !(post.data.category === "Courses Notes" && post.data.course),
 );
 
 const courses = [
-        ...Array.from(
-                new Set(
-                        coursePosts
-                                .map((post) => post.data.course)
-                                .filter((course): course is string => Boolean(course)),
-                ),
-        ).map((course) => {
-                const modules = coursePosts
-                        .filter((post) => post.data.course === course)
-                        .sort((a, b) => (a.data.module ?? 999) - (b.data.module ?? 999));
+    ...Array.from(
+        new Set(
+            coursePosts
+                .map((post) => post.data.course)
+                .filter((course): course is string => Boolean(course)),
+        ),
+    ).map((course) => {
+        const modules = coursePosts
+            .filter((post) => post.data.course === course)
+            .sort((a, b) => (a.data.module ?? 999) - (b.data.module ?? 999));
 
-                return {
-                        name: course,
-                        modules,
-                        href: url(`/courses/${course.toLowerCase()}/`),
-                        description: "AI Security Course Notes",
-                };
-        }),
+        return {
+            name: course,
+            modules,
+            href: url(`/courses/${course.toLowerCase()}/`),
+            description:
+                course === "eMAPT"
+                    ? "Mobile Application Penetration Testing Notes"
+                    : "AI Security Course Notes",
+        };
+    }),
 
-        {
-                name: "OSCP+",
-                modules: Array.from({ length: 17 }, (_, i) => i + 1),
-                href: url("/courses/oscp/"),
-                description: "Offensive Security Course Notes",
-        },
+    {
+        name: "OSCP+",
+        modules: Array.from({ length: 17 }, (_, i) => i + 1),
+        href: url("/courses/oscp/"),
+        description: "Offensive Security Course Notes",
+    },
 
-        {
-                name: "CEHv13",
-                modules: Array.from({ length: 17 }, (_, i) => i + 1),
-                href: url("/courses/cehv13/"),
-                description: "Certified Ethical Hacker v13 Notes",
-        },
+    {
+        name: "CEHv13",
+        modules: Array.from({ length: 17 }, (_, i) => i + 1),
+        href: url("/courses/cehv13/"),
+        description: "Certified Ethical Hacker v13 Notes",
+    },
 
-        {
-                name: "eWPTXv3",
-                modules: Array.from({ length: 6 }, (_, i) => i + 1),
-                href: url("/courses/ewptxv3/"),
-                description: "Advanced Web Application Penetration Testing Notes",
-        },
+    {
+        name: "eWPTXv3",
+        modules: Array.from({ length: 6 }, (_, i) => i + 1),
+        href: url("/courses/ewptxv3/"),
+        description: "Advanced Web Application Penetration Testing Notes",
+    },
 ];
 
-const standaloneCourses = ["OSCP+", "CEHv13", "eWPTXv3"];
+const standaloneCourses = ["OSCP+", "CEHv13", "eWPTXv3", "eMAPT"];
 
 const groups: { year: number; posts: typeof standalonePosts }[] = (() => {
-        const groupedPosts = standalonePosts.reduce(
-                (grouped: { [year: number]: typeof standalonePosts }, post) => {
-                        const year = post.data.published.getFullYear();
+    const groupedPosts = standalonePosts.reduce(
+        (grouped: { [year: number]: typeof standalonePosts }, post) => {
+            const year = post.data.published.getFullYear();
 
-                        if (!grouped[year]) {
-                                grouped[year] = [];
-                        }
+            if (!grouped[year]) {
+                grouped[year] = [];
+            }
 
-                        grouped[year].push(post);
+            grouped[year].push(post);
 
-                        return grouped;
-                },
-                {},
-        );
+            return grouped;
+        },
+        {},
+    );
 
-        const groupedPostsArray = Object.keys(groupedPosts).map((key) => ({
-                year: Number.parseInt(key),
-                posts: groupedPosts[Number.parseInt(key)],
-        }));
+    const groupedPostsArray = Object.keys(groupedPosts).map((key) => ({
+        year: Number.parseInt(key),
+        posts: groupedPosts[Number.parseInt(key)],
+    }));
 
-        groupedPostsArray.sort((a, b) => b.year - a.year);
+    groupedPostsArray.sort((a, b) => b.year - a.year);
 
-        return groupedPostsArray;
+    return groupedPostsArray;
 })();
 
 function formatDate(date: Date) {
-        const month = (date.getMonth() + 1).toString().padStart(2, "0");
-        const day = date.getDate().toString().padStart(2, "0");
+    const month = (date.getMonth() + 1).toString().padStart(2, "0");
+    const day = date.getDate().toString().padStart(2, "0");
 
-        return `${month}-${day}`;
+    return `${month}-${day}`;
 }
 
 function formatTag(tag: string[]) {
-        return tag.map((t) => `#${t}`).join(" ");
+    return tag.map((t) => `#${t}`).join(" ");
 }
 ---
 
