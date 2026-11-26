@@ -27,6 +27,12 @@ const networkPracticeUrl = "/exams/network-plus-practice/index.html";
 
 const securityExamUrl = "/exams/security-plus/index.html";
 const securityPracticeUrl = "/exams/security-plus-practice/index.html";
+
+const cysaExamUrl = "/exams/cysa-plus/index.html";
+const cysaPracticeUrl = "/exams/cysa-plus-practice/index.html";
+
+const linuxExamUrl = "/exams/linux-plus/index.html";
+const linuxPracticeUrl = "/exams/linux-plus-practice/index.html";
 ---
 
 <MainGridLayout
@@ -74,8 +80,8 @@ const securityPracticeUrl = "/exams/security-plus-practice/index.html";
                         <div class="emblem-caption">TEST YOUR KNOWLEDGE</div>
                     </div>
 
-                    <div class="floating-tag tag-top">6 EXAMS</div>
-                    <div class="floating-tag tag-bottom">3 CERTIFICATIONS</div>
+                    <div class="floating-tag tag-top">10 EXAMS</div>
+                    <div class="floating-tag tag-bottom">5 CERTIFICATIONS</div>
                 </div>
             </section>
 
@@ -232,30 +238,128 @@ const securityPracticeUrl = "/exams/security-plus-practice/index.html";
                         </article>
                     </div>
                 </div>
+
+                <!-- CySA+ -->
+                <div class="certification-group">
+                    <div class="certification-heading">
+                        <span class="certification-index">04</span>
+                        <div>
+                            <h3>CompTIA CySA+</h3>
+                            <p>Cybersecurity Analyst Certification</p>
+                        </div>
+                    </div>
+
+                    <div class="exam-options-grid">
+                        <article class="exam-option-card">
+                            <div class="option-top">
+                                <span class="option-number">07</span>
+                                <span class="option-label">EXAM SIMULATOR</span>
+                            </div>
+
+                            <h3>CySA+ Exam Simulator</h3>
+
+                            <p>
+                                Test your cybersecurity analysis knowledge and evaluate
+                                your readiness for the CompTIA CySA+ certification.
+                            </p>
+
+                            <a href={cysaExamUrl} target="_blank" rel="noopener noreferrer" data-no-swup class="start-button">
+                                Start Examination <span>→</span>
+                            </a>
+                        </article>
+
+                        <article class="exam-option-card practice-card">
+                            <div class="option-top">
+                                <span class="option-number">08</span>
+                                <span class="option-label">PRACTICE EXAM</span>
+                            </div>
+
+                            <h3>CySA+ Practice</h3>
+
+                            <p>
+                                Challenge your cybersecurity analysis skills with
+                                additional practice questions.
+                            </p>
+
+                            <a href={cysaPracticeUrl} target="_blank" rel="noopener noreferrer" data-no-swup class="start-button">
+                                Start Practice <span>→</span>
+                            </a>
+                        </article>
+                    </div>
+                </div>
+
+                <!-- Linux+ -->
+                <div class="certification-group">
+                    <div class="certification-heading">
+                        <span class="certification-index">05</span>
+                        <div>
+                            <h3>CompTIA Linux+</h3>
+                            <p>Linux System Administration Certification</p>
+                        </div>
+                    </div>
+
+                    <div class="exam-options-grid">
+                        <article class="exam-option-card">
+                            <div class="option-top">
+                                <span class="option-number">09</span>
+                                <span class="option-label">EXAM SIMULATOR</span>
+                            </div>
+
+                            <h3>Linux+ Exam Simulator</h3>
+
+                            <p>
+                                Test your Linux knowledge and evaluate your readiness
+                                for the CompTIA Linux+ certification.
+                            </p>
+
+                            <a href={linuxExamUrl} target="_blank" rel="noopener noreferrer" data-no-swup class="start-button">
+                                Start Examination <span>→</span>
+                            </a>
+                        </article>
+
+                        <article class="exam-option-card practice-card">
+                            <div class="option-top">
+                                <span class="option-number">10</span>
+                                <span class="option-label">PRACTICE EXAM</span>
+                            </div>
+
+                            <h3>Linux+ Practice</h3>
+
+                            <p>
+                                Strengthen your Linux skills with additional practice
+                                questions and test your knowledge.
+                            </p>
+
+                            <a href={linuxPracticeUrl} target="_blank" rel="noopener noreferrer" data-no-swup class="start-button">
+                                Start Practice <span>→</span>
+                            </a>
+                        </article>
+                    </div>
+                </div>
             </section>
 
             <section class="stats">
                 <div class="stat-card">
                     <span class="stat-icon">◈</span>
-                    <strong>03</strong>
+                    <strong>05</strong>
                     <span>Certifications</span>
                 </div>
 
                 <div class="stat-card">
                     <span class="stat-icon">◷</span>
-                    <strong>06</strong>
+                    <strong>10</strong>
                     <span>Available Exams</span>
                 </div>
 
                 <div class="stat-card">
                     <span class="stat-icon">◎</span>
-                    <strong>03</strong>
+                    <strong>05</strong>
                     <span>Exam Simulators</span>
                 </div>
 
                 <div class="stat-card">
                     <span class="stat-icon">✧</span>
-                    <strong>03</strong>
+                    <strong>05</strong>
                     <span>Practice Exams</span>
                 </div>
             </section>
@@ -306,7 +410,7 @@ const securityPracticeUrl = "/exams/security-plus-practice/index.html";
                 </div>
 
                 <div class="passing-score">
-                    <strong>6<span></span></strong>
+                    <strong>10<span></span></strong>
                     <small>AVAILABLE EXAMS</small>
                 </div>
             </section>
@@ -322,7 +426,7 @@ const securityPracticeUrl = "/exams/security-plus-practice/index.html";
                     Explore All Exams <span>→</span>
                 </a>
 
-                <small>CEHv13 · Network+ · Security+</small>
+                <small>CEHv13 · Network+ · Security+ · CySA+ · Linux+</small>
             </section>
         </main>
     ) : (
