@@ -21,11 +21,17 @@ const isExamSimulation = category === "eXam Simulation";
 
 const examUrl = "/exams/cehv13/index.html";
 const practiceUrl = "/exams/cehv13-practice/index.html";
+
+const networkExamUrl = "/exams/network-plus/";
+const networkPracticeUrl = "/exams/network-plus-practice/";
+
+const securityExamUrl = "/exams/security-plus/";
+const securityPracticeUrl = "/exams/security-plus-practice/";
 ---
 
 <MainGridLayout
-    title={isExamSimulation ? "CEHv13 Exam Simulation" : i18n(I18nKey.archive)}
-    description={isExamSimulation ? "Certified Ethical Hacker v13 Examination" : i18n(I18nKey.archive)}
+    title={isExamSimulation ? "Cybersecurity Exam Simulations" : i18n(I18nKey.archive)}
+    description={isExamSimulation ? "Professional Certification Examination Simulations" : i18n(I18nKey.archive)}
 >
     {isExamSimulation ? (
         <main class="exam-page">
@@ -36,31 +42,28 @@ const practiceUrl = "/exams/cehv13-practice/index.html";
                         EXAM SIMULATION
                     </div>
 
-                    <p class="course-label">EC-COUNCIL · CEH v13</p>
+                    <p class="course-label">CYBERSECURITY · CERTIFICATION EXAMS</p>
 
                     <h1>
-                        Certified Ethical Hacker
-                        <span>v13 Examination</span>
+                        Test Your Cybersecurity
+                        <span>Knowledge & Skills</span>
                     </h1>
 
                     <p class="hero-description">
-                        Test your cybersecurity knowledge with a realistic
-                        CEHv13 examination experience. Challenge yourself,
-                        evaluate your skills, and measure your readiness.
+                        Challenge yourself with realistic certification exam
+                        simulations. Evaluate your knowledge, test your skills,
+                        and measure your readiness for professional certifications.
                     </p>
 
                     <div class="hero-actions">
                         <a
-                            href={examUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            data-no-swup
+                            href="#exam-options"
                             class="start-button"
                         >
-                            Start Examination <span>→</span>
+                            Explore Examinations <span>↓</span>
                         </a>
 
-                        <span class="secure-label">◈ Secure Exam Environment</span>
+                        <span class="secure-label">◈ Online Exam Simulations</span>
                     </div>
                 </div>
 
@@ -68,99 +71,232 @@ const practiceUrl = "/exams/cehv13-practice/index.html";
                     <div class="visual-glow"></div>
 
                     <div class="exam-emblem">
-                        <div class="emblem-top">CEH</div>
-                        <div class="emblem-number">v13</div>
+                        <div class="emblem-top">EXAM</div>
+                        <div class="emblem-number">SIMULATOR</div>
                         <div class="emblem-line"></div>
-                        <div class="emblem-caption">CERTIFIED ETHICAL HACKER</div>
+                        <div class="emblem-caption">TEST YOUR KNOWLEDGE</div>
                     </div>
 
-                    <div class="floating-tag tag-top">125 QUESTIONS</div>
-                    <div class="floating-tag tag-bottom">4 HOURS</div>
+                    <div class="floating-tag tag-top">6 EXAMS</div>
+                    <div class="floating-tag tag-bottom">3 CERTIFICATIONS</div>
                 </div>
             </section>
 
             <!-- Examination Options -->
             <section class="exam-options" id="exam-options">
                 <div class="section-heading">
-                    <span class="section-kicker">CHOOSE YOUR EXAM</span>
-                    <h2>Select Your <span>Challenge</span></h2>
-                    <p>Choose the examination you want to take.</p>
+                    <span class="section-kicker">AVAILABLE EXAMINATIONS</span>
+                    <h2>Choose Your <span>Certification</span></h2>
+                    <p>Select an examination simulator or practice test to get started.</p>
                 </div>
 
-                <div class="exam-options-grid">
-                    <article class="exam-option-card">
-                        <div class="option-top">
-                            <span class="option-number">01</span>
-                            <span class="option-label">EXAM SIMULATOR</span>
+                <!-- CEHv13 -->
+                <div class="certification-group">
+                    <div class="certification-heading">
+                        <span class="certification-index">01</span>
+                        <div>
+                            <h3>CEHv13</h3>
+                            <p>Certified Ethical Hacker · EC-Council</p>
                         </div>
+                    </div>
 
-                        <h3>CEHv13 Exam Simulator</h3>
+                    <div class="exam-options-grid">
+                        <article class="exam-option-card">
+                            <div class="option-top">
+                                <span class="option-number">01</span>
+                                <span class="option-label">EXAM SIMULATOR</span>
+                            </div>
 
-                        <p>
-                            Test your cybersecurity knowledge with the CEHv13
-                            examination simulation and evaluate your readiness.
-                        </p>
+                            <h3>CEHv13 Exam Simulator</h3>
 
-                        <a
-                            href={examUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            data-no-swup
-                            class="start-button"
-                        >
-                            Start Examination <span>→</span>
-                        </a>
-                    </article>
+                            <p>
+                                Test your cybersecurity knowledge with the CEHv13
+                                examination simulation and evaluate your readiness.
+                            </p>
 
-                    <article class="exam-option-card practice-card">
-                        <div class="option-top">
-                            <span class="option-number">02</span>
-                            <span class="option-label">PRACTICE EXAM</span>
+                            <a
+                                href={examUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                data-no-swup
+                                class="start-button"
+                            >
+                                Start Examination <span>→</span>
+                            </a>
+                        </article>
+
+                        <article class="exam-option-card practice-card">
+                            <div class="option-top">
+                                <span class="option-number">02</span>
+                                <span class="option-label">PRACTICE EXAM</span>
+                            </div>
+
+                            <h3>CEHv13 Practice</h3>
+
+                            <p>
+                                Take the additional practice exam to challenge
+                                your knowledge and strengthen your preparation.
+                            </p>
+
+                            <a
+                                href={practiceUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                data-no-swup
+                                class="start-button"
+                            >
+                                Start Practice <span>→</span>
+                            </a>
+                        </article>
+                    </div>
+                </div>
+
+                <!-- Network+ -->
+                <div class="certification-group">
+                    <div class="certification-heading">
+                        <span class="certification-index">02</span>
+                        <div>
+                            <h3>CompTIA Network+</h3>
+                            <p>Networking Certification</p>
                         </div>
+                    </div>
 
-                        <h3>CEHv13 Practice</h3>
+                    <div class="exam-options-grid">
+                        <article class="exam-option-card">
+                            <div class="option-top">
+                                <span class="option-number">03</span>
+                                <span class="option-label">EXAM SIMULATOR</span>
+                            </div>
 
-                        <p>
-                            Take the additional practice exam to challenge
-                            your knowledge and strengthen your preparation.
-                        </p>
+                            <h3>Network+ Exam Simulator</h3>
 
-                        <a
-                            href={practiceUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            data-no-swup
-                            class="start-button"
-                        >
-                            Start Practice <span>→</span>
-                        </a>
-                    </article>
+                            <p>
+                                Assess your networking knowledge, including network
+                                infrastructure, operations, troubleshooting, and security.
+                            </p>
+
+                            <a
+                                href={networkExamUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                data-no-swup
+                                class="start-button"
+                            >
+                                Start Examination <span>→</span>
+                            </a>
+                        </article>
+
+                        <article class="exam-option-card practice-card">
+                            <div class="option-top">
+                                <span class="option-number">04</span>
+                                <span class="option-label">PRACTICE EXAM</span>
+                            </div>
+
+                            <h3>Network+ Practice</h3>
+
+                            <p>
+                                Strengthen your networking skills with additional
+                                practice questions and test your exam readiness.
+                            </p>
+
+                            <a
+                                href={networkPracticeUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                data-no-swup
+                                class="start-button"
+                            >
+                                Start Practice <span>→</span>
+                            </a>
+                        </article>
+                    </div>
+                </div>
+
+                <!-- Security+ -->
+                <div class="certification-group">
+                    <div class="certification-heading">
+                        <span class="certification-index">03</span>
+                        <div>
+                            <h3>CompTIA Security+</h3>
+                            <p>Cybersecurity Certification · SY0-701</p>
+                        </div>
+                    </div>
+
+                    <div class="exam-options-grid">
+                        <article class="exam-option-card">
+                            <div class="option-top">
+                                <span class="option-number">05</span>
+                                <span class="option-label">EXAM SIMULATOR</span>
+                            </div>
+
+                            <h3>Security+ Exam Simulator</h3>
+
+                            <p>
+                                Test your understanding of cybersecurity concepts,
+                                threats, vulnerabilities, and security controls.
+                            </p>
+
+                            <a
+                                href={securityExamUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                data-no-swup
+                                class="start-button"
+                            >
+                                Start Examination <span>→</span>
+                            </a>
+                        </article>
+
+                        <article class="exam-option-card practice-card">
+                            <div class="option-top">
+                                <span class="option-number">06</span>
+                                <span class="option-label">PRACTICE EXAM</span>
+                            </div>
+
+                            <h3>Security+ Practice</h3>
+
+                            <p>
+                                Improve your security knowledge and prepare for
+                                the CompTIA Security+ certification exam.
+                            </p>
+
+                            <a
+                                href={securityPracticeUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                data-no-swup
+                                class="start-button"
+                            >
+                                Start Practice <span>→</span>
+                            </a>
+                        </article>
+                    </div>
                 </div>
             </section>
 
             <section class="stats">
                 <div class="stat-card">
                     <span class="stat-icon">◈</span>
-                    <strong>125</strong>
-                    <span>Questions</span>
+                    <strong>03</strong>
+                    <span>Certifications</span>
                 </div>
 
                 <div class="stat-card">
                     <span class="stat-icon">◷</span>
-                    <strong>04:00</strong>
-                    <span>Hours Duration</span>
+                    <strong>06</strong>
+                    <span>Available Exams</span>
                 </div>
 
                 <div class="stat-card">
                     <span class="stat-icon">◎</span>
-                    <strong>70%</strong>
-                    <span>Passing Score</span>
+                    <strong>03</strong>
+                    <span>Exam Simulators</span>
                 </div>
 
                 <div class="stat-card">
                     <span class="stat-icon">✧</span>
-                    <strong>100%</strong>
-                    <span>Online Simulation</span>
+                    <strong>03</strong>
+                    <span>Practice Exams</span>
                 </div>
             </section>
 
@@ -168,71 +304,65 @@ const practiceUrl = "/exams/cehv13-practice/index.html";
                 <div class="section-heading">
                     <span class="section-kicker">BEFORE YOU BEGIN</span>
                     <h2>Examination <span>Guidelines</span></h2>
-                    <p>Please read the following rules carefully before starting.</p>
+                    <p>Please review these general guidelines before starting an exam.</p>
                 </div>
 
                 <div class="rules-grid">
                     <article class="rule-card">
                         <div class="rule-icon">⌁</div>
                         <h3>No Copy & Paste</h3>
-                        <p>Copying and pasting are not permitted during the examination.</p>
+                        <p>Follow the examination rules regarding copying and pasting.</p>
                     </article>
 
                     <article class="rule-card warning">
                         <div class="rule-icon">⚠</div>
                         <h3>Stay on Exam Tab</h3>
-                        <p>Leaving the examination tab will trigger the exam termination policy.</p>
+                        <p>Some simulations may apply restrictions when leaving the examination tab.</p>
                     </article>
 
                     <article class="rule-card">
                         <div class="rule-icon">◷</div>
                         <h3>Time Limit</h3>
-                        <p>You have exactly four hours to complete all 125 questions.</p>
+                        <p>Check the examination instructions for the time limit of each exam.</p>
                     </article>
 
                     <article class="rule-card">
                         <div class="rule-icon">✧</div>
-                        <h3>Completion Certificate</h3>
-                        <p>Receive a Certificate of Completion after finishing the examination.</p>
+                        <h3>Review Your Results</h3>
+                        <p>Review your performance after completing the examination.</p>
                     </article>
                 </div>
             </section>
 
             <section class="passing-section">
                 <div class="passing-content">
-                    <span class="section-kicker">YOUR TARGET</span>
+                    <span class="section-kicker">YOUR NEXT CHALLENGE</span>
                     <h2>Are you ready to <span>prove your skills?</span></h2>
 
                     <p>
-                        You must achieve at least 70% to pass the simulation.
-                        Prepare yourself and give it your best.
+                        Choose your certification, prepare yourself, and challenge
+                        your knowledge through our online examination simulations.
                     </p>
                 </div>
 
                 <div class="passing-score">
-                    <strong>70<span>%</span></strong>
-                    <small>PASSING SCORE</small>
+                    <strong>6<span></span></strong>
+                    <small>AVAILABLE EXAMS</small>
                 </div>
             </section>
 
             <section class="final-cta" id="exam-access">
-                <span class="section-kicker">CEHv13 · EXAM SIMULATION</span>
+                <span class="section-kicker">CYBERSECURITY · EXAM SIMULATIONS</span>
 
                 <h2>Your challenge starts here.</h2>
 
-                <p>Make sure you are ready before entering the examination.</p>
+                <p>Choose your certification and start testing your knowledge.</p>
 
-                <a
-                    href={examUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    data-no-swup
-                    class="start-button"
-                >
-                    Start Examination <span>→</span>
+                <a href="#exam-options" class="start-button">
+                    Explore All Exams <span>→</span>
                 </a>
 
-                <small>125 Questions · 4 Hours · 70% Passing Score</small>
+                <small>CEHv13 · Network+ · Security+</small>
             </section>
         </main>
     ) : (
@@ -376,8 +506,8 @@ const practiceUrl = "/exams/cehv13-practice/index.html";
                     0 0 45px rgba(192,68,104,.2);
     }
 
-    .emblem-top { color: #fff; font-size: 48px; font-weight: 900; letter-spacing: 4px; }
-    .emblem-number { color: #e27b9a; font-size: 26px; font-weight: 800; }
+    .emblem-top { color: #fff; font-size: 39px; font-weight: 900; letter-spacing: 4px; }
+    .emblem-number { color: #e27b9a; font-size: 19px; font-weight: 800; }
     .emblem-line { width: 65px; height: 2px; margin: 9px 0; background: #c04468; }
     .emblem-caption { color: #c9aab6; font-size: 7px; letter-spacing: 1.5px; }
 
@@ -400,6 +530,45 @@ const practiceUrl = "/exams/cehv13-practice/index.html";
 
     .exam-options {
         margin: 45px 0 60px;
+    }
+
+    .certification-group {
+        margin-top: 38px;
+    }
+
+    .certification-heading {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        margin-bottom: 17px;
+        padding-bottom: 15px;
+        border-bottom: 1px solid var(--line-color);
+    }
+
+    .certification-index {
+        display: grid;
+        place-items: center;
+        width: 43px;
+        height: 43px;
+        flex-shrink: 0;
+        border: 1px solid rgba(192,68,104,.35);
+        border-radius: 11px;
+        color: #e58aa4;
+        background: rgba(142,36,69,.15);
+        font-size: 16px;
+        font-weight: 900;
+    }
+
+    .certification-heading h3 {
+        margin: 0 0 4px;
+        font-size: 19px;
+        font-weight: 850;
+    }
+
+    .certification-heading p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 11px;
     }
 
     .exam-options-grid {
@@ -561,7 +730,6 @@ const practiceUrl = "/exams/cehv13-practice/index.html";
     .passing-content { max-width: 600px; }
     .passing-score { display: flex; flex-direction: column; align-items: center; min-width: 125px; }
     .passing-score strong { color: #dc7594; font-size: 52px; line-height: 1; }
-    .passing-score strong span { font-size: 27px; }
     .passing-score small { margin-top: 9px; color: var(--muted); font-size: 9px; letter-spacing: 2px; }
 
     .final-cta {
