@@ -22,11 +22,11 @@ const isExamSimulation = category === "eXam Simulation";
 const examUrl = "/exams/cehv13/index.html";
 const practiceUrl = "/exams/cehv13-practice/index.html";
 
-const networkExamUrl = "/exams/network-plus/";
-const networkPracticeUrl = "/exams/network-plus-practice/";
+const networkExamUrl = "/exams/network-plus/index.html";
+const networkPracticeUrl = "/exams/network-plus-practice/index.html";
 
-const securityExamUrl = "/exams/security-plus/";
-const securityPracticeUrl = "/exams/security-plus-practice/";
+const securityExamUrl = "/exams/security-plus/index.html";
+const securityPracticeUrl = "/exams/security-plus-practice/index.html";
 ---
 
 <MainGridLayout
@@ -56,10 +56,7 @@ const securityPracticeUrl = "/exams/security-plus-practice/";
                     </p>
 
                     <div class="hero-actions">
-                        <a
-                            href="#exam-options"
-                            class="start-button"
-                        >
+                        <a href="#exam-options" class="start-button">
                             Explore Examinations <span>↓</span>
                         </a>
 
@@ -82,7 +79,6 @@ const securityPracticeUrl = "/exams/security-plus-practice/";
                 </div>
             </section>
 
-            <!-- Examination Options -->
             <section class="exam-options" id="exam-options">
                 <div class="section-heading">
                     <span class="section-kicker">AVAILABLE EXAMINATIONS</span>
@@ -114,13 +110,7 @@ const securityPracticeUrl = "/exams/security-plus-practice/";
                                 examination simulation and evaluate your readiness.
                             </p>
 
-                            <a
-                                href={examUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                data-no-swup
-                                class="start-button"
-                            >
+                            <a href={examUrl} target="_blank" rel="noopener noreferrer" data-no-swup class="start-button">
                                 Start Examination <span>→</span>
                             </a>
                         </article>
@@ -138,13 +128,7 @@ const securityPracticeUrl = "/exams/security-plus-practice/";
                                 your knowledge and strengthen your preparation.
                             </p>
 
-                            <a
-                                href={practiceUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                data-no-swup
-                                class="start-button"
-                            >
+                            <a href={practiceUrl} target="_blank" rel="noopener noreferrer" data-no-swup class="start-button">
                                 Start Practice <span>→</span>
                             </a>
                         </article>
@@ -175,13 +159,7 @@ const securityPracticeUrl = "/exams/security-plus-practice/";
                                 infrastructure, operations, troubleshooting, and security.
                             </p>
 
-                            <a
-                                href={networkExamUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                data-no-swup
-                                class="start-button"
-                            >
+                            <a href={networkExamUrl} target="_blank" rel="noopener noreferrer" data-no-swup class="start-button">
                                 Start Examination <span>→</span>
                             </a>
                         </article>
@@ -199,13 +177,7 @@ const securityPracticeUrl = "/exams/security-plus-practice/";
                                 practice questions and test your exam readiness.
                             </p>
 
-                            <a
-                                href={networkPracticeUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                data-no-swup
-                                class="start-button"
-                            >
+                            <a href={networkPracticeUrl} target="_blank" rel="noopener noreferrer" data-no-swup class="start-button">
                                 Start Practice <span>→</span>
                             </a>
                         </article>
@@ -236,13 +208,7 @@ const securityPracticeUrl = "/exams/security-plus-practice/";
                                 threats, vulnerabilities, and security controls.
                             </p>
 
-                            <a
-                                href={securityExamUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                data-no-swup
-                                class="start-button"
-                            >
+                            <a href={securityExamUrl} target="_blank" rel="noopener noreferrer" data-no-swup class="start-button">
                                 Start Examination <span>→</span>
                             </a>
                         </article>
@@ -260,13 +226,7 @@ const securityPracticeUrl = "/exams/security-plus-practice/";
                                 the CompTIA Security+ certification exam.
                             </p>
 
-                            <a
-                                href={securityPracticeUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                data-no-swup
-                                class="start-button"
-                            >
+                            <a href={securityPracticeUrl} target="_blank" rel="noopener noreferrer" data-no-swup class="start-button">
                                 Start Practice <span>→</span>
                             </a>
                         </article>
@@ -563,6 +523,7 @@ const securityPracticeUrl = "/exams/security-plus-practice/";
         margin: 0 0 4px;
         font-size: 19px;
         font-weight: 850;
+        color: #e58aa4;
     }
 
     .certification-heading p {
